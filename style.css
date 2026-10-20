@@ -1,0 +1,24 @@
+/*
+Theme Name: PVDak
+Author: PVDak
+Description: قالب بلوکی و تمپلیت‌محور پی‌وی‌داک با پشتیبانی از فارسی.
+Version: 0.1.0
+Requires at least: 6.6
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: pvdak
+Tags: full-site-editing, block-patterns, custom-colors, custom-logo, editor-style, rtl-language-support, wide-blocks
+*/
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; height: auto; }
+:where(a, button, input, textarea, select):focus-visible { outline: 3px solid var(--wp--preset--color--accent); outline-offset: 4px; }
+.wp-block-post-title, .wp-block-site-title { overflow-wrap: anywhere; }
+.pvdak-hero { padding-block: clamp(3rem, 8vw, 7rem); }
+.pvdak-card { height: 100%; border: 1px solid var(--wp--preset--color--border); border-radius: 16px; padding: 1.5rem; }
+.wp-block-post-content :where(pre) { overflow-x: auto; }
+.wp-block-post-content :where(table) { width: 100%; }
+@media (max-width: 600px) { .pvdak-header { gap: 1rem; } .wp-block-site-title { font-size: 1.25rem; } }
+
+@media (max-width: 781px) { .wp-block-query .wp-block-post-template.is-layout-grid { grid-template-columns: 1fr; } }
