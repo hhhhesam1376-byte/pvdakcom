@@ -1,13 +1,7 @@
 name: Deploy PVDak to cPanel
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - index.html
-      - .cpanel.yml
-      - .github/workflows/deploy.yml
+  # Production updates are pulled by the cPanel cron job.
   workflow_dispatch:
 
 permissions:
