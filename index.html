@@ -3,19 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PVDak — Hello World</title>
+  <meta name="theme-color" content="#101625">
+  <meta name="description" content="سایت PVDak در حال تعمیرات و گسترش است. به‌زودی با امکانات تازه برمی‌گردیم.">
+  <title>PVDak | در حال تعمیرات و گسترش</title>
   <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-           font-family: Tahoma, Arial, sans-serif; background: #f5f7fb; color: #17233a; }
-    main { padding: 40px; text-align: center; }
-    h1 { margin: 0 0 12px; font-size: clamp(32px, 6vw, 64px); }
-    p { margin: 0; color: #526079; }
+    :root{color-scheme:dark;--night:#101625;--ink:#eff6ff;--muted:#a3b0c6;--lime:#caff68;--gold:#ffd186}
+    *,*::before,*::after{box-sizing:border-box}
+    html{min-height:100%;scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;min-height:100svh;overflow-x:hidden;display:grid;place-items:center;background:radial-gradient(ellipse 80% 55% at 50% 54%,#27314b 0%,#171d30 55%,#0d1220 100%);color:var(--ink);font-family:Tahoma,"Segoe UI",Arial,sans-serif;text-align:center}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to bottom,transparent 5%,#000 70%)}
+    .cave{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+    .cave::before,.cave::after{content:"";position:absolute;left:-4%;right:-4%;background:#080d18}
+    .cave::before{top:0;height:70px;clip-path:polygon(0 0,100% 0,100% 68%,95% 58%,90% 100%,85% 48%,80% 80%,72% 55%,65% 95%,59% 52%,52% 75%,43% 55%,35% 96%,28% 60%,22% 80%,15% 48%,10% 95%,5% 58%,0 72%)}
+    .cave::after{bottom:0;height:8vh;clip-path:polygon(0 25%,8% 60%,16% 34%,27% 70%,36% 42%,45% 67%,55% 40%,65% 72%,76% 34%,86% 60%,94% 28%,100% 63%,100% 100%,0 100%)}
+    main{position:relative;z-index:1;width:min(100%,1000px);padding:72px 22px 66px}
+    .brand{display:inline-flex;align-items:center;gap:11px;direction:ltr;font:900 16px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.20em;color:var(--lime)}
+    .brand .mark{display:grid;place-items:center;width:33px;height:33px;border:1px solid #caff6880;border-radius:11px;background:#caff6815;font-size:22px;letter-spacing:0}
+    .eyebrow{display:table;margin:20px auto 0;padding:9px 17px;border:1px solid #ffffff22;border-radius:99px;background:#ffffff09;color:#dce5f5;font-size:12px;letter-spacing:.04em}
+    .scene{position:relative;width:min(100%,780px);margin:4px auto -38px}
+    .scene::before{content:"";position:absolute;inset:19% 13% 4%;border-radius:50%;background:radial-gradient(ellipse,#e8a75e25,transparent 65%);filter:blur(22px);animation:breathe 4s ease-in-out infinite}
+    svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 20px 32px #02050b45)}
+    .dust circle{fill:#ffd695;opacity:.4;animation:float 5s ease-in-out infinite}
+    .dust circle:nth-child(2n){animation-delay:-2s;fill:#caff68}
+    .dust circle:nth-child(3n){animation-delay:-3.7s}
+    .rock{fill:#252b3d;stroke:#3a4257;stroke-width:3}
+    .caveman{transform-origin:450px 365px;animation:wiggle 4.4s ease-in-out infinite}
+    .hair{transform-origin:450px 147px;animation:hair-jump 4.4s ease-in-out infinite}
+    .eye{transform-origin:center;animation:blink 5s infinite}
+    .wire-left,.wire-right{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:10}
+    .wire-left{stroke:#ff967b;stroke-dasharray:330;animation:wire-pulse 4.4s ease-in-out infinite}
+    .wire-right{stroke:#80d8ee;stroke-dasharray:330;animation:wire-pulse 4.4s ease-in-out infinite reverse}
+    .wire-tip-left{animation:tip-left 4.4s ease-in-out infinite;transform-origin:432px 261px}
+    .wire-tip-right{animation:tip-right 4.4s ease-in-out infinite;transform-origin:468px 261px}
+    .spark{opacity:0;transform-origin:450px 260px;animation:zap 4.4s ease-in-out infinite}
+    .spark-ring{fill:none;stroke:#caff68;stroke-width:5;opacity:0;transform-origin:450px 260px;animation:ring 4.4s ease-out infinite}
+    .spark-lines{stroke:#f9ffb0;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;fill:none;filter:drop-shadow(0 0 10px #d8ff59)}
+    .shadow{fill:#05091560}
+    h1{position:relative;margin:0 auto 13px;max-width:880px;font-size:clamp(28px,5.6vw,56px);font-weight:900;line-height:1.55;letter-spacing:-.045em}
+    h1 .highlight{color:var(--lime);text-shadow:0 0 35px #b6ff4440}
+    p{margin:0 auto;max-width:650px;color:var(--muted);font-size:clamp(14px,2vw,18px);line-height:2}
+    .status{display:inline-flex;align-items:center;gap:9px;margin-top:27px;color:#e7eccf;font-size:13px}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px #caff681a,0 0 16px #caff6870;animation:pulse 2s infinite}
+    footer{margin-top:46px;font:700 12px/1.5 "Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#738099}
+    @keyframes breathe{50%{opacity:.45;transform:scale(1.08)}}
+    @keyframes float{50%{transform:translateY(-15px);opacity:.9}}
+    @keyframes pulse{50%{box-shadow:0 0 0 9px #caff6809,0 0 22px #caff68}}
+    @keyframes wiggle{0%,59%,73%,100%{transform:translate(0,0) rotate(0)}61%,65%,69%{transform:translate(-3px,1px) rotate(-1.5deg)}63%,67%,71%{transform:translate(3px,-2px) rotate(1.5deg)}}
+    @keyframes hair-jump{0%,59%,73%,100%{transform:translateY(0)}64%,68%{transform:translateY(-5px)}}
+    @keyframes blink{0%,35%,38%,100%{transform:scaleY(1)}36%{transform:scaleY(.1)}}
+    @keyframes wire-pulse{0%,55%,100%{stroke-width:10}63%{stroke-width:12}}
+    @keyframes tip-left{0%,47%,78%,100%{transform:translateX(0)}56%,68%{transform:translateX(16px)}}
+    @keyframes tip-right{0%,47%,78%,100%{transform:translateX(0)}56%,68%{transform:translateX(-16px)}}
+    @keyframes zap{0%,54%,73%,100%{opacity:0;transform:scale(.4)}57%,60%,64%,68%,71%{opacity:1;transform:scale(1.2)}59%,62%,66%,70%{opacity:.25;transform:scale(.8)}}
+    @keyframes ring{0%,55%,100%{opacity:0;transform:scale(.2)}59%{opacity:.85;transform:scale(.65)}72%{opacity:0;transform:scale(2.7)}}
+    @media(max-width:620px){main{padding:65px 16px 56px}.scene{width:115%;max-width:none;margin:15px -7.5% -12px}h1{font-size:clamp(27px,7vw,38px)}.cave::before{height:35px}.status{margin-top:25px}footer{margin-top:38px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.spark{opacity:1;transform:scale(.7)}}
   </style>
 </head>
 <body>
+  <div class="cave" aria-hidden="true"></div>
   <main>
-    <h1>Hello World! 👋</h1>
-    <p>اولین قدم طراحی قالب اختصاصی PVDak</p>
+    <div class="brand"><span class="mark" aria-hidden="true">ϟ</span> PVDAK</div>
+    <div class="eyebrow">یه جرقه تا اتفاق‌های بزرگ باقی مونده!</div>
+    <div class="scene">
+      <svg viewBox="0 0 900 510" role="img" aria-labelledby="scene-title scene-desc" xmlns="http://www.w3.org/2000/svg">
+        <title id="scene-title">غارنشین کوچولوی برق‌کار</title>
+        <desc id="scene-desc">یک غارنشین کارتونی خندان دو سیم رنگی را به هم نزدیک می‌کند و بین آن‌ها جرقه‌های بامزه برق می‌زند.</desc>
+        <g class="dust" aria-hidden="true">
+          <circle cx="220" cy="170" r="3"/><circle cx="680" cy="125" r="4"/><circle cx="160" cy="300" r="2.5"/>
+          <circle cx="745" cy="290" r="3"/><circle cx="300" cy="85" r="2.5"/><circle cx="615" cy="75" r="2.5"/>
+          <circle cx="710" cy="425" r="3"/><circle cx="225" cy="390" r="2"/>
+        </g>
+        <!-- cave floor -->
+        <ellipse class="shadow" cx="450" cy="473" rx="220" ry="21"/>
+        <path class="rock" d="M140 464l23-38 35 3 25 36zM684 465l18-46 41-2 37 48z"/>
+        <path d="M157 450l19-14m535 11 13-21" stroke="#566078" stroke-width="4" stroke-linecap="round"/>
+        <!-- caveman, his outfit and hands -->
+        <g class="caveman">
+          <path d="M410 412l-17 55h48l18-55M485 412l16 55h-47l-6-53" fill="#d69a66" stroke="#473246" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M380 342Q395 306 450 310Q517 307 528 354L519 433l-27-15-20 17-22-18-23 20-22-18-30 14z" fill="#edac68" stroke="#55384e" stroke-width="7" stroke-linejoin="round"/>
+          <path d="M395 348q42 25 105-9M410 371q38 20 85 0" fill="none" stroke="#b57251" stroke-width="8" stroke-linecap="round" opacity=".6"/>
+          <path d="M451 315l30 108" stroke="#623b50" stroke-width="16" stroke-linecap="round"/>
+          <circle cx="464" cy="371" r="12" fill="#a86c4c"/>
+          <!-- arms -->
+          <path d="M393 345Q360 353 340 312" stroke="#593b42" stroke-width="37" fill="none" stroke-linecap="round"/>
+          <path d="M393 345Q360 353 340 312" stroke="#d9a071" stroke-width="28" fill="none" stroke-linecap="round"/>
+          <path d="M505 347Q543 351 559 313" stroke="#593b42" stroke-width="37" fill="none" stroke-linecap="round"/>
+          <path d="M505 347Q543 351 559 313" stroke="#d9a071" stroke-width="28" fill="none" stroke-linecap="round"/>
+          <!-- ears / face -->
+          <ellipse cx="373" cy="210" rx="23" ry="30" fill="#bc835b" stroke="#563c45" stroke-width="6"/>
+          <ellipse cx="526" cy="210" rx="23" ry="30" fill="#bc835b" stroke="#563c45" stroke-width="6"/>
+          <path d="M373 171Q371 110 449 108Q528 112 530 177L525 246Q504 283 450 282Q398 279 373 245z" fill="#e5ac7b" stroke="#563c45" stroke-width="7"/>
+          <!-- nose -->
+          <ellipse cx="450" cy="224" rx="26" ry="17" fill="#c88d65"/>
+          <ellipse cx="442" cy="228" rx="4" ry="3" fill="#80513f"/><ellipse cx="459" cy="228" rx="4" ry="3" fill="#80513f"/>
+          <!-- eyes -->
+          <g class="eye"><ellipse cx="414" cy="198" rx="10" ry="13" fill="#232337"/><circle cx="417" cy="193" r="3" fill="#fff"/></g>
+          <g class="eye"><ellipse cx="485" cy="198" rx="10" ry="13" fill="#232337"/><circle cx="488" cy="193" r="3" fill="#fff"/></g>
+          <path d="M432 246q18 21 37 0" stroke="#6f3e3b" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <ellipse cx="395" cy="232" rx="13" ry="7" fill="#ee947e" opacity=".65"/><ellipse cx="506" cy="232" rx="13" ry="7" fill="#ee947e" opacity=".65"/>
+          <!-- wild hair -->
+          <g class="hair">
+            <path d="M370 176l-14-52 40 22-10-61 41 27 21-60 26 49 39-32-5 62 41-23-22 67q-17-35-36-30-32-28-47-5-43-15-74 36z" fill="#52374a" stroke="#352739" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M403 129l12-27m47 18 13-24m28 43 15-13" stroke="#816174" stroke-width="6" stroke-linecap="round"/>
+          </g>
+          <!-- hands -->
+          <circle cx="340" cy="304" r="20" fill="#e5ac7b" stroke="#593b42" stroke-width="6"/>
+          <circle cx="559" cy="304" r="20" fill="#e5ac7b" stroke="#593b42" stroke-width="6"/>
+        </g>
+        <!-- colored cables, with loose ends pointed towards the spark -->
+        <path class="wire-left" d="M340 304C369 316 379 252 432 261"/>
+        <path class="wire-right" d="M559 304C532 321 520 248 468 261"/>
+        <g class="wire-tip-left">
+          <path d="M422 261h10" stroke="#ffc19b" stroke-width="12" stroke-linecap="round"/>
+          <path d="M432 261h9" stroke="#e7f3ff" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g class="wire-tip-right">
+          <path d="M468 261h10" stroke="#9cecff" stroke-width="12" stroke-linecap="round"/>
+          <path d="M459 261h9" stroke="#e7f3ff" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <!-- comic electric shock -->
+        <circle class="spark-ring" cx="450" cy="260" r="30"/>
+        <g class="spark">
+          <circle cx="450" cy="260" r="21" fill="#dcff64" opacity=".75" filter="drop-shadow(0 0 22px #dfff76)"/>
+          <path class="spark-lines" d="M444 211l10 30-17 0 12 37 17-30-12-1 8-36M413 244l-19-16m100 5 20-19m-100 77-20 17m101-20 19 16m-63-85v-19"/>
+          <g fill="#fffde4"><circle cx="413" cy="220" r="4"/><circle cx="512" cy="260" r="4"/><circle cx="433" cy="306" r="3"/></g>
+        </g>
+        <g fill="#cfddf3" opacity=".75">
+          <path d="M276 333l11-12 8 14-12 5z"/><path d="M632 364l14-8 7 16-16 2z"/>
+        </g>
+      </svg>
+    </div>
+    <h1>سایت در حال <span class="highlight">تعمیرات و گسترش</span> است</h1>
+    <p>غارنشینِ ما تازه برق رو کشف کرده! داریم با کمی جرقه و کلی انرژی، تجربه‌ای بهتر برای شما می‌سازیم. به‌زودی برمی‌گردیم.</p>
+    <div class="status"><span class="status-dot" aria-hidden="true"></span><span>در حال ساخت چیزهای هیجان‌انگیز...</span></div>
+    <footer>PVDAK &bull; COMING SOON</footer>
   </main>
 </body>
 </html>
