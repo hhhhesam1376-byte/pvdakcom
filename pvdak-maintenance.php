@@ -37,8 +37,20 @@ function pvdak_maintenance_render() {
     nocache_headers();
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
     header( 'Content-Type: text/html; charset=UTF-8', true );
-    $image_path = get_template_directory() . '/assets/maintenance/pvdak-coming-soon.png';
-    $image_url  = get_template_directory_uri() . '/assets/maintenance/pvdak-coming-soon.png';
+    // Keep the artwork in uploads so deployment of the theme cannot delete it.
+    // A theme-bundled version remains supported as a fallback.
+    $uploads = wp_upload_dir( null, false );
+    $upload_path = trailingslashit( $uploads['basedir'] ) . 'pvdak-maintenance/pvdak-coming-soon.png';
+    $upload_url  = trailingslashit( $uploads['baseurl'] ) . 'pvdak-maintenance/pvdak-coming-soon.png';
+    $theme_path  = get_template_directory() . '/assets/maintenance/pvdak-coming-soon.png';
+    $theme_url   = get_template_directory_uri() . '/assets/maintenance/pvdak-coming-soon.png';
+    if ( is_readable( $upload_path ) ) {
+        $image_path = $upload_path;
+        $image_url  = $upload_url;
+    } else {
+        $image_path = $theme_path;
+        $image_url  = $theme_url;
+    }
     $image_ready = is_readable( $image_path );
     ?>
 <!doctype html>
