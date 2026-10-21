@@ -167,6 +167,48 @@ function pvdak_register_home_acf_fields() {
     $fields[] = array( 'key' => 'field_pvdak_home_faq_2_answer', 'label' => 'پاسخ 2', 'name' => 'faq_2_answer', 'type' => 'textarea', 'default_value' => isset($defaults['faq_2_answer']) ? $defaults['faq_2_answer'] : '', 'rows' => 3 );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_3_question', 'label' => 'پرسش 3', 'name' => 'faq_3_question', 'type' => 'text', 'default_value' => isset($defaults['faq_3_question']) ? $defaults['faq_3_question'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_3_answer', 'label' => 'پاسخ 3', 'name' => 'faq_3_answer', 'type' => 'textarea', 'default_value' => isset($defaults['faq_3_answer']) ? $defaults['faq_3_answer'] : '', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_tab_quick', 'label' => '۹. نوار دسترسی سریع', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_1_title', 'label' => 'دسترسی ۱ — عنوان', 'name' => 'quick_1_title', 'type' => 'text', 'default_value' => 'پیگیری درخواست' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_1_url', 'label' => 'دسترسی ۱ — لینک', 'name' => 'quick_1_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_2_title', 'label' => 'دسترسی ۲ — عنوان', 'name' => 'quick_2_title', 'type' => 'text', 'default_value' => 'راهنمای خدمات' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_2_url', 'label' => 'دسترسی ۲ — لینک', 'name' => 'quick_2_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_3_title', 'label' => 'دسترسی ۳ — عنوان', 'name' => 'quick_3_title', 'type' => 'text', 'default_value' => 'پنل جامعه حقوقی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_3_url', 'label' => 'دسترسی ۳ — لینک', 'name' => 'quick_3_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_4_title', 'label' => 'دسترسی ۴ — عنوان', 'name' => 'quick_4_title', 'type' => 'text', 'default_value' => 'پشتیبانی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_quick_4_url', 'label' => 'دسترسی ۴ — لینک', 'name' => 'quick_4_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_magazinesupp', 'label' => '۱۰. کارت‌های مکمل مجله', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_1_title', 'label' => 'کارت مجله ۱ — عنوان', 'name' => 'magazine_side_1_title', 'type' => 'text', 'default_value' => 'قراردادها را با آگاهی بخوانید' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_1_description', 'label' => 'کارت مجله ۱ — خلاصه', 'name' => 'magazine_side_1_description', 'type' => 'textarea', 'default_value' => 'راهنمای شناخت تعهدات و تصمیم‌گیری بهتر', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_1_button', 'label' => 'کارت مجله ۱ — متن لینک', 'name' => 'magazine_side_1_button', 'type' => 'text', 'default_value' => 'موضوع پیشنهادی مجله' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_1_url', 'label' => 'کارت مجله ۱ — لینک', 'name' => 'magazine_side_1_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_2_title', 'label' => 'کارت مجله ۲ — عنوان', 'name' => 'magazine_side_2_title', 'type' => 'text', 'default_value' => 'جایی برای گفت‌وگوی تخصصی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_2_description', 'label' => 'کارت مجله ۲ — خلاصه', 'name' => 'magazine_side_2_description', 'type' => 'textarea', 'default_value' => 'تبادل تجربه و طرح مسائل در انجمن وکلا', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_2_button', 'label' => 'کارت مجله ۲ — متن لینک', 'name' => 'magazine_side_2_button', 'type' => 'text', 'default_value' => 'ورود به انجمن' );
+    $fields[] = array( 'key' => 'field_pvdak_home_magazine_side_2_url', 'label' => 'کارت مجله ۲ — لینک', 'name' => 'magazine_side_2_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_notices', 'label' => '۱۱. اطلاعیه‌ها و تازه‌ها', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_title', 'label' => 'عنوان بخش تازه‌ها', 'name' => 'news_title', 'type' => 'text', 'default_value' => 'تازه‌های پویش و اطلاعیه‌ها' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_archive_label', 'label' => 'متن لینک آرشیو', 'name' => 'news_archive_label', 'type' => 'text', 'default_value' => 'آرشیو اطلاعیه‌ها' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_archive_url', 'label' => 'آدرس آرشیو اطلاعیه‌ها', 'name' => 'news_archive_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_heading', 'label' => 'عنوان تابلوی اطلاعیه‌ها', 'name' => 'notice_heading', 'type' => 'text', 'default_value' => 'تابلوی اطلاعیه‌های پویش' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_badge', 'label' => 'برچسب تابلوی اطلاعیه‌ها', 'name' => 'notice_badge', 'type' => 'text', 'default_value' => 'اطلاع‌رسانی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_1_title', 'label' => 'اطلاعیه ۱ — عنوان', 'name' => 'notice_1_title', 'type' => 'text', 'default_value' => 'راهنمای عضویت جامعه حقوقی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_1_description', 'label' => 'اطلاعیه ۱ — خلاصه', 'name' => 'notice_1_description', 'type' => 'textarea', 'default_value' => 'مراحل معرفی تخصص و تکمیل حساب', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_1_url', 'label' => 'اطلاعیه ۱ — لینک', 'name' => 'notice_1_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_2_title', 'label' => 'اطلاعیه ۲ — عنوان', 'name' => 'notice_2_title', 'type' => 'text', 'default_value' => 'آشنایی با اشتراک و سهمیه' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_2_description', 'label' => 'اطلاعیه ۲ — خلاصه', 'name' => 'notice_2_description', 'type' => 'textarea', 'default_value' => 'راهنمای اعلام آمادگی روی درخواست‌ها', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_2_url', 'label' => 'اطلاعیه ۲ — لینک', 'name' => 'notice_2_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_3_title', 'label' => 'اطلاعیه ۳ — عنوان', 'name' => 'notice_3_title', 'type' => 'text', 'default_value' => 'اصول ارجاع و پیگیری' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_3_description', 'label' => 'اطلاعیه ۳ — خلاصه', 'name' => 'notice_3_description', 'type' => 'textarea', 'default_value' => 'آشنایی با مراحل رسیدگی به درخواست', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_3_url', 'label' => 'اطلاعیه ۳ — لینک', 'name' => 'notice_3_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_article_title', 'label' => 'مطلب شاخص — عنوان', 'name' => 'news_article_title', 'type' => 'text', 'default_value' => 'دانش حقوقی کاربردی' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_article_description', 'label' => 'مطلب شاخص — خلاصه', 'name' => 'news_article_description', 'type' => 'textarea', 'default_value' => 'مطالب آموزشی و راهنمای خدمات', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_article_image', 'label' => 'مطلب شاخص — تصویر', 'name' => 'news_article_image', 'type' => 'image', 'default_value' => '', 'return_format' => 'id', 'preview_size' => 'medium', 'library' => 'all' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_article_button', 'label' => 'مطلب شاخص — متن لینک', 'name' => 'news_article_button', 'type' => 'text', 'default_value' => 'مطالعه در مجله' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_article_url', 'label' => 'مطلب شاخص — لینک', 'name' => 'news_article_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_forum_feature_title', 'label' => 'انجمن وکلا — تیتر اول', 'name' => 'forum_feature_title', 'type' => 'text', 'default_value' => 'یک جامعه' );
+    $fields[] = array( 'key' => 'field_pvdak_home_forum_feature_subtitle', 'label' => 'انجمن وکلا — تیتر دوم', 'name' => 'forum_feature_subtitle', 'type' => 'text', 'default_value' => 'چندین تجربه' );
+    $fields[] = array( 'key' => 'field_pvdak_home_forum_feature_description', 'label' => 'انجمن وکلا — توضیح', 'name' => 'forum_feature_description', 'type' => 'textarea', 'default_value' => 'گفت‌وگو درباره مسائل تخصصی با اعضای جامعه حقوقی', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_forum_feature_button', 'label' => 'انجمن وکلا — متن دکمه', 'name' => 'forum_feature_button', 'type' => 'text', 'default_value' => 'ورود به انجمن وکلا' );
     acf_add_local_field_group( array(
         'key' => 'group_pvdak_home_content_v1',
         'title' => 'محتوای صفحه اصلی PVDak',
