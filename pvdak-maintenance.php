@@ -37,6 +37,9 @@ function pvdak_maintenance_render() {
     nocache_headers();
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
     header( 'Content-Type: text/html; charset=UTF-8', true );
+    $image_path = get_template_directory() . '/assets/maintenance/pvdak-coming-soon.png';
+    $image_url  = get_template_directory_uri() . '/assets/maintenance/pvdak-coming-soon.png';
+    $image_ready = is_readable( $image_path );
     ?>
 <!doctype html>
 <html lang="fa" dir="rtl">
@@ -107,9 +110,49 @@ function pvdak_maintenance_render() {
         .description { max-width: 510px; margin: 10px auto 0; color: #c9d6dc; font-size: 15px; }
         .footnote { margin: 22px 0 0; color: #95b2bd; font-size: 13px; }
         @media (prefers-reduced-motion: reduce) { .lightning, .caveman, .glow { animation: none; } }
+        /* Full-screen cinematic artwork. The complete poster stays visible at any ratio. */
+        body.pvdak-image-mode {
+            display: block;
+            padding: 0;
+            overflow: hidden;
+            background: #03192b;
+        }
+        .pvdak-fullscreen {
+            position: relative;
+            isolation: isolate;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
+            overflow: hidden;
+            background: #03192b;
+        }
+        .pvdak-fullscreen::before {
+            content: '';
+            position: absolute;
+            inset: -32px;
+            z-index: -1;
+            background-image: var(--pvdak-scene);
+            background-position: center;
+            background-size: cover;
+            filter: blur(27px) brightness(.38);
+            transform: scale(1.06);
+        }
+        .pvdak-fullscreen__image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center center;
+        }
     </style>
 </head>
-<body>
+<body<?php echo $image_ready ? ' class="pvdak-image-mode"' : ''; ?>>
+    <?php if ( $image_ready ) : ?>
+        <main class="pvdak-fullscreen" style="--pvdak-scene: url('<?php echo esc_url( $image_url ); ?>')">
+            <img class="pvdak-fullscreen__image" src="<?php echo esc_url( $image_url ); ?>" alt="سایت در حال توسعه است؛ به‌زودی با تجربه‌ای بهتر برمی‌گردیم" decoding="async" fetchpriority="high">
+        </main>
+    <?php else : ?>
     <main class="panel">
         <span class="eyebrow">P V D A K · COMING SOON</span>
         <div class="scene">
@@ -160,6 +203,7 @@ function pvdak_maintenance_render() {
         <p class="description">یه اتصال کوچولو مونده تا همه‌چیز روشن بشه. به‌زودی با کلی امکانات جذاب برمی‌گردیم.</p>
         <p class="footnote">PVDak · به‌زودی می‌بینیمتون!</p>
     </main>
+    <?php endif; ?>
 </body>
 </html>
     <?php
