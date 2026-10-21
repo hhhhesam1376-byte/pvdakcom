@@ -36,6 +36,13 @@ function pvdak_home_assets() {
             array( 'pvdak-style' ),
             wp_get_theme()->get( 'Version' )
         );
+        wp_enqueue_script(
+            'pvdak-home-search',
+            get_template_directory_uri() . '/assets/js/pvdak-home.js',
+            array(),
+            wp_get_theme()->get( 'Version' ),
+            true
+        );
     }
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
