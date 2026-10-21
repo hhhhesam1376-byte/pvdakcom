@@ -82,3 +82,22 @@
 - Conserved all existing ACF 11 tabs/117 fields and public maintenance screen.
 - Bumped theme to `0.5.2` and pushed to `main`.
 - Live admin validation pending: verify the editor form appears, one title can be changed and saved, and the value reflects on the homepage (admin signed in). PHP lint on actual deployment pending.
+
+## 2026-10-21 — LEGAL-PAGES-006 (v0.6.0)
+- Corrected the user-identified content-model error: **legal topics are ordinary hierarchical WordPress Pages serving as standalone SEO landing pages**, not categories or 8 repeated ACF title/url fields.
+- Homepage now uses the **published child pages** of one selected root page. Each card links to the actual page permalink, uses the WordPress page title, and optionally uses an ACF-selected icon.
+- Added a single ACF `legal_topics_parent_page` selector to the homepage editor (tab 4) and removed 16 unused fixed fields from code registration without deleting any WordPress database data.
+- Added a legal-topic landing template using the normal page editor, optional featured image and small ACF landing intro/icon fields.
+- Added an archive/index template for the landing root to show its published child pages. No topic terms or custom post type were registered.
+- Existing `topic_1..8` postmeta remains untouched; legacy defaults removed from code because they no longer drive display.
+- Home topics are no longer capped at eight; sorting respects native WordPress page order and titles.
+- Theme version bumped to `0.6.0`; maintenance page remains enabled.
+- Updated client editor guide with setup steps.
+- GitHub changes pushed; live cPanel deploy and actual WP/ACF runtime checks still pending.
+
+### Next operator steps
+1. Deploy via existing automatic cron or `bash "$HOME/.pvdak-deploy/deploy.sh"`.
+2. Create the published parent Page "موضوعات حقوقی" and assign template "فهرست لندینگ‌های حقوقی".
+3. In the "محتوای صفحه اصلی" editor, choose it in tab 4.
+4. Add published child Pages such as "حقوق خانواده"; select template "لندینگ موضوع حقوقی", set content and optional icon.
+5. Refresh homepage as an authenticated admin to verify title/link/icon updates. If not working, collect cPanel PHP lint and WordPress logs for precise diagnosis.
