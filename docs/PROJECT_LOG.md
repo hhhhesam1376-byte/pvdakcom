@@ -45,3 +45,21 @@
 - Live homepage is behind the maintenance screen; an admin login is needed to preview it.
 - To test on the target server, confirm version 0.4.0 has deployed, ACF is active, and set a static front page using the `محتوای صفحه اصلی` entry; then change hero image and copy and reload the homepage as an administrator.
 - Customer request forms, lawyer verification, case matching, subscription billing and real service routes remain future work.
+
+## 2026-10-21 — HOME-DESIGN-003 (v0.5.0)
+- The customer supplied the actual desktop screenshot of the approved PVDak version `1.01.05`. Corrected earlier generic implementation to reflect its **actual composition**.
+- Preserved photo-led legal-consultation hero and dark overlay, 3 white service action cards, and a raised white four-shortcut strip (not a four-link table).
+- Followed intended RTL order: rightmost audience card navy; eight teal line-icon topic cards; four-step navy/teal timeline.
+- Rebuilt **magazine** as photo feature on the right plus two stacked pastel editorial cards on the left.
+- Added entirely separate **news/announcements** 3-column region: white notices panel on the right, featured photo article in the center and dark forum card on the left.
+- Reworked green membership banner and FAQ accordions; retained native WordPress header/footer and accessible semantic content.
+- Extended the existing ACF Free editor with quick links, the 2 magazine side cards, and the announcements/news panel. Editor now has 11 tabs and 117 fields (including optional mobile hero image).
+- All buttons without a configured destination are deliberately not clickable while application services are unimplemented.
+- Original photos were extracted from the supplied design as a separate bundle for use in WordPress Media Library. They are not yet present in the repository or live media library; the photo slots therefore show gradient placeholders until ACF images are configured.
+- Theme version is `0.5.0`; public maintenance screen is unchanged.
+
+### Verification still required
+- Confirm the updated theme actually deploys with the existing cPanel cron.
+- PHP lint, visual desktop/mobile screenshot comparison and ACF admin save/reload tests against the live WordPress installation are **not yet complete**.
+- Upload the supplied design photographs into WordPress media library and assign **بنر اصلی > عکس پس‌زمینه**, **مجله > تصویر مجله**, **اطلاعیه‌ها > تصویر مطلب شاخص**, **دعوت به عضویت > تصویر**.
+- Real lawyer-request workflows, member identity verification and paid subscriptions remain future milestones.
