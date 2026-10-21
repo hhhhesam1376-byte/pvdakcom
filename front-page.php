@@ -3,17 +3,47 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 get_header();
 $hero_image = pvdak_home_image_url('hero_image');
+$hero_image_mobile = pvdak_home_image_url('hero_image_mobile');
 ?>
 <main id="main-content" class="pvdak-home container" tabindex="-1">
-    <section class="pvdak-home-hero"<?php if($hero_image): ?> style="--pvdak-hero-image:url('<?php echo esc_url($hero_image); ?>')"<?php endif; ?>>
+    <section class="pvdak-home-hero"<?php if($hero_image || $hero_image_mobile): ?> style="<?php if($hero_image): ?>--pvdak-hero-image:url('<?php echo esc_url($hero_image); ?>');<?php endif; ?><?php if($hero_image_mobile): ?>--pvdak-hero-mobile-image:url('<?php echo esc_url($hero_image_mobile); ?>');<?php endif; ?>"<?php endif; ?>>
         <div class="pvdak-home-hero__content">
             <p class="pvdak-home-eyebrow"><?php echo esc_html(pvdak_home_value('hero_label')); ?></p>
             <h1><?php echo esc_html(pvdak_home_value('hero_title')); ?></h1>
             <p class="pvdak-home-lead"><?php echo esc_html(pvdak_home_value('hero_description')); ?></p>
-            <div class="pvdak-home-search-hint"><?php echo esc_html(pvdak_home_value('hero_search_label')); ?></div>
+            <form class="pvdak-home-search" action="<?php echo esc_url(home_url('/')); ?>" method="get" role="search">
+                <label for="pvdak-legal-topic" class="screen-reader-text">جستجوی موضوع حقوقی</label>
+                <span class="pvdak-home-search-symbol" aria-hidden="true">⌕</span>
+                <input id="pvdak-legal-topic" name="s" type="search" autocomplete="off"
+                    placeholder="<?php echo esc_attr(pvdak_home_value('hero_search_label')); ?>">
+                <button type="submit">جستجو</button>
+            </form>
+            <div class="pvdak-home-hero-actions" aria-label="خدمات اصلی">
+                <?php
+                $hero_symbols = array(1=>'⚖',2=>'▤',3=>'؟');
+                for($i=1;$i<=3;$i++):
+                    $label = pvdak_home_value("service_{$i}_title");
+                    $url = pvdak_home_value("service_{$i}_url",'');
+                    if($url): ?>
+                        <a class="pvdak-home-hero-action" href="<?php echo esc_url($url); ?>">
+                            <span aria-hidden="true"><?php echo esc_html($hero_symbols[$i]); ?></span><?php echo esc_html($label); ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="pvdak-home-hero-action">
+                            <span aria-hidden="true"><?php echo esc_html($hero_symbols[$i]); ?></span><?php echo esc_html($label); ?>
+                        </span>
+                    <?php endif;
+                endfor; ?>
+            </div>
             <p class="pvdak-home-process-hint"><?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
         </div>
     </section>
+    <div class="pvdak-home-quick-actions" aria-label="دسترسی سریع به بخش‌های سایت">
+        <a href="#services"><span aria-hidden="true">▤</span> خدمات حقوقی</a>
+        <a href="#topics"><span aria-hidden="true">⌕</span> موضوعات حقوقی</a>
+        <a href="#magazine"><span aria-hidden="true">▣</span> مجله حقوقی</a>
+        <a href="#community"><span aria-hidden="true">✦</span> همکاری با ما</a>
+    </div>
     <section id="services" class="pvdak-home-section" aria-labelledby="services-title">
         <div class="pvdak-home-section-head"><h2 id="services-title"><?php echo esc_html(pvdak_home_value('services_title')); ?></h2></div>
         <div class="pvdak-home-grid pvdak-home-grid--3">
@@ -47,17 +77,18 @@ $hero_image = pvdak_home_image_url('hero_image');
         <?php endfor; ?>
         </div>
     </section>
-    <section class="pvdak-home-section" aria-labelledby="topics-title">
+    <section id="topics" class="pvdak-home-section" aria-labelledby="topics-title">
         <div class="pvdak-home-section-head"><h2 id="topics-title"><?php echo esc_html(pvdak_home_value('topics_title')); ?></h2></div>
         <div class="pvdak-home-topics">
         <?php for($i=1;$i<=8;$i++):
             $url=pvdak_home_value("topic_{$i}_url",'');
             $label=pvdak_home_value("topic_{$i}_title");
         ?>
-            <?php if($url): ?><a class="pvdak-home-topic" href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
-            <?php else: ?><span class="pvdak-home-topic"><?php echo esc_html($label); ?></span><?php endif; ?>
+            <?php if($url): ?><a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
+            <?php else: ?><span class="pvdak-home-topic" data-pvdak-topic><?php echo esc_html($label); ?></span><?php endif; ?>
         <?php endfor; ?>
         </div>
+        <p class="pvdak-home-search-empty" id="pvdak-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد. می‌توانید عبارت دیگری امتحان کنید.</p>
     </section>
     <section class="pvdak-home-process" aria-labelledby="process-title">
         <h2 id="process-title"><?php echo esc_html(pvdak_home_value('process_title')); ?></h2>
@@ -71,7 +102,7 @@ $hero_image = pvdak_home_image_url('hero_image');
         <?php endfor; ?>
         </div>
     </section>
-    <section class="pvdak-home-section" aria-labelledby="magazine-title">
+    <section id="magazine" class="pvdak-home-section" aria-labelledby="magazine-title">
         <div class="pvdak-home-section-head"><h2 id="magazine-title"><?php echo esc_html(pvdak_home_value('magazine_title')); ?></h2></div>
         <div class="pvdak-home-grid pvdak-home-grid--2">
             <?php $magazine_image=pvdak_home_image_url('magazine_image'); ?>
@@ -84,7 +115,7 @@ $hero_image = pvdak_home_image_url('hero_image');
                 </div>
             </article>
             <?php $forum_image=pvdak_home_image_url('forum_image'); ?>
-            <article class="pvdak-home-editorial pvdak-home-editorial--forum">
+            <article id="forum" class="pvdak-home-editorial pvdak-home-editorial--forum">
                 <?php if($forum_image): ?><img src="<?php echo esc_url($forum_image); ?>" alt="" loading="lazy"><?php endif; ?>
                 <div class="pvdak-home-editorial__body">
                     <h3><?php echo esc_html(pvdak_home_value('forum_title')); ?></h3>
@@ -94,7 +125,7 @@ $hero_image = pvdak_home_image_url('hero_image');
             </article>
         </div>
     </section>
-    <section class="pvdak-home-community" aria-labelledby="community-title">
+    <section id="community" class="pvdak-home-community" aria-labelledby="community-title">
         <?php $community_image=pvdak_home_image_url('community_image'); ?>
         <?php if($community_image): ?><img src="<?php echo esc_url($community_image); ?>" alt="" loading="lazy"><?php endif; ?>
         <div>
