@@ -139,24 +139,20 @@ function pvdak_register_home_acf_fields() {
     $fields[] = array( 'key' => 'field_pvdak_home_audience_3_title', 'label' => 'گروه 3 — عنوان', 'name' => 'audience_3_title', 'type' => 'text', 'default_value' => isset($defaults['audience_3_title']) ? $defaults['audience_3_title'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_audience_3_description', 'label' => 'گروه 3 — توضیح', 'name' => 'audience_3_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_3_description']) ? $defaults['audience_3_description'] : '', 'rows' => 3 );
     $fields[] = array( 'key' => 'field_pvdak_home_audience_3_url', 'label' => 'گروه 3 — لینک', 'name' => 'audience_3_url', 'type' => 'url', 'default_value' => isset($defaults['audience_3_url']) ? $defaults['audience_3_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_tab_topics', 'label' => '۴. موضوعات حقوقی', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topics_title', 'label' => 'عنوان موضوعات', 'name' => 'topics_title', 'type' => 'text', 'default_value' => isset($defaults['topics_title']) ? $defaults['topics_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_1_title', 'label' => 'موضوع 1 — عنوان', 'name' => 'topic_1_title', 'type' => 'text', 'default_value' => isset($defaults['topic_1_title']) ? $defaults['topic_1_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_1_url', 'label' => 'موضوع 1 — لینک', 'name' => 'topic_1_url', 'type' => 'url', 'default_value' => isset($defaults['topic_1_url']) ? $defaults['topic_1_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_2_title', 'label' => 'موضوع 2 — عنوان', 'name' => 'topic_2_title', 'type' => 'text', 'default_value' => isset($defaults['topic_2_title']) ? $defaults['topic_2_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_2_url', 'label' => 'موضوع 2 — لینک', 'name' => 'topic_2_url', 'type' => 'url', 'default_value' => isset($defaults['topic_2_url']) ? $defaults['topic_2_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_3_title', 'label' => 'موضوع 3 — عنوان', 'name' => 'topic_3_title', 'type' => 'text', 'default_value' => isset($defaults['topic_3_title']) ? $defaults['topic_3_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_3_url', 'label' => 'موضوع 3 — لینک', 'name' => 'topic_3_url', 'type' => 'url', 'default_value' => isset($defaults['topic_3_url']) ? $defaults['topic_3_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_4_title', 'label' => 'موضوع 4 — عنوان', 'name' => 'topic_4_title', 'type' => 'text', 'default_value' => isset($defaults['topic_4_title']) ? $defaults['topic_4_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_4_url', 'label' => 'موضوع 4 — لینک', 'name' => 'topic_4_url', 'type' => 'url', 'default_value' => isset($defaults['topic_4_url']) ? $defaults['topic_4_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_5_title', 'label' => 'موضوع 5 — عنوان', 'name' => 'topic_5_title', 'type' => 'text', 'default_value' => isset($defaults['topic_5_title']) ? $defaults['topic_5_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_5_url', 'label' => 'موضوع 5 — لینک', 'name' => 'topic_5_url', 'type' => 'url', 'default_value' => isset($defaults['topic_5_url']) ? $defaults['topic_5_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_6_title', 'label' => 'موضوع 6 — عنوان', 'name' => 'topic_6_title', 'type' => 'text', 'default_value' => isset($defaults['topic_6_title']) ? $defaults['topic_6_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_6_url', 'label' => 'موضوع 6 — لینک', 'name' => 'topic_6_url', 'type' => 'url', 'default_value' => isset($defaults['topic_6_url']) ? $defaults['topic_6_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_7_title', 'label' => 'موضوع 7 — عنوان', 'name' => 'topic_7_title', 'type' => 'text', 'default_value' => isset($defaults['topic_7_title']) ? $defaults['topic_7_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_7_url', 'label' => 'موضوع 7 — لینک', 'name' => 'topic_7_url', 'type' => 'url', 'default_value' => isset($defaults['topic_7_url']) ? $defaults['topic_7_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_8_title', 'label' => 'موضوع 8 — عنوان', 'name' => 'topic_8_title', 'type' => 'text', 'default_value' => isset($defaults['topic_8_title']) ? $defaults['topic_8_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_topic_8_url', 'label' => 'موضوع 8 — لینک', 'name' => 'topic_8_url', 'type' => 'url', 'default_value' => isset($defaults['topic_8_url']) ? $defaults['topic_8_url'] : '' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_topics', 'label' => '۴. لندینگ‌های حقوقی', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_home_topics_title', 'label' => 'عنوان این قسمت در صفحه اصلی', 'name' => 'topics_title', 'type' => 'text', 'default_value' => isset($defaults['topics_title']) ? $defaults['topics_title'] : '' );
+    $fields[] = array(
+        'key' => 'field_pvdak_home_legal_topics_parent_page',
+        'label' => 'برگه مادر لندینگ‌های حقوقی',
+        'name' => 'legal_topics_parent_page',
+        'type' => 'post_object',
+        'post_type' => array( 'page' ),
+        'post_status' => array( 'publish' ),
+        'return_format' => 'id',
+        'ui' => 1,
+        'allow_null' => 1,
+        'instructions' => 'از بخش «برگه‌ها» یک برگه مادر (مثل موضوعات حقوقی) بسازید. سپس برای هر لندینگ، برگه فرزند آن را منتشر کنید. کارت‌های صفحه اصلی به‌صورت خودکار از همین برگه‌ها و پیوند یکتای آن‌ها ساخته می‌شوند؛ نیازی به ثبت نام یا لینک جداگانه نیست.',
+    );
     $fields[] = array( 'key' => 'field_pvdak_tab_process', 'label' => '۵. مراحل رسیدگی', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_process_title', 'label' => 'عنوان مراحل', 'name' => 'process_title', 'type' => 'text', 'default_value' => isset($defaults['process_title']) ? $defaults['process_title'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_step_1_title', 'label' => 'مرحله 1 — عنوان', 'name' => 'step_1_title', 'type' => 'text', 'default_value' => isset($defaults['step_1_title']) ? $defaults['step_1_title'] : '' );
