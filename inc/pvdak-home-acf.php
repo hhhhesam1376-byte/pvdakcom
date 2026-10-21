@@ -339,6 +339,10 @@ function pvdak_home_admin_landing() {
         'form'            => true,
         'form_attributes' => array( 'id' => 'pvdak-home-acf-form' ),
     ) );
+    // Output ACF media templates inside the document body for image fields.
+    if ( function_exists( 'acf_enqueue_uploader' ) ) {
+        acf_enqueue_uploader();
+    }
     echo '</div>';
 }
 
