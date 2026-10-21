@@ -24,3 +24,18 @@ add_action( 'wp_enqueue_scripts', 'pvdak_assets' );
 
 // Keep unfinished pages hidden from public visitors while development is in progress.
 require_once get_template_directory() . '/pvdak-maintenance.php';
+
+/* Homepage content and editor (ACF Free-compatible). */
+require_once get_template_directory() . '/inc/pvdak-home-acf.php';
+
+function pvdak_home_assets() {
+    if ( is_front_page() ) {
+        wp_enqueue_style(
+            'pvdak-home',
+            get_template_directory_uri() . '/assets/css/pvdak-home.css',
+            array( 'pvdak-style' ),
+            wp_get_theme()->get( 'Version' )
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
