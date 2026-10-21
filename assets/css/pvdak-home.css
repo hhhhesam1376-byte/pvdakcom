@@ -51,3 +51,96 @@ a.pvdak-home-topic:hover{background:#eef7f2}
 .pvdak-home-faq details p{color:#5d717c;margin:8px 0 0}
 @media(max-width:850px){.pvdak-home-grid--4{grid-template-columns:repeat(2,minmax(0,1fr))}.pvdak-home-topics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.pvdak-home{padding-top:12px}.pvdak-home-hero{min-height:370px;border-radius:19px}.pvdak-home-hero__content{padding:34px 17px}.pvdak-home-section{margin-block:33px}.pvdak-home-grid--2,.pvdak-home-grid--3{grid-template-columns:1fr}.pvdak-home-grid--4{gap:14px}.pvdak-home-process{padding:24px 19px}.pvdak-home-step h3{font-size:1rem}.pvdak-home-community{flex-direction:column;align-items:stretch}.pvdak-home-community>img{width:100%;max-width:100%;aspect-ratio:16/9}}
+
+/* V1.01.05 fidelity upgrade — desktop/mobile hero, shortcuts and action cards */
+.pvdak-home{width:min(1280px,calc(100% - 44px));padding-block:18px 60px}
+.pvdak-home-hero{min-height:510px;border-radius:22px;background:
+ radial-gradient(circle at 15% 80%,rgba(28,117,117,.5),transparent 50%),
+ radial-gradient(circle at 85% 10%,rgba(95,153,161,.22),transparent 38%),#102a3e}
+.pvdak-home-hero:before{background-image:var(--pvdak-hero-image,none);background-position:center 40%;background-size:cover}
+.pvdak-home-hero:after{background:linear-gradient(115deg,rgba(7,35,52,.9),rgba(9,47,59,.79) 48%,rgba(5,40,57,.89))}
+.pvdak-home-hero__content{max-width:950px;width:100%;padding:70px 25px 80px}
+.pvdak-home-eyebrow{background:#e1f3e543;color:#edffef;border-color:#ffffff45;font-size:13px;padding-inline:18px}
+.pvdak-home-hero h1{margin:18px 0 10px;line-height:1.5;font-size:clamp(30px,3.55vw,51px);font-weight:800;text-wrap:balance}
+.pvdak-home-lead{font-size:17px;max-width:650px;line-height:2;margin-bottom:24px;color:#ebf8f5}
+.pvdak-home-search{display:flex;align-items:center;gap:10px;background:#fff;color:#33505c;border-radius:15px;padding:7px 9px 7px 12px;width:min(100%,750px);margin:0 auto;box-shadow:0 13px 27px #010f182b}
+.pvdak-home-search-symbol{font-size:25px;color:#087f72;line-height:1;flex:0 0 auto;margin-inline:9px}
+.pvdak-home-search input[type=search]{flex:1;min-width:0;border:0;background:transparent;outline-offset:-1px;box-shadow:none;padding:8px 2px;color:#244659;font-size:14px}
+.pvdak-home-search input::placeholder{color:#72858a;opacity:1}
+.pvdak-home-search button{flex:0 0 auto;min-height:38px;border-radius:11px;background:#087f72;color:#fff;padding:6px 20px;font-weight:700;font-size:14px}
+.pvdak-home-hero-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:22px auto 13px}
+.pvdak-home-hero-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 17px;min-width:155px;background:#fff;border:1px solid #ffffffbf;color:#1e3a49;text-decoration:none;border-radius:13px;font-size:14px;font-weight:750;box-shadow:0 6px 15px #010f1817}
+.pvdak-home-hero-action>span{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#e1f4e8;color:#087f72;font-size:16px}
+a.pvdak-home-hero-action:hover{background:#e8f6ed;color:#0c6059}
+.pvdak-home-process-hint{margin:17px 0 0;font-size:12px;line-height:2.2;color:#c2e1dc}
+.pvdak-home-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:min(92%,1130px);position:relative;z-index:2;margin:-33px auto 0;padding:12px 18px;background:#fff;border:1px solid #e7efea;border-radius:18px;box-shadow:0 12px 25px #173b3221}
+.pvdak-home-quick-actions a{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;color:#1b3c4f;text-decoration:none;padding:7px;font-size:14px;font-weight:700;border-radius:10px}
+.pvdak-home-quick-actions a:hover{background:#f0f8f3}
+.pvdak-home-quick-actions span{color:#087f72;font-size:23px}
+.pvdak-home-section{margin-block:54px}
+.pvdak-home-section-head{align-items:center;margin-bottom:21px}
+.pvdak-home-section-head h2,.pvdak-home-process h2,.pvdak-home-community h2{font-size:clamp(23px,2.5vw,30px);font-weight:800;color:#163548}
+.pvdak-home-tile{border-color:#e2eae6;box-shadow:0 5px 18px #2949440b;border-radius:18px;min-height:205px;transition:transform .2s ease,box-shadow .2s ease}
+.pvdak-home-tile:hover{transform:translateY(-3px);box-shadow:0 10px 26px #29494417}
+.pvdak-home-tile--service:first-child{background:#142b45;border-color:#142b45;color:#fff}
+.pvdak-home-tile--service:first-child p{color:#bcd2d9}
+.pvdak-home-tile--service:first-child .pvdak-home-icon{background:#236c72;color:#d1fff0}
+.pvdak-home-tile--service:first-child .pvdak-home-text-link{color:#d9f4dd}
+.pvdak-home-icon{width:40px;height:40px;border-radius:12px;background:#dff1e9;font-size:15px}
+.pvdak-home-tile h3{font-size:19px;margin:14px 0 10px}
+.pvdak-home-tile p{line-height:1.9;font-size:13px}
+.pvdak-home-topics{grid-template-columns:repeat(8,minmax(0,1fr));gap:13px}
+.pvdak-home-topic{min-height:93px;font-size:13px;background:#fff;color:#1d3d52;box-shadow:0 3px 10px #173a3610;border-radius:16px}
+.pvdak-home-topic[hidden]{display:none}
+.pvdak-home-search-empty{background:#fff3ee;border:1px solid #f4d2c3;border-radius:13px;color:#93451d;padding:12px;margin-top:15px}
+.pvdak-home-process{padding:37px 38px;background:linear-gradient(112deg,#102b3d,#175a5a)}
+.pvdak-home-process h2{color:#fff}
+.pvdak-home-step{padding:7px 5px}
+.pvdak-home-step>span{background:#2a6d69;color:#e2f7e7}
+.pvdak-home-editorial{min-height:320px}
+.pvdak-home-community{padding:30px 35px}
+.pvdak-home-faq summary::marker{color:#087f72}
+.pvdak-home-section[id],.pvdak-home-community[id]{scroll-margin-top:30px}
+@media(max-width:1060px){
+ .pvdak-home-topics{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .pvdak-home-grid--3{gap:12px}
+ .pvdak-home-tile{padding:20px}
+}
+@media(max-width:760px){
+ .pvdak-home{width:min(100%,calc(100% - 30px))}
+ .pvdak-home-hero{min-height:440px}
+ .pvdak-home-hero__content{padding-block:50px 63px}
+ .pvdak-home-quick-actions{width:94%;gap:0;padding-inline:7px}
+ .pvdak-home-quick-actions a{font-size:12px;gap:4px;flex-direction:column}
+ .pvdak-home-quick-actions span{font-size:18px}
+ .pvdak-home-grid--3{grid-template-columns:1fr}
+ .pvdak-home-tile{min-height:0}
+ .pvdak-home-process .pvdak-home-grid--4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+ .pvdak-home{width:min(100%,calc(100% - 26px));padding-block:14px 28px}
+ .pvdak-home-hero{min-height:0;background:linear-gradient(160deg,#eff8f2,#f7faf7);color:#142b45;border-radius:20px}
+ .pvdak-home-hero:before{background-image:var(--pvdak-hero-mobile-image,var(--pvdak-hero-image,none));background-position:center center;opacity:.18}
+ .pvdak-home-hero:after{background:linear-gradient(180deg,#f8faf7e8,#e5f3eae0)}
+ .pvdak-home-hero__content{padding:45px 18px 38px}
+ .pvdak-home-eyebrow{background:#d9f0e5;color:#087f72;border:0}
+ .pvdak-home-hero h1{font-size:clamp(29px,8vw,42px);color:#142b45;margin:11px 0}
+ .pvdak-home-lead{color:#566c70;line-height:1.9;font-size:14px;margin-bottom:19px}
+ .pvdak-home-search{box-shadow:0 3px 14px #142b4513;border:1px solid #dcece5}
+ .pvdak-home-search input[type=search]{font-size:12px}
+ .pvdak-home-search button{font-size:12px;padding:6px 13px;min-height:34px}
+ .pvdak-home-hero-actions{flex-direction:column;gap:9px;margin-top:22px}
+ .pvdak-home-hero-action{justify-content:space-between;min-height:52px}
+ .pvdak-home-process-hint{color:#547474;font-size:11px;margin-top:16px}
+ .pvdak-home-quick-actions{display:none}
+ .pvdak-home-section{margin-block:36px}
+ .pvdak-home-section-head h2,.pvdak-home-process h2,.pvdak-home-community h2{font-size:22px}
+ .pvdak-home-topics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .pvdak-home-topic{min-height:77px;font-size:13px}
+ .pvdak-home-process .pvdak-home-grid--4{grid-template-columns:1fr;gap:10px}
+ .pvdak-home-process{padding:24px}
+ .pvdak-home-step{padding:6px}
+ .pvdak-home-editorial{min-height:235px}
+ .pvdak-home-community{padding:22px}
+}
+@media(prefers-reduced-motion:reduce){.pvdak-home-tile{transition:none}}
