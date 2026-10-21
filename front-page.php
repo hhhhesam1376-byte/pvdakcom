@@ -97,23 +97,35 @@ $svg_icons = array(
     </div>
   </section>
 
+  <?php
+  $legal_parent_id = pvdak_legal_topics_root_id();
+  $legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
+  ?>
   <section id="topics" class="pvdak-home-section pvdak-topics-section" aria-labelledby="topics-title">
     <div class="pvdak-home-section-head">
-      <h2 id="topics-title"><?php echo esc_html(pvdak_home_value('topics_title')); ?></h2>
-      <span class="pvdak-section-aside">همه موضوعات ←</span>
+      <h2 id="topics-title"><?php echo esc_html( pvdak_home_value( 'topics_title' ) ); ?></h2>
+      <?php if ( $legal_parent_id ): ?>
+        <a class="pvdak-section-aside" href="<?php echo esc_url( get_permalink( $legal_parent_id ) ); ?>">همه موضوعات ←</a>
+      <?php endif; ?>
     </div>
+
+    <?php if ( $legal_pages ): ?>
     <div class="pvdak-home-topics">
-      <?php for($i=1;$i<=8;$i++):
-        $label=pvdak_home_value("topic_{$i}_title");
-        $url=pvdak_home_value("topic_{$i}_url",'');
-        $symbol='<svg viewBox="0 0 24 24" aria-hidden="true">'. $icon_paths[$i] .'</svg>';
-      ?>
-        <?php if($url): ?><a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url($url); ?>"><?php else: ?><span class="pvdak-home-topic" data-pvdak-topic><?php endif; ?>
-          <?php echo $symbol; ?><span><?php echo esc_html($label); ?></span>
-        <?php if($url): ?></a><?php else: ?></span><?php endif; ?>
-      <?php endfor; ?>
+      <?php foreach ( $legal_pages as $legal_page ): ?>
+        <a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
+          <?php echo pvdak_legal_topic_svg( pvdak_legal_topic_icon( $legal_page->ID ) ); ?>
+          <span><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
+        </a>
+      <?php endforeach; ?>
     </div>
     <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد.</p>
+    <?php elseif ( current_user_can( 'edit_pages' ) ): ?>
+      <div class="pvdak-legal-topics-setup">
+        هنوز لندینگ منتشرشده‌ای زیر برگه مادر موضوعات حقوقی وجود ندارد.
+        در پیشخوان یک برگه مادر و برگه‌های فرزند آن را بسازید، سپس برگه مادر را در «محتوای صفحه اصلی» انتخاب کنید.
+        <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=page' ) ); ?>">مدیریت برگه‌ها</a>
+      </div>
+    <?php endif; ?>
   </section>
 
   <section class="pvdak-home-process" aria-labelledby="process-title">
