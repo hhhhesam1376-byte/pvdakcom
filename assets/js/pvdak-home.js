@@ -3,7 +3,7 @@
     'use strict';
     function ready() {
         var form = document.querySelector('.pvdak-home-search');
-        var field = document.getElementById('pvdak-legal-topic');
+        var field = document.getElementById('pvdak-topic-input');
         var section = document.getElementById('topics');
         var items = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-topic]'));
         var empty = document.getElementById('pvdak-search-empty');
