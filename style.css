@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.5.2
+Version: 0.6.0
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -347,3 +347,24 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
  .pvdak-home-faq summary{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.pvdak-home-tile{transition:none}}
+
+/* PVDak legal pages v0.6 — normal WordPress pages, not categories. */
+.pvdak-legal-topics-setup,.pvdak-legal-admin-note{background:#e5f3eb;border:1px solid #b3d8ce;color:#225046;border-radius:12px;padding:15px 20px;line-height:2}
+.pvdak-legal-topics-setup a,.pvdak-legal-admin-note a{color:#087f72;font-weight:700}
+.pvdak-legal-landing{width:min(1160px,calc(100% - 34px));padding-block:26px 60px;min-height:65vh}
+.pvdak-legal-breadcrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:12px;color:#687e82;margin:5px 0 22px}
+.pvdak-legal-breadcrumbs a{color:#087f72;text-decoration:none}
+.pvdak-legal-hero{position:relative;isolation:isolate;display:flex;align-items:center;min-height:270px;border-radius:20px;background:linear-gradient(115deg,#102b40,#195d5a);color:#fff;padding:42px clamp(24px,6vw,68px);overflow:hidden}
+.pvdak-legal-hero--image:before{content:"";position:absolute;inset:0;background-image:var(--pvdak-legal-photo);background-size:cover;background-position:center;z-index:-2}
+.pvdak-legal-hero--image:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(7,35,49,.9),rgba(7,35,49,.69));z-index:-1}
+.pvdak-legal-hero-content{max-width:770px}
+.pvdak-legal-label{display:inline-block;border-radius:30px;background:#ffffff27;padding:5px 15px;font-size:12px}
+.pvdak-legal-hero h1{color:#fff;font-size:clamp(27px,4vw,42px);margin:16px 0 9px}
+.pvdak-legal-hero p{font-size:15px;line-height:2;color:#e0efee;margin:0}
+.pvdak-legal-article{max-width:850px;margin:36px auto 20px;line-height:2.1;font-size:16px}
+.pvdak-legal-article h2,.pvdak-legal-article h3{color:#153e49}
+.pvdak-legal-article img{height:auto}
+.pvdak-legal-index-items{margin:35px 0}
+.pvdak-legal-index .pvdak-home-topics{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:760px){.pvdak-legal-index .pvdak-home-topics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.pvdak-legal-hero{min-height:220px;padding:28px 20px}.pvdak-legal-hero h1{font-size:28px}.pvdak-legal-article{margin-top:20px}}
