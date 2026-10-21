@@ -78,3 +78,59 @@ button,.button,input[type="submit"] { display:inline-block; background:var(--pvd
 .skip-link:focus { clip:auto; clip-path:none; width:auto; height:auto; margin:0; inset-block-start:1rem; inset-inline-start:1rem; padding:1rem; background:white; z-index:100000; }
 @media (max-width:900px) { .post-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:600px) { .post-grid { grid-template-columns:1fr; } .header-inner { align-items:flex-start; } .primary-navigation { width:100%; } .site-main { padding-block:2rem; } }
+
+/* PVDAK 0.4 — design system, header and footer */
+body.home{background:#f8faf7}
+.pvdak-topbar{background:#142b45;color:#dcebe7;font-size:11px;text-align:center;padding:7px 0;letter-spacing:.1px}
+.site-header{background:#fff;border-bottom:1px solid #eaf0ec;position:relative;z-index:30}
+.header-inner{min-height:92px;padding-block:16px;flex-wrap:nowrap;gap:22px}
+.site-branding{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-width:0}
+.site-branding .custom-logo{max-height:46px;width:auto}
+.pvdak-site-brand{line-height:1.4}
+.site-branding .site-title{color:#142b45;font-family:Tahoma,Arial,sans-serif;font-size:26px;line-height:1.2;font-weight:900;letter-spacing:1px}
+.site-branding .site-description{display:block;margin:3px 0 0;font-size:10px;white-space:nowrap;color:#657875}
+.site-header .primary-navigation{flex:1;min-width:0}
+.site-header .menu{justify-content:center;align-items:center;gap:clamp(9px,2vw,30px);flex-wrap:nowrap}
+.site-header .menu>li>a{color:#284258;font-weight:600;font-size:14px;white-space:nowrap}
+.site-header .menu>li>a:hover{color:#087f72}
+.site-header .menu .sub-menu{position:absolute;background:#fff;z-index:20;padding:12px;border:1px solid #e0e8e7;border-radius:12px;box-shadow:0 10px 30px #142b4517;min-width:180px}
+.pvdak-header-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.pvdak-login-button{display:inline-flex;align-items:center;justify-content:center;background:#087f72;color:#fff;text-decoration:none;border-radius:999px;min-height:42px;padding:5px 22px;font-weight:700;font-size:13px;white-space:nowrap;transition:background .2s}
+.pvdak-login-button:hover{background:#09695e;color:#fff}
+.pvdak-mobile-menu{display:none;position:relative}
+.site-footer{background:#142b45;color:#d6e5e8;margin-top:24px;font-size:13px}
+.pvdak-footer-layout{padding-block:36px;display:grid;grid-template-columns:1.2fr 1fr .75fr;gap:34px;align-items:start}
+.pvdak-footer-brand .pvdak-footer-logo{display:inline-block;color:#fff;font-size:24px;font-weight:900;letter-spacing:1px;text-decoration:none}
+.pvdak-footer-brand p{margin:6px 0;color:#c8d6da}
+.pvdak-footer-nav{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.pvdak-footer-nav p{margin:0 0 6px}
+.pvdak-footer-nav>a,.pvdak-footer-nav .menu a,.pvdak-footer-address a{color:#d9ecea;text-decoration:none}
+.pvdak-footer-nav .menu{gap:10px;flex-direction:column}
+.pvdak-footer-address{display:flex;gap:10px;flex-direction:column}
+.pvdak-footer-bottom{border-top:1px solid #ffffff23;text-align:center;padding-block:17px;color:#b5c7cf}
+@media(max-width:1030px){
+ .header-inner{gap:15px}
+ .site-header .primary-navigation{display:none}
+ .pvdak-header-actions{margin-inline-start:auto}
+ .pvdak-mobile-menu{display:block}
+ .pvdak-mobile-menu>summary{list-style:none;border:1px solid #dce9e3;border-radius:50px;padding:8px 14px;color:#163d4d;font-size:13px;font-weight:700;cursor:pointer}
+ .pvdak-mobile-menu>summary::-webkit-details-marker{display:none}
+ .pvdak-mobile-menu[open]>nav{position:absolute;inset-inline-end:0;top:calc(100% + 12px);background:#fff;width:min(82vw,300px);padding:14px;border:1px solid #e2ebe8;border-radius:14px;box-shadow:0 14px 30px #142b4528}
+ .pvdak-mobile-links{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+ .pvdak-mobile-links li{list-style:none}
+ .pvdak-mobile-links a{display:block;padding:8px 10px;border-radius:8px;text-decoration:none;font-size:14px}
+ .pvdak-mobile-links a:hover{background:#eff8f5}
+ .pvdak-mobile-links .sub-menu{margin-inline-start:14px}
+}
+@media(max-width:620px){
+ .pvdak-topbar{display:none}
+ .header-inner{min-height:72px;flex-direction:row;align-items:center;padding-block:12px}
+ .site-branding .site-title{font-size:22px}
+ .site-branding .site-description{display:none}
+ .site-branding .custom-logo{max-height:35px}
+ .pvdak-login-button{font-size:11px;min-height:34px;padding-inline:14px}
+ .pvdak-mobile-menu>summary{font-size:0;min-height:34px;padding:6px 12px}
+ .pvdak-mobile-menu>summary span{font-size:17px}
+ .pvdak-footer-layout{grid-template-columns:1fr;gap:20px;padding-block:27px}
+ .pvdak-footer-nav{display:none}
+}
