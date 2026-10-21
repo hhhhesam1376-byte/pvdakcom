@@ -30,12 +30,7 @@ require_once get_template_directory() . '/inc/pvdak-home-acf.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
-        wp_enqueue_style(
-            'pvdak-home',
-            get_template_directory_uri() . '/assets/css/pvdak-home.css',
-            array( 'pvdak-style' ),
-            wp_get_theme()->get( 'Version' )
-        );
+        // Homepage CSS is bundled into root style.css to survive partial theme deploys.
         wp_enqueue_script(
             'pvdak-home-search',
             get_template_directory_uri() . '/assets/js/pvdak-home.js',
