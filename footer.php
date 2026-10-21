@@ -2,14 +2,31 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 ?>
 <footer class="site-footer">
-	<div class="container footer-inner">
-		<p><?php echo esc_html( get_bloginfo( 'name' ) ); ?> &copy; <?php echo esc_html( wp_date( 'Y' ) ); ?></p>
-		<?php if ( has_nav_menu( 'footer' ) ) : ?>
-			<nav aria-label="<?php esc_attr_e( 'منوی فوتر', 'pvdak' ); ?>">
-				<?php wp_nav_menu( array( 'theme_location' => 'footer', 'container' => false, 'menu_class' => 'menu', 'fallback_cb' => false, 'depth' => 1 ) ); ?>
-			</nav>
-		<?php endif; ?>
-	</div>
+    <div class="container pvdak-footer-layout">
+        <div class="pvdak-footer-brand">
+            <a href="<?php echo esc_url(home_url('/')); ?>" class="pvdak-footer-logo">PVDAK</a>
+            <p>پویش وکلای دادگستری کشور</p>
+            <p>همراهی، حمایت، تجربه؛ با یک مسیر روشن.</p>
+        </div>
+        <div class="pvdak-footer-nav">
+            <?php if ( has_nav_menu( 'footer' ) ) : ?>
+                <nav aria-label="<?php esc_attr_e('منوی فوتر','pvdak'); ?>">
+                    <?php wp_nav_menu(array('theme_location'=>'footer','container'=>false,'menu_class'=>'menu','fallback_cb'=>false,'depth'=>1)); ?>
+                </nav>
+            <?php else : ?>
+                <p>همراه مسیر حقوقی شما</p>
+                <a href="<?php echo esc_url(home_url('/#services')); ?>">خدمات حقوقی</a>
+                <a href="<?php echo esc_url(home_url('/#community')); ?>">همکاری با ما</a>
+            <?php endif; ?>
+        </div>
+        <div class="pvdak-footer-address">
+            <span>نشانی اینترنتی</span>
+            <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html(wp_parse_url(home_url('/'), PHP_URL_HOST)); ?></a>
+        </div>
+    </div>
+    <div class="pvdak-footer-bottom container">
+        <small>&copy; <?php echo esc_html(wp_date('Y')); ?> تمام حقوق محفوظ است.</small>
+    </div>
 </footer>
 <?php wp_footer(); ?>
 </body>
