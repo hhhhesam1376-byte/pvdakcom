@@ -21,3 +21,6 @@ function pvdak_assets() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_assets' );
+
+// Keep unfinished pages hidden from public visitors while development is in progress.
+require_once get_template_directory() . '/pvdak-maintenance.php';
