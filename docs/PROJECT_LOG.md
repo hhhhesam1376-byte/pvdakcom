@@ -63,3 +63,11 @@
 - PHP lint, visual desktop/mobile screenshot comparison and ACF admin save/reload tests against the live WordPress installation are **not yet complete**.
 - Upload the supplied design photographs into WordPress media library and assign **بنر اصلی > عکس پس‌زمینه**, **مجله > تصویر مجله**, **اطلاعیه‌ها > تصویر مطلب شاخص**, **دعوت به عضویت > تصویر**.
 - Real lawyer-request workflows, member identity verification and paid subscriptions remain future milestones.
+
+## 2026-10-21 — HOME-STYLE-HOTFIX-004 (v0.5.1)
+- User screenshot after activation shows that base site stylesheet is loaded, but homepage-specific styles are absent: the hero appears unstyled and inline icons render at natural oversized sizes.
+- Root cause cannot be confirmed without live HTTP asset details or cPanel deploy logs. A possible asset URL/caching/deployment issue is suspected.
+- Bundled homepage CSS into theme root `style.css` and removed conditional extra CSS file enqueue, so all homepage layout and SVG styles are served from the stylesheet already loaded by the site.
+- Kept source `assets/css/pvdak-home.css` as an editable copy; root stylesheet now embeds a matching snapshot for reliable deploy.
+- Set theme version to `0.5.1` to bust asset caches. Left maintenance mode intact.
+- GitHub committed; cPanel deploy and browser hard-refresh still required to confirm fix.
