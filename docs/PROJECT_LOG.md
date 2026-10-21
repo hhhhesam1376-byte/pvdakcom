@@ -71,3 +71,14 @@
 - Kept source `assets/css/pvdak-home.css` as an editable copy; root stylesheet now embeds a matching snapshot for reliable deploy.
 - Set theme version to `0.5.1` to bust asset caches. Left maintenance mode intact.
 - GitHub committed; cPanel deploy and browser hard-refresh still required to confirm fix.
+
+## 2026-10-21 — ACF-EDITOR-005 (v0.5.2)
+- User reported that the expected homepage ACF section / edit option was not visible after installing ACF.
+- Earlier menu sent users into native WordPress post editor, dependent on the static front-page setting and ACF's metabox placement.
+- Changed the `محتوای صفحه اصلی` top-level menu into a dedicated ACF Free editor with all existing field group sections directly rendered.
+- Implemented `acf_form_head()` in the menu's WordPress load hook so edited fields can be saved before header output.
+- If the homepage is not assigned to a static page, a clear one-click, nonce-protected setup button appears; no automatic page replacement is performed by merely visiting the menu.
+- Admin form writes ACF values to the existing static front-page post ID, so front-end `get_field(..., $page_id)` remains compatible.
+- Conserved all existing ACF 11 tabs/117 fields and public maintenance screen.
+- Bumped theme to `0.5.2` and pushed to `main`.
+- Live admin validation pending: verify the editor form appears, one title can be changed and saved, and the value reflects on the homepage (admin signed in). PHP lint on actual deployment pending.
