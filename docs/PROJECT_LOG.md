@@ -26,3 +26,22 @@
 3. Implement real request submission workflow and link destinations.
 4. Add structured taxonomy and dynamic content for legal subjects, magazine, and forum.
 5. Perform release smoke testing and mobile layout review.
+
+## 2026-10-21 — HOME-UI-002 (v0.4.0)
+- Shipped improved header and footer aligned with the supplied desktop/mobile design `1.01.05`.
+- The standard WordPress menu editor controls both desktop and mobile navigation when a menu is assigned; a sensible anchor-link fallback is provided otherwise.
+- Added login entry linked to the standard WordPress login URL; role-based registration and specialized dashboards are **not implemented** yet.
+- Homepage hero now supports separate desktop/mobile image fields through ACF; image sources use Media Library IDs.
+- Added the three service shortcuts inside the hero, additional cross-page quick links, and live topic filtering with a Persian-normalized client-side script. Search falls back to WordPress site search when JavaScript is off.
+- Updated responsive CSS, cards, topics grid, and mobile appearance with the mockup as layout reference.
+- Version bumped to `0.4.0`; deployed assets are expected to be served from the theme.
+- All editable content remains linked to the existing 8-tab ACF field group. New field: `hero_image_mobile` (78 content fields total).
+- No plugin purchase required; Advanced Custom Fields Free is the intended dependency.
+- Public maintenance view and its separate uploaded image directory remain unchanged.
+
+### Validation / deployment
+- GitHub Push successful. Repository files were re-fetched for consistency.
+- **Server-side PHP lint and end-to-end WordPress/ACF testing have not yet been completed.**
+- Live homepage is behind the maintenance screen; an admin login is needed to preview it.
+- To test on the target server, confirm version 0.4.0 has deployed, ACF is active, and set a static front page using the `محتوای صفحه اصلی` entry; then change hero image and copy and reload the homepage as an administrator.
+- Customer request forms, lawyer verification, case matching, subscription billing and real service routes remain future work.
