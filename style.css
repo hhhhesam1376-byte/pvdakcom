@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.5.0
+Version: 0.5.1
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -134,3 +134,216 @@ body.home{background:#f8faf7}
  .pvdak-footer-layout{grid-template-columns:1fr;gap:20px;padding-block:27px}
  .pvdak-footer-nav{display:none}
 }
+
+/* PVDAK HOMEPAGE BUILT-IN STYLES — fallback for cPanel deployments */
+/* PVDak V1.01.05 — visual alignment with the customer-supplied design.
+ * The content (including photo assets) is managed in WordPress through ACF.
+ * This file intentionally overrides legacy homepage foundation styles.
+ */
+body.home{background:#f8faf7}
+.pvdak-home{width:min(1344px,calc(100% - 46px));max-width:none;padding:18px 0 43px;color:#142b45}
+.pvdak-home svg{display:block;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.pvdak-home-section{margin:56px 36px}
+.pvdak-home-section-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px}
+.pvdak-home-section-head h2,.pvdak-home-process h2,.pvdak-home-community h2{font-size:clamp(22px,2.1vw,27px);font-weight:800;line-height:1.55;color:#142b45;margin:0}
+.pvdak-home-section-head p,.pvdak-section-aside{font-size:12px;color:#648279;text-decoration:none;margin:0}
+a.pvdak-section-aside:hover{color:#087f72}
+.pvdak-home-grid{display:grid;gap:22px}
+.pvdak-home-grid--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pvdak-home-grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pvdak-home-grid--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+/* Hero: image under dark navy overlay; white search and white 3 service cards. */
+.pvdak-home-hero{min-height:540px;display:grid;place-items:center;position:relative;isolation:isolate;border-radius:22px;overflow:hidden;background:#0e2a3a;color:#fff;text-align:center}
+.pvdak-home-hero::before{content:"";position:absolute;inset:0;z-index:-2;background-image:var(--pvdak-hero-image,none);background-position:center 44%;background-size:cover;background-repeat:no-repeat}
+.pvdak-home-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,rgba(7,30,43,.78),rgba(9,36,54,.84) 54%,rgba(9,40,48,.79))}
+.pvdak-home-hero__content{width:100%;max-width:960px;padding:62px 25px 96px}
+.pvdak-home-eyebrow{display:inline-block;margin:0;padding:5px 24px;border-radius:100px;border:0;background:rgba(49,122,109,.55);color:#f0f8f3;font-size:13px;letter-spacing:0}
+.pvdak-home-hero h1{font-size:clamp(31px,3.75vw,49px);line-height:1.45;font-weight:900;color:#fff;margin:18px 0 14px}
+.pvdak-home-lead{font-size:17px;color:#eff5f3;line-height:1.8;margin:0 auto 27px;max-width:760px}
+.pvdak-home-search{max-width:730px;min-height:56px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 10px;border-radius:17px;background:#fff;color:#224052;box-shadow:0 12px 28px rgba(0,8,17,.13);border:0;text-align:right}
+.pvdak-home-search-info{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1.7px solid #087f72;border-radius:100%;color:#087f72;font-size:16px;font-weight:800}
+.pvdak-home-search input[type=search]{flex:1;min-width:0;max-width:100%;border:0;outline:0;box-shadow:none;background:transparent;padding:8px;color:#233e4e;font-size:14px}
+.pvdak-home-search input::placeholder{color:#6e8585}
+.pvdak-home-search button{background:#078378;color:#fff;border-radius:30px;font-weight:700;font-size:13px;min-height:39px;padding:6px 22px}
+.pvdak-home-search button:hover{background:#066a60}
+.pvdak-home-hero-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:810px;gap:15px;margin:19px auto 0}
+.pvdak-home-hero-action{display:flex;flex-direction:row;align-items:center;gap:10px;min-height:65px;text-align:right;background:#fff;color:#203e4f;border-radius:12px;border:1px solid #e7ece8;padding:10px 16px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 8px 22px rgba(2,16,25,.14)}
+.pvdak-home-hero-action>svg{color:#087f72;width:23px;height:23px}
+.pvdak-home-hero-action>span:nth-child(2){flex:1}
+.pvdak-home-hero-action .pvdak-arrow{color:#087f72;font-size:18px;flex:0}
+a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
+.pvdak-home-process-hint{font-size:12px;color:#dce8e4;margin:22px auto 0;line-height:1.8}
+
+/* Floating white four-shortcut strip over hero bottom edge. */
+.pvdak-home-quick-actions{width:calc(100% - 128px);max-width:1160px;position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;align-items:center;margin:-34px auto 0;min-height:78px;background:#fff;padding:12px 18px;border:1px solid #dfe9e4;border-radius:20px;box-shadow:0 9px 0 rgba(31,76,62,.045),0 8px 21px rgba(28,60,50,.04)}
+.pvdak-home-quick-actions>a,.pvdak-home-quick-actions>span{display:flex;align-items:center;justify-content:center;flex-direction:row;gap:11px;padding:8px 9px;text-decoration:none;color:#214252;text-align:center;font-size:13px;font-weight:700;border-radius:12px;min-width:0}
+.pvdak-home-quick-actions svg{color:#087f72;width:21px;height:21px}
+.pvdak-home-quick-actions>a:hover{background:#ecf7f1;color:#087f72}
+
+/* Audience cards — first (rightmost, in RTL) deep navy. */
+.pvdak-audiences{margin-top:52px}
+.pvdak-audiences .pvdak-home-tile{background:#fff;min-height:208px;display:flex;flex-direction:column;align-items:flex-start;border:1px solid #e0e9e5;border-radius:17px;box-shadow:none;padding:23px 22px;transition:transform .2s,box-shadow .2s}
+.pvdak-audiences .pvdak-home-tile:hover{transform:translateY(-2px);box-shadow:0 8px 18px #142b4512}
+.pvdak-audiences .pvdak-home-tile--featured{background:#142b45;border-color:#142b45;color:#fff}
+.pvdak-home-icon{display:grid;place-items:center;width:42px;height:42px;background:#e6f4ed;color:#087f72;border-radius:10px;margin-bottom:11px}
+.pvdak-home-icon svg{width:23px;height:23px}
+.pvdak-home-tile--featured .pvdak-home-icon{background:#234b62;color:#d3edbe}
+.pvdak-audiences h3{font-size:16px;margin:4px 0 7px;line-height:1.6;color:inherit}
+.pvdak-audiences p{color:#76888c;font-size:12px;line-height:1.9;margin:0 0 11px}
+.pvdak-audiences .pvdak-home-tile--featured p{color:#c9d5dd}
+.pvdak-home-text-link{display:inline-block;font-size:12px;color:#087f72;font-weight:700;text-decoration:none;margin-top:auto}
+.pvdak-home-tile--featured .pvdak-home-text-link{color:#e0efcb}
+
+/* Eight legal subject tiles across the row. */
+.pvdak-home-topics{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px}
+.pvdak-home-topic{min-height:106px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:14px 6px;text-decoration:none;color:#233f4d;background:#fff;border:1px solid #e1e9e5;border-radius:16px;font-size:12px;font-weight:700;box-shadow:0 3px 12px rgba(11,41,43,.025)}
+.pvdak-home-topic svg{color:#087f72;width:25px;height:25px}
+.pvdak-home-topic[hidden]{display:none}
+.pvdak-home-topic:hover{background:#f3fbf6;color:#087f72}
+.pvdak-home-search-empty{margin:15px 0 0;padding:12px;border:1px solid #ebc9c0;border-radius:10px;background:#fff6f2;color:#924726;font-size:13px}
+
+/* Dark teal timeline, numbering 1 → 4 right to left. */
+.pvdak-home-process{min-height:260px;margin:52px 36px;border-radius:19px;padding:36px 45px;color:#fff;background:linear-gradient(110deg,#102b40,#175e5b)}
+.pvdak-home-process h2{color:#fff;font-size:25px;margin-bottom:34px}
+.pvdak-home-process .pvdak-home-grid--4{gap:38px}
+.pvdak-home-step{text-align:right;padding:0}
+.pvdak-home-step>span{display:grid;place-items:center;margin-bottom:19px;border-radius:9px;background:#2a666b;color:#e7f8e9;width:32px;height:32px;font-size:12px;font-weight:700}
+.pvdak-home-step h3{font-size:15px;color:#fff;line-height:1.6;margin:0 0 11px}
+.pvdak-home-step p{font-size:12px;color:#aec8cf;line-height:1.9;margin:0}
+
+/* Magazine: photo story on right, two stacked pastel stories on left. */
+.pvdak-magazine-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:326px}
+.pvdak-magazine-feature{position:relative;isolation:isolate;min-height:326px;border-radius:19px;overflow:hidden;background:linear-gradient(145deg,#c4d9ca,#496b67);display:flex;align-items:flex-end;color:#fff}
+.pvdak-magazine-feature>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.pvdak-magazine-feature::before{position:absolute;content:"";inset:0;z-index:-1;background:linear-gradient(0deg,rgba(6,27,40,.82) 0%,rgba(6,27,40,.03) 70%)}
+.pvdak-magazine-feature-content{width:100%;padding:25px 24px;text-align:right}
+.pvdak-magazine-feature h3{font-size:20px;color:#fff;margin:0 0 8px}
+.pvdak-magazine-feature p{font-size:13px;color:#e7f0f0;margin:0 0 8px}
+.pvdak-magazine-feature a,.pvdak-magazine-feature-content span{color:#d9f1bd;text-decoration:none;font-size:12px;font-weight:700}
+.pvdak-magazine-aside{display:grid;grid-template-rows:1fr 1fr;gap:14px}
+.pvdak-magazine-aside-card{position:relative;border-radius:18px;background:#e2f1e8;padding:22px 26px 17px;text-align:right;min-height:150px;overflow:hidden}
+.pvdak-magazine-aside-card--2{background:#f3ede0}
+.pvdak-magazine-aside-symbol{position:absolute;top:22px;right:20px;color:#087f72}
+.pvdak-magazine-aside-symbol svg{width:22px;height:22px}
+.pvdak-magazine-aside-card h3{font-size:17px;margin:8px 33px 9px 0;color:#173b48}
+.pvdak-magazine-aside-card p{font-size:12px;color:#667c79;margin:0 0 10px}
+.pvdak-magazine-aside-card a,.pvdak-magazine-aside-card>span:last-child{color:#087f72;font-weight:700;font-size:12px;text-decoration:none}
+
+/* Three-column news: notices right, photo article middle, forum dark card left. */
+.pvdak-news-grid{display:grid;grid-template-columns:1.12fr .9fr .92fr;gap:18px;align-items:stretch}
+.pvdak-notices-panel{min-height:325px;background:#fff;border:1px solid #e0e9e5;border-radius:20px;padding:22px 25px}
+.pvdak-notices-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:22px}
+.pvdak-notices-header h3{font-size:17px;color:#1a3d4e;margin:0}
+.pvdak-notices-header>span{color:#087f72;background:#e5f3eb;border-radius:999px;padding:6px 15px;font-size:11px}
+.pvdak-notices-list{display:grid;gap:18px}
+.pvdak-notice{display:flex;align-items:flex-start;gap:11px}
+.pvdak-notice>span{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;background:#edf8f2;border-radius:8px;color:#087f72}
+.pvdak-notice svg{width:17px;height:17px}
+.pvdak-notice strong,.pvdak-notice a{display:block;color:#243e4b;text-decoration:none;font-size:13px;font-weight:700;margin-bottom:6px}
+.pvdak-notice p{color:#728584;font-size:12px;line-height:1.7;margin:0}
+.pvdak-news-article{min-height:325px;display:flex;flex-direction:column;overflow:hidden;border-radius:18px;background:#e5f3eb}
+.pvdak-news-article-picture{height:152px;background:linear-gradient(140deg,#a9c6b7,#38685c);overflow:hidden}
+.pvdak-news-article-picture>img{width:100%;height:100%;object-fit:cover}
+.pvdak-news-article-content{display:flex;flex:1;flex-direction:column;padding:18px 20px}
+.pvdak-news-article-content h3{font-size:16px;margin:0 0 11px;color:#153c4e}
+.pvdak-news-article-content p{color:#6b8080;font-size:12px;line-height:1.9;margin:0 0 12px}
+.pvdak-news-article-content a,.pvdak-news-article-content span{margin-top:auto;color:#087f72;text-decoration:none;font-weight:700;font-size:12px}
+.pvdak-forum-card{min-height:325px;display:flex;flex-direction:column;align-items:flex-start;padding:27px 26px;border-radius:18px;background:#142b45;color:#fff;text-align:right}
+.pvdak-forum-card-icon{color:#d7ecc1;margin:0 0 20px}
+.pvdak-forum-card h3{font-size:24px;line-height:1.8;font-weight:800;margin:0 0 15px;color:#fff}
+.pvdak-forum-card p{color:#cad7d8;font-size:12px;line-height:2;margin:0 0 20px}
+.pvdak-forum-button{display:block;width:100%;background:#d8edb0;color:#163f40;padding:9px;text-align:center;font-weight:700;font-size:12px;text-decoration:none;border-radius:30px;margin-top:auto}
+
+/* Wide green membership call-to-action, image on the left in RTL. */
+.pvdak-home-community{display:flex;align-items:center;gap:42px;margin:48px 36px 55px;background:#e0f1e8;border-radius:20px;padding:22px 24px}
+.pvdak-home-community-content{flex:1;text-align:right}
+.pvdak-home-community h2{font-size:24px;color:#153548;margin:0 0 13px}
+.pvdak-home-community p{font-size:13px;color:#59766d;line-height:1.8;margin:0 0 8px}
+.pvdak-home-community>img,.pvdak-community-placeholder{width:305px;max-width:34%;height:190px;flex:0 0 305px;object-fit:cover;border-radius:14px;background:linear-gradient(135deg,#8dbdb1,#2d6265)}
+.pvdak-home-button{display:inline-block;border-radius:30px;background:#087f72;color:#fff;font-weight:700;font-size:13px;text-decoration:none;padding:9px 25px;margin:8px 0 0}
+.pvdak-home-faq{margin-top:55px}
+.pvdak-home-faq details{border:1px solid #e0e9e5;border-radius:10px;background:#fff;margin:9px 0;overflow:hidden;padding:0}
+.pvdak-home-faq summary{display:flex;align-items:center;justify-content:space-between;gap:20px;cursor:pointer;padding:14px 19px;font-size:13px;font-weight:700;color:#314755;list-style:none}
+.pvdak-home-faq summary::-webkit-details-marker{display:none}
+.pvdak-home-faq summary:after{content:"+";font-size:22px;color:#087f72;font-weight:400}
+.pvdak-home-faq details[open] summary:after{content:"−"}
+.pvdak-home-faq details>div{border-top:1px solid #e8eee9;padding:7px 20px;font-size:13px;color:#58717c}
+.pvdak-home-faq details p{margin:7px 0}
+.pvdak-home-section[id],.pvdak-home-community[id]{scroll-margin-top:30px}
+
+@media(max-width:1150px){
+ .pvdak-home-section,.pvdak-home-process,.pvdak-home-community{margin-inline:22px}
+ .pvdak-home-quick-actions{width:calc(100% - 78px)}
+ .pvdak-home-topics{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .pvdak-home-grid--3{gap:16px}
+ .pvdak-news-grid{gap:13px}
+}
+@media(max-width:800px){
+ .pvdak-home{width:calc(100% - 26px)}
+ .pvdak-home-section,.pvdak-home-process,.pvdak-home-community{margin-inline:8px}
+ .pvdak-home-hero{min-height:460px}
+ .pvdak-home-hero__content{padding:48px 22px 75px}
+ .pvdak-home-quick-actions{width:calc(100% - 40px);gap:0}
+ .pvdak-home-quick-actions>span,.pvdak-home-quick-actions>a{font-size:11px;gap:5px}
+ .pvdak-magazine-layout{grid-template-columns:1fr}
+ .pvdak-magazine-feature{min-height:320px}
+ .pvdak-magazine-aside{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+ .pvdak-news-grid{grid-template-columns:1fr 1fr}
+ .pvdak-notices-panel{grid-column:1/-1;min-height:0}
+ .pvdak-home-community{gap:22px}
+ .pvdak-home-community>img,.pvdak-community-placeholder{max-width:40%;flex:0 0 40%}
+}
+@media(max-width:620px){
+ .pvdak-home{padding-block:12px 28px;width:calc(100% - 20px)}
+ .pvdak-home-section{margin:34px 5px}
+ .pvdak-home-hero{min-height:0;border-radius:16px}
+ .pvdak-home-hero:before{background-image:var(--pvdak-hero-mobile-image,var(--pvdak-hero-image,none));opacity:.32}
+ .pvdak-home-hero:after{background:linear-gradient(180deg,rgba(14,46,59,.88),rgba(9,39,54,.88))}
+ .pvdak-home-hero__content{padding:42px 14px 54px}
+ .pvdak-home-eyebrow{font-size:11px;padding:6px 16px}
+ .pvdak-home-hero h1{font-size:31px;line-height:1.55;margin:16px 0 10px}
+ .pvdak-home-lead{font-size:13px;margin-bottom:22px}
+ .pvdak-home-search{min-height:48px;border-radius:13px;padding:4px 5px;gap:6px}
+ .pvdak-home-search-info{width:21px;height:21px;flex-basis:21px;font-size:12px}
+ .pvdak-home-search input[type=search]{font-size:11px;min-width:0}
+ .pvdak-home-search button{min-height:36px;padding:6px 13px;font-size:11px}
+ .pvdak-home-hero-actions{grid-template-columns:1fr;gap:9px;max-width:320px;margin-top:20px}
+ .pvdak-home-hero-action{min-height:52px;font-size:13px;border-radius:10px;padding:8px 15px}
+ .pvdak-home-process-hint{font-size:10px;margin-top:19px;line-height:2.2}
+ .pvdak-home-quick-actions{width:calc(100% - 22px);margin:-22px auto 0;min-height:63px;grid-template-columns:repeat(4,minmax(0,1fr));padding:7px 5px;border-radius:12px}
+ .pvdak-home-quick-actions>span,.pvdak-home-quick-actions>a{flex-direction:column;gap:5px;font-size:9px;padding:5px 0;line-height:1.35}
+ .pvdak-home-quick-actions svg{width:18px;height:18px}
+ .pvdak-home-section-head{margin-bottom:16px}
+ .pvdak-home-section-head h2,.pvdak-home-process h2,.pvdak-home-community h2{font-size:21px}
+ .pvdak-home-section-head p,.pvdak-section-aside{font-size:10px}
+ .pvdak-home-grid--3{grid-template-columns:1fr;gap:12px}
+ .pvdak-audiences .pvdak-home-tile{min-height:0;padding:18px;align-items:flex-start}
+ .pvdak-audiences .pvdak-home-tile h3{margin-top:6px}
+ .pvdak-home-topics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .pvdak-home-topic{min-height:93px}
+ .pvdak-home-process{margin:35px 5px;border-radius:16px;padding:24px 17px}
+ .pvdak-home-process h2{margin-bottom:25px}
+ .pvdak-home-process .pvdak-home-grid--4{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+ .pvdak-home-step>span{margin-bottom:12px}
+ .pvdak-home-step h3{font-size:12px}
+ .pvdak-home-step p{font-size:10px}
+ .pvdak-magazine-layout{gap:12px}
+ .pvdak-magazine-feature{min-height:260px}
+ .pvdak-magazine-feature-content{padding:20px}
+ .pvdak-magazine-feature h3{font-size:17px}
+ .pvdak-magazine-aside{grid-template-columns:1fr;gap:10px}
+ .pvdak-magazine-aside-card{min-height:132px}
+ .pvdak-news-grid{grid-template-columns:1fr;gap:12px}
+ .pvdak-notices-panel{grid-column:auto;padding:20px 18px}
+ .pvdak-news-article{min-height:0}
+ .pvdak-news-article-picture{height:185px}
+ .pvdak-forum-card{min-height:260px}
+ .pvdak-home-community{flex-direction:column;align-items:stretch;padding:19px;margin:36px 5px;gap:16px}
+ .pvdak-home-community>img,.pvdak-community-placeholder{max-width:100%;width:100%;flex:auto;height:200px;order:2}
+ .pvdak-home-community-content{order:1}
+ .pvdak-home-community h2{font-size:21px}
+ .pvdak-home-community p{font-size:12px}
+ .pvdak-home-faq summary{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.pvdak-home-tile{transition:none}}
