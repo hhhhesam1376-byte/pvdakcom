@@ -289,9 +289,6 @@ function pvdak_home_editor_load() {
     if ( function_exists( 'acf_form_head' ) ) {
         // Process & save ACF fields before the admin header is rendered.
         acf_form_head();
-        if ( function_exists( 'acf_enqueue_uploader' ) ) {
-            acf_enqueue_uploader();
-        }
     }
 }
 
