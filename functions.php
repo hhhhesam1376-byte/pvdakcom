@@ -27,6 +27,7 @@ require_once get_template_directory() . '/pvdak-maintenance.php';
 
 /* Homepage content and editor (ACF Free-compatible). */
 require_once get_template_directory() . '/inc/pvdak-home-acf.php';
+require_once get_template_directory() . '/inc/pvdak-legal-landings.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
