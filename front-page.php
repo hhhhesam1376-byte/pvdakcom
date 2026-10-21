@@ -10,16 +10,6 @@ $article_img  = pvdak_home_image_url('news_article_image');
 if ( ! $article_img ) { $article_img = $magazine_img; }
 $community_img= pvdak_home_image_url('community_image');
 
-$icon_paths = array(
-    1 => '<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2a5.5 5.5 0 0 1 11 0v2M17 9a3 3 0 0 1 0 6m2 5v-2a4 4 0 0 0-3-3.87"/>',
-    2 => '<path d="M3 10.5 12 3l9 7.5M5 9v12h14V9M9 21v-9h6v9"/>',
-    3 => '<path d="m14 4 6 6m-9-3 6 6M3 21l10-10m-2-4 3-3 6 6-3 3m-4 3 3 3M4 20h16"/>',
-    4 => '<path d="M5 3h14v18H5zM8 7h8m-8 4h8m-8 4h5"/>',
-    5 => '<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M9 7V4h6v3m-12 7h18M11 13h2"/>',
-    6 => '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 11h18m-15 4h4"/>',
-    7 => '<path d="m4 20 8-16 8 16M8 13h8M2 20h20"/>',
-    8 => '<path d="M5 21V3h14v18M2 21h20M9 7h2m3 0h2M9 11h2m3 0h2M9 15h2m3 0h2"/>'
-);
 $svg_icons = array(
     'scales' => '<path d="M12 3v18m-7 0h14M6 7h12M5 7l-3 7h6l-3-7m14 0-3 7h6l-3-7"/>',
     'chat' => '<path d="M4 4h16v13H8l-4 4V4zM7 9h10m-10 4h7"/>',
