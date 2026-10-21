@@ -249,48 +249,133 @@ function pvdak_register_home_acf_fields() {
 }
 add_action( 'acf/init', 'pvdak_register_home_acf_fields' );
 
+/**
+ * Dedicated client editor. Unlike a redirect to Gutenberg this loads
+ * all 11 ACF tabs directly in the PVDak menu, even if WordPress changes
+ * the normal page-editor presentation.
+ */
 function pvdak_home_add_admin_menu() {
-    add_menu_page('محتوای صفحه اصلی','محتوای صفحه اصلی','edit_pages','pvdak-home-content','pvdak_home_admin_landing','dashicons-admin-home',22);
+    $hook = add_menu_page(
+        'محتوای صفحه اصلی',
+        'محتوای صفحه اصلی',
+        'edit_pages',
+        'pvdak-home-content',
+        'pvdak_home_admin_landing',
+        'dashicons-admin-home',
+        22
+    );
+    if ( $hook ) {
+        add_action( 'load-' . $hook, 'pvdak_home_editor_load' );
+    }
 }
 add_action( 'admin_menu', 'pvdak_home_add_admin_menu' );
 
-function pvdak_home_admin_redirect() {
-    if ( empty($_GET['page']) || 'pvdak-home-content' !== sanitize_key(wp_unslash($_GET['page'])) ) { return; }
-    $page_id = (int) get_option('page_on_front');
-    if ( $page_id && 'page' === get_option('show_on_front') && 'page' === get_post_type($page_id) && current_user_can('edit_post',$page_id) ) {
-        wp_safe_redirect( admin_url('post.php?post='.$page_id.'&action=edit') );
-        exit;
+function pvdak_home_page_id() {
+    $page_id = (int) get_option( 'page_on_front' );
+    if ( 'page' !== get_option( 'show_on_front' ) || ! $page_id || 'page' !== get_post_type( $page_id ) ) {
+        return 0;
+    }
+    return $page_id;
+}
+
+function pvdak_home_editor_load() {
+    if ( ! current_user_can( 'edit_pages' ) ) {
+        wp_die( esc_html__( 'You are not allowed to edit pages.', 'pvdak' ) );
+    }
+    $page_id = pvdak_home_page_id();
+    if ( ! $page_id || ! current_user_can( 'edit_post', $page_id ) ) {
+        return;
+    }
+    if ( function_exists( 'acf_form_head' ) ) {
+        // Process & save ACF fields before the admin header is rendered.
+        acf_form_head();
+        if ( function_exists( 'acf_enqueue_uploader' ) ) {
+            acf_enqueue_uploader();
+        }
     }
 }
-add_action( 'admin_init', 'pvdak_home_admin_redirect' );
 
 function pvdak_home_admin_landing() {
-    if ( ! current_user_can('edit_pages') ) { return; }
-    echo '<div class="wrap"><h1>محتوای صفحه اصلی</h1>';
-    if ( ! function_exists('acf_add_local_field_group') ) {
-        echo '<div class="notice notice-warning"><p>برای ویرایش این فیلدها، افزونه رایگان Advanced Custom Fields (ACF) را نصب و فعال کنید.</p></div>';
+    if ( ! current_user_can( 'edit_pages' ) ) {
+        return;
     }
-    echo '<p>ابتدا یک برگه را به عنوان صفحه اصلی در تنظیمات خواندن مشخص کنید، یا با دکمه زیر آن را بسازید.</p>';
-    if ( current_user_can('manage_options') ) {
-        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';
-        echo '<input type="hidden" name="action" value="pvdak_prepare_home_page">';
-        wp_nonce_field('pvdak_prepare_home_page');
-        submit_button('ایجاد و تنظیم برگه صفحه اصلی');
-        echo '</form>';
+    echo '<div class="wrap pvdak-home-editor"><h1>محتوای صفحه اصلی PVDak</h1>';
+    echo '<p>عنوان‌ها، متن‌ها، لینک‌ها و تصاویر صفحه اصلی را از همین بخش تغییر دهید و ذخیره کنید.</p>';
+
+    if ( ! function_exists( 'acf_form' ) || ! function_exists( 'acf_add_local_field_group' ) ) {
+        echo '<div class="notice notice-warning"><p>افزونه Advanced Custom Fields (ACF) باید فعال باشد. پس از فعال‌سازی صفحه را دوباره باز کنید.</p></div>';
+        echo '</div>';
+        return;
     }
-    echo '<p><a href="'.esc_url(admin_url('options-reading.php')).'">تنظیمات خواندن وردپرس</a></p></div>';
+    $page_id = pvdak_home_page_id();
+    if ( ! $page_id ) {
+        echo '<div class="notice notice-info inline"><p>صفحه اصلی وردپرس هنوز به یک برگه ثابت متصل نشده است. برای فعال‌کردن ویرایشگر، یک‌بار دکمه زیر را بزنید.</p></div>';
+        if ( current_user_can( 'manage_options' ) ) {
+            echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+            echo '<input type="hidden" name="action" value="pvdak_prepare_home_page">';
+            wp_nonce_field( 'pvdak_prepare_home_page' );
+            submit_button( 'فعال‌سازی ویرایشگر صفحه اصلی' );
+            echo '</form>';
+        } else {
+            echo '<p>برای راه‌اندازی اولیه، از مدیر سایت کمک بگیرید.</p>';
+        }
+        echo '<p><a href="' . esc_url( admin_url( 'options-reading.php' ) ) . '">تنظیمات خواندن وردپرس</a></p></div>';
+        return;
+    }
+    if ( ! current_user_can( 'edit_post', $page_id ) ) {
+        echo '<div class="notice notice-error inline"><p>مجوز ویرایش برگه صفحه اصلی را ندارید.</p></div></div>';
+        return;
+    }
+    if ( isset( $_GET['updated'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['updated'] ) ) ) {
+        echo '<div class="notice notice-success is-dismissible"><p>تغییرات صفحه اصلی ذخیره شد.</p></div>';
+    }
+    echo '<p><a href="' . esc_url( get_permalink( $page_id ) ) . '" target="_blank" rel="noopener noreferrer">پیش‌نمایش صفحه اصلی</a> | ';
+    echo '<a href="' . esc_url( admin_url( 'post.php?post=' . $page_id . '&action=edit' ) ) . '">ویرایش برگه در وردپرس</a></p>';
+
+    // ACF Free includes acf_form: no ACF Pro options-page license required.
+    acf_form( array(
+        'post_id'         => $page_id,
+        'field_groups'    => array( 'group_pvdak_home_content_v1' ),
+        'submit_value'    => 'ذخیره تغییرات صفحه اصلی',
+        'updated_message' => 'تغییرات ذخیره شد.',
+        'return'          => admin_url( 'admin.php?page=pvdak-home-content&updated=1' ),
+        'form'            => true,
+        'form_attributes' => array( 'id' => 'pvdak-home-acf-form' ),
+    ) );
+    echo '</div>';
 }
+
 function pvdak_home_prepare_page() {
-    if ( ! current_user_can('manage_options') ) { wp_die('دسترسی مجاز نیست.'); }
-    check_admin_referer('pvdak_prepare_home_page');
-    $page_id = (int) get_option('page_on_front');
-    if ( ! $page_id || 'page' !== get_post_type($page_id) ) {
-        $page_id = wp_insert_post( array('post_type'=>'page','post_status'=>'publish','post_title'=>'صفحه اصلی','post_name'=>'pvdak-home','post_content'=>'') , true );
-        if ( is_wp_error($page_id) ) { wp_die( esc_html($page_id->get_error_message()) ); }
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'You are not allowed to manage this site.', 'pvdak' ) );
     }
-    update_option('show_on_front','page');
-    update_option('page_on_front',(int) $page_id);
-    wp_safe_redirect( admin_url('post.php?post='.(int)$page_id.'&action=edit') );
+    check_admin_referer( 'pvdak_prepare_home_page' );
+
+    $page_id = (int) get_option( 'page_on_front' );
+    if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
+        $existing = get_page_by_path( 'pvdak-home', OBJECT, 'page' );
+        if ( $existing && 'trash' !== $existing->post_status ) {
+            $page_id = (int) $existing->ID;
+            if ( 'publish' !== $existing->post_status ) {
+                wp_update_post( array( 'ID' => $page_id, 'post_status' => 'publish' ) );
+            }
+        } else {
+            $created = wp_insert_post( array(
+                'post_type'    => 'page',
+                'post_status'  => 'publish',
+                'post_title'   => 'صفحه اصلی',
+                'post_name'    => 'pvdak-home',
+                'post_content' => '',
+            ), true );
+            if ( is_wp_error( $created ) ) {
+                wp_die( esc_html( $created->get_error_message() ) );
+            }
+            $page_id = (int) $created;
+        }
+    }
+    update_option( 'show_on_front', 'page' );
+    update_option( 'page_on_front', $page_id );
+    wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content' ) );
     exit;
 }
-add_action('admin_post_pvdak_prepare_home_page','pvdak_home_prepare_page');
+add_action( 'admin_post_pvdak_prepare_home_page', 'pvdak_home_prepare_page' );
