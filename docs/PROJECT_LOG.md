@@ -328,3 +328,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Bumped theme to `0.8.8` and updated WP-CLI preflight version expectation. Core code remains `0.8.0`.
 - No changes to Cron cadence, GitHub Actions, secrets or maintenance screen. The diagnostic source is committed, but **no host execution/results have been received**; real installed versions, RTL status, test suite outcomes and staging readiness remain unverified until a cPanel-host report is supplied.
 
+## 2026-10-22 — HOST-TEST-PATH-FIX-020 (Theme 0.8.8 / bundled Core 0.8.0)
+- User ran private diagnostic at 2026-10-22T15:25:11Z; confirmed WordPress 7.1.3, PHP CLI 8.1.34, ACF 6.8.10 active, site locale en_US, active theme pvdakcom-main 0.8.8, bundled Core 0.8.0, **Core not installed or activated**, and rtl.css present.
+- Theme lint and prior editorial/search assertions reached successful checkpoints, but `check-pvdak.sh` failed because it sought `pvdak-wp-preflight.php` under the **public theme scripts directory**. Existing publisher deliberately removes scripts and docs before rsync; deployment is not broken.
+- Core source check linted all 12 PHP files but failed at the policy suite (exit 255). The private temporary git archive contained scripts/tests, while the policy suite unconditionally required the Core entry from that same extraction root, where packages were absent. Policy results were therefore *unknown*, not a proven regression in installed Core.
+- Fixed theme check to load WP-CLI preflight from the executing script's **private temporary directory**.
+- Fixed standalone Core policy suite to use optional `PVDAK_CORE_SOURCE` (defaults to full repo layout), modified `check-pvdak-core.sh` to pass the actual deployed bundled plugin entry path, and modified `install-pvdak-core.sh` similarly. Both paths now expose PHP runtime errors rather than silently returning 255.
+- Updated the host report guide with the verified findings and correct one-command rerun. No Cron, GitHub Actions, server files, production intake or maintenance-page settings were changed. **Awaiting rerun to confirm real WP-CLI preflight and policy-suite results; do not enable Core/real intake before then.**
+
