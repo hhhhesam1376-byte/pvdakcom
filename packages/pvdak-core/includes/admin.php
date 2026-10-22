@@ -153,3 +153,24 @@ function pvdak_core_create_service_pages() {
     exit;
 }
 add_action( 'admin_post_pvdak_core_create_pages', 'pvdak_core_create_service_pages' );
+
+/**
+ * Avoid accidentally caching personalized legal account/request pages.
+ * Does not modify static public article or landing page caching.
+ */
+function pvdak_core_private_page_headers() {
+    if ( ! is_singular( 'page' ) ) { return; }
+    $post = get_queried_object();
+    if ( ! $post instanceof WP_Post ) { return; }
+    $shortcodes = array( 'pvdak_account_dashboard', 'pvdak_my_requests', 'pvdak_request_form', 'pvdak_professional_application' );
+    foreach ( $shortcodes as $code ) {
+        if ( has_shortcode( $post->post_content, $code ) ) {
+            nocache_headers();
+            if ( in_array( $code, array( 'pvdak_account_dashboard', 'pvdak_my_requests' ), true ) ) {
+                header( 'X-Robots-Tag: noindex, nofollow', true );
+            }
+            return;
+        }
+    }
+}
+add_action( 'template_redirect', 'pvdak_core_private_page_headers', 1 );
