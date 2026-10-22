@@ -37,14 +37,25 @@ function get_post_status( $id ) { return in_array( (int) $id, array( 501, 502 ),
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
 $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'approved';
+$GLOBALS['pvdak_mock_capacity_limit'] = '2';
+$GLOBALS['pvdak_mock_accepting'] = '1';
+$GLOBALS['pvdak_mock_active_count'] = 1;
 function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_specialty_page_ids' === $key ) { return array( 11 ); }
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
     if ( '_pvdak_member_type' === $key ) { return (int) $id === 501 ? 'lawyer' : 'student'; }
+    if ( '_pvdak_capacity_limit' === $key ) { return $GLOBALS['pvdak_mock_capacity_limit']; }
+    if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
+    if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
     return '';
 }
-function get_posts( $query ) { return array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) ); }
+function get_posts( $query ) {
+    if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
+        return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
+    }
+    return array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
+}
 
 require dirname( __DIR__, 2 ) . '/packages/pvdak-core/pvdak-core.php';
 
@@ -104,4 +115,18 @@ $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'pending';
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Pending membership cannot be internally matched' );
 $GLOBALS['pvdak_mock_state'] = 'approved';
+pvdak_expect( pvdak_core_capacity_limit( 501 ) === 2, 'Lawyer capacity cap stored as bounded integer' );
+pvdak_expect( pvdak_core_active_assignment_count( 501 ) === 1, 'Only active internally assigned case records count toward capacity' );
+pvdak_expect( pvdak_core_capacity_available( 501 ), 'Eligible capacity leaves one new slot' );
+$GLOBALS['pvdak_mock_active_count'] = 2;
+pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Full capacity excludes candidate for new assignments' );
+pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 0, 'Full lawyer is absent from candidate dropdown' );
+$GLOBALS['pvdak_mock_active_count'] = 1;
+$GLOBALS['pvdak_mock_accepting'] = '0';
+pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Manually paused accepting status blocks matching' );
+$GLOBALS['pvdak_mock_accepting'] = '1';
+$GLOBALS['pvdak_mock_capacity_limit'] = '0';
+pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Unconfigured capacity defaults to closed instead of unlimited' );
+$GLOBALS['pvdak_mock_capacity_limit'] = '2';
+pvdak_expect( pvdak_core_capacity_available( 501 ), 'Capacity restores only when both limit and accepting switch are valid' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";
