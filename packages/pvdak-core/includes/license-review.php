@@ -28,7 +28,7 @@ function pvdak_core_license_review_current( $profile_id ) {
     }
     $date = (string) get_post_meta( $id, '_pvdak_license_review_expires', true );
     if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) || ! wp_checkdate(
-        (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 )
+        (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 ), $date
     ) ) { return false; }
     $reviewer = absint( get_post_meta( $id, '_pvdak_license_review_by', true ) );
     return $reviewer > 0 && $date >= current_time( 'Y-m-d' );
@@ -94,7 +94,7 @@ function pvdak_core_save_license_review( $post_id ) {
     $confirmed = isset( $_POST['pvdak_review_confirm'] ) && is_string( $_POST['pvdak_review_confirm'] ) &&
         '1' === wp_unslash( $_POST['pvdak_review_confirm'] );
     $valid_date = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $expiry ) && wp_checkdate(
-        (int) substr( $expiry, 5, 2 ), (int) substr( $expiry, 8, 2 ), (int) substr( $expiry, 0, 4 )
+        (int) substr( $expiry, 5, 2 ), (int) substr( $expiry, 8, 2 ), (int) substr( $expiry, 0, 4 ), $expiry
     );
     $approved = $confirmed && 'official_source' === $method && $valid_date &&
         $expiry >= current_time( 'Y-m-d' );
@@ -115,7 +115,7 @@ function pvdak_core_save_license_review( $post_id ) {
     add_post_meta( $post_id, '_pvdak_license_review_audit', array(
         'from' => $old, 'to' => $new, 'method' => $method,
         'expires' => $valid_date ? $expiry : '',
-        'note' => mb_substr( $note, 0, 300 ),
+        'note' => wp_html_excerpt( $note, 300 ),
         'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
     ), false );
 }
