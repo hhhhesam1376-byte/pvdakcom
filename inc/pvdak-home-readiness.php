@@ -16,6 +16,10 @@ function pvdak_home_readiness_items() {
 
     return array(
         array( 'صفحه اصلی وردپرس', $has_front, $has_front ? 'برگه اصلی انتخاب شده' : 'برگه اصلی ثابت را تنظیم کنید', admin_url( 'options-reading.php' ) ),
+        array( 'زبان فارسی پیشخوان وردپرس', 'fa_IR' === (string) get_option( 'WPLANG', '' ),
+            'زبان سایت را در تنظیمات عمومی روی فارسی قرار دهید؛ زبان شخصی هر مدیر نیز بررسی شود', admin_url( 'options-general.php' ) ),
+        array( 'قالب راست‌چین', is_readable( get_template_directory() . '/rtl.css' ),
+            'فایل راست‌چین و نسخه قالب را بررسی کنید', admin_url( 'themes.php' ) ),
         array( 'تصویر اصلی بنر', (bool) pvdak_home_image_url( 'hero_image' ), 'یک تصویر شاخص برای بنر انتخاب کنید', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'لندینگ‌های موضوعات حقوقی', $topics_count > 0, $topics_count . ' برگه فرزند منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
