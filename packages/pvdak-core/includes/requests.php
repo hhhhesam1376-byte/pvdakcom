@@ -57,6 +57,7 @@ function pvdak_core_request_form( $atts ) {
     $html .= '<input type="hidden" name="pvdak_type" value="' . esc_attr( $type ) . '">';
     $html .= '<label>عنوان کوتاه درخواست <input type="text" name="pvdak_title" required maxlength="140" autocomplete="off"></label>';
     $html .= '<label>شرح مختصر <textarea name="pvdak_description" maxlength="3000" rows="6" required></textarea></label>';
+    $html .= '<label class="pvdak-core-consent"><input type="checkbox" name="pvdak_consent" value="1" required> موافقم اطلاعات واردشده برای بررسی این درخواست در سامانه ثبت و توسط مدیران مجاز بررسی شود.</label>';
     $html .= '<button type="submit">ثبت درخواست برای بررسی</button></form></section>';
     return $html;
 }
@@ -74,7 +75,8 @@ function pvdak_core_handle_request() {
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
-    if ( ! isset( $types[ $type ] ) || '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
+    $consent = isset( $_POST['pvdak_consent'] ) && '1' === (string) wp_unslash( $_POST['pvdak_consent'] );
+    if ( ! $consent || ! isset( $types[ $type ] ) || '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
         exit;
     }
