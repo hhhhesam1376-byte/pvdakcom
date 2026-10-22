@@ -176,6 +176,6 @@ $GLOBALS['viewer_id'] = 33;
 $forged = pvdak_core_professional_dashboard();
 pvdak_privacy_assert( false === strpos( $forged, 'BETA_CITY_ONLY' ), 'Forged cross-owner professional link rejected' );
 pvdak_privacy_assert( $GLOBALS['write_attempts'] === 0, 'Read-only simulated views do not attempt writes' );
-$expected = 22; // 4 anonymous/option checks + 8 checks each for 2 users + 2 forged/write checks.
+$expected = 22; // 4 anonymous/option checks + 8 for each user + 2 forged/write checks.
 pvdak_privacy_assert( $checks === $expected, 'Exact synthetic assertion count executed' );
-echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " (synthetic; no real accounts, data or writes)\n";
+echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=23 (synthetic; no real accounts, data or writes)\n";
