@@ -11,12 +11,11 @@
 if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
     exit( "Must be run with WP-CLI eval-file.\n" );
 }
-$checks = 0;
-$failures = 0;
+$GLOBALS['pvdak_anon_live_checks'] = 0;
+$GLOBALS['pvdak_anon_live_failures'] = 0;
 function pvdak_anon_check( $name, $pass ) {
-    global $checks, $failures;
-    $checks++;
-    if ( ! $pass ) { $failures++; }
+    $GLOBALS['pvdak_anon_live_checks']++;
+    if ( ! $pass ) { $GLOBALS['pvdak_anon_live_failures']++; }
     WP_CLI::line( ( $pass ? 'PASS ' : 'FAIL ' ) . $name );
 }
 $loaded = function_exists( 'pvdak_core_request_form' ) &&
@@ -77,8 +76,13 @@ $unsafe_routes = array_filter( $routes, function ( $route ) {
 pvdak_anon_check( 'No public REST routes for legal cases/profiles', ! $unsafe_routes );
 wp_set_current_user( $original_user );
 
-WP_CLI::line( sprintf( 'PVDAK_ANON_LIVE_SMOKE: checks=%d failures=%d (read-only; no private content printed)', $checks, $failures ) );
-if ( $failures ) {
+$checks = $GLOBALS['pvdak_anon_live_checks'];
+$failures = $GLOBALS['pvdak_anon_live_failures'];
+// This script executes a fixed baseline: 4 readiness + 1 login + 6 capabilities
+// + 7 shortcodes + 1 REST route check. Never accept an empty test run as PASS.
+$expected_checks = 19;
+WP_CLI::line( sprintf( 'PVDAK_ANON_LIVE_SMOKE: checks=%d failures=%d expected=%d (read-only; no private content printed)', $checks, $failures, $expected_checks ) );
+if ( $checks !== $expected_checks || $failures ) {
     WP_CLI::error( 'Anonymous-access smoke test FAILED. Keep intake disabled and maintenance active.' );
 }
 WP_CLI::success( 'Anonymous-access baseline passed. Test accounts and browser sessions are still required.' );
