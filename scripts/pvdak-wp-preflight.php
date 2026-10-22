@@ -25,7 +25,7 @@ function pvdak_preflight_check( $label, $condition, $mandatory = true ) {
 
 $theme = wp_get_theme();
 pvdak_preflight_check( 'Theme is pvdakcom-main', 'pvdakcom-main' === $theme->get_stylesheet() );
-pvdak_preflight_check( 'Theme version is 0.8.3 or newer', version_compare( (string) $theme->get( 'Version' ), '0.8.3', '>=' ) );
+pvdak_preflight_check( 'Theme version is 0.8.5 or newer', version_compare( (string) $theme->get( 'Version' ), '0.8.5', '>=' ) );
 pvdak_preflight_check( 'Required Persian RTL stylesheet exists', is_readable( get_template_directory() . '/rtl.css' ) );
 pvdak_preflight_check( 'WordPress site language is Persian (fa_IR)', 'fa_IR' === (string) get_option( 'WPLANG', '' ), false );
 pvdak_preflight_check( 'ACF is loaded', function_exists( 'acf_add_local_field_group' ), false );
@@ -34,6 +34,12 @@ pvdak_preflight_check( 'Published static homepage configured',
     'page' === get_option( 'show_on_front' ) && $front && 'page' === get_post_type( $front ) &&
     'publish' === get_post_status( $front ), false );
 pvdak_preflight_check( 'Legal landing helpers loaded', function_exists( 'pvdak_legal_topic_pages' ) );
+pvdak_preflight_check( 'Server-side topic search available',
+    function_exists( 'pvdak_legal_filter_topic_pages' ) &&
+    function_exists( 'pvdak_legal_topic_search_term' ) );
+pvdak_preflight_check( 'Native editorial Category archive available',
+    is_readable( get_template_directory() . '/category.php' ) &&
+    is_readable( get_template_directory() . '/assets/css/pvdak-editorial.css' ) );
 
 if ( function_exists( 'pvdak_legal_topic_pages' ) ) {
     $parent = function_exists( 'pvdak_legal_topics_root_id' ) ? pvdak_legal_topics_root_id() : 0;
