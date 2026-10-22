@@ -115,29 +115,52 @@ function pvdak_core_my_requests() {
     if ( ! is_user_logged_in() ) {
         return '<p>برای دیدن درخواست‌های خود <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">وارد شوید</a>.</p>';
     }
-    $items = get_posts( array(
+    $user_id = get_current_user_id();
+    $page = isset( $_GET['pvdak_page'] ) && is_scalar( $_GET['pvdak_page'] ) ?
+        max( 1, min( 1000, absint( wp_unslash( $_GET['pvdak_page'] ) ) ) ) : 1;
+    $query = new WP_Query( array(
         'post_type' => 'pvdak_request',
         'post_status' => 'private',
-        'author' => get_current_user_id(),
-        'posts_per_page' => 30,
+        'author' => $user_id,
+        'posts_per_page' => 20,
+        'paged' => $page,
         'orderby' => 'date',
         'order' => 'DESC',
+        'no_found_rows' => false,
+        'suppress_filters' => false,
     ) );
+    $items = array();
+    foreach ( $query->posts as $item ) {
+        if ( 'pvdak_request' === $item->post_type && (int) $item->post_author === $user_id ) {
+            $items[] = $item;
+        }
+    }
     if ( ! $items ) {
-        return '<p>هنوز درخواستی ثبت نکرده‌اید.</p>';
+        return '<div class="pvdak-core-panel"><h2>درخواست‌های من</h2><p>در این صفحه درخواستی یافت نشد.</p></div>';
     }
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
     $html = '<div class="pvdak-core-panel"><h2>درخواست‌های من</h2><ul class="pvdak-core-requests">';
     foreach ( $items as $item ) {
-        if ( (int) $item->post_author !== get_current_user_id() ) { continue; }
         $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
         $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
         $html .= '<li><strong>' . esc_html( get_the_title( $item->ID ) ) . '</strong><span>' .
             esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'درخواست حقوقی' ) . ' · ' .
             esc_html( isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'ثبت‌شده' ) . '</span></li>';
     }
-    return $html . '</ul></div>';
+    $html .= '</ul>';
+    if ( (int) $query->max_num_pages > 1 ) {
+        $base = remove_query_arg( 'pvdak_page' );
+        $links = paginate_links( array(
+            'base' => add_query_arg( 'pvdak_page', '%#%', $base ),
+            'current' => $page,
+            'total' => (int) $query->max_num_pages,
+            'prev_text' => 'قبلی',
+            'next_text' => 'بعدی',
+        ) );
+        if ( $links ) { $html .= '<nav class="pvdak-core-pagination" aria-label="صفحه‌های درخواست‌های من">' . $links . '</nav>'; }
+    }
+    return $html . '</div>';
 }
 add_shortcode( 'pvdak_my_requests', 'pvdak_core_my_requests' );
 
