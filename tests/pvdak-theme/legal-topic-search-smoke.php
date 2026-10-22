@@ -46,10 +46,10 @@ pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, 'غیرموج
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, '' ) ) === 4, 'Empty query preserves legacy Page collection' );
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( null, 'test' ) ) === 0, 'Unexpected source is safely ignored' );
 
-$_GET['topic'] = ' ملکی ';
+$_GET['pvdak_topic'] = ' ملکی ';
 pvdak_topic_expect( pvdak_legal_topic_search_term() === 'ملکی', 'GET search term sanitized and trimmed' );
-$_GET['topic'] = array( 'bad' );
+$_GET['pvdak_topic'] = array( 'bad' );
 pvdak_topic_expect( pvdak_legal_topic_search_term() === '', 'Array query parameter rejected' );
-unset( $_GET['topic'] );
+unset( $_GET['pvdak_topic'] );
 pvdak_topic_expect( pvdak_legal_topic_search_term() === '', 'Unspecified query is empty' );
 echo "PVDAK_LEGAL_SEARCH_SMOKE_OK: {$checks} checks.\n";
