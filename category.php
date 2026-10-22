@@ -33,7 +33,7 @@ get_header();
             <span aria-current="page"><?php echo esc_html( single_cat_title( '', false ) ); ?></span>
         </nav>
         <span class="pvdak-archive-eyebrow">مطالب و محتوای پویش</span>
-        <h1><?php single_cat_title(); ?></h1>
+        <h1><?php echo esc_html( single_cat_title( '', false ) ); ?></h1>
         <?php $description = term_description( $term, 'category' ); ?>
         <?php if ( $description ) : ?>
             <div class="pvdak-archive-description"><?php echo wp_kses_post( $description ); ?></div>
