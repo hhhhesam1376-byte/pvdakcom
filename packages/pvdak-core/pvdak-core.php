@@ -127,3 +127,18 @@ function pvdak_core_admin_message() {
     echo '<div class="notice notice-info"><p><strong>PVDak Core:</strong> ثبت درخواست فقط برای کاربران واردشده و پس از فعال‌سازی دستی مدیر امکان‌پذیر است. احراز صلاحیت وکلا، مدیریت مدارک حساس و ارجاع خودکار هنوز پیاده‌سازی نشده‌اند. قبل از تأیید امنیت، داده حساس واقعی وارد نکنید.</p></div>';
 }
 add_action( 'admin_notices', 'pvdak_core_admin_message' );
+
+/**
+ * Defense in depth: neither case files nor professional applications may
+ * become publicly published through WordPress admin or other integrations.
+ * Draft, auto-draft and trash are left to core behavior.
+ */
+function pvdak_core_enforce_private_status( $data, $postarr ) {
+    if ( ! isset( $data['post_type'], $data['post_status'] ) ) { return $data; }
+    if ( in_array( $data['post_type'], array( 'pvdak_request', 'pvdak_professional' ), true ) &&
+         in_array( $data['post_status'], array( 'publish', 'future' ), true ) ) {
+        $data['post_status'] = 'private';
+    }
+    return $data;
+}
+add_filter( 'wp_insert_post_data', 'pvdak_core_enforce_private_status', 20, 2 );
