@@ -21,3 +21,17 @@
 
 .pvdak-core-form .pvdak-core-consent{display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.9;font-weight:400}
 .pvdak-core-form .pvdak-core-consent input[type=checkbox]{flex:0 0 auto;width:17px;height:17px;margin-top:5px}
+
+/* Private user dashboard: no public data or table overflow */
+.pvdak-core-dashboard{width:min(100%,1000px)}
+.pvdak-core-eyebrow{display:inline-block;font-size:12px;color:#087f72;font-weight:700;margin:0 0 8px!important}
+.pvdak-core-dashboard h3{font-size:18px;color:#173b4d;margin:28px 0 14px}
+.pvdak-core-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:22px 0}
+.pvdak-core-stats>div{display:grid;gap:10px;background:#edf6f1;border-radius:14px;padding:17px 20px;min-width:0}
+.pvdak-core-stats strong{font-size:27px;color:#087f72;line-height:1.3}
+.pvdak-core-stats span{font-size:13px;color:#42616b}
+.pvdak-core-dashboard-actions{display:flex;flex-wrap:wrap;gap:9px}
+.pvdak-core-dashboard-actions a{display:inline-flex;padding:9px 17px;border-radius:30px;text-decoration:none;background:#fff;border:1px solid #b4d5cc;color:#16675e;font-size:13px;font-weight:700}
+.pvdak-core-dashboard-actions a:hover{background:#e4f3eb}
+.pvdak-core-empty{padding:12px 17px;border:1px dashed #b7d7ca;border-radius:12px;background:#fbfefd}
+@media(max-width:650px){.pvdak-core-stats{grid-template-columns:1fr;gap:9px}.pvdak-core-stats>div{display:flex;align-items:center;justify-content:space-between}}
