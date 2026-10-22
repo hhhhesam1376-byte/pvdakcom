@@ -91,7 +91,7 @@ function pvdak_core_assets() {
         has_shortcode( $post->post_content, 'pvdak_request_form' ) ||
         has_shortcode( $post->post_content, 'pvdak_my_requests' )
     ) ) {
-        wp_enqueue_style( 'pvdak-core', plugins_url( 'assets/forms.css', dirname( __FILE__ ) . '/../pvdak-core.php' ), array(), PVDAK_CORE_VERSION );
+        wp_enqueue_style( 'pvdak-core', plugins_url( 'assets/forms.css', PVDAK_CORE_PLUGIN_FILE ), array(), PVDAK_CORE_VERSION );
     }
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_core_assets' );
