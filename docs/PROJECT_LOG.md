@@ -320,3 +320,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Bumped theme to 0.8.7, left independent Core source at 0.8.0. Added `docs/CORE_STAGING_HANDOFF.md` with the exact no-new-Cron dry-run/install/acceptance sequence.
 - **No change** to GitHub Actions, server Cron, deployment script, maintenance page or production intake settings. The project has not yet run Core installation, PHP lint, WordPress role/E2E or database concurrency tests on the cPanel server in this turn.
 - Still pending: on-host verification, optional inactive plugin installation and stage-only activation, real access isolation checks with multiple test accounts, MariaDB double-session locking tests, privacy/retention and case workflow completion.
+
+## 2026-10-22 — HOST-DIAGNOSTIC-019 (Theme 0.8.8 / Core 0.8.0)
+- Added `scripts/pvdak-status.sh`, a read-only Bash diagnostic. Without options, it reports WordPress/PHP/site locale/active theme, deployed theme version, bundled Core version, installed Core version, plugin install/activation status, intake option states, installed-vs-bundled Core file comparison and optional local repo SHA (explicitly **not** deployment proof).
+- With `--test`, the same command invokes the existing read-only `check-pvdak.sh` and `check-pvdak-core.sh` tools, prints compact PASS/FAIL summaries and the last relevant failure lines. It does not install or activate plugins, change languages, or enable intake.
+- Published `docs/HOST_STATUS_REPORT.md` with one copy/paste host command using the **existing** `deploy.sh`, plus instructions to send only the diagnostic block back to chat.
+- Bumped theme to `0.8.8` and updated WP-CLI preflight version expectation. Core code remains `0.8.0`.
+- No changes to Cron cadence, GitHub Actions, secrets or maintenance screen. The diagnostic source is committed, but **no host execution/results have been received**; real installed versions, RTL status, test suite outcomes and staging readiness remain unverified until a cPanel-host report is supplied.
+
