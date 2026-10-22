@@ -55,7 +55,7 @@ fi
 value "WordPress detected" "$WP_AVAILABLE"
 value "WordPress version" "$(wp_read core version)"
 value "WordPress site language" "$(wp_read eval 'echo get_locale();')"
-value "WordPress WPLANG option" "$(wp_read option get WPLANG)"
+value "WordPress WPLANG option" "$(wp_read eval '$v = get_option("WPLANG", null); echo null === $v ? "UNSET (English default)" : ("" === $v ? "EMPTY (English default)" : $v);')"
 value "WordPress active theme" "$(wp_read theme list --status=active --field=name)"
 
 if [[ "$WP_AVAILABLE" == "YES" ]]; then
@@ -69,8 +69,8 @@ if [[ "$WP_AVAILABLE" == "YES" ]]; then
   else
     value "Core plugin active" "NO"
   fi
-  value "Core legal intake option" "$(wp_read option get pvdak_core_intake_enabled)"
-  value "Core member intake option" "$(wp_read option get pvdak_core_member_intake_enabled)"
+  value "Core legal intake option" "$(wp_read eval '$v = get_option("pvdak_core_intake_enabled", null); echo null === $v ? "UNSET (defaults OFF)" : ("" === $v ? "EMPTY (defaults OFF)" : $v);')"
+  value "Core member intake option" "$(wp_read eval '$v = get_option("pvdak_core_member_intake_enabled", null); echo null === $v ? "UNSET (defaults OFF)" : ("" === $v ? "EMPTY (defaults OFF)" : $v);')"
 else
   value "Core plugin installed" "NOT_CHECKED"
   value "Core plugin active" "NOT_CHECKED"
