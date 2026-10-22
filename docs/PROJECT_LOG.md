@@ -345,3 +345,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Noted a locale reporting discrepancy: diagnostic's `get_locale()` returned `en_US` while the preflight emitted zero warnings for its `WPLANG` option check. Investigate the option versus runtime locale before claiming the dashboard is Persian.
 - Next stage is a controlled **inactive plugin install** with backup/rollback checks; only after this, evaluate isolated staging activation and real-user permission tests. No new Cron, Actions or secrets.
 
+## 2026-10-22 — CORE-INACTIVE-INSTALL-022 (user host CLI confirmation)
+- The cPanel user ran the existing private-script installer against `public_html/wp-content/themes/pvdakcom-main/packages/pvdak-core`. Both **SOURCE_LINT_OK** and **SOURCE_POLICY_SMOKE_OK** passed during the first `DRY_RUN` and again during `--install`.
+- Host reported `INSTALLED_INACTIVE_SOURCE: /home/amirhoseainsabet/public_html/wp-content/plugins/pvdak-core`, followed by `wp plugin status pvdak-core` showing **Status: Inactive, Version: 0.8.0**.
+- Consequently, the next phase no longer needs to troubleshoot Core source transfer or repeat installation. **Do not execute the installer again against an active plugin.**
+- Remains unverified: actual plugin activation and resulting registered admin roles/post types, WP-CLI active Core acceptance, live front-end/role security checks, independent legal data privacy and MariaDB concurrent assignment behavior.
+- Both real client and professional intake should remain disabled; public maintenance should remain enabled. No new Cron/Actions/secrets requested.
+
