@@ -13,6 +13,16 @@ function pvdak_home_readiness_items() {
     $notice_term = pvdak_home_selected_category( 'notice_category' );
     $notice_count = count( pvdak_home_category_posts( 'notice_category', 1 ) );
     $faq_count = count( pvdak_home_faq_pages() );
+    // Distinguish source delivery, actual plugin installation and safe activation.
+    $core_source = get_template_directory() . '/packages/pvdak-core/pvdak-core.php';
+    $core_plugin = WP_PLUGIN_DIR . '/pvdak-core/pvdak-core.php';
+    $core_installed = is_file( $core_plugin );
+    $core_active = function_exists( 'pvdak_core_register_post_types' );
+    $core_matches = $core_installed && is_file( $core_source ) &&
+        hash_file( 'sha256', $core_plugin ) === hash_file( 'sha256', $core_source );
+    $core_safe = $core_active && function_exists( 'pvdak_core_intake_open' ) &&
+        function_exists( 'pvdak_core_member_intake_open' ) &&
+        ! pvdak_core_intake_open() && ! pvdak_core_member_intake_open();
 
     return array(
         array( 'صفحه اصلی وردپرس', $has_front, $has_front ? 'برگه اصلی انتخاب شده' : 'برگه اصلی ثابت را تنظیم کنید', admin_url( 'options-reading.php' ) ),
@@ -26,7 +36,14 @@ function pvdak_home_readiness_items() {
         array( 'اطلاعیه‌های پویش', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'پرسش‌های متداول', $faq_count > 0, $faq_count . ' برگه پرسش/پاسخ منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'فهرست اصلی', has_nav_menu( 'primary' ), has_nav_menu( 'primary' ) ? 'فهرست اختصاص داده شده' : 'فهرست سایت را اختصاص دهید', admin_url( 'nav-menus.php' ) ),
-        array( 'هسته سامانه درخواست‌ها', function_exists( 'pvdak_core_request_types' ), function_exists( 'pvdak_core_request_types' ) ? 'افزونه هسته فعال است؛ پذیرش را جدا بررسی کنید' : 'هنوز نصب و فعال نشده', admin_url( 'plugins.php' ) ),
+        array( 'نصب مستقل PVDak Core', $core_installed,
+            $core_installed ? 'نسخه افزونه روی وردپرس شناسایی شد' : 'Cron فقط قالب را منتشر می‌کند؛ نصب افزونه مستقل هنوز انجام نشده', admin_url( 'plugins.php' ) ),
+        array( 'هماهنگی نسخه قالب و Core', $core_matches,
+            $core_matches ? 'فایل اصلی با بسته قالب برابر است' : 'فایل‌های نصب‌شده را با نسخه مخزن و آزمون کامل مقایسه کنید', admin_url( 'plugins.php' ) ),
+        array( 'فعال‌بودن هسته سامانه', $core_active,
+            $core_active ? 'افزونه Core فعال است' : 'هسته هنوز در وردپرس فعال نشده', admin_url( 'plugins.php' ) ),
+        array( 'پذیرش داده‌های حقوقی خاموش', $core_safe,
+            $core_safe ? 'هر دو فرم درخواست و همکاری غیرفعال‌اند' : 'قبل از تست واقعی، پذیرش اطلاعات باید خاموش بماند', $core_active ? admin_url( 'options-general.php?page=pvdak-core' ) : admin_url( 'plugins.php' ) ),
     );
 }
 
