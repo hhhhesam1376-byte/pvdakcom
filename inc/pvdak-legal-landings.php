@@ -47,6 +47,37 @@ function pvdak_legal_topic_pages( $parent_id = 0 ) {
     ) );
 }
 
+/**
+ * Keep homepage search scoped to real published child landing Pages.
+ * Works without JavaScript; browser filtering is progressive enhancement.
+ */
+function pvdak_legal_topic_search_term() {
+    if ( ! isset( $_GET['topic'] ) || ! is_string( $_GET['topic'] ) ) { return ''; }
+    $term = sanitize_text_field( wp_unslash( $_GET['topic'] ) );
+    $term = trim( $term );
+    return function_exists( 'mb_substr' ) ? mb_substr( $term, 0, 100 ) : substr( $term, 0, 100 );
+}
+
+function pvdak_legal_normalize_topic_text( $value ) {
+    $value = strtr( (string) $value, array( 'ي' => 'ی', 'ك' => 'ک', '‌' => ' ' ) );
+    $value = preg_replace( '/[\x{064B}-\x{065F}\x{0670}]/u', '', $value );
+    $value = preg_replace( '/\s+/u', ' ', $value );
+    return trim( function_exists( 'mb_strtolower' ) ? mb_strtolower( $value, 'UTF-8' ) : strtolower( $value ) );
+}
+
+function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
+    if ( ! is_array( $pages ) ) { return array(); }
+    $needle = pvdak_legal_normalize_topic_text( $search_term );
+    if ( '' === $needle ) { return $pages; }
+    return array_values( array_filter( $pages, function ( $page ) use ( $needle ) {
+        if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ) { return false; }
+        $haystack = pvdak_legal_normalize_topic_text(
+            $page->post_title . ' ' . wp_strip_all_tags( $page->post_excerpt )
+        );
+        return false !== strpos( $haystack, $needle );
+    } ) );
+}
+
 function pvdak_legal_topic_icon( $post_id ) {
     $choices = array( 'family', 'property', 'criminal', 'contract', 'work', 'finance', 'inheritance', 'business' );
     $value = function_exists( 'get_field' ) ? get_field( 'pvdak_topic_icon', (int) $post_id ) : '';
