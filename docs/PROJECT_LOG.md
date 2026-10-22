@@ -290,3 +290,15 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - WordPress's `fa_IR` setting remains unconfirmed on the server (requires one-time WP-CLI `scripts/set-persian-wordpress.sh --apply --admins` if not already applied).
 - Existing Cron and maintenance mode are unchanged. **PVDak Core is still not confirmed installed/activated on the site**.
 - This phase advances real client operability, but a live acceptance test is needed before the site is treated as ready.
+
+## 2026-10-22 — EDITORIAL-SEARCH-016 (Theme 0.8.5; Core still 0.8.0)
+- Replaced the homepage `name=s` query with a dedicated `topic` query scoped to real published legal-topic child **Pages**, preventing accidental fallback to unrelated WordPress article search.
+- Added `pvdak_legal_topic_search_term`, `pvdak_legal_normalize_topic_text`, and `pvdak_legal_filter_topic_pages`; normalization covers common Arabic/Persian kaf/yeh variants, non-breaking half-spaces, whitespace and diacritic marks. Client-side topic filtering remains progressive enhancement; server-side results and an empty-state are available without JavaScript.
+- Implemented native `category.php` for WordPress **post** Categories only (magazine, news, announcements). Legal-topic landings remain WordPress hierarchical **Pages**. Archives use the category title, term description and the existing posts/pagination loop without duplicated ACF items or invented content.
+- Added `assets/css/pvdak-editorial.css` for RTL responsive editorial cards, category navigation and article typography; loaded only on post/category/archive contexts.
+- Added `tests/pvdak-theme/legal-topic-search-smoke.php` with 11 synthetic assertions, hooked into the read-only `scripts/check-pvdak.sh` alongside the 14 editorial-bootstrap assertions. Checks fail when real editorial archive files are missing.
+- Updated `scripts/pvdak-wp-preflight.php` to require theme 0.8.5, topic search helpers and category template/styles.
+- All changes pushed directly to `main`; no GitHub Actions, secrets, cron or maintenance-page changes.
+
+### Unverified
+- Code/connector reference checks only: **PHP CLI execution, browser/mobile layout, WordPress admin input/save, on-host Cron deployment and cache invalidation are not confirmed**. Existing Core must still be staged and activated separately from theme release.
