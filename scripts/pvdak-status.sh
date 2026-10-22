@@ -135,6 +135,24 @@ if [[ "$MODE" == "--test" ]]; then
   }
   run_test "Theme release tests" "$SCRIPTS/check-pvdak.sh" "$THEME" "$WP_ROOT"
   run_test "Core source tests" "$SCRIPTS/check-pvdak-core.sh" "$CORE_SOURCE" "$WP_ROOT"
+  # Synthetic negative control for the live WP counter. A deliberately failed
+  # assertion must yield 19 checks / 1 failure, not a false 0/0 PASS.
+  SELFTEST="$SCRIPTS/pvdak-anonymous-counter-selftest.php"
+  if [[ -f "$SELFTEST" ]] && command -v php >/dev/null 2>&1; then
+    SELFTEST_LOG="$(mktemp)"
+    if php "$SELFTEST" pass >"$SELFTEST_LOG" 2>&1 && php "$SELFTEST" fail >>"$SELFTEST_LOG" 2>&1; then
+      value "Diagnostic fail-closed self-test" "PASS"
+      grep -E 'COUNTER_SELFTEST_OK:' "$SELFTEST_LOG" | tail -n 2 || true
+    else
+      value "Diagnostic fail-closed self-test" "FAIL"
+      tail -n 12 "$SELFTEST_LOG"
+      failure=1
+    fi
+    rm -f "$SELFTEST_LOG"
+  else
+    value "Diagnostic fail-closed self-test" "FAIL: private PHP self-test missing"
+    failure=1
+  fi
   # Separate, anonymous in-memory WordPress test. Never creates real users
   # and never reads or prints private cases.
   if [[ "$WP_AVAILABLE" == "YES" ]] && wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
