@@ -22,7 +22,15 @@ function pvdak_home_selected_post( $field ) {
     $selected = get_field( $field, $page_id );
     $id = $selected instanceof WP_Post ? (int) $selected->ID : absint( $selected );
     $post = $id ? get_post( $id ) : null;
-    return ( $post && 'post' === $post->post_type && 'publish' === $post->post_status ) ? $post : null;
+    if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) { return null; }
+    // Featured override must belong to the matching selected category.
+    $category_field = 'magazine_featured_post' === $field ? 'magazine_category' :
+        ( 'news_featured_post' === $field ? 'news_category' : '' );
+    if ( $category_field ) {
+        $category_id = pvdak_home_selected_category( $category_field );
+        if ( ! $category_id || ! has_category( $category_id, $post ) ) { return null; }
+    }
+    return $post;
 }
 
 function pvdak_home_category_posts( $field, $limit = 3, $exclude = array() ) {
