@@ -304,6 +304,10 @@ function pvdak_home_admin_landing() {
     echo '<p><a href="' . esc_url( get_permalink( $page_id ) ) . '" target="_blank" rel="noopener noreferrer">پیش‌نمایش صفحه اصلی</a> | ';
     echo '<a href="' . esc_url( admin_url( 'post.php?post=' . $page_id . '&action=edit' ) ) . '">ویرایش برگه در وردپرس</a></p>';
 
+    if ( function_exists( 'pvdak_home_readiness_panel' ) ) {
+        pvdak_home_readiness_panel();
+    }
+
     // ACF Free includes acf_form: no ACF Pro options-page license required.
     acf_form( array(
         'post_id'         => $page_id,
