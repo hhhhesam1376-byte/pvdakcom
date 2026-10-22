@@ -59,7 +59,7 @@ function pvdak_home_readiness_panel() {
     echo '<table class="widefat striped"><thead><tr><th>قسمت</th><th>وضعیت</th><th>اقدام</th></tr></thead><tbody>';
     foreach ( $items as $item ) {
         echo '<tr><th scope="row">' . esc_html( $item[0] ) . '</th>';
-        echo '<td>' . ( $item[1] ? '<span style="color:#16734c">✓ آماده از نظر محتوا</span>' : '<span style="color:#925600">نیازمند تنظیم</span>' ) . '</td>';
+        echo '<td>' . ( $item[1] ? '<span style="color:#16734c">✓ برقرار</span>' : '<span style="color:#925600">نیازمند بررسی</span>' ) . '</td>';
         echo '<td><a href="' . esc_url( $item[3] ) . '">' . esc_html( $item[2] ) . '</a></td></tr>';
     }
     echo '</tbody></table></div></div>';
