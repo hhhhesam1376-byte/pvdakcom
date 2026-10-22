@@ -52,10 +52,12 @@ function pvdak_legal_topic_pages( $parent_id = 0 ) {
  * Works without JavaScript; browser filtering is progressive enhancement.
  */
 function pvdak_legal_topic_search_term() {
-    if ( ! isset( $_GET['topic'] ) || ! is_string( $_GET['topic'] ) ) { return ''; }
-    $term = sanitize_text_field( wp_unslash( $_GET['topic'] ) );
+    if ( ! isset( $_GET['pvdak_topic'] ) || ! is_string( $_GET['pvdak_topic'] ) ) { return ''; }
+    $term = sanitize_text_field( wp_unslash( $_GET['pvdak_topic'] ) );
     $term = trim( $term );
-    return function_exists( 'mb_substr' ) ? mb_substr( $term, 0, 100 ) : substr( $term, 0, 100 );
+    if ( function_exists( 'mb_substr' ) ) { return mb_substr( $term, 0, 100 ); }
+    $chars = preg_split( '//u', $term, -1, PREG_SPLIT_NO_EMPTY );
+    return is_array( $chars ) ? implode( '', array_slice( $chars, 0, 100 ) ) : '';
 }
 
 function pvdak_legal_normalize_topic_text( $value ) {
