@@ -61,7 +61,7 @@ $svg_icons = array(
         <?php
         $symbol_names=array(1=>'scales',2=>'chat',3=>'question');
         for($i=1;$i<=3;$i++):
-            $url=pvdak_home_value("service_{$i}_url",'');
+            $url=pvdak_home_service_url($i);
             $title=pvdak_home_value("service_{$i}_title");
             $symbol='<svg viewBox="0 0 24 24" aria-hidden="true">'. $svg_icons[$symbol_names[$i]] . '</svg>';
         ?>
@@ -245,7 +245,7 @@ $svg_icons = array(
       <h2 id="community-title"><?php echo esc_html(pvdak_home_value('community_title')); ?></h2>
       <p><?php echo esc_html(pvdak_home_value('community_description')); ?></p>
       <p><?php echo esc_html(pvdak_home_value('community_note')); ?></p>
-      <?php $u=pvdak_home_value('community_url',''); if($u): ?><a class="pvdak-home-button" href="<?php echo esc_url($u); ?>"><?php else: ?><span class="pvdak-home-button"><?php endif; ?><?php echo esc_html(pvdak_home_value('community_button')); ?> ←<?php if($u): ?></a><?php else: ?></span><?php endif; ?>
+      <?php $u=pvdak_home_join_url(); if($u): ?><a class="pvdak-home-button" href="<?php echo esc_url($u); ?>"><?php else: ?><span class="pvdak-home-button"><?php endif; ?><?php echo esc_html(pvdak_home_value('community_button')); ?> ←<?php if($u): ?></a><?php else: ?></span><?php endif; ?>
     </div>
     <?php if($community_img): ?><img src="<?php echo esc_url($community_img); ?>" alt="" loading="lazy" decoding="async"><?php else: ?><div class="pvdak-community-placeholder" aria-hidden="true"></div><?php endif; ?>
   </section>
