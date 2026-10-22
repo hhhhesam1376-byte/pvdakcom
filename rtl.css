@@ -1,0 +1,170 @@
+/*
+ * PVDak Persian/RTL presentation layer.
+ *
+ * This stylesheet is loaded by the theme independently of the WP admin
+ * language. Directionality is not coupled to WordPress's initial en_US locale.
+ * Use logical properties for new layout rules wherever possible.
+ */
+html {
+  direction: rtl;
+}
+html, body {
+  text-align: start;
+}
+body,
+input,
+textarea,
+select,
+button {
+  font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+}
+body {
+  direction: rtl;
+  text-align: right;
+}
+input, textarea, select {
+  direction: rtl;
+  text-align: start;
+}
+:where(input[type="email"], input[type="url"], input[type="tel"], input[type="number"], input[type="date"]) {
+  unicode-bidi: plaintext;
+}
+:where(pre, code, kbd, samp, .entry-content pre, .entry-content code) {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+:where(.container, .site-main, .site-header, .site-footer, .pvdak-home, .pvdak-legal-landing) {
+  direction: rtl;
+}
+:where(.site-header, .pvdak-topbar, .site-footer, .pvdak-home, .pvdak-legal-landing) :where(h1, h2, h3, h4, h5, h6, p, label, li, summary) {
+  unicode-bidi: plaintext;
+}
+:where(.site-header, .pvdak-home, .pvdak-legal-landing, .site-footer) :where(
+  .header-inner, .site-branding, .primary-navigation, .menu,
+  .pvdak-header-actions, .pvdak-footer-layout, .pvdak-footer-nav,
+  .pvdak-home-hero-actions, .pvdak-home-quick-actions,
+  .pvdak-home-section-head, .pvdak-home-topics,
+  .pvdak-magazine-layout, .pvdak-news-grid,
+  .pvdak-legal-breadcrumbs
+) {
+  direction: rtl;
+}
+.site-branding, .site-branding .pvdak-site-brand, .primary-navigation {
+  text-align: right;
+}
+.primary-navigation .menu, .pvdak-mobile-links {
+  padding-inline-start: 0;
+  margin-inline-start: 0;
+  text-align: right;
+}
+.primary-navigation .menu {
+  justify-content: flex-start;
+}
+.primary-navigation .sub-menu {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  text-align: right;
+}
+.pvdak-mobile-menu[open] > nav {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  text-align: right;
+}
+.pvdak-footer-nav, .pvdak-footer-address, .pvdak-footer-brand {
+  text-align: right;
+}
+/* Keep the homepage hero centered, but align the content of service cards. */
+.pvdak-home-hero {
+  text-align: center;
+}
+.pvdak-home-search {
+  direction: rtl;
+  text-align: right;
+  flex-direction: row;
+}
+.pvdak-home-search input[type="search"] {
+  min-width: 0;
+  direction: rtl;
+  text-align: right;
+}
+.pvdak-home-hero-action,
+.pvdak-home-tile,
+.pvdak-home-step,
+.pvdak-magazine-feature-content,
+.pvdak-magazine-aside-card,
+.pvdak-news-article-content,
+.pvdak-notices-panel,
+.pvdak-forum-card,
+.pvdak-home-community-content,
+.pvdak-home-faq details {
+  direction: rtl;
+  text-align: right;
+}
+.pvdak-home-topic,
+.pvdak-home-quick-actions > a,
+.pvdak-home-quick-actions > span {
+  direction: rtl;
+}
+.pvdak-magazine-aside-symbol {
+  inset-inline-start: 20px;
+  right: auto;
+}
+.pvdak-legal-breadcrumbs {
+  direction: rtl;
+}
+.pvdak-legal-hero, .pvdak-legal-article, .entry-content {
+  direction: rtl;
+  text-align: right;
+}
+.entry-content :where(blockquote, ul, ol) {
+  padding-inline-start: 1.5em;
+  padding-inline-end: 0;
+}
+.entry-content blockquote {
+  border-inline-start: 3px solid var(--pvdak-accent);
+  padding-inline-start: 1rem;
+}
+.entry-content :where(table, img, video) {
+  max-width: 100%;
+}
+.entry-content table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+/* WP editorial alignment names follow the visual side in the Arabic-script
+   editor, so the left/right float dimensions must be swapped from LTR. */
+.alignleft {
+  float: right;
+  margin: 0 0 1rem 1.5rem;
+}
+.alignright {
+  float: left;
+  margin: 0 1.5rem 1rem 0;
+}
+/* LTR addresses, email, codes, and Latin brand labels remain readable. */
+:where(.pvdak-footer-address a, .pvdak-footer-logo, .site-title) {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+:where(input[type="email"], input[type="url"]) {
+  direction: ltr;
+  text-align: left;
+}
+:where([dir="ltr"]) {
+  direction: ltr;
+}
+@media (max-width: 760px) {
+  .pvdak-mobile-menu[open] > nav,
+  .pvdak-mobile-links,
+  .pvdak-home-hero-action,
+  .pvdak-audiences .pvdak-home-tile {
+    text-align: right;
+  }
+  .pvdak-home-search {
+    min-width: 0;
+  }
+}
