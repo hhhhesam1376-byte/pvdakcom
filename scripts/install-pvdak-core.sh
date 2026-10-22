@@ -27,7 +27,10 @@ if [[ ! -f "$SMOKE" ]]; then
     exit 1
 fi
 php -l "$SMOKE" >/dev/null
-php "$SMOKE" >/dev/null || { echo "STOP: Core policy checks failed" >&2; exit 1; }
+PVDAK_CORE_SOURCE="$SRC/pvdak-core.php" php -d display_errors=stderr -d log_errors=1 -d error_log=/dev/stderr "$SMOKE" >/dev/null || {
+    echo "STOP: Core policy checks failed. No plugin files were changed." >&2
+    exit 1
+}
 echo "SOURCE_POLICY_SMOKE_OK"
 echo "SOURCE=$SRC"
 echo "DEST=$DEST"
