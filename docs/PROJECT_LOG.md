@@ -101,3 +101,33 @@
 3. In the "محتوای صفحه اصلی" editor, choose it in tab 4.
 4. Add published child Pages such as "حقوق خانواده"; select template "لندینگ موضوع حقوقی", set content and optional icon.
 5. Refresh homepage as an authenticated admin to verify title/link/icon updates. If not working, collect cPanel PHP lint and WordPress logs for precise diagnosis.
+
+## 2026-10-22 — CONTENT-ARCHITECTURE-007 (v0.7.0)
+
+### Reason for revision
+The owner correctly identified that the earlier site was a visually dynamic theme but not a client-operable legal platform. ACF had been used as a replacement for WordPress' real content types, including repeated magazine articles, announcements, and FAQ items.
+
+### Implemented in GitHub
+- Audited the architecture against official WP theme/plugin handbooks and the data-model patterns of MyListing and Listeo. Confirmed: core content in WP, theme for presentation, durable service workflows in a standalone plugin.
+- Created `docs/PRODUCT_ARCHITECTURE.md` with entities, WordPress role boundaries, permissions, the three request types, state model, data privacy safeguards, roadmap and handover acceptance tests.
+- Created `inc/pvdak-home-collections.php`, which queries published Posts in selected categories and published child Pages for FAQ. It intentionally returns no unrelated results if no category is configured.
+- Replaced fixed magazine, news, notices and three FAQ repetitions in `front-page.php` with read-only dynamic queries; highlights come from published posts and their images/excerpts/permalinks. FAQ can grow without new ACF fields.
+- Refactored the ACF editor: `102 -> 74` content controls, `11 -> 10` tabs. Category/post/Page selectors replace repeated per-item fields. Existing WordPress DB postmeta was NOT deleted.
+- Added client-facing shortcuts to Pages, Posts, Categories, Media, and Menus under `محتوای صفحه اصلی`; rewrote `docs/HOMEPAGE_EDITOR_GUIDE.md` around actual content editing.
+- Added `packages/pvdak-core/pvdak-core.php`, an independent, **not-installed** plugin skeleton containing read-only community roles and private request/professional record types (no public REST, no public submission). It must pass a staged review and receive a proper plugin deployment path before use.
+- Added read-only PHP lint / basic configuration script `scripts/check-pvdak.sh`, corrected README maintenance HTTP semantics and bumped theme to `0.7.0`.
+
+### Status / limitations
+- GitHub commits succeeded; new content queries and plugin behavior have NOT been functionally tested on the actual server.
+- Real lawyer verification, membership, case intake, sensitive document processing, quotas, service routing and discussion forum are not live features.
+- Public maintenance page preserved. Do not disable it until product testing and readiness review.
+- The current cPanel cron deploy targets the **theme**; it does not install or update the standalone `packages/pvdak-core` plugin.
+- Media and existing unported ACF fields are deliberately preserved in WordPress storage; only display logic and registration changed.
+
+### Follow-up release validation
+1. Run normal deploy; ensure no automatic rollback.
+2. Run `bash "$HOME/public_html/wp-content/themes/pvdakcom-main/scripts/check-pvdak.sh"` and review PHP lint / theme version `0.7.0`.
+3. In WP admin, select Magazine and Notices categories and create at least one published post in each; test that only those posts appear on homepage.
+4. Make a published child Page under the FAQ parent and verify its accordion entry; test draft visibility.
+5. Recheck main legal landing pages, maintenance mode, mobile screenshot and ACF editor save/reload.
+6. Plan independent plugin deployment and least-privilege request form testing before collecting real user data.
