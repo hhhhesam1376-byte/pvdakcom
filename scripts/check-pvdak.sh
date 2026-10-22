@@ -23,6 +23,11 @@ if [[ ! -f "$THEME/tests/pvdak-theme/editor-bootstrap-smoke.php" ]]; then
   exit 1
 fi
 php "$THEME/tests/pvdak-theme/editor-bootstrap-smoke.php"
+if [[ ! -f "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php" ]]; then
+  echo "FAIL: legal Page search smoke tests are missing" >&2
+  exit 1
+fi
+php "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php"
 if [[ ! -s "$THEME/rtl.css" ]] || ! grep -Fq "pvdak-rtl" "$THEME/functions.php" ||
    ! grep -Fq '<html lang="fa-IR" dir="rtl">' "$THEME/header.php"; then
   echo "FAIL: Persian/RTL assets or document language are not deployed correctly." >&2
