@@ -10,7 +10,7 @@ function pvdak_setup() {
 	add_theme_support( 'html5', array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script' ) );
 	add_theme_support( 'responsive-embeds' );
 	add_theme_support( 'align-wide' );
-	register_nav_menus( array( 'primary' => __( 'منوی اصلی', 'pvdak' ), 'footer' => __( 'منوی فوتر', 'pvdak' ) ) );
+	register_nav_menus( array( 'primary' => __( 'منوی اصلی', 'pvdak' ), 'footer' => __( 'منوی فوتر', 'pvdak' ), 'pvdak_quick' => __( 'دسترسی‌های سریع صفحه اصلی', 'pvdak' ) ) );
 }
 add_action( 'after_setup_theme', 'pvdak_setup' );
 
