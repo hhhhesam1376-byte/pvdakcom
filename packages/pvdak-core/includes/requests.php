@@ -44,8 +44,10 @@ function pvdak_core_request_form( $atts ) {
         return '<p class="pvdak-core-notice">برای ثبت و پیگیری درخواست باید وارد حساب خود شوید. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">ورود به حساب</a></p>';
     }
     $html = '<section class="pvdak-core-panel"><h2>' . esc_html( $types[ $type ] ) . '</h2>';
-    if ( isset( $_GET['pvdak_sent'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['pvdak_sent'] ) ) ) {
-        $html .= '<p class="pvdak-core-success" role="status">درخواست ثبت شد و در صف بررسی قرار گرفت.</p>';
+    $receipt_key = 'pvdak_receipt_' . get_current_user_id();
+    if ( get_transient( $receipt_key ) ) {
+        delete_transient( $receipt_key );
+        $html .= '<p class="pvdak-core-success" role="status">درخواست شما ثبت شد و در صف بررسی قرار گرفت.</p>';
     }
     if ( isset( $_GET['pvdak_error'] ) ) {
         $html .= '<p class="pvdak-core-error" role="alert">اطلاعات ارسالی قابل ثبت نبود. فیلدها را بررسی کنید یا کمی بعد دوباره تلاش کنید.</p>';
@@ -103,7 +105,8 @@ function pvdak_core_handle_request() {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
         exit;
     }
-    wp_safe_redirect( add_query_arg( 'pvdak_sent', '1', $destination ) );
+    set_transient( 'pvdak_receipt_' . $user_id, 1, 300 );
+    wp_safe_redirect( $destination );
     exit;
 }
 add_action( 'admin_post_pvdak_core_submit_request', 'pvdak_core_handle_request' );
