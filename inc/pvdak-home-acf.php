@@ -312,6 +312,10 @@ function pvdak_home_admin_landing() {
         pvdak_home_readiness_panel();
     }
 
+    if ( function_exists( 'pvdak_editor_bootstrap_card' ) ) {
+        pvdak_editor_bootstrap_card();
+    }
+
     // ACF Free includes acf_form: no ACF Pro options-page license required.
     acf_form( array(
         'post_id'         => $page_id,
