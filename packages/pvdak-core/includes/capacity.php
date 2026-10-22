@@ -28,9 +28,15 @@ function pvdak_core_active_assignment_count( $profile_id ) {
         'meta_key' => '_pvdak_assigned_profile_id',
         'meta_value' => (string) $profile_id,
         'no_found_rows' => true,
+        'cache_results' => false,
+        'update_post_meta_cache' => false,
     ) );
     $total = 0;
     foreach ( $ids as $request_id ) {
+        // Another manager might have completed a case in a separate request.
+        if ( function_exists( 'wp_cache_delete' ) ) {
+            wp_cache_delete( absint( $request_id ), 'post_meta' );
+        }
         $state = get_post_meta( absint( $request_id ), '_pvdak_request_state', true );
         if ( in_array( $state, array( 'matched', 'answered' ), true ) ) { $total++; }
     }
