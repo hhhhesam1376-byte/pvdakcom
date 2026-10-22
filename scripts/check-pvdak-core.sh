@@ -26,10 +26,12 @@ if command -v wp >/dev/null 2>&1 && [[ -f "$WORDPRESS/wp-config.php" ]]; then
     echo "PLUGIN_INACTIVE"
   fi
 fi
-POLICY_TEST="$(dirname "$(dirname "$ROOT")")/tests/pvdak-core/policy-smoke.php"
-if [[ -f "$POLICY_TEST" ]]; then
-  php "$POLICY_TEST"
-else
-  echo "INFO: policy smoke test not found beside source: $POLICY_TEST"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+POLICY_TEST="$SCRIPT_DIR/../tests/pvdak-core/policy-smoke.php"
+if [[ ! -f "$POLICY_TEST" ]]; then
+  echo "FAIL: Required policy test file absent: $POLICY_TEST" >&2
+  exit 1
 fi
+php -l "$POLICY_TEST" >/dev/null || { echo "FAIL: policy test has PHP syntax errors" >&2; exit 1; }
+php "$POLICY_TEST"
 echo "NOTE: lint and configuration checks do not substitute for role isolation, privacy or end-to-end tests."
