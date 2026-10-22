@@ -76,6 +76,11 @@ if [[ "$actual" != "fa_IR" ]]; then
     echo "ERROR: WordPress locale was not switched successfully; reported: $actual" >&2
     exit 1
 fi
+effective_locale="$(wp eval 'echo get_locale();' --path="$WP_ROOT" 2>/dev/null)"
+if [[ "$effective_locale" != "fa_IR" ]]; then
+    echo "ERROR: WordPress still reports effective locale '$effective_locale'. Check WPLANG overrides in wp-config.php or plugins." >&2
+    exit 1
+fi
 echo "PERSIAN_SITE_OK: locale=fa_IR"
 echo "The dashboard uses RTL when its user's profile language is Persian or inherits the site language."
 echo "No WordPress reinstall, database reset, theme deployment, or Cron edit performed."
