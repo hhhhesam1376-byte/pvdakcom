@@ -378,3 +378,12 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Private host reporter now differentiates unset/empty WordPress `WPLANG` and unset legal/member intake options from a WP-CLI query that failed; Core code defaults both intakes to OFF, and WordPress runtime language is still independently reported.
 - The success log for active Core acceptance now prints `PVDAK_CORE_ACCEPTANCE: checks=26 failures=0 expected=26` after the new WP-CLI global-counter logic is exercised correctly; anonymous audit prints `checks=19 failures=0 expected=19`. The two-mode offline counter self-test is included in the private one-command reporter.
 - All assertions and operational reporting fixes have been pushed to GitHub, but **no post-fix host run has been received yet**. Do not take a previous `checks=0 failures=0` summary as a verified passing privacy audit.
+
+## 2026-10-22 — VERIFIED-HOST-AUDIT-027 (read-only host test at 17:06 UTC)
+- User supplied `DEPLOY_OK 04c23f9cc09e45316c767fce8bd249f9d64a5647` and a complete `PVDAK_DIAGNOSTIC_END status=OK` from cPanel.
+- `pvdakcom-main 0.8.8` active, `PVDak Core 0.8.0` installed/active and exact source MATCH, WordPress 7.1.3, PHP CLI 8.1.34, RTL stylesheet present. `WPLANG` EMPTY (English default); runtime language en_US.
+- Legal and professional intake settings both UNSET (default OFF), public maintenance previously confirmed ON and checked inside the 19-pass anonymous live test.
+- Test evidence: editor-bootstrap 14/14 (synthetic), legal topic search 11/11 (synthetic), Core 40/40 policy (synthetic), active WP Core acceptance **26 checks / 0 failures**, anonymous live WP **19 checks / 0 failures**, live WP preflight **23 checks / 0 failures / 2 warnings**. Both fail-closed controls (19/0 and deliberately 19/1) passed.
+- **Two preflight warnings** remain, one confirmed from en_US vs fa_IR. The other is not shown in the compact host log; do not guess its cause. Enhanced `pvdak-status.sh --test` to print `WARN` labels next to the summary on future host runs.
+- Real multi-account client/lawyer isolation, private data leakage tests with distinct records and simultaneous MariaDB assignment remain outstanding. Baseline success does not authorize opening intake or disabling maintenance.
+
