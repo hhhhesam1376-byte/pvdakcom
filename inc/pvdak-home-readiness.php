@@ -23,6 +23,18 @@ function pvdak_home_readiness_items() {
     $core_safe = $core_active && function_exists( 'pvdak_core_intake_open' ) &&
         function_exists( 'pvdak_core_member_intake_open' ) &&
         ! pvdak_core_intake_open() && ! pvdak_core_member_intake_open();
+    // Visibility for administrators only; not a substitute for account-level
+    // isolation tests. These baseline roles must be present and non-privileged.
+    $roles_ready = $core_active;
+    foreach ( array( 'pvdak_client', 'pvdak_lawyer', 'pvdak_trainee', 'pvdak_student' ) as $slug ) {
+        $role = get_role( $slug );
+        if ( ! $role || ! $role->has_cap( 'read' ) ||
+             $role->has_cap( 'edit_pvdak_requests' ) ||
+             $role->has_cap( 'edit_pvdak_professionals' ) ) {
+            $roles_ready = false;
+        }
+    }
+    $maintenance_on = function_exists( 'pvdak_maintenance_enabled' ) && pvdak_maintenance_enabled();
 
     return array(
         array( 'صفحه اصلی وردپرس', $has_front, $has_front ? 'برگه اصلی انتخاب شده' : 'برگه اصلی ثابت را تنظیم کنید', admin_url( 'options-reading.php' ) ),
@@ -31,6 +43,8 @@ function pvdak_home_readiness_items() {
         array( 'قالب راست‌چین', is_readable( get_template_directory() . '/rtl.css' ),
             'فایل راست‌چین و نسخه قالب را بررسی کنید', admin_url( 'themes.php' ) ),
         array( 'تصویر اصلی بنر', (bool) pvdak_home_image_url( 'hero_image' ), 'یک تصویر شاخص برای بنر انتخاب کنید', admin_url( 'admin.php?page=pvdak-home-content' ) ),
+        array( 'برگه مادر موضوعات حقوقی', $topics_root > 0,
+            $topics_root ? 'برگه مادر آماده است' : 'در همین صفحه دکمه «آماده‌سازی ساختار محتوایی» را بزنید', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'لندینگ‌های موضوعات حقوقی', $topics_count > 0, $topics_count . ' برگه فرزند منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های پویش', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
@@ -42,6 +56,10 @@ function pvdak_home_readiness_items() {
             $core_matches ? 'فایل اصلی با بسته قالب برابر است' : 'فایل‌های نصب‌شده را با نسخه مخزن و آزمون کامل مقایسه کنید', admin_url( 'plugins.php' ) ),
         array( 'فعال‌بودن هسته سامانه', $core_active,
             $core_active ? 'افزونه Core فعال است' : 'هسته هنوز در وردپرس فعال نشده', admin_url( 'plugins.php' ) ),
+        array( 'نقش‌های پایه کاربران', $roles_ready,
+            $roles_ready ? 'چهار نقش پایه حاضرند؛ آزمون چندحسابی همچنان لازم است' : 'نقش‌های مراجعه‌کننده یا متخصص نیازمند بازبینی هستند', admin_url( 'users.php' ) ),
+        array( 'صفحه تعمیرات عمومی', $maintenance_on,
+            $maintenance_on ? 'بازدیدکنندگان عمومی هنوز صفحه تعمیرات را می‌بینند' : 'تا پایان آزمون‌ها صفحه تعمیرات را فعال نگه دارید', admin_url( 'themes.php' ) ),
         array( 'پذیرش داده‌های حقوقی خاموش', $core_safe,
             $core_safe ? 'هر دو فرم درخواست و همکاری غیرفعال‌اند' : 'قبل از تست واقعی، پذیرش اطلاعات باید خاموش بماند', $core_active ? admin_url( 'options-general.php?page=pvdak-core' ) : admin_url( 'plugins.php' ) ),
     );
