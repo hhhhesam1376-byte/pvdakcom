@@ -302,3 +302,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 
 ### Unverified
 - Code/connector reference checks only: **PHP CLI execution, browser/mobile layout, WordPress admin input/save, on-host Cron deployment and cache invalidation are not confirmed**. Existing Core must still be staged and activated separately from theme release.
+
+## 2026-10-22 — PERSIAN-SEARCH-POLISH-017 (Theme 0.8.6)
+- Moved the legal-topic query parameter from generic `topic` to namespaced `pvdak_topic` to avoid future clashes with forum or other WP integrations. Updated PHP, homepage input, JavaScript, regression tests and acceptance checklist consistently.
+- Made non-mbstring PHP search truncation Unicode-safe via `preg_split('//u')` and normalized Arabic diacritic marks in JavaScript consistently with the PHP renderer.
+- Added explicit `.pvdak-home-topic[hidden]` CSS so author-level display rules cannot accidentally override client-side filtering.
+- Bumped theme to `0.8.6` to invalidate cached JS/CSS assets and aligned read-only WP-CLI preflight with this release.
+- Connector re-read verified search parameter consistency, template wiring, expected assets and 11 **authored** search assertions (plus the existing 14 content bootstrap assertions).
+- **Still pending:** actual on-host PHP interpreter execution, Cron deployment confirmation, WordPress browser/mobile tests, and separate Core 0.8.0 plugin staging/activation. Existing Cron/Actions, maintenance mode and disabled private intake are unchanged.
