@@ -15,3 +15,6 @@
 .pvdak-core-requests strong{font-weight:700}
 .pvdak-core-requests span{font-size:13px;color:#536e72}
 @media(max-width:620px){.pvdak-core-panel{padding:18px;margin:16px auto}.pvdak-core-form button{width:100%}}
+
+.pvdak-core-form select{width:100%;border:1px solid #b6cec8;border-radius:11px;background:#fcfefd;color:#153e4b;padding:12px;font:inherit}
+.pvdak-core-form select:focus-visible{outline:3px solid #7cb8ae;outline-offset:2px}
