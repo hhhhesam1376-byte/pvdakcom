@@ -146,3 +146,27 @@ function pvdak_core_save_member_review( $id ) {
     add_post_meta( $id, '_pvdak_member_audit', array( 'from' => $old, 'to' => $new, 'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ) ), false );
 }
 add_action( 'save_post_pvdak_professional', 'pvdak_core_save_member_review' );
+
+/** The editorial review queue should show type and state at a glance. */
+function pvdak_core_member_admin_columns( $cols ) {
+    $cols['pvdak_member_type'] = 'نوع عضویت';
+    $cols['pvdak_member_state'] = 'وضعیت بررسی';
+    $cols['pvdak_member_city'] = 'شهر';
+    return $cols;
+}
+add_filter( 'manage_pvdak_professional_posts_columns', 'pvdak_core_member_admin_columns' );
+function pvdak_core_member_admin_column( $column, $id ) {
+    if ( ! current_user_can( 'edit_post', $id ) ) { return; }
+    if ( 'pvdak_member_type' === $column ) {
+        $types = pvdak_core_member_types();
+        $type = get_post_meta( $id, '_pvdak_member_type', true );
+        echo esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' );
+    } elseif ( 'pvdak_member_state' === $column ) {
+        $states = pvdak_core_member_states();
+        $state = get_post_meta( $id, '_pvdak_member_state', true );
+        echo esc_html( isset( $states[ $state ] ) ? $states[ $state ] : $states['pending'] );
+    } elseif ( 'pvdak_member_city' === $column ) {
+        echo esc_html( get_post_meta( $id, '_pvdak_member_city', true ) );
+    }
+}
+add_action( 'manage_pvdak_professional_posts_custom_column', 'pvdak_core_member_admin_column', 10, 2 );
