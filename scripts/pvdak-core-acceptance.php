@@ -10,10 +10,14 @@ if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
     exit( "PVDak Core acceptance requires WP-CLI eval-file.\n" );
 }
 
-$failures = 0;
+// WP-CLI eval-file can execute this script inside a method scope.
+// Explicit global state ensures failures observed by the function are read
+// by the final summary and cannot produce a misleading 0-failure PASS.
+$GLOBALS['pvdak_core_acceptance_checks'] = 0;
+$GLOBALS['pvdak_core_acceptance_failures'] = 0;
 function pvdak_core_acceptance_check( $label, $result ) {
-    global $failures;
-    if ( ! $result ) { $failures++; }
+    $GLOBALS['pvdak_core_acceptance_checks']++;
+    if ( ! $result ) { $GLOBALS['pvdak_core_acceptance_failures']++; }
     WP_CLI::line( ( $result ? 'PASS ' : 'FAIL ' ) . $label );
 }
 
@@ -111,8 +115,13 @@ pvdak_core_acceptance_check( 'Professional license review gate loaded',
 pvdak_core_acceptance_check( 'Referral UI action is registered',
     has_action( 'admin_post_pvdak_core_assign', 'pvdak_core_assign_request' ) !== false );
 
-WP_CLI::line( 'PVDAK_CORE_ACCEPTANCE: failures=' . $failures . ' (read-only; no real case data displayed)' );
-if ( $failures ) {
+$checks = $GLOBALS['pvdak_core_acceptance_checks'];
+$failures = $GLOBALS['pvdak_core_acceptance_failures'];
+// 26 baseline assertions are required in a fully initialized WordPress,
+// including all installed subscriber, professional, editor, author roles.
+$expected_checks = 26;
+WP_CLI::line( sprintf( 'PVDAK_CORE_ACCEPTANCE: checks=%d failures=%d expected=%d (read-only; no real case data displayed)', $checks, $failures, $expected_checks ) );
+if ( $checks !== $expected_checks || $failures ) {
     WP_CLI::error( 'Core acceptance checks failed. Keep both intake switches disabled.' );
 }
 WP_CLI::success( 'Core baseline accepted in WordPress. End-to-end role and concurrent assignment tests still required.' );
