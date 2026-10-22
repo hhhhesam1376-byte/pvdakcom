@@ -310,3 +310,13 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Bumped theme to `0.8.6` to invalidate cached JS/CSS assets and aligned read-only WP-CLI preflight with this release.
 - Connector re-read verified search parameter consistency, template wiring, expected assets and 11 **authored** search assertions (plus the existing 14 content bootstrap assertions).
 - **Still pending:** actual on-host PHP interpreter execution, Cron deployment confirmation, WordPress browser/mobile tests, and separate Core 0.8.0 plugin staging/activation. Existing Cron/Actions, maintenance mode and disabled private intake are unchanged.
+
+## 2026-10-22 — CORE-RELEASE-GATE-018 (Theme 0.8.7 / Core source 0.8.0)
+- Refocused the previous development roadmap on **staging readiness** instead of creating another untested product feature.
+- Added `scripts/pvdak-core-acceptance.php`: strictly read-only WP-CLI acceptance gate, requiring an active Core installation and checking Core version, plugin/main theme source SHA-256 file matching, both intake switches OFF, registered shortcodes, private CPTs and REST isolation, administrator-only capabilities, assignment locks and time-valid professional review handler. No real personal data are printed.
+- Integrated this gate into the existing `scripts/check-pvdak-core.sh` **only if Core is already active**. For an inactive Core it still reports inactive and runs standalone lint/policy tests.
+- Hardened the existing `scripts/install-pvdak-core.sh`: Core policy suite is required and must pass before copying source into WordPress plugins, a valid WP-CLI/WordPress installation is required, active plugin replacement is refused, and the previous inactive release is restored when WP-CLI does not recognize the new copy.
+- Expanded the client `محتوای صفحه اصلی` readiness panel to distinguish **files in themes**, **plugin installed**, **plugin source release matching**, **plugin active** and **both intake channels disabled**; corrected vague “ready” text to neutral “present/needs review.”
+- Bumped theme to 0.8.7, left independent Core source at 0.8.0. Added `docs/CORE_STAGING_HANDOFF.md` with the exact no-new-Cron dry-run/install/acceptance sequence.
+- **No change** to GitHub Actions, server Cron, deployment script, maintenance page or production intake settings. The project has not yet run Core installation, PHP lint, WordPress role/E2E or database concurrency tests on the cPanel server in this turn.
+- Still pending: on-host verification, optional inactive plugin installation and stage-only activation, real access isolation checks with multiple test accounts, MariaDB double-session locking tests, privacy/retention and case workflow completion.
