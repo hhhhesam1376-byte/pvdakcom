@@ -62,7 +62,8 @@ function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $requ
          'private' !== get_post_status( $profile_id ) ||
          ! pvdak_core_valid_specialty( $specialty_id ) ) { return false; }
     if ( 'approved' !== get_post_meta( $profile_id, '_pvdak_member_state', true ) ||
-         '1' !== (string) get_post_meta( $profile_id, '_pvdak_referral_cleared', true ) ) { return false; }
+         '1' !== (string) get_post_meta( $profile_id, '_pvdak_referral_cleared', true ) ||
+         ! pvdak_core_license_review_current( $profile_id ) ) { return false; }
     // No trainee/student matching without a separate supervision policy.
     if ( 'lawyer' !== get_post_meta( $profile_id, '_pvdak_member_type', true ) ) { return false; }
     return in_array( $request_type, array( 'lawyer', 'consultation', 'question' ), true ) &&
