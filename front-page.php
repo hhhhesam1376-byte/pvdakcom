@@ -5,9 +5,6 @@ get_header();
 
 $hero_desktop = pvdak_home_image_url('hero_image');
 $hero_mobile  = pvdak_home_image_url('hero_image_mobile');
-$magazine_img = pvdak_home_image_url('magazine_image');
-$article_img  = pvdak_home_image_url('news_article_image');
-if ( ! $article_img ) { $article_img = $magazine_img; }
 $community_img= pvdak_home_image_url('community_image');
 
 /* Native WordPress content: published posts/categories and child FAQ pages. */
