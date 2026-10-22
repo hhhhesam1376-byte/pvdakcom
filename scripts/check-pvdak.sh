@@ -18,6 +18,11 @@ while IFS= read -r -d '' file; do
   ((count+=1))
 done < <(find "$THEME" -type f -name '*.php' -print0)
 echo "PASS: PHP lint ($count files)."
+if [[ ! -f "$THEME/tests/pvdak-theme/editor-bootstrap-smoke.php" ]]; then
+  echo "FAIL: client editor content smoke tests are missing" >&2
+  exit 1
+fi
+php "$THEME/tests/pvdak-theme/editor-bootstrap-smoke.php"
 if [[ ! -s "$THEME/rtl.css" ]] || ! grep -Fq "pvdak-rtl" "$THEME/functions.php" ||
    ! grep -Fq '<html lang="fa-IR" dir="rtl">' "$THEME/header.php"; then
   echo "FAIL: Persian/RTL assets or document language are not deployed correctly." >&2
