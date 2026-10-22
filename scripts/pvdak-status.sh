@@ -153,6 +153,22 @@ if [[ "$MODE" == "--test" ]]; then
     value "Diagnostic fail-closed self-test" "FAIL: private PHP self-test missing"
     failure=1
   fi
+  # Read-only live WordPress account role audit: no users or case records created.
+  if [[ "$WP_AVAILABLE" == "YES" ]] && wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
+    ROLE_AUDIT="$SCRIPTS/pvdak-role-capabilities-smoke.php"
+    ROLE_LOG="$(mktemp)"
+    if [[ -f "$ROLE_AUDIT" ]] && wp eval-file "$ROLE_AUDIT" --path="$WP_ROOT" >"$ROLE_LOG" 2>&1; then
+      value "Account role permissions" "PASS"
+      grep -E 'PVDAK_ROLE_CAPABILITIES:' "$ROLE_LOG" | tail -n 1 || true
+    else
+      value "Account role permissions" "FAIL"
+      tail -n 14 "$ROLE_LOG"
+      failure=1
+    fi
+    rm -f "$ROLE_LOG"
+  else
+    value "Account role permissions" "SKIPPED: Core not active"
+  fi
   # Separate, anonymous in-memory WordPress test. Never creates real users
   # and never reads or prints private cases.
   if [[ "$WP_AVAILABLE" == "YES" ]] && wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
