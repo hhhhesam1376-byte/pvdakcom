@@ -72,6 +72,8 @@ function pvdak_core_dashboard( $atts = array() ) {
         array( 'join-legal-community', 'pvdak_professional_application', 'همکاری با پویش' ),
     );
     foreach ( $services as $service ) {
+        if ( in_array( $service[0], array( 'request-lawyer', 'request-consultation', 'request-question' ), true ) && ! pvdak_core_intake_open() ) { continue; }
+        if ( 'join-legal-community' === $service[0] && ! pvdak_core_member_intake_open() ) { continue; }
         $url = pvdak_core_published_page_link( $service[0], $service[1] );
         if ( $url ) {
             $html .= '<a href="' . esc_url( $url ) . '">' . esc_html( $service[2] ) . '</a>';
