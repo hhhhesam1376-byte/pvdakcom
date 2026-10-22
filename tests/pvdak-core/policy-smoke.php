@@ -57,6 +57,35 @@ function get_posts( $query ) {
     return array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
 }
 
+/**
+ * Fake advisory locks for deterministic policy tests. No DB connection.
+ * This tests lock orchestration, not actual simultaneous MariaDB processes.
+ */
+class PVDak_Test_Lock_DB {
+    public $locks = array();
+    public $deny = false;
+    public function prepare( $sql, ...$args ) {
+        $escaped = array_map( function( $arg ) {
+            return is_string( $arg ) ? "'" . addslashes( $arg ) . "'" : (string) $arg;
+        }, $args );
+        $sql = str_replace( '%s', '%s', $sql );
+        return vsprintf( $sql, $escaped );
+    }
+    public function get_var( $sql ) {
+        if ( preg_match( "/GET_LOCK\\('([^']+)'/", $sql, $matches ) ) {
+            if ( $this->deny || isset( $this->locks[ $matches[1] ] ) ) { return 0; }
+            $this->locks[ $matches[1] ] = true;
+            return 1;
+        }
+        if ( preg_match( "/RELEASE_LOCK\\('([^']+)'/", $sql, $matches ) ) {
+            unset( $this->locks[ $matches[1] ] );
+            return 1;
+        }
+        return null;
+    }
+}
+$GLOBALS['wpdb'] = new PVDak_Test_Lock_DB();
+
 require dirname( __DIR__, 2 ) . '/packages/pvdak-core/pvdak-core.php';
 
 $checks = 0;
@@ -129,4 +158,25 @@ $GLOBALS['pvdak_mock_capacity_limit'] = '0';
 pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Unconfigured capacity defaults to closed instead of unlimited' );
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 pvdak_expect( pvdak_core_capacity_available( 501 ), 'Capacity restores only when both limit and accepting switch are valid' );
+pvdak_expect(
+    pvdak_core_assignment_lock_names( 701, 501 ) === array( 'pvdak:pro:501', 'pvdak:req:701' ),
+    'Request and lawyer locks have deterministic sorted names'
+);
+$inside_locks = false;
+$locked_result = pvdak_core_with_assignment_locks( 701, 501, function () use ( &$inside_locks ) {
+    $inside_locks = count( $GLOBALS['wpdb']->locks ) === 2;
+    return 'ok';
+} );
+pvdak_expect( 'ok' === $locked_result && $inside_locks, 'Both database locks held across decision callback' );
+pvdak_expect( count( $GLOBALS['wpdb']->locks ) === 0, 'Both advisory locks released after normal decision' );
+$GLOBALS['wpdb']->deny = true;
+$callback_invoked = false;
+$denied = pvdak_core_with_assignment_locks( 702, 501, function() use ( &$callback_invoked ) {
+    $callback_invoked = true;
+    return 'unsafe';
+} );
+pvdak_expect( 'lock_unavailable' === $denied && ! $callback_invoked, 'Lock timeout fails closed without writes' );
+$GLOBALS['wpdb']->deny = false;
+pvdak_expect( count( $GLOBALS['wpdb']->locks ) === 0, 'Denied acquisition does not leak advisory locks' );
+pvdak_expect( 'lock_unavailable' === pvdak_core_with_assignment_locks( 0, 501, function() {} ), 'Zero request IDs cannot acquire locks' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";
