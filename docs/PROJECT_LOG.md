@@ -271,3 +271,22 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - **Live WordPress site language has NOT been changed from this connector:** the language migration must be executed once on the cPanel server because it updates the existing WordPress installation and potentially downloads the official translation pack.
 - Browser/mobile and WP admin after-migration RTL checks have NOT been performed; old site cache may still present older assets.
 - No new password, secret, workflow, deployment path or WordPress database reinstall is required.
+
+## 2026-10-22 — CONTENT-ONBOARDING-015 (Theme 0.8.4; Core unchanged 0.8.0)
+
+### Implemented in existing main branch
+- Added an explicit administrator-only, nonce-protected **editorial content starter** in `inc/pvdak-editor-bootstrap.php`, linked to the already-working `محتوای صفحه اصلی` dashboard.
+- The editor can choose to create the published parent Pages `legal-topics` and `legal-faq`, native WordPress post Categories `legal-magazine`, `pvdak-notices` and `pvdak-news`, plus four sample child legal-topic Pages that are **drafts only** (family, property, criminal and contracts).
+- Starter is idempotent: existing Pages, terms, titles, slugs, content, statuses and templates are preserved. It preselects the created sources in corresponding ACF Free fields **only if those selections were previously empty**.
+- No invented legal article content is published. The admin must review titles, editor text, permalink, featured images and publication status.
+- Added WordPress language (`fa_IR`) and RTL CSS checks to the client's existing readiness panel, taking its status rows from 8 to 10.
+- Added 14 isolated PHP assertions for no duplicate pages, preservation of drafts, duplicate categories, empty-only ACF source selections and authorization assumptions in `tests/pvdak-theme/editor-bootstrap-smoke.php`.
+- Existing read-only `scripts/check-pvdak.sh` now requires that smoke test to be present and executes it, prior to WP-CLI runtime checks.
+- Updated `docs/HOMEPAGE_EDITOR_GUIDE.md`, `docs/ACCEPTANCE_TESTS.md`, `README.md`, and theme version to `0.8.4`.
+
+### Validation boundary
+- All GitHub file writes succeeded and re-fetched source passed a **basic structural delimiter scan**.
+- No on-host PHP interpreter tests, WordPress mutation tests or browser visual checks have been performed as part of this turn. The new smoke tests are authored, not reported as passed.
+- WordPress's `fa_IR` setting remains unconfirmed on the server (requires one-time WP-CLI `scripts/set-persian-wordpress.sh --apply --admins` if not already applied).
+- Existing Cron and maintenance mode are unchanged. **PVDak Core is still not confirmed installed/activated on the site**.
+- This phase advances real client operability, but a live acceptance test is needed before the site is treated as ready.
