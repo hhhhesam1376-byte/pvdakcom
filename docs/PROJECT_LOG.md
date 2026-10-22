@@ -184,3 +184,24 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - **No PHP interpreter or live WordPress runtime tests on the production server have been executed in this turn.** Source policy tests have been authored but their pass results are not yet confirmed. The user still needs to run read-only lint and staged acceptance tests after the existing Cron deploy.
 - Core remains uninstalled/unactivated on production; both intake settings are OFF by default. Maintenance mode is unchanged.
 - No automated case matching, verified professional directory, payment or sensitive file upload currently exists. Do not accept real confidential information until privacy/security tests pass.
+
+## 2026-10-22 — LEGAL-REFERRAL-011 (Core 0.5.0; Theme remains 0.8.2)
+
+### Core implementation
+- Added `includes/specialties.php`: sources specialties from published child **WordPress Pages** under the selected legal-landing parent. No custom taxonomy or duplicate content model was introduced.
+- Core resolves landing parent from its own optional setting, then from homepage ACF selection, then from default published `legal-topics` page. The plugin remains functional without the theme or ACF (using the normal Pages fallback).
+- Professional managers can select specialties directly from Page objects and record a separate, audited internal referral-clearance flag. Clearance is not a statement of official license verification; it is never applicant-editable in the public form.
+- Client intake now requires a published legal-topic landing Page ID. The request stores `_pvdak_legal_landing_id`, not a free-form ACF title or duplicated category.
+- Added `includes/assignments.php`: manager-only matching screen and nonce-protected POST action for reviewed cases, filtering professional profiles to approved, manually-cleared **lawyers** with the exact specialty and excluding self-assignment.
+- Successful action writes a unique internal profile reference, updates state to `matched`, and appends audit records. **No case contents, contact details, notifications or file attachments are transmitted to a professional**; this is only internal case assignment.
+- Standard request state editor still cannot select `matched` directly; that state is only reached through guarded matching.
+- Changing a professional's clearance, status or specialties causes any now-ineligible internally matched requests to revert to `review`, deleting their active assignment reference but keeping historical audits.
+- Renamed the client-visible `matched` label to "انتساب داخلی ثبت‌شده" to avoid implying actual lawyer contact or representation.
+- Added a mock WordPress security-policy test suite extension (20 assertions total), checked into `tests/pvdak-core/policy-smoke.php`; these assertions are **not yet executed on host**.
+- Updated docs for client-side review, explicit limitations, and stage acceptance.
+
+### Rollout precautions
+- Source pushed to existing `main` branch. **No new GitHub Actions workflow, Secrets, deploy route or Cron was created.**
+- Existing site cron is known to update the **theme files**. It can bring the `packages/pvdak-core` source alongside the theme, but that does NOT mean PVDak Core is installed/activated as a WordPress plugin. Its independent rollout must wait for PHP lint and staging checks.
+- Request and professional application intake both remain **disabled by default**; public maintenance is unchanged.
+- Live PHP lint, WordPress registration/permissions and end-to-end multi-user testing are not yet confirmed.
