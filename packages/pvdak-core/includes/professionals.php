@@ -2,6 +2,11 @@
 /** Private onboarding applications for legal-community members. No public directory. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+function pvdak_core_member_intake_open() {
+    if ( defined( 'PVDAK_CORE_DISABLE_INTAKE' ) && PVDAK_CORE_DISABLE_INTAKE ) { return false; }
+    return '1' === (string) get_option( 'pvdak_core_member_intake_enabled', '0' );
+}
+
 function pvdak_core_member_types() {
     return array(
         'lawyer' => 'متقاضی عضویت به‌عنوان وکیل',
@@ -42,7 +47,7 @@ function pvdak_core_member_application_form() {
     if ( ! is_user_logged_in() ) {
         return '<p class="pvdak-core-notice">برای درخواست عضویت در جامعه حقوقی ابتدا <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">وارد حساب شوید</a>.</p>';
     }
-    if ( ! pvdak_core_intake_open() ) {
+    if ( ! pvdak_core_member_intake_open() ) {
         return '<p class="pvdak-core-notice">ثبت درخواست همکاری در حال آماده‌سازی است.</p>';
     }
     $existing_id = pvdak_core_existing_application( get_current_user_id() );
@@ -74,7 +79,7 @@ function pvdak_core_member_application_form() {
 add_shortcode( 'pvdak_professional_application', 'pvdak_core_member_application_form' );
 
 function pvdak_core_submit_application() {
-    if ( ! is_user_logged_in() || ! current_user_can( 'read' ) || ! pvdak_core_intake_open() ) {
+    if ( ! is_user_logged_in() || ! current_user_can( 'read' ) || ! pvdak_core_member_intake_open() ) {
         wp_die( 'امکان ثبت درخواست وجود ندارد.', '', array( 'response' => 403 ) );
     }
     check_admin_referer( 'pvdak_core_member_apply', '_pvdak_member_nonce' );
