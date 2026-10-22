@@ -16,6 +16,7 @@ require_once __DIR__ . '/includes/requests.php';
 require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/professionals.php';
 require_once __DIR__ . '/includes/portal.php';
+require_once __DIR__ . '/includes/triage.php';
 
 /**
  * Product roles: never confer professional verification or post-editing rights
