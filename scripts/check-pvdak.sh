@@ -48,13 +48,17 @@ if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
   echo "Homepage configuration:"
   wp option get show_on_front --path="$WP_ROOT"
   wp option get page_on_front --path="$WP_ROOT"
-  if [[ -f "$THEME/scripts/pvdak-wp-preflight.php" ]]; then
-    echo "Read-only WordPress runtime preflight:"
-    wp eval-file "$THEME/scripts/pvdak-wp-preflight.php" --path="$WP_ROOT"
-  else
-    echo "FAIL: required WordPress runtime preflight script is missing" >&2
+  # Cron deliberately excludes private diagnostics from the public theme.
+  # When this checker runs from a private git archive, its sibling script
+  # is the correct, non-public WP-CLI entry point.
+  PRIVATE_SCRIPTS="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  PREFLIGHT="$PRIVATE_SCRIPTS/pvdak-wp-preflight.php"
+  if [[ ! -f "$PREFLIGHT" ]]; then
+    echo "FAIL: required PRIVATE WordPress preflight script is missing at $PREFLIGHT" >&2
     exit 1
   fi
+  echo "Read-only WordPress runtime preflight:"
+  wp eval-file "$PREFLIGHT" --path="$WP_ROOT"
 else
   echo "INFO: WP-CLI or wp-config.php unavailable; WordPress runtime checks skipped."
 fi
