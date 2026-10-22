@@ -51,7 +51,17 @@ function pvdak_core_settings_page() {
     }
     submit_button( 'ذخیره تنظیمات' );
     echo '</form>';
-    echo '<h2>برگه‌های موردنیاز</h2><p>پس از تست، برگه‌های جدا برای هر خدمت ایجاد کنید و یکی از کدهای کوتاه زیر را قرار دهید:</p>';
+    echo '<h2>ساخت برگه‌های خدمات (بدون انتشار عمومی)</h2>';
+    echo '<p>با این دکمه چهار برگه پیش‌نویس برای درخواست وکیل، مشاوره، پرسش حقوقی و پیگیری درخواست‌ها ساخته می‌شود. می‌توانید محتوا و طراحی هر برگه را ویرایش و بعد از آزمون منتشر کنید؛ برگه موجود دوباره ساخته نمی‌شود.</p>';
+    echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
+    echo '<input type="hidden" name="action" value="pvdak_core_create_pages">';
+    wp_nonce_field( 'pvdak_core_create_pages' );
+    submit_button( 'ساخت برگه‌های آزمایشی به‌صورت پیش‌نویس', 'secondary' );
+    echo '</form>';
+    if ( isset( $_GET['pvdak_pages'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['pvdak_pages'] ) ) ) {
+        echo '<div class="notice notice-success inline"><p>برگه‌ها بررسی و در صورت نیاز به‌صورت پیش‌نویس ساخته شدند. برای مشاهده به بخش برگه‌ها بروید.</p></div>';
+    }
+    echo '<h2>برگه‌های موردنیاز</h2><p>هر برگه از یکی از کدهای کوتاه زیر استفاده می‌کند:</p>';
     echo '<p><code>[pvdak_request_form type="lawyer"]</code>، <code>[pvdak_request_form type="consultation"]</code>، <code>[pvdak_request_form type="question"]</code></p>';
     echo '<p>پنل پیگیری درخواست‌های شخصی: <code>[pvdak_my_requests]</code></p>';
     echo '<p>وقتی برگه‌ها تست شدند، لینک‌های سه خدمت را در منوی «محتوای صفحه اصلی» قالب روی همان برگه‌ها قرار دهید.</p>';
@@ -95,3 +105,35 @@ function pvdak_core_assets() {
     }
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_core_assets' );
+
+
+/** One-click draft service pages: safe to repeat, never overwrite content. */
+function pvdak_core_default_service_pages() {
+    return array(
+        'request-lawyer' => array( 'درخواست وکیل', '[pvdak_request_form type="lawyer"]' ),
+        'request-consultation' => array( 'درخواست مشاوره حقوقی', '[pvdak_request_form type="consultation"]' ),
+        'request-question' => array( 'پرسش حقوقی', '[pvdak_request_form type="question"]' ),
+        'my-legal-requests' => array( 'درخواست‌های من', '[pvdak_my_requests]' ),
+    );
+}
+function pvdak_core_create_service_pages() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
+    }
+    check_admin_referer( 'pvdak_core_create_pages' );
+    foreach ( pvdak_core_default_service_pages() as $slug => $item ) {
+        $existing = get_page_by_path( $slug, OBJECT, 'page' );
+        if ( $existing ) { continue; }
+        wp_insert_post( array(
+            'post_type' => 'page',
+            'post_status' => 'draft',
+            'post_title' => $item[0],
+            'post_name' => $slug,
+            'post_content' => $item[1],
+            'post_author' => get_current_user_id(),
+        ) );
+    }
+    wp_safe_redirect( admin_url( 'options-general.php?page=pvdak-core&pvdak_pages=1' ) );
+    exit;
+}
+add_action( 'admin_post_pvdak_core_create_pages', 'pvdak_core_create_service_pages' );
