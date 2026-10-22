@@ -157,3 +157,44 @@ function pvdak_core_assignment_link_html( $post ) {
     $url = admin_url( 'admin.php?page=pvdak-assign-request&request_id=' . $post->ID );
     echo '<p><a class="button button-secondary" href="' . esc_url( $url ) . '">مدیریت ارجاع داخلی</a></p>';
 }
+
+/**
+ * When admin retracts the internal clearance, changes the approved role, or
+ * removes a specialty, previously internally matched cases return to review.
+ * Case contents remain private; historical assignment evidence is retained.
+ */
+function pvdak_core_recheck_assigned_professional( $profile_id ) {
+    if ( ! current_user_can( 'edit_post', $profile_id ) ||
+         'pvdak_professional' !== get_post_type( $profile_id ) ) { return; }
+    $requests = get_posts( array(
+        'post_type' => 'pvdak_request',
+        'post_status' => 'private',
+        'posts_per_page' => -1,
+        'meta_key' => '_pvdak_assigned_profile_id',
+        'meta_value' => (int) $profile_id,
+    ) );
+    foreach ( $requests as $request ) {
+        $topic = absint( get_post_meta( $request->ID, '_pvdak_legal_landing_id', true ) );
+        $type = get_post_meta( $request->ID, '_pvdak_request_type', true );
+        if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) ) { continue; }
+        // The audit log records why a once-eligible assignment was removed.
+        $previous = get_post_meta( $request->ID, '_pvdak_request_state', true );
+        delete_post_meta( $request->ID, '_pvdak_assigned_profile_id', $profile_id );
+        if ( 'matched' === $previous ) {
+            update_post_meta( $request->ID, '_pvdak_request_state', 'review' );
+            add_post_meta( $request->ID, '_pvdak_state_audit', array(
+                'from' => 'matched', 'to' => 'review', 'by' => get_current_user_id(),
+                'at' => current_time( 'mysql', true ), 'reason' => 'eligibility_revoked',
+            ), false );
+        }
+        add_post_meta( $request->ID, '_pvdak_assignment_audit', array(
+            'profile_id' => (int) $profile_id,
+            'by' => get_current_user_id(),
+            'at' => current_time( 'mysql', true ),
+            'action' => 'eligibility_revoked',
+            'scope' => 'internal_only',
+        ), false );
+    }
+}
+// Run AFTER the separate administrative status and specialty save handlers.
+add_action( 'save_post_pvdak_professional', 'pvdak_core_recheck_assigned_professional', 30 );
