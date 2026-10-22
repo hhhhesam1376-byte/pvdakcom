@@ -70,6 +70,7 @@ function pvdak_core_dashboard( $atts = array() ) {
         array( 'request-question', 'pvdak_request_form', 'پرسش حقوقی' ),
         array( 'my-legal-requests', 'pvdak_my_requests', 'همه درخواست‌های من' ),
         array( 'join-legal-community', 'pvdak_professional_application', 'همکاری با پویش' ),
+        array( 'my-professional-account', 'pvdak_professional_dashboard', 'پنل همکاری من' ),
     );
     foreach ( $services as $service ) {
         if ( in_array( $service[0], array( 'request-lawyer', 'request-consultation', 'request-question' ), true ) && ! pvdak_core_intake_open() ) { continue; }
