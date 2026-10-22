@@ -37,6 +37,10 @@ function get_post_status( $id ) { return in_array( (int) $id, array( 501, 502 ),
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
 $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'approved';
+$GLOBALS['pvdak_mock_license_status'] = 'checked';
+$GLOBALS['pvdak_mock_license_method'] = 'official_source';
+$GLOBALS['pvdak_mock_license_expiry'] = '2099-12-31';
+$GLOBALS['pvdak_mock_license_reviewer'] = 10;
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 $GLOBALS['pvdak_mock_accepting'] = '1';
 $GLOBALS['pvdak_mock_active_count'] = 1;
@@ -45,10 +49,18 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
     if ( '_pvdak_member_type' === $key ) { return (int) $id === 501 ? 'lawyer' : 'student'; }
+    if ( '_pvdak_license_review_status' === $key ) { return $GLOBALS['pvdak_mock_license_status']; }
+    if ( '_pvdak_license_review_method' === $key ) { return $GLOBALS['pvdak_mock_license_method']; }
+    if ( '_pvdak_license_review_expires' === $key ) { return $GLOBALS['pvdak_mock_license_expiry']; }
+    if ( '_pvdak_license_review_by' === $key ) { return $GLOBALS['pvdak_mock_license_reviewer']; }
     if ( '_pvdak_capacity_limit' === $key ) { return $GLOBALS['pvdak_mock_capacity_limit']; }
     if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
     if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
     return '';
+}
+function current_time( $format ) { return '2026-10-22'; }
+function wp_checkdate( $month, $day, $year, $source_date ) {
+    return checkdate( $month, $day, $year );
 }
 function get_posts( $query ) {
     if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
@@ -179,4 +191,18 @@ pvdak_expect( 'lock_unavailable' === $denied && ! $callback_invoked, 'Lock timeo
 $GLOBALS['wpdb']->deny = false;
 pvdak_expect( count( $GLOBALS['wpdb']->locks ) === 0, 'Denied acquisition does not leak advisory locks' );
 pvdak_expect( 'lock_unavailable' === pvdak_core_with_assignment_locks( 0, 501, function() {} ), 'Zero request IDs cannot acquire locks' );
+pvdak_expect( pvdak_core_license_review_current( 501 ), 'Time-limited staff review is valid with source, reviewer and expiry' );
+$GLOBALS['pvdak_mock_license_status'] = 'pending';
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Pending license review blocks internal matching' );
+$GLOBALS['pvdak_mock_license_status'] = 'checked';
+$GLOBALS['pvdak_mock_license_method'] = 'document_review';
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Initial document review is insufficient for referral' );
+$GLOBALS['pvdak_mock_license_method'] = 'official_source';
+$GLOBALS['pvdak_mock_license_expiry'] = '2020-01-01';
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Expired independent review blocks referral' );
+$GLOBALS['pvdak_mock_license_expiry'] = '2099-12-31';
+$GLOBALS['pvdak_mock_license_reviewer'] = 0;
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Review without accountable manager is invalid' );
+$GLOBALS['pvdak_mock_license_reviewer'] = 10;
+pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Eligible lawyer can be matched only after independent current review' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";
