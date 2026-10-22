@@ -68,14 +68,14 @@ function pvdak_core_handle_request() {
         wp_die( 'ثبت درخواست در دسترس نیست.', '', array( 'response' => 403 ) );
     }
     check_admin_referer( 'pvdak_core_submit_request', '_pvdak_nonce' );
-    $type = isset( $_POST['pvdak_type'] ) ? sanitize_key( wp_unslash( $_POST['pvdak_type'] ) ) : '';
+    $type = isset( $_POST['pvdak_type'] ) && is_string( $_POST['pvdak_type'] ) ? sanitize_key( wp_unslash( $_POST['pvdak_type'] ) ) : '';
     $types = pvdak_core_request_types();
     $title = isset( $_POST['pvdak_title'] ) && is_string( $_POST['pvdak_title'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_title'] ) ) : '';
     $description = isset( $_POST['pvdak_description'] ) && is_string( $_POST['pvdak_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_description'] ) ) : '';
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
-    $consent = isset( $_POST['pvdak_consent'] ) && '1' === (string) wp_unslash( $_POST['pvdak_consent'] );
+    $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
     if ( ! $consent || ! isset( $types[ $type ] ) || '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
         exit;
