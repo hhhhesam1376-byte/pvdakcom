@@ -250,3 +250,24 @@ The owner correctly identified that the earlier site was a visually dynamic them
 3. Build document management with strictly controlled private storage and retention/deletion rules.
 4. Complete authenticated inter-party messaging and role-specific workflow without exposing claimant details before authorized release.
 5. Integrate role-specific content, editorial landing Pages, subscriptions and handover acceptance checks as separate milestones.
+
+## 2026-10-22 — PERSIAN-RTL-014 (Theme 0.8.3; Core remains 0.8.0)
+
+### User-reported defects
+1. WordPress site administration had been left in English after installation.
+2. The theme was not rendered consistently right-to-left.
+
+### GitHub changes
+- New, explicitly loaded `rtl.css`: global RTL direction and scoped layouts for header/navigation, homepage, legal landing pages, forms, magazine/news/FAQ/footer and mobile. Kept code and Latin/URL fields readable in LTR.
+- `header.php` now emits `<html lang="fa-IR" dir="rtl">` consistently, regardless of the previously English WordPress installation.
+- `functions.php` explicitly enqueues `rtl.css` after `style.css` even when WordPress locale remains `en_US`; theme bumped to `0.8.3`.
+- New `scripts/set-persian-wordpress.sh` checks current locale without writes by default; with `--apply` installs the official `fa_IR` core pack as needed and switches the site locale via WP-CLI. Optional `--admins` changes only administrator user profiles explicitly pinned to `en_US` (preserving other personal preferences).
+- Existing `scripts/check-pvdak.sh` now fails if the new RTL stylesheet/enqueue or Persian HTML attributes are missing, and WP-CLI preflight checks/theme version are updated; locale mismatch is reported as a warning until the dedicated migration is applied.
+- Added `docs/PERSIAN_RTL_SETUP.md` with one-time host operation, read-only checks and mobile/desktop visual acceptance steps. Updated README.
+- Left existing Cron, GitHub Actions, maintenance artwork/page and Core integration unchanged.
+
+### Verification boundary
+- GitHub writes succeeded. Source integrity to be re-read after the change.
+- **Live WordPress site language has NOT been changed from this connector:** the language migration must be executed once on the cPanel server because it updates the existing WordPress installation and potentially downloads the official translation pack.
+- Browser/mobile and WP admin after-migration RTL checks have NOT been performed; old site cache may still present older assets.
+- No new password, secret, workflow, deployment path or WordPress database reinstall is required.
