@@ -3,6 +3,14 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_core_register_settings() {
+    register_setting( 'pvdak_core_settings', 'pvdak_core_landing_parent_id', array(
+        'type' => 'integer',
+        'default' => 0,
+        'sanitize_callback' => function( $value ) {
+            $page_id = absint( $value );
+            return ( $page_id && 'page' === get_post_type( $page_id ) ) ? $page_id : 0;
+        },
+    ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_intake_enabled', array(
         'type' => 'string',
         'default' => '0',
@@ -42,12 +50,30 @@ function pvdak_core_settings_page() {
         'ثبت سه نوع درخواست' => 'فرم پایه فقط برای کاربران واردشده، پشت کلید فعال‌سازی',
         'مدیریت درخواست‌ها' => 'فقط مدیر، ثبت وضعیت و تاریخچه تغییر وضعیت',
         'درخواست‌های من' => 'فقط درخواست‌های کاربر واردشده',
+        'تخصص‌های حقوقی' => 'انتخاب برگه لندینگ واقعی برای هر متخصص',
+        'صلاحیت ارجاع داخلی' => 'تأیید دستی مجزا از درخواست عضویت و تأیید اداری',
+        'ارجاع کنترل‌شده' => 'فقط به وکیل دارای وضعیت داخلی مجاز و تخصص مرتبط، بدون ارسال اطلاعات در این نسخه',
         'مدارک، ارجاع، سهمیه، پرداخت و انجمن' => 'هنوز پیاده‌سازی نشده',
     );
     foreach( $items as $name => $status ) {
         echo '<tr><th scope="row">' . esc_html( $name ) . '</th><td>' . esc_html( $status ) . '</td></tr>';
     }
     echo '</tbody></table>';
+    echo '<h2>موضوعات حقوقی (برگه‌های لندینگ)</h2>';
+    echo '<p>همان برگه مادر صفحه اصلی را انتخاب کنید؛ حوزه‌های تخصصی، موضوع درخواست‌ها و تطبیق داخلی همگی به برگه‌های فرزند منتشرشده این صفحه متصل می‌شوند.</p>';
+    echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '">';
+    settings_fields( 'pvdak_core_settings' );
+    echo wp_dropdown_pages( array(
+        'name' => 'pvdak_core_landing_parent_id',
+        'id' => 'pvdak_core_landing_parent_id',
+        'selected' => absint( get_option( 'pvdak_core_landing_parent_id', 0 ) ),
+        'show_option_none' => 'انتخاب برگه مادر',
+        'option_none_value' => 0,
+        'echo' => 0,
+    ) );
+    echo '<p class="description">اگر خالی باشد، برگه با نشانی legal-topics استفاده می‌شود.</p>';
+    submit_button( 'ذخیره برگه مادر حقوقی' );
+    echo '</form>';
     echo '<h2>کنترل پذیرش درخواست</h2>';
     echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '">';
     settings_fields( 'pvdak_core_settings' );
