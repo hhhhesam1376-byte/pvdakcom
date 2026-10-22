@@ -62,7 +62,7 @@ function pvdak_core_settings_page() {
     submit_button( 'ذخیره تنظیمات' );
     echo '</form>';
     echo '<h2>ساخت برگه‌های خدمات (بدون انتشار عمومی)</h2>';
-    echo '<p>با این دکمه پنج برگه پیش‌نویس برای درخواست وکیل، مشاوره، پرسش حقوقی و پیگیری درخواست‌ها ساخته می‌شود. می‌توانید محتوا و طراحی هر برگه را ویرایش و بعد از آزمون منتشر کنید؛ برگه موجود دوباره ساخته نمی‌شود.</p>';
+    echo '<p>با این دکمه شش برگه پیش‌نویس برای درخواست وکیل، مشاوره، پرسش حقوقی و پیگیری درخواست‌ها ساخته می‌شود. می‌توانید محتوا و طراحی هر برگه را ویرایش و بعد از آزمون منتشر کنید؛ برگه موجود دوباره ساخته نمی‌شود.</p>';
     echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
     echo '<input type="hidden" name="action" value="pvdak_core_create_pages">';
     wp_nonce_field( 'pvdak_core_create_pages' );
@@ -75,6 +75,7 @@ function pvdak_core_settings_page() {
     echo '<p><code>[pvdak_request_form type="lawyer"]</code>، <code>[pvdak_request_form type="consultation"]</code>، <code>[pvdak_request_form type="question"]</code></p>';
     echo '<p>پنل پیگیری درخواست‌های شخصی: <code>[pvdak_my_requests]</code></p>';
     echo '<p>فرم عضویت جامعه حقوقی: <code>[pvdak_professional_application]</code></p>';
+    echo '<p>داشبورد شخصی کاربران: <code>[pvdak_account_dashboard]</code></p>';
     echo '<p>وقتی برگه‌ها تست شدند، لینک‌های سه خدمت را در منوی «محتوای صفحه اصلی» قالب روی همان برگه‌ها قرار دهید.</p>';
     echo '</div>';
 }
@@ -111,7 +112,8 @@ function pvdak_core_assets() {
     if ( $post instanceof WP_Post && (
         has_shortcode( $post->post_content, 'pvdak_request_form' ) ||
         has_shortcode( $post->post_content, 'pvdak_my_requests' ) ||
-        has_shortcode( $post->post_content, 'pvdak_professional_application' )
+        has_shortcode( $post->post_content, 'pvdak_professional_application' ) ||
+        has_shortcode( $post->post_content, 'pvdak_account_dashboard' )
     ) ) {
         wp_enqueue_style( 'pvdak-core', plugins_url( 'assets/forms.css', PVDAK_CORE_PLUGIN_FILE ), array(), PVDAK_CORE_VERSION );
     }
@@ -127,6 +129,7 @@ function pvdak_core_default_service_pages() {
         'request-question' => array( 'پرسش حقوقی', '[pvdak_request_form type="question"]' ),
         'my-legal-requests' => array( 'درخواست‌های من', '[pvdak_my_requests]' ),
         'join-legal-community' => array( 'همکاری با پویش وکلا', '[pvdak_professional_application]' ),
+        'my-pvdak-account' => array( 'پنل کاربری پویش', '[pvdak_account_dashboard]' ),
     );
 }
 function pvdak_core_create_service_pages() {
