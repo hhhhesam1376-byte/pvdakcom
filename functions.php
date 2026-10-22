@@ -32,6 +32,8 @@ require_once get_template_directory() . '/inc/pvdak-home-acf.php';
 require_once get_template_directory() . '/inc/pvdak-legal-landings.php';
 require_once get_template_directory() . '/inc/pvdak-home-collections.php';
 require_once get_template_directory() . '/inc/pvdak-home-readiness.php';
+// Optional admin starter: native Page and Post Category content structure.
+require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
