@@ -88,7 +88,7 @@ function pvdak_core_submit_application() {
     $name = isset( $_POST['pvdak_member_name'] ) && is_string( $_POST['pvdak_member_name'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_member_name'] ) ) : '';
     $city = isset( $_POST['pvdak_member_city'] ) && is_string( $_POST['pvdak_member_city'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_member_city'] ) ) : '';
     $about = isset( $_POST['pvdak_member_about'] ) && is_string( $_POST['pvdak_member_about'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_member_about'] ) ) : '';
-    $consent = isset( $_POST['pvdak_consent'] ) && '1' === (string) wp_unslash( $_POST['pvdak_consent'] );
+    $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
     if ( ! $consent || ! isset( $types[ $type ] ) || ! $name || ! $city || ! $about || strlen( $name ) > 450 || strlen( $city ) > 360 || strlen( $about ) > 6400 ) {
         wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) ) );
         exit;
