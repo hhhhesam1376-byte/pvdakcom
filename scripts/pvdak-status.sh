@@ -3,18 +3,18 @@
 # Usage: bash scripts/pvdak-status.sh [--test]
 # Reports versions without exposing passwords, tokens, account data or case data.
 set -u
-MODE="\${1:-}"
+MODE="${1:-}"
 if [[ -n "$MODE" && "$MODE" != "--test" ]] || [[ $# -gt 1 ]]; then
   echo "USAGE: bash pvdak-status.sh [--test]" >&2
   exit 2
 fi
 
-WP_ROOT="\${PVDAK_WP_ROOT:-$HOME/public_html}"
-THEME="\${PVDAK_THEME_PATH:-$WP_ROOT/wp-content/themes/pvdakcom-main}"
+WP_ROOT="${PVDAK_WP_ROOT:-$HOME/public_html}"
+THEME="${PVDAK_THEME_PATH:-$WP_ROOT/wp-content/themes/pvdakcom-main}"
 CORE_SOURCE="$THEME/packages/pvdak-core"
 CORE_INSTALLED="$WP_ROOT/wp-content/plugins/pvdak-core"
 NOW="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-SCRIPTS="$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 safe_version() {
   local filepath="$1" expression="$2" result
@@ -100,7 +100,7 @@ fi
 if command -v git >/dev/null 2>&1 && [[ -d "$HOME/repositories/pvdakcom/.git" ]]; then
   # This is the local CHECKOUT, not proof that the site is deployed at this SHA.
   sha="$(git -C "$HOME/repositories/pvdakcom" rev-parse --short=12 HEAD 2>/dev/null)"
-  value "Repository checkout SHA" "\${sha:-UNKNOWN} (not deployment proof)"
+  value "Repository checkout SHA" "${sha:-UNKNOWN} (not deployment proof)"
 else
   value "Repository checkout SHA" "NOT_AVAILABLE"
 fi
