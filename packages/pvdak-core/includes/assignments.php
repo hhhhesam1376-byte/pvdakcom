@@ -92,6 +92,44 @@ function pvdak_core_assignment_admin_page() {
     echo '</form></div>';
 }
 
+/**
+ * A single atomic decision is protected by DB advisory locks on the request
+ * AND the professional. Every validation is repeated *after* taking the locks.
+ */
+function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
+    pvdak_core_refresh_assignment_meta( $request_id, $profile_id );
+    $landing_id = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
+    $type = get_post_meta( $request_id, '_pvdak_request_type', true );
+    if ( 'pvdak_request' !== get_post_type( $request_id ) ||
+         'private' !== get_post_status( $request_id ) ||
+         'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ||
+         get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ||
+         ! pvdak_core_profile_referral_eligible( $profile_id, $landing_id, $type ) ||
+         (int) get_post_field( 'post_author', $request_id ) === (int) get_post_field( 'post_author', $profile_id ) ||
+         ! pvdak_core_capacity_available( $profile_id ) ) {
+        return 'invalid';
+    }
+    // A unique key by itself is not a database unique constraint. The
+    // advisory request lock is what serializes competing managers here.
+    if ( ! add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true ) ) {
+        return 'duplicate';
+    }
+    if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'matched' ) ) {
+        delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
+        return 'write_failed';
+    }
+    add_post_meta( $request_id, '_pvdak_state_audit', array(
+        'from' => 'review', 'to' => 'matched', 'by' => get_current_user_id(),
+        'at' => current_time( 'mysql', true ),
+    ), false );
+    add_post_meta( $request_id, '_pvdak_assignment_audit', array(
+        'profile_id' => $profile_id, 'landing_id' => $landing_id,
+        'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
+        'scope' => 'internal_only',
+    ), false );
+    return 'ok';
+}
+
 function pvdak_core_assign_request() {
     if ( ! current_user_can( 'edit_pvdak_requests' ) ) {
         wp_die( 'مجوز کافی نیست.', '', array( 'response' => 403 ) );
@@ -105,33 +143,16 @@ function pvdak_core_assign_request() {
         wp_die( 'ورودی نامعتبر است.', '', array( 'response' => 403 ) );
     }
     check_admin_referer( 'pvdak_assign_' . $request_id );
-    $landing_id = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
-    $type = get_post_meta( $request_id, '_pvdak_request_type', true );
     $return = admin_url( 'admin.php?page=pvdak-assign-request&request_id=' . $request_id );
-    if ( 'private' !== get_post_status( $request_id ) ||
-         'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ||
-         get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ||
-         ! pvdak_core_profile_referral_eligible( $profile_id, $landing_id, $type ) ||
-         ! pvdak_core_capacity_available( $profile_id ) ||
-         (int) get_post_field( 'post_author', $request_id ) === (int) get_post_field( 'post_author', $profile_id ) ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_assignment_error', 'invalid', $return ) );
+    $result = pvdak_core_with_assignment_locks( $request_id, $profile_id, function () use ( $request_id, $profile_id ) {
+        return pvdak_core_assign_request_decision( $request_id, $profile_id );
+    } );
+    if ( 'ok' !== $result ) {
+        $result = in_array( $result, array( 'invalid', 'duplicate', 'lock_unavailable', 'write_failed' ), true ) ?
+            $result : 'write_failed';
+        wp_safe_redirect( add_query_arg( 'pvdak_assignment_error', $result, $return ) );
         exit;
     }
-    // A unique meta key guards against a second assignment by another manager.
-    if ( ! add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true ) ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_assignment_error', 'duplicate', $return ) );
-        exit;
-    }
-    update_post_meta( $request_id, '_pvdak_request_state', 'matched' );
-    add_post_meta( $request_id, '_pvdak_state_audit', array(
-        'from' => 'review', 'to' => 'matched', 'by' => get_current_user_id(),
-        'at' => current_time( 'mysql', true ),
-    ), false );
-    add_post_meta( $request_id, '_pvdak_assignment_audit', array(
-        'profile_id' => $profile_id, 'landing_id' => $landing_id,
-        'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
-        'scope' => 'internal_only',
-    ), false );
     wp_safe_redirect( $return );
     exit;
 }
