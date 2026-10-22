@@ -225,3 +225,28 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Core 0.6.0 is not confirmed installed/active in WordPress. On-host PHP lint, policy suite execution, real WordPress role isolation, form handling, no-cache behavior and referral concurrency tests remain pending.
 - Production intake remains disabled by default, and the maintenance page remains unchanged.
 
+## 2026-10-22 — PHASE1-CORE-SAFETY-013 (Core 0.8.0; Theme 0.8.2)
+
+### Executed on GitHub main
+- Added an explicit, separate **MariaDB/MySQL named-lock** module `packages/pvdak-core/includes/assignment-locks.php`. A referral now locks both request and professional in deterministic order, repeats eligibility and capacity checks inside the locks, fails closed on unavailable lock, and releases acquired locks via `finally`.
+- Capacity query now disables WP_Query result caching and refreshes request meta-cache for each case before computing current workload.
+- Professional clearance/specification revocation review also uses the matching request/professional locks. If a lock cannot be acquired, an internal private warning record is left for staff follow-up.
+- Added manager-facing distinctions for lock contention versus invalid/missing eligibility.
+- Added `includes/license-review.php`: a strictly administrative and expiring professional review record (source method, reviewer, expiry, audit); **no automatic authoritative verification or public certificate is claimed**.
+- Internal assignment eligibility now requires three independent controls: approved membership, explicit internal referral clearance, and a current official-source review recorded by a manager. A missing/expired review fails closed.
+- Added WP-CLI live preflight `scripts/pvdak-wp-preflight.php`: read-only checks of site theme version, ACF, front-page configuration, private CPTs and role permissions. Wired into existing `scripts/check-pvdak.sh`.
+- Strengthened `scripts/check-pvdak-core.sh` so the required policy test cannot be silently skipped. Expanded `tests/pvdak-core/policy-smoke.php` to **40 synthetic assertions**, including lock order, contention failure, expiry, validation method, staff reviewer and capacity.
+- Version changed to `Core 0.8.0`; theme remains `0.8.2`. No changes to the existing GitHub Actions, cPanel Cron, server settings, maintenance mode or live intake toggles.
+
+### Verification status
+- GitHub source writes and connector re-reads have succeeded. A lightweight PHP bracket/string-structure scan found no mismatched delimiters in inspected modules.
+- **Not yet done:** `php -l`, execution of 40 synthetic tests with real PHP interpreter on server, live WordPress staging permission/API checks, concurrency simulation using two MariaDB sessions, backup restore rehearsal, and browser testing. No claim of deployed/activated Core.
+- Current site Cron delivers the theme source, but it does **not** install/activate the Core plugin in WordPress. It has not been modified.
+- Real legal data intake must stay disabled until independent privacy, role and staging tests pass.
+
+### Next implementation priorities
+1. Run read-only host checks and staging tests; ensure lock behavior is as expected with two real database connections.
+2. Complete formal professional verification workflow: staff review evidence policy, expiry/re-review, revocation reporting and user-safe status labels.
+3. Build document management with strictly controlled private storage and retention/deletion rules.
+4. Complete authenticated inter-party messaging and role-specific workflow without exposing claimant details before authorized release.
+5. Integrate role-specific content, editorial landing Pages, subscriptions and handover acceptance checks as separate milestones.
