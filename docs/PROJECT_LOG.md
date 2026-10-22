@@ -145,3 +145,21 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - New script `scripts/check-pvdak-core.sh`: read-only PHP lint/plugin status checker; added updated README for Core 0.3.
 - Theme version bumped to 0.8.0. Plugin source not installed; no public intake live.
 - **Not yet verified:** real PHP lint from deployed release, WordPress Core plugin activation, proper owner-only CPT retrieval, CSRF rejection, private permission isolation and browser/mobile acceptance. Do not enable intake in production until these pass.
+
+## 2026-10-22 — PRODUCT-OPERATIONS-009 (Theme 0.8.1 / Core 0.3.0)
+- Added `[pvdak_professional_application]` private role-claim onboarding for lawyers, trainees and students; applications do not grant verified rights or public listings.
+- Added independent toggles for legal-case intake and professional-member intake, both initially OFF; emergency `PVDAK_CORE_DISABLE_INTAKE` is a shared kill switch.
+- Added explicit consent requirement and scalar input validation on both forms. Prevented automatic file uploads and unnecessary private revisions.
+- Added administrator status-review meta boxes, audit history for requests and applications and list columns for review queues.
+- Added five safe draft service pages via admin control, without altering pages that already exist.
+- Added `inc/pvdak-home-readiness.php`: client-facing homepage readiness and direct admin next actions (eight checks).
+- Changed three legal service CTAs and professional join CTA to resolve published workflow pages automatically when the respective Core intake feature is enabled. Manually configured ACF URL still wins.
+- Changed the four shortcut cards below Hero to a **native WordPress navigation menu location**, retaining a noneditable legacy fallback until the client assigns a menu; removed seven repetitive ACF input fields.
+- Added `scripts/install-pvdak-core.sh` (default dry-run, explicit install only, never activates plugin) and `scripts/check-pvdak-core.sh` for PHP lint/installation status.
+- Added `docs/ACCEPTANCE_TESTS.md` with independent security/privacy, content, UX and role-access criteria.
+- README for PVDak Core documents explicit opt-in, draft pages, current limitations and required staging work.
+
+### Verification gate
+- GitHub source writes and reference consistency checks succeeded.
+- **No live php -l, WordPress form submission, role isolation test or Core activation completed**. Core is source code only until installed and enabled by an authorized operator. Production intake should remain OFF. The maintenance screen remains configured.
+- Next step: deploy theme 0.8.1 via existing `deploy.sh` and perform `scripts/check-pvdak.sh`; run Core read-only lint and staged tests independently before enabling.
