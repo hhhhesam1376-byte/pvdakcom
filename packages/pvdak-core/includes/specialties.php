@@ -11,6 +11,16 @@ function pvdak_core_landing_parent_id() {
     if ( $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) {
         return $id;
     }
+    // If the theme's ACF home editor already chooses a root, reuse it.
+    // The Core plugin does not require the theme or ACF to be active.
+    if ( function_exists( 'get_field' ) ) {
+        $front_id = absint( get_option( 'page_on_front' ) );
+        $acf_page = $front_id ? get_field( 'legal_topics_parent_page', $front_id ) : 0;
+        $acf_id = $acf_page instanceof WP_Post ? (int) $acf_page->ID : absint( $acf_page );
+        if ( $acf_id && 'page' === get_post_type( $acf_id ) && 'publish' === get_post_status( $acf_id ) ) {
+            return $acf_id;
+        }
+    }
     $default = get_page_by_path( 'legal-topics', OBJECT, 'page' );
     return $default && 'publish' === $default->post_status ? (int) $default->ID : 0;
 }
