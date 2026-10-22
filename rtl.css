@@ -168,3 +168,6 @@ input, textarea, select {
     min-width: 0;
   }
 }
+
+/* Author display styles must not override native hidden state. */
+.pvdak-home-topic[hidden] { display: none !important; }
