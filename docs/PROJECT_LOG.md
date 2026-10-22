@@ -205,3 +205,23 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Existing site cron is known to update the **theme files**. It can bring the `packages/pvdak-core` source alongside the theme, but that does NOT mean PVDak Core is installed/activated as a WordPress plugin. Its independent rollout must wait for PHP lint and staging checks.
 - Request and professional application intake both remain **disabled by default**; public maintenance is unchanged.
 - Live PHP lint, WordPress registration/permissions and end-to-end multi-user testing are not yet confirmed.
+
+## 2026-10-22 — CAPACITY-PORTAL-012 (Core 0.6.0 / Theme unchanged 0.8.2)
+
+### GitHub updates
+- Created `packages/pvdak-core/includes/capacity.php`, loaded from Core bootstrap.
+- Administrators can set per-professional limits 0–25 and independently switch **accepting new internal assignments** on/off. Both are OFF by default; zero does not mean unlimited. Audit entries record capacity changes.
+- Active workload is based on internally matched/answered private requests only, excluding closed items. Lowering the limit pauses future referrals without deleting existing assignments.
+- Candidate lists and final assignment POST both re-check capacity, specialty, internal professional clearance and request state. **This is not a transaction-safe capacity guarantee under concurrent managers**; race-condition testing/locking remains mandatory before live use.
+- Created `packages/pvdak-core/includes/professional-portal.php`: private `[pvdak_professional_dashboard]` displays the signed-in user's own application review, public landing-topic labels and **aggregate** capacity counts, but no case texts, names, files or claimant contacts.
+- Core admin can create a seventh service page `my-professional-account` as DRAFT; page also appears in signed-in account shortcut panel when published. Personal dashboard uses existing nocache/noindex helpers.
+- Fixed a previous settings coupling bug: the legal landing parent option now uses a separate Settings API group from the intake toggles, preventing accidental reset of unrelated options.
+- Extended `tests/pvdak-core/policy-smoke.php` from 20 to 28 synthetic policy checks including "full capacity", "paused accepting", zero default and candidate filtering.
+- Updated Core README, administrator capability list, acceptance test checklist, version metadata and source comments.
+
+### Deployment and remaining testing
+- Code changes committed directly to the existing `main` branch, without new GitHub Actions, secrets or Cron changes.
+- Existing Cron deploy handles theme deployment; it **does not by itself activate the plugin** from `packages/pvdak-core`.
+- Core 0.6.0 is not confirmed installed/active in WordPress. On-host PHP lint, policy suite execution, real WordPress role isolation, form handling, no-cache behavior and referral concurrency tests remain pending.
+- Production intake remains disabled by default, and the maintenance page remains unchanged.
+
