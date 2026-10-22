@@ -395,3 +395,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - The site language may be set with existing private `scripts/set-persian-wordpress.sh --apply` (without `--admins`, which would change admin profile language overrides). After creating the legal parent, the preflight may show **a new warning** (`At least one published legal landing exists`) until an editor legitimately publishes a completed child landing; do not publish placeholder legal articles simply to silence diagnostics.
 - Remaining work: real client/lawyer account isolation with dedicated safe test accounts on an isolated stage, MariaDB concurrent assignment, privacy/retention E2E. Do not enable either intake or disable maintenance merely due to passing read-only checks.
 
+## 2026-10-22 — FA_IR_INSTALL_NETWORK_TIMEOUT-029 (user-reported host)
+- WordPress Persian language installation `wp language core install fa_IR --path="$HOME/public_html"` failed with `cURL error 28: Operation timed out after 3000 milliseconds with 0 bytes received` while contacting WordPress.org.
+- A subsequent guarded retry with temporary HTTP timeout filter returned no output; explicit status probes showed `wp language core is-installed fa_IR` exit **1**, `WPLANG` value **empty** with exit 0, and runtime `get_locale()` still **en_US**. **Persian translation is NOT installed; do not claim otherwise.** The previous `wp site switch-language` stage did not complete.
+- Next: read-only remote network checks on `api.wordpress.org` and `downloads.wordpress.org` (and an explicit WordPress HTTP GET with longer timeout) to isolate outgoing network vs WP PHP transport. Do not reset WordPress, modify resolver/firewall, download unverified translations or create alternate deployment flows.
+- All other previously validated PVDak Core 0.8.0 PASS results stand; maintenance ON and intake default OFF. Legal topic parent remains unconfigured pending separate editorial initializer action.
+
