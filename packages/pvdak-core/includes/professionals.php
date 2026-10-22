@@ -20,6 +20,10 @@ function pvdak_core_member_states() {
 }
 
 function pvdak_core_existing_application( $user_id ) {
+    $linked = absint( get_user_meta( $user_id, '_pvdak_core_application', true ) );
+    if ( $linked && 'pvdak_professional' === get_post_type( $linked ) && (int) get_post_field( 'post_author', $linked ) === (int) $user_id ) {
+        return $linked;
+    }
     $matches = get_posts( array(
         'post_type' => 'pvdak_professional',
         'post_status' => array( 'private', 'draft' ),
@@ -27,7 +31,11 @@ function pvdak_core_existing_application( $user_id ) {
         'posts_per_page' => 1,
         'fields' => 'ids',
     ) );
-    return $matches ? (int) $matches[0] : 0;
+    if ( $matches ) {
+        update_user_meta( $user_id, '_pvdak_core_application', (int) $matches[0] );
+        return (int) $matches[0];
+    }
+    return 0;
 }
 
 function pvdak_core_member_application_form() {
@@ -75,12 +83,12 @@ function pvdak_core_submit_application() {
     $city = isset( $_POST['pvdak_member_city'] ) && is_string( $_POST['pvdak_member_city'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_member_city'] ) ) : '';
     $about = isset( $_POST['pvdak_member_about'] ) && is_string( $_POST['pvdak_member_about'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_member_about'] ) ) : '';
     if ( ! isset( $types[ $type ] ) || ! $name || ! $city || ! $about || strlen( $name ) > 450 || strlen( $city ) > 360 || strlen( $about ) > 6400 ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer(), home_url( '/' ) ) ) );
+        wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) ) );
         exit;
     }
     $user_id = get_current_user_id();
     if ( pvdak_core_existing_application( $user_id ) ) {
-        wp_safe_redirect( wp_validate_redirect( wp_get_referer(), home_url( '/' ) ) );
+        wp_safe_redirect( wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) );
         exit;
     }
     $id = wp_insert_post( array(
@@ -96,10 +104,11 @@ function pvdak_core_submit_application() {
         ),
     ), true );
     if ( is_wp_error( $id ) || ! $id ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer(), home_url( '/' ) ) ) );
+        wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) ) );
         exit;
     }
-    wp_safe_redirect( wp_validate_redirect( wp_get_referer(), home_url( '/' ) ) );
+    update_user_meta( $user_id, '_pvdak_core_application', (int) $id );
+    wp_safe_redirect( wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) );
     exit;
 }
 add_action( 'admin_post_pvdak_core_member_apply', 'pvdak_core_submit_application' );
