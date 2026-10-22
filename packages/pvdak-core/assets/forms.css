@@ -39,3 +39,9 @@
 .pvdak-core-pagination{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:20px}
 .pvdak-core-pagination .page-numbers{display:inline-flex;padding:7px 12px;border:1px solid #b7d6cc;border-radius:9px;color:#13695f;text-decoration:none;font-size:13px}
 .pvdak-core-pagination .page-numbers.current{background:#087f72;color:#fff;border-color:#087f72}
+
+.pvdak-core-summary{background:#f5f9f7;border-radius:12px;padding:14px 18px}
+.pvdak-core-summary p{margin:7px 0}
+.pvdak-core-topic-list{display:flex;flex-wrap:wrap;gap:9px;list-style:none;padding:0}
+.pvdak-core-topic-list li{border-radius:50px;background:#e5f3ed;color:#17655d;padding:6px 13px;font-size:13px}
+.pvdak-core-link{display:inline-flex;color:#087f72;font-weight:700}
