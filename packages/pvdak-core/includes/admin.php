@@ -3,7 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_core_register_settings() {
-    register_setting( 'pvdak_core_settings', 'pvdak_core_landing_parent_id', array(
+    register_setting( 'pvdak_core_pages_settings', 'pvdak_core_landing_parent_id', array(
         'type' => 'integer',
         'default' => 0,
         'sanitize_callback' => function( $value ) {
@@ -62,7 +62,7 @@ function pvdak_core_settings_page() {
     echo '<h2>موضوعات حقوقی (برگه‌های لندینگ)</h2>';
     echo '<p>همان برگه مادر صفحه اصلی را انتخاب کنید؛ حوزه‌های تخصصی، موضوع درخواست‌ها و تطبیق داخلی همگی به برگه‌های فرزند منتشرشده این صفحه متصل می‌شوند.</p>';
     echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '">';
-    settings_fields( 'pvdak_core_settings' );
+    settings_fields( 'pvdak_core_pages_settings' );
     echo wp_dropdown_pages( array(
         'name' => 'pvdak_core_landing_parent_id',
         'id' => 'pvdak_core_landing_parent_id',
