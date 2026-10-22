@@ -14,7 +14,7 @@ function pvdak_core_request_statuses() {
     return array(
         'submitted' => 'ثبت‌شده',
         'review'    => 'در حال بررسی',
-        'matched'   => 'ارجاع‌شده',
+        'matched'   => 'انتساب داخلی ثبت‌شده',
         'answered'  => 'پاسخ داده‌شده',
         'closed'    => 'بسته‌شده',
     );
@@ -203,6 +203,9 @@ function pvdak_core_request_metabox_html( $post ) {
     $type = get_post_meta( $post->ID, '_pvdak_request_type', true );
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
+    $landing_id = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
+    echo '<p><strong>موضوع حقوقی:</strong> ' .
+        ( pvdak_core_valid_specialty( $landing_id ) ? esc_html( get_the_title( $landing_id ) ) : 'نامشخص/قدیمی' ) . '</p>';
     $current = get_post_meta( $post->ID, '_pvdak_request_state', true );
     if ( ! isset( $statuses[ $current ] ) ) { $current = 'submitted'; }
     echo '<p><strong>نوع:</strong> ' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
