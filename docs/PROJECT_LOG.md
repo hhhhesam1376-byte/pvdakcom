@@ -374,3 +374,7 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Site's `WPLANG` status was `UNKNOWN` in the CLI report; its runtime locale is `en_US`. A Persian-language warning may now be correctly visible after rerun. No language setting has been changed. **Host rerun is still required**: no claim of complete live anonymous isolation is warranted from the false-positive 0/0 report.
 - Existing 15-min Git fetch/archive/rsync deployment remains unchanged, as do public maintenance and both legal/professional intake OFF. No changes to the installed Core plugin or to real WordPress accounts/data.
 
+## 2026-10-22 — DIAGNOSTIC-OPTION-REPORT-026 (after CLI scope fix)
+- Private host reporter now differentiates unset/empty WordPress `WPLANG` and unset legal/member intake options from a WP-CLI query that failed; Core code defaults both intakes to OFF, and WordPress runtime language is still independently reported.
+- The success log for active Core acceptance now prints `PVDAK_CORE_ACCEPTANCE: checks=26 failures=0 expected=26` after the new WP-CLI global-counter logic is exercised correctly; anonymous audit prints `checks=19 failures=0 expected=19`. The two-mode offline counter self-test is included in the private one-command reporter.
+- All assertions and operational reporting fixes have been pushed to GitHub, but **no post-fix host run has been received yet**. Do not take a previous `checks=0 failures=0` summary as a verified passing privacy audit.
