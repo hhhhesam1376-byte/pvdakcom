@@ -358,3 +358,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Expanded `docs/CORE_STAGING_HANDOFF.md` with the existing `deploy.sh` + private `git archive` procedure, Bash syntax check, dry-run and activation command.
 - Source-only commit; **no activation, on-host command execution or live E2E assessment has been performed by the assistant**. Cron, GitHub Actions, production frontend maintenance and intake options are untouched. Await user CLI output.
 
+## 2026-10-22 — CORE-ACTIVE-ANON-GATE-024 (verified activation; next test pending)
+- Actual cPanel output confirmed deployment `454012fe0e5247ac0cf80ec4b94ff3cdab5e7675` and first-time PVDak Core **0.8.0 Active** after guarded dry run and private database backup `pvdak-before-core-20261022T163606Z-3646343.sql` (do not copy backup into public webroot).
+- Guard reported bundled and installed Core files MATCH, public maintenance mode ON, both legal and professional intake OFF/unset. `PVDAK_CORE_ACCEPTANCE: failures=0`; 26 labeled PASS checks appeared in WP-CLI output, including the private CPTs/shortcodes, administrator permissions, lack of private management roles for 8 non-administrator roles, and loadable referral safety code. No real legal data were exposed by this audit.
+- WordPress activation created the intended roles and management capabilities. **Do not mistake these baseline checks for true multi-account E2E, official credential verification, MariaDB concurrency or privacy/legal completion.**
+- Added `scripts/pvdak-anonymous-live-smoke.php` as a strictly read-only WP-CLI check: anonymous caller cannot manage sensitive post types; request/application/account/dashboard shortcodes do not render editable forms or case lists while intake is closed; no direct sensitive REST routes; maintenance remains on. Runs with `wp_set_current_user(0)` in memory, without creating user data. Integrated into `scripts/pvdak-status.sh --test` automatically when Core is active.
+- Improved diagnostics to show both `get_locale()` runtime value and the `WPLANG` option independently for the observed en_US/fa_IR discrepancy.
+- **New anonymous-access test has NOT yet been run on the user's actual WordPress**; keep intake closed and maintenance active. No plugin PHP modifications, plugin upgrade, extra Cron/Actions/secrets or production access changes performed.
+
