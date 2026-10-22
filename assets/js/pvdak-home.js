@@ -12,6 +12,7 @@
         function normalize(s) {
             return String(s || '').toLocaleLowerCase()
                 .replace(/ي/g, 'ی').replace(/ك/g, 'ک')
+                .replace(/[\u064b-\u065f\u0670]/g, '')
                 .replace(/[\u200c\u200f]/g, ' ')
                 .replace(/\s+/g, ' ').trim();
         }
@@ -35,7 +36,7 @@
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
         var params = new URLSearchParams(window.location.search);
-        var start = params.get('topic');
+        var start = params.get('pvdak_topic');
         if (start) { field.value = start; filterTopics(); }
     }
     if (document.readyState === 'loading') {
