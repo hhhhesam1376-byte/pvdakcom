@@ -27,6 +27,13 @@ if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
   echo "Homepage configuration:"
   wp option get show_on_front --path="$WP_ROOT"
   wp option get page_on_front --path="$WP_ROOT"
+  if [[ -f "$THEME/scripts/pvdak-wp-preflight.php" ]]; then
+    echo "Read-only WordPress runtime preflight:"
+    wp eval-file "$THEME/scripts/pvdak-wp-preflight.php" --path="$WP_ROOT"
+  else
+    echo "FAIL: required WordPress runtime preflight script is missing" >&2
+    exit 1
+  fi
 else
   echo "INFO: WP-CLI or wp-config.php unavailable; WordPress runtime checks skipped."
 fi
