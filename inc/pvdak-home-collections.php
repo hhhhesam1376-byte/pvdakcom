@@ -94,7 +94,7 @@ function pvdak_home_service_url( $index ) {
 function pvdak_home_join_url() {
     $manual = pvdak_home_value( 'community_url', '' );
     if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
-    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
+    if ( ! function_exists( 'pvdak_core_member_intake_open' ) || ! pvdak_core_member_intake_open() ) { return ''; }
     $page = get_page_by_path( 'join-legal-community', OBJECT, 'page' );
     if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_professional_application' ) ) { return ''; }
     return get_permalink( $page->ID );
