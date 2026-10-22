@@ -197,26 +197,41 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
         'meta_value' => (int) $profile_id,
     ) );
     foreach ( $requests as $request ) {
-        $topic = absint( get_post_meta( $request->ID, '_pvdak_legal_landing_id', true ) );
-        $type = get_post_meta( $request->ID, '_pvdak_request_type', true );
-        if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) ) { continue; }
-        // The audit log records why a once-eligible assignment was removed.
-        $previous = get_post_meta( $request->ID, '_pvdak_request_state', true );
-        delete_post_meta( $request->ID, '_pvdak_assigned_profile_id', $profile_id );
-        if ( 'matched' === $previous ) {
-            update_post_meta( $request->ID, '_pvdak_request_state', 'review' );
-            add_post_meta( $request->ID, '_pvdak_state_audit', array(
-                'from' => 'matched', 'to' => 'review', 'by' => get_current_user_id(),
-                'at' => current_time( 'mysql', true ), 'reason' => 'eligibility_revoked',
+        $request_id = (int) $request->ID;
+        $result = pvdak_core_with_assignment_locks( $request_id, $profile_id, function () use ( $request_id, $profile_id ) {
+            pvdak_core_refresh_assignment_meta( $request_id, $profile_id );
+            if ( (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) !== (int) $profile_id ) {
+                return 'already_removed';
+            }
+            $topic = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
+            $type = get_post_meta( $request_id, '_pvdak_request_type', true );
+            if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) ) {
+                return 'eligible';
+            }
+            $previous = get_post_meta( $request_id, '_pvdak_request_state', true );
+            delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
+            if ( 'matched' === $previous ) {
+                update_post_meta( $request_id, '_pvdak_request_state', 'review' );
+                add_post_meta( $request_id, '_pvdak_state_audit', array(
+                    'from' => 'matched', 'to' => 'review',
+                    'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
+                    'reason' => 'eligibility_revoked',
+                ), false );
+            }
+            add_post_meta( $request_id, '_pvdak_assignment_audit', array(
+                'profile_id' => (int) $profile_id,
+                'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
+                'action' => 'eligibility_revoked', 'scope' => 'internal_only',
+            ), false );
+            return 'revoked';
+        } );
+        if ( 'lock_unavailable' === $result ) {
+            // Fail visibly: staff must re-run review after a timeout.
+            add_post_meta( $profile_id, '_pvdak_referral_review_warning', array(
+                'request_id' => $request_id, 'at' => current_time( 'mysql', true ),
+                'reason' => 'assignment_lock_timeout',
             ), false );
         }
-        add_post_meta( $request->ID, '_pvdak_assignment_audit', array(
-            'profile_id' => (int) $profile_id,
-            'by' => get_current_user_id(),
-            'at' => current_time( 'mysql', true ),
-            'action' => 'eligibility_revoked',
-            'scope' => 'internal_only',
-        ), false );
     }
 }
 // Run AFTER the separate administrative status and specialty save handlers.
