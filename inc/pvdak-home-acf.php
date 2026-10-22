@@ -173,15 +173,14 @@ function pvdak_register_home_acf_fields() {
     $fields[] = array( 'key' => 'field_pvdak_tab_faq', 'label' => '۸. پرسش‌های متداول', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_title', 'name' => 'faq_title', 'label' => 'عنوان بخش پرسش‌های متداول', 'type' => 'text', 'default_value' => 'پیش از شروع، بیشتر بدانید' );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_parent_page', 'name' => 'faq_parent_page', 'label' => 'برگه مادر پرسش‌های متداول', 'type' => 'post_object', 'post_type' => array( 'page' ), 'post_status' => array( 'publish' ), 'return_format' => 'id', 'ui' => 1, 'allow_null' => 1, 'instructions' => 'یک برگه مادر بسازید و هر پرسش را یک برگه فرزند آن قرار دهید؛ عنوان برگه سؤال و محتوای برگه پاسخ است.' );
-    $fields[] = array( 'key' => 'field_pvdak_tab_quick', 'label' => '۹. نوار دسترسی سریع', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_1_title', 'label' => 'دسترسی ۱ — عنوان', 'name' => 'quick_1_title', 'type' => 'text', 'default_value' => 'پیگیری درخواست' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_1_url', 'label' => 'دسترسی ۱ — لینک', 'name' => 'quick_1_url', 'type' => 'url', 'default_value' => '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_2_title', 'label' => 'دسترسی ۲ — عنوان', 'name' => 'quick_2_title', 'type' => 'text', 'default_value' => 'راهنمای خدمات' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_2_url', 'label' => 'دسترسی ۲ — لینک', 'name' => 'quick_2_url', 'type' => 'url', 'default_value' => '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_3_title', 'label' => 'دسترسی ۳ — عنوان', 'name' => 'quick_3_title', 'type' => 'text', 'default_value' => 'پنل جامعه حقوقی' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_3_url', 'label' => 'دسترسی ۳ — لینک', 'name' => 'quick_3_url', 'type' => 'url', 'default_value' => '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_4_title', 'label' => 'دسترسی ۴ — عنوان', 'name' => 'quick_4_title', 'type' => 'text', 'default_value' => 'پشتیبانی' );
-    $fields[] = array( 'key' => 'field_pvdak_home_quick_4_url', 'label' => 'دسترسی ۴ — لینک', 'name' => 'quick_4_url', 'type' => 'url', 'default_value' => '' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_quick', 'label' => '۹. دسترسی‌های سریع', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array(
+        'key' => 'field_pvdak_home_quick_menu_guide',
+        'label' => 'مدیریت از فهرست وردپرس',
+        'name' => '',
+        'type' => 'message',
+        'message' => 'برای اضافه/حذف/مرتب‌سازی چهار دسترسی سریع زیر بنر، به نمایش ← فهرست‌ها بروید و فهرست دلخواه را به جایگاه «دسترسی‌های سریع صفحه اصلی» اختصاص دهید. تا زمانی که فهرست تنظیم نشده باشد، مقادیر قدیمی برای جلوگیری از خالی شدن صفحه نمایش داده می‌شوند.',
+    );
     $fields[] = array( 'key' => 'field_pvdak_tab_notices', 'label' => '۹. اطلاعیه‌ها و تازه‌های پویش', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_news_title', 'name' => 'news_title', 'label' => 'عنوان بخش تازه‌ها', 'type' => 'text', 'default_value' => 'تازه‌های پویش و اطلاعیه‌ها' );
     $fields[] = array( 'key' => 'field_pvdak_home_notice_heading', 'name' => 'notice_heading', 'label' => 'عنوان تابلوی اطلاعیه‌ها', 'type' => 'text', 'default_value' => 'تابلوی اطلاعیه‌های پویش' );
