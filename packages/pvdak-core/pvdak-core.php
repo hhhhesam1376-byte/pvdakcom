@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: PVDak Core (Foundation)
- * Description: Independent data types and least-privilege roles for future PVDak legal service workflows.
- * Version: 0.1.0
+ * Plugin Name: PVDak Core
+ * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
+ * Version: 0.2.0
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,10 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.1.0' );
+define( 'PVDAK_CORE_VERSION', '0.2.0' );
+define( 'PVDAK_CORE_PLUGIN_FILE', __FILE__ );
+require_once __DIR__ . '/includes/requests.php';
+require_once __DIR__ . '/includes/admin.php';
 
 /**
  * Product roles: never confer professional verification or post-editing rights
@@ -119,6 +122,6 @@ function pvdak_core_admin_message() {
     if ( ! $screen || ! in_array( $screen->post_type, array( 'pvdak_request', 'pvdak_professional' ), true ) ) {
         return;
     }
-    echo '<div class="notice notice-info"><p><strong>PVDak Core:</strong> این قسمت فعلاً مدل داده خصوصی و محیط مدیریت آزمایشی است؛ فرم عمومی، اعتبارسنجی وکلا، مدیریت دسترسی به پرونده‌ها و ارجاع اتوماتیک هنوز فعال نیستند. اطلاعات حساس واقعی را پیش از تأیید فرآیند امنیتی در این بخش وارد نکنید.</p></div>';
+    echo '<div class="notice notice-info"><p><strong>PVDak Core:</strong> ثبت درخواست فقط برای کاربران واردشده و پس از فعال‌سازی دستی مدیر امکان‌پذیر است. احراز صلاحیت وکلا، مدیریت مدارک حساس و ارجاع خودکار هنوز پیاده‌سازی نشده‌اند. قبل از تأیید امنیت، داده حساس واقعی وارد نکنید.</p></div>';
 }
 add_action( 'admin_notices', 'pvdak_core_admin_message' );
