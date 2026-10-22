@@ -16,6 +16,8 @@ add_action( 'after_setup_theme', 'pvdak_setup' );
 
 function pvdak_assets() {
 	wp_enqueue_style( 'pvdak-style', get_stylesheet_uri(), array(), wp_get_theme()->get( 'Version' ) );
+	// Always load the Persian RTL layer, even before WordPress is switched from en_US.
+	wp_enqueue_style( 'pvdak-rtl', get_template_directory_uri() . '/rtl.css', array( 'pvdak-style' ), wp_get_theme()->get( 'Version' ) );
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
