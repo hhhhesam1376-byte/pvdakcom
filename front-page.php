@@ -18,6 +18,7 @@ $news_other   = pvdak_home_category_posts( 'news_category', 1, $news_feature ? a
 if ( ! $news_feature && $news_other ) {
     $news_feature = $news_other[0];
 }
+$legal_search_term = pvdak_legal_topic_search_term();
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
 $magazine_category_id = pvdak_home_selected_category( 'magazine_category' );
@@ -51,10 +52,10 @@ $svg_icons = array(
       <p class="pvdak-home-eyebrow"><?php echo esc_html(pvdak_home_value('hero_label')); ?></p>
       <h1 id="hero-title"><?php echo esc_html(pvdak_home_value('hero_title')); ?></h1>
       <p class="pvdak-home-lead"><?php echo esc_html(pvdak_home_value('hero_description')); ?></p>
-      <form class="pvdak-home-search" method="get" action="<?php echo esc_url(home_url('/')); ?>" role="search">
+      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( home_url( '/' ) . '#topics' ); ?>" role="search" aria-label="جست‌وجوی موضوعات حقوقی">
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
         <label class="screen-reader-text" for="pvdak-topic-input">موضوع حقوقی</label>
-        <input id="pvdak-topic-input" type="search" name="s" placeholder="<?php echo esc_attr(pvdak_home_value('hero_search_label')); ?>">
+        <input id="pvdak-topic-input" type="search" name="topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
         <button type="submit">جست‌وجو</button>
       </form>
       <div class="pvdak-home-hero-actions">
@@ -127,7 +128,8 @@ $svg_icons = array(
 
   <?php
   $legal_parent_id = pvdak_legal_topics_root_id();
-  $legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
+  $all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
+  $legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
   ?>
   <section id="topics" class="pvdak-home-section pvdak-topics-section" aria-labelledby="topics-title">
     <div class="pvdak-home-section-head">
@@ -147,6 +149,11 @@ $svg_icons = array(
       <?php endforeach; ?>
     </div>
     <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد.</p>
+    <?php elseif ( '' !== $legal_search_term && $all_legal_pages ): ?>
+      <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status">
+        موضوعی مطابق «<?php echo esc_html( $legal_search_term ); ?>» پیدا نشد.
+        <a href="<?php echo esc_url( home_url( '/#topics' ) ); ?>">نمایش همه موضوعات</a>
+      </p>
     <?php elseif ( current_user_can( 'edit_pages' ) ): ?>
       <div class="pvdak-legal-topics-setup">
         هنوز لندینگ منتشرشده‌ای زیر برگه مادر موضوعات حقوقی وجود ندارد.
