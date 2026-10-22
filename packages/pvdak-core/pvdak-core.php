@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.4.0
+ * Version: 0.5.0
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,13 +10,15 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.4.0' );
+define( 'PVDAK_CORE_VERSION', '0.5.0' );
 define( 'PVDAK_CORE_PLUGIN_FILE', __FILE__ );
 require_once __DIR__ . '/includes/requests.php';
 require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/professionals.php';
 require_once __DIR__ . '/includes/portal.php';
 require_once __DIR__ . '/includes/triage.php';
+require_once __DIR__ . '/includes/specialties.php';
+require_once __DIR__ . '/includes/assignments.php';
 
 /**
  * Product roles: never confer professional verification or post-editing rights
