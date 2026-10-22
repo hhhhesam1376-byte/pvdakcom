@@ -10,6 +10,13 @@ function pvdak_core_register_settings() {
             return '1' === (string) $value ? '1' : '0';
         },
     ) );
+    register_setting( 'pvdak_core_settings', 'pvdak_core_member_intake_enabled', array(
+        'type' => 'string',
+        'default' => '0',
+        'sanitize_callback' => function( $value ) {
+            return '1' === (string) $value ? '1' : '0';
+        },
+    ) );
 }
 add_action( 'admin_init', 'pvdak_core_register_settings' );
 
@@ -46,6 +53,9 @@ function pvdak_core_settings_page() {
     settings_fields( 'pvdak_core_settings' );
     echo '<input type="hidden" name="pvdak_core_intake_enabled" value="0">';
     echo '<label><input type="checkbox" name="pvdak_core_intake_enabled" value="1" ' . checked( pvdak_core_intake_open(), true, false ) . '> پذیرش فرم درخواست را فعال کن (فقط بعد از تست کامل)</label>';
+    echo '<p>پذیرش درخواست همکاری جامعه حقوقی جداگانه کنترل می‌شود:</p>';
+    echo '<input type="hidden" name="pvdak_core_member_intake_enabled" value="0">';
+    echo '<label><input type="checkbox" name="pvdak_core_member_intake_enabled" value="1" ' . checked( pvdak_core_member_intake_open(), true, false ) . '> پذیرش درخواست همکاری حرفه‌ای (فقط پس از تست)</label>';
     if ( defined( 'PVDAK_CORE_DISABLE_INTAKE' ) && PVDAK_CORE_DISABLE_INTAKE ) {
         echo '<p><strong>قفل اضطراری فعال:</strong> تعریف PVDAK_CORE_DISABLE_INTAKE در wp-config.php اجازه ثبت درخواست نمی‌دهد.</p>';
     }
