@@ -50,7 +50,21 @@ fi
 # Network access to WordPress.org may be required for initial installation.
 if (( language_ready == 0 )); then
     echo "Installing the official Persian (fa_IR) core language pack..."
-    wp language core install fa_IR --path="$WP_ROOT"
+    # WordPress translations_api() starts with a 3-second HTTP timeout.
+    # Extend it only inside this WP-CLI process, without editing WP/PHP/DNS.
+    # --exec runs before WP loads, so do NOT call add_filter() there directly.
+    # WP_CLI::add_wp_hook() registers the WP filter for the command runtime.
+    wp language core install fa_IR --path="$WP_ROOT" --exec='WP_CLI::add_wp_hook("http_request_args", function($args, $url) {
+        $host = parse_url($url, PHP_URL_HOST);
+        if (in_array($host, array("api.wordpress.org", "downloads.wordpress.org"), true)) {
+            $args["timeout"] = max(30, (int) (isset($args["timeout"]) ? $args["timeout"] : 0));
+        }
+        return $args;
+    }, 10, 2);'
+    if ! wp language core is-installed fa_IR --path="$WP_ROOT"; then
+        echo "ERROR: fa_IR package was not installed; site locale remains unchanged." >&2
+        exit 1
+    fi
 fi
 # Use the supported WP-CLI site language command, not direct SQL.
 wp site switch-language fa_IR --path="$WP_ROOT"
