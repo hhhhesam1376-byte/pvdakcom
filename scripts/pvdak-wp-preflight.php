@@ -12,13 +12,18 @@ if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
     exit( "This file must run through WP-CLI eval-file.\n" );
 }
 
-$fail = 0;
-$warn = 0;
+// WP-CLI eval-file includes this PHP file from a command callback scope.
+// Store counts explicitly in $GLOBALS: local initializers + "global" inside
+// pvdak_preflight_check used separate variables and falsely reported 0/0.
+$GLOBALS['pvdak_preflight_checks'] = 0;
+$GLOBALS['pvdak_preflight_failures'] = 0;
+$GLOBALS['pvdak_preflight_warnings'] = 0;
 function pvdak_preflight_check( $label, $condition, $mandatory = true ) {
-    global $fail, $warn;
+    $GLOBALS['pvdak_preflight_checks']++;
     $status = $condition ? 'PASS' : ( $mandatory ? 'FAIL' : 'WARN' );
     if ( ! $condition ) {
-        if ( $mandatory ) { $fail++; } else { $warn++; }
+        if ( $mandatory ) { $GLOBALS['pvdak_preflight_failures']++; }
+        else { $GLOBALS['pvdak_preflight_warnings']++; }
     }
     WP_CLI::line( sprintf( '%-5s %s', $status, $label ) );
 }
@@ -79,8 +84,11 @@ if ( $core ) {
         function_exists( 'pvdak_core_with_assignment_locks' ) );
 }
 
-WP_CLI::line( sprintf( 'PREFLIGHT_SUMMARY: fails=%d warnings=%d (read-only)', $fail, $warn ) );
-if ( $fail ) {
+$checks = $GLOBALS['pvdak_preflight_checks'];
+$fail = $GLOBALS['pvdak_preflight_failures'];
+$warn = $GLOBALS['pvdak_preflight_warnings'];
+WP_CLI::line( sprintf( 'PREFLIGHT_SUMMARY: checks=%d fails=%d warnings=%d (read-only)', $checks, $fail, $warn ) );
+if ( $checks < 9 || $fail ) {
     WP_CLI::error( 'Read-only preflight failed; leave real data intake disabled.' );
 }
 WP_CLI::success( 'Read-only preflight completed. Human/staging E2E checks still required.' );
