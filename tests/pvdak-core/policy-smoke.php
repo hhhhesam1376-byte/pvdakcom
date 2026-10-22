@@ -6,6 +6,7 @@
  * Run: php tests/pvdak-core/policy-smoke.php
  */
 define( 'ABSPATH', __DIR__ . '/' );
+define( 'OBJECT', 'OBJECT' );
 function add_action() {}
 function add_filter() {}
 function add_shortcode() {}
