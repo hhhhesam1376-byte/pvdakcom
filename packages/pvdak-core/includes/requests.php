@@ -43,6 +43,10 @@ function pvdak_core_request_form( $atts ) {
     if ( ! is_user_logged_in() ) {
         return '<p class="pvdak-core-notice">برای ثبت و پیگیری درخواست باید وارد حساب خود شوید. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">ورود به حساب</a></p>';
     }
+    $landing_pages = pvdak_core_specialty_pages();
+    if ( ! $landing_pages ) {
+        return '<p class="pvdak-core-notice">پذیرش این درخواست هنوز آماده نیست؛ موضوعات حقوقی باید توسط مدیر سایت تنظیم شوند.</p>';
+    }
     $html = '<section class="pvdak-core-panel"><h2>' . esc_html( $types[ $type ] ) . '</h2>';
     $receipt_key = 'pvdak_receipt_' . get_current_user_id();
     if ( get_transient( $receipt_key ) ) {
@@ -58,6 +62,11 @@ function pvdak_core_request_form( $atts ) {
     $html .= '<input type="hidden" name="action" value="pvdak_core_submit_request">';
     $html .= '<input type="hidden" name="pvdak_type" value="' . esc_attr( $type ) . '">';
     $html .= '<label>عنوان کوتاه درخواست <input type="text" name="pvdak_title" required maxlength="140" autocomplete="off"></label>';
+    $html .= '<label>موضوع حقوقی <select name="pvdak_landing_id" required><option value="">انتخاب موضوع</option>';
+    foreach ( $landing_pages as $page ) {
+        $html .= '<option value="' . esc_attr( $page->ID ) . '">' . esc_html( $page->post_title ) . '</option>';
+    }
+    $html .= '</select></label>';
     $html .= '<label>شرح مختصر <textarea name="pvdak_description" maxlength="3000" rows="6" required></textarea></label>';
     $html .= '<label class="pvdak-core-consent"><input type="checkbox" name="pvdak_consent" value="1" required> موافقم اطلاعات واردشده برای بررسی این درخواست در سامانه ثبت و توسط مدیران مجاز بررسی شود.</label>';
     $html .= '<button type="submit">ثبت درخواست برای بررسی</button></form></section>';
@@ -74,11 +83,14 @@ function pvdak_core_handle_request() {
     $types = pvdak_core_request_types();
     $title = isset( $_POST['pvdak_title'] ) && is_string( $_POST['pvdak_title'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_title'] ) ) : '';
     $description = isset( $_POST['pvdak_description'] ) && is_string( $_POST['pvdak_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_description'] ) ) : '';
+    $landing_id = isset( $_POST['pvdak_landing_id'] ) && is_scalar( $_POST['pvdak_landing_id'] ) ?
+        absint( wp_unslash( $_POST['pvdak_landing_id'] ) ) : 0;
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
     $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
-    if ( ! $consent || ! isset( $types[ $type ] ) || '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
+    if ( ! $consent || ! isset( $types[ $type ] ) || ! pvdak_core_valid_specialty( $landing_id ) ||
+         '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
         exit;
     }
@@ -97,6 +109,7 @@ function pvdak_core_handle_request() {
         'post_content' => $description,
         'meta_input' => array(
             '_pvdak_request_type' => $type,
+            '_pvdak_legal_landing_id' => $landing_id,
             '_pvdak_request_state' => 'submitted',
         ),
     ), true );
