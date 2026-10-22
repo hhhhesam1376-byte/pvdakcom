@@ -55,6 +55,7 @@ fi
 value "WordPress detected" "$WP_AVAILABLE"
 value "WordPress version" "$(wp_read core version)"
 value "WordPress site language" "$(wp_read eval 'echo get_locale();')"
+value "WordPress WPLANG option" "$(wp_read option get WPLANG)"
 value "WordPress active theme" "$(wp_read theme list --status=active --field=name)"
 
 if [[ "$WP_AVAILABLE" == "YES" ]]; then
