@@ -1,8 +1,12 @@
 <?php
 /** PVDak classic theme header. Navigation is managed under Appearance > Menus. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
-$auth_label = is_user_logged_in() ? 'پنل کاربری' : 'عضویت / ورود';
+$auth_label = is_user_logged_in() ? 'پنل کاربری' : 'ورود به حساب';
 $auth_url = is_user_logged_in() ? admin_url() : wp_login_url( home_url( '/' ) );
+if ( is_user_logged_in() && function_exists( 'pvdak_core_account_url' ) ) {
+    $portal_url = pvdak_core_account_url();
+    if ( $portal_url ) { $auth_url = $portal_url; }
+}
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
