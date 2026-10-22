@@ -75,3 +75,27 @@ function pvdak_home_faq_pages() {
         'no_found_rows'  => true,
     ) );
 }
+
+/**
+ * Keep service CTAs synchronized with real published workflow pages.
+ * ACF override takes precedence. Never link to drafts or inactive forms.
+ */
+function pvdak_home_service_url( $index ) {
+    $manual = pvdak_home_value( 'service_' . absint( $index ) . '_url', '' );
+    if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
+    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
+    $slugs = array( 1 => 'request-lawyer', 2 => 'request-consultation', 3 => 'request-question' );
+    if ( ! isset( $slugs[ $index ] ) ) { return ''; }
+    $page = get_page_by_path( $slugs[ $index ], OBJECT, 'page' );
+    if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_request_form' ) ) { return ''; }
+    return get_permalink( $page->ID );
+}
+
+function pvdak_home_join_url() {
+    $manual = pvdak_home_value( 'community_url', '' );
+    if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
+    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
+    $page = get_page_by_path( 'join-legal-community', OBJECT, 'page' );
+    if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_professional_application' ) ) { return ''; }
+    return get_permalink( $page->ID );
+}
