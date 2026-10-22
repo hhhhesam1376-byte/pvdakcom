@@ -352,3 +352,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Remains unverified: actual plugin activation and resulting registered admin roles/post types, WP-CLI active Core acceptance, live front-end/role security checks, independent legal data privacy and MariaDB concurrent assignment behavior.
 - Both real client and professional intake should remain disabled; public maintenance should remain enabled. No new Cron/Actions/secrets requested.
 
+## 2026-10-22 — CORE-ACTIVATION-GUARD-023 (preflight tool; not yet run on host)
+- Confirmed successful separate **inactive** PVDak Core 0.8.0 plugin installation via user's WP-CLI log (see CORE-INACTIVE-INSTALL-022).
+- Added private-only `scripts/pvdak-core-activate-guarded.sh` with explicit `--check` (read-only) and `--activate` modes. The latter refuses the wrong site/theme, installation/source mismatches, open intake settings, non-maintenance mode and root execution; creates a private DB backup and checks the active Core role/CPT/source policy. If acceptance fails, it attempts plugin deactivation without claiming database rollback.
+- Expanded `docs/CORE_STAGING_HANDOFF.md` with the existing `deploy.sh` + private `git archive` procedure, Bash syntax check, dry-run and activation command.
+- Source-only commit; **no activation, on-host command execution or live E2E assessment has been performed by the assistant**. Cron, GitHub Actions, production frontend maintenance and intake options are untouched. Await user CLI output.
+
