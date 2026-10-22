@@ -35,3 +35,7 @@
 .pvdak-core-dashboard-actions a:hover{background:#e4f3eb}
 .pvdak-core-empty{padding:12px 17px;border:1px dashed #b7d7ca;border-radius:12px;background:#fbfefd}
 @media(max-width:650px){.pvdak-core-stats{grid-template-columns:1fr;gap:9px}.pvdak-core-stats>div{display:flex;align-items:center;justify-content:space-between}}
+
+.pvdak-core-pagination{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:20px}
+.pvdak-core-pagination .page-numbers{display:inline-flex;padding:7px 12px;border:1px solid #b7d6cc;border-radius:9px;color:#13695f;text-decoration:none;font-size:13px}
+.pvdak-core-pagination .page-numbers.current{background:#087f72;color:#fff;border-color:#087f72}
