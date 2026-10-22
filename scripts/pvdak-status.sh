@@ -134,6 +134,28 @@ if [[ "$MODE" == "--test" ]]; then
   }
   run_test "Theme release tests" "$SCRIPTS/check-pvdak.sh" "$THEME" "$WP_ROOT"
   run_test "Core source tests" "$SCRIPTS/check-pvdak-core.sh" "$CORE_SOURCE" "$WP_ROOT"
+  # Separate, anonymous in-memory WordPress test. Never creates real users
+  # and never reads or prints private cases.
+  if [[ "$WP_AVAILABLE" == "YES" ]] && wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
+    LIVE_AUDIT="$SCRIPTS/pvdak-anonymous-live-smoke.php"
+    if [[ ! -f "$LIVE_AUDIT" ]]; then
+      value "Anonymous live WP checks" "FAIL: private audit file missing"
+      failure=1
+    else
+      AUDIT_LOG="$(mktemp)"
+      if wp eval-file "$LIVE_AUDIT" --path="$WP_ROOT" >"$AUDIT_LOG" 2>&1; then
+        value "Anonymous live WP checks" "PASS"
+        grep -E 'PVDAK_ANON_LIVE_SMOKE:' "$AUDIT_LOG" | tail -n 1 || true
+      else
+        value "Anonymous live WP checks" "FAIL"
+        tail -n 18 "$AUDIT_LOG"
+        failure=1
+      fi
+      rm -f "$AUDIT_LOG"
+    fi
+  else
+    value "Anonymous live WP checks" "SKIPPED: Core not active"
+  fi
 fi
 echo "PVDAK_DIAGNOSTIC_END status=$([[ $failure -eq 0 ]] && echo OK || echo NEEDS_REVIEW)"
 exit "$failure"
