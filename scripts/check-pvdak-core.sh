@@ -22,6 +22,14 @@ if command -v wp >/dev/null 2>&1 && [[ -f "$WORDPRESS/wp-config.php" ]]; then
     echo "PLUGIN_ACTIVE"
     printf 'Intake setting: '
     wp option get pvdak_core_intake_enabled --path="$WORDPRESS" 2>/dev/null || echo "0 (default)"
+    ACCEPTANCE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/pvdak-core-acceptance.php"
+    if [[ ! -f "$ACCEPTANCE" ]]; then
+      echo "FAIL: Core WP-CLI acceptance checks file is missing" >&2
+      exit 1
+    fi
+    php -l "$ACCEPTANCE" >/dev/null
+    wp eval-file "$ACCEPTANCE" --path="$WORDPRESS"
+    echo "CORE_WORDPRESS_ACCEPTANCE_OK"
   else
     echo "PLUGIN_INACTIVE"
   fi
