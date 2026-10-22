@@ -18,6 +18,12 @@ while IFS= read -r -d '' file; do
   ((count+=1))
 done < <(find "$THEME" -type f -name '*.php' -print0)
 echo "PASS: PHP lint ($count files)."
+if [[ ! -s "$THEME/rtl.css" ]] || ! grep -Fq "pvdak-rtl" "$THEME/functions.php" ||
+   ! grep -Fq '<html lang="fa-IR" dir="rtl">' "$THEME/header.php"; then
+  echo "FAIL: Persian/RTL assets or document language are not deployed correctly." >&2
+  exit 1
+fi
+echo "PASS: RTL stylesheet, enqueue and Persian document attributes found."
 grep -E '^Version:' "$THEME/style.css" | head -1
 if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
   echo "Active WordPress theme:"
