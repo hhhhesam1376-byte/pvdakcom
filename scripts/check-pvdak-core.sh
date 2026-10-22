@@ -41,5 +41,8 @@ if [[ ! -f "$POLICY_TEST" ]]; then
   exit 1
 fi
 php -l "$POLICY_TEST" >/dev/null || { echo "FAIL: policy test has PHP syntax errors" >&2; exit 1; }
-php "$POLICY_TEST"
+# Test the actual bundled Core on the WordPress host rather than assuming
+# the checkout has been updated (cron uses git fetch + archive).
+# Explicit PHP diagnostics are surfaced even when host php.ini hides warnings.
+PVDAK_CORE_SOURCE="$ROOT/pvdak-core.php" php -d display_errors=stderr -d log_errors=1 -d error_log=/dev/stderr "$POLICY_TEST"
 echo "NOTE: lint and configuration checks do not substitute for role isolation, privacy or end-to-end tests."
