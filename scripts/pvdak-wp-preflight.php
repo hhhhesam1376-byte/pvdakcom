@@ -25,7 +25,9 @@ function pvdak_preflight_check( $label, $condition, $mandatory = true ) {
 
 $theme = wp_get_theme();
 pvdak_preflight_check( 'Theme is pvdakcom-main', 'pvdakcom-main' === $theme->get_stylesheet() );
-pvdak_preflight_check( 'Theme version is 0.8.2 or newer', version_compare( (string) $theme->get( 'Version' ), '0.8.2', '>=' ) );
+pvdak_preflight_check( 'Theme version is 0.8.3 or newer', version_compare( (string) $theme->get( 'Version' ), '0.8.3', '>=' ) );
+pvdak_preflight_check( 'Required Persian RTL stylesheet exists', is_readable( get_template_directory() . '/rtl.css' ) );
+pvdak_preflight_check( 'WordPress site language is Persian (fa_IR)', 'fa_IR' === (string) get_option( 'WPLANG', '' ), false );
 pvdak_preflight_check( 'ACF is loaded', function_exists( 'acf_add_local_field_group' ), false );
 $front = (int) get_option( 'page_on_front' );
 pvdak_preflight_check( 'Published static homepage configured',
