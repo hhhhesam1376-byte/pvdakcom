@@ -55,7 +55,7 @@ $svg_icons = array(
       <form class="pvdak-home-search" method="get" action="<?php echo esc_url( home_url( '/' ) . '#topics' ); ?>" role="search" aria-label="جست‌وجوی موضوعات حقوقی">
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
         <label class="screen-reader-text" for="pvdak-topic-input">موضوع حقوقی</label>
-        <input id="pvdak-topic-input" type="search" name="topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
+        <input id="pvdak-topic-input" type="search" name="pvdak_topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
         <button type="submit">جست‌وجو</button>
       </form>
       <div class="pvdak-home-hero-actions">
