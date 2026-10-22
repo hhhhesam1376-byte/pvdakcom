@@ -88,6 +88,11 @@ function pvdak_home_value( $name, $default = null ) {
         $value = get_field( $name, $page_id );
         if ( false !== $value && null !== $value && '' !== $value ) { return $value; }
     }
+    // Transitional support for custom shortcut text saved before migration to WP Menus.
+    if ( $page_id && preg_match( '/^quick_[1-4]_(title|url)$/', (string) $name ) ) {
+        $legacy = get_post_meta( $page_id, $name, true );
+        if ( is_string( $legacy ) && '' !== $legacy ) { return $legacy; }
+    }
     return $default;
 }
 function pvdak_home_image_url( $name ) {
