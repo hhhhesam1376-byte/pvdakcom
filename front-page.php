@@ -76,19 +76,35 @@ $svg_icons = array(
     </div>
   </section>
 
-  <div class="pvdak-home-quick-actions" aria-label="دسترسی‌های سریع">
+  <nav class="pvdak-home-quick-actions" aria-label="دسترسی‌های سریع">
     <?php
-    $quick_symbols=array('document','question','briefcase','chat');
-    for($i=1;$i<=4;$i++):
-        $title=pvdak_home_value("quick_{$i}_title");
-        $url=pvdak_home_value("quick_{$i}_url",'');
-        $symbol='<svg viewBox="0 0 24 24" aria-hidden="true">'. $svg_icons[$quick_symbols[$i-1]] . '</svg>';
+    $quick_symbols = array( 'document', 'question', 'briefcase', 'chat' );
+    $menu_locations = get_nav_menu_locations();
+    $quick_items = ! empty( $menu_locations['pvdak_quick'] ) ? wp_get_nav_menu_items( (int) $menu_locations['pvdak_quick'] ) : array();
+    if ( is_array( $quick_items ) && $quick_items ):
+        $position = 0;
+        foreach ( $quick_items as $quick_item ):
+            if ( empty( $quick_item->url ) ) { continue; }
+            $symbol = $svg_icons[ $quick_symbols[ $position % 4 ] ];
+            $position++;
     ?>
-      <?php if($url): ?><a href="<?php echo esc_url($url); ?>"><?php else: ?><span><?php endif; ?>
-        <?php echo $symbol; ?><span><?php echo esc_html($title); ?></span>
-      <?php if($url): ?></a><?php else: ?></span><?php endif; ?>
-    <?php endfor; ?>
-  </div>
+        <a href="<?php echo esc_url( $quick_item->url ); ?>">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
+            <span><?php echo esc_html( $quick_item->title ); ?></span>
+        </a>
+    <?php endforeach; else:
+        // Legacy fallback while the client configures the dedicated WordPress menu.
+        for ( $i = 1; $i <= 4; $i++ ):
+            $title = pvdak_home_value( "quick_{$i}_title" );
+            $url = pvdak_home_value( "quick_{$i}_url", '' );
+            $symbol = $svg_icons[ $quick_symbols[ $i - 1 ] ];
+    ?>
+        <?php if ( $url ): ?><a href="<?php echo esc_url( $url ); ?>"><?php else: ?><span><?php endif; ?>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
+            <span><?php echo esc_html( $title ); ?></span>
+        <?php if ( $url ): ?></a><?php else: ?></span><?php endif; ?>
+    <?php endfor; endif; ?>
+  </nav>
 
   <section id="services" class="pvdak-home-section pvdak-audiences" aria-labelledby="audiences-title">
     <div class="pvdak-home-section-head">
