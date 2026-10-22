@@ -98,7 +98,17 @@ class PVDak_Test_Lock_DB {
 }
 $GLOBALS['wpdb'] = new PVDak_Test_Lock_DB();
 
-require dirname( __DIR__, 2 ) . '/packages/pvdak-core/pvdak-core.php';
+// Supports both a full repository checkout and the current cPanel deployment:
+// production keeps Core under the theme but strips private scripts from web.
+$core_entry = getenv( 'PVDAK_CORE_SOURCE' );
+if ( ! is_string( $core_entry ) || '' === $core_entry ) {
+    $core_entry = dirname( __DIR__, 2 ) . '/packages/pvdak-core/pvdak-core.php';
+}
+if ( ! is_readable( $core_entry ) ) {
+    fwrite( STDERR, 'POLICY_SOURCE_MISSING: ' . $core_entry . PHP_EOL );
+    exit( 2 );
+}
+require $core_entry;
 
 $checks = 0;
 function pvdak_expect( $condition, $description ) {
