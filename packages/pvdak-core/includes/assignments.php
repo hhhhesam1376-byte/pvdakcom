@@ -74,7 +74,12 @@ function pvdak_core_assignment_admin_page() {
         return;
     }
     if ( isset( $_GET['pvdak_assignment_error'] ) ) {
-        echo '<div class="notice notice-error inline"><p>ارجاع ثبت نشد؛ وضعیت پرونده یا صلاحیت منتخب تغییر کرده است.</p></div>';
+        $error = is_string( $_GET['pvdak_assignment_error'] ) ? sanitize_key( wp_unslash( $_GET['pvdak_assignment_error'] ) ) : '';
+        if ( 'lock_unavailable' === $error ) {
+            echo '<div class="notice notice-warning inline"><p>درخواست دیگری در حال بررسی یا ارجاع همین پرونده/متخصص است. هیچ انتساب جدیدی ثبت نشد؛ پس از بررسی وضعیت مجدداً اقدام کنید.</p></div>';
+        } else {
+            echo '<div class="notice notice-error inline"><p>ارجاع ثبت نشد؛ وضعیت پرونده، ظرفیت یا صلاحیت منتخب تغییر کرده است.</p></div>';
+        }
     }
     echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
     wp_nonce_field( 'pvdak_assign_' . $request_id );
