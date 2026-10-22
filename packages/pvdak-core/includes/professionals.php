@@ -67,6 +67,7 @@ function pvdak_core_member_application_form() {
     $html .= '<label>نام نمایشی <input type="text" name="pvdak_member_name" maxlength="110" required></label>';
     $html .= '<label>شهر فعالیت <input type="text" name="pvdak_member_city" maxlength="90" required></label>';
     $html .= '<label>حوزه‌های مورد علاقه/تخصص <textarea name="pvdak_member_about" maxlength="1600" rows="4" required></textarea></label>';
+    $html .= '<label class="pvdak-core-consent"><input type="checkbox" name="pvdak_consent" value="1" required> موافقم اطلاعات این درخواست همکاری برای بررسی اداری ذخیره و توسط مدیران مجاز بررسی شود.</label>';
     $html .= '<button type="submit">ارسال برای بررسی</button></form></section>';
     return $html;
 }
@@ -82,7 +83,8 @@ function pvdak_core_submit_application() {
     $name = isset( $_POST['pvdak_member_name'] ) && is_string( $_POST['pvdak_member_name'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_member_name'] ) ) : '';
     $city = isset( $_POST['pvdak_member_city'] ) && is_string( $_POST['pvdak_member_city'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_member_city'] ) ) : '';
     $about = isset( $_POST['pvdak_member_about'] ) && is_string( $_POST['pvdak_member_about'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_member_about'] ) ) : '';
-    if ( ! isset( $types[ $type ] ) || ! $name || ! $city || ! $about || strlen( $name ) > 450 || strlen( $city ) > 360 || strlen( $about ) > 6400 ) {
+    $consent = isset( $_POST['pvdak_consent'] ) && '1' === (string) wp_unslash( $_POST['pvdak_consent'] );
+    if ( ! $consent || ! isset( $types[ $type ] ) || ! $name || ! $city || ! $about || strlen( $name ) > 450 || strlen( $city ) > 360 || strlen( $about ) > 6400 ) {
         wp_safe_redirect( add_query_arg( 'pvdak_application', 'error', wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) ) );
         exit;
     }
