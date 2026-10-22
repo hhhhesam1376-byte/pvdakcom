@@ -336,3 +336,12 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Fixed standalone Core policy suite to use optional `PVDAK_CORE_SOURCE` (defaults to full repo layout), modified `check-pvdak-core.sh` to pass the actual deployed bundled plugin entry path, and modified `install-pvdak-core.sh` similarly. Both paths now expose PHP runtime errors rather than silently returning 255.
 - Updated the host report guide with the verified findings and correct one-command rerun. No Cron, GitHub Actions, server files, production intake or maintenance-page settings were changed. **Awaiting rerun to confirm real WP-CLI preflight and policy-suite results; do not enable Core/real intake before then.**
 
+## 2026-10-22 — HOST-TEST-PASS-021 (verified host run 16:16:05 UTC)
+- Host returned `UP_TO_DATE 80457b695175bf9924dce4711fdc6841ca09f042`. Existing Cron workflow delivered theme **0.8.8** to WordPress; bundled Core source is **0.8.0**.
+- Read-only diagnostic showed WordPress **7.1.3**, PHP CLI **8.1.34**, active theme `pvdakcom-main`, site runtime locale `en_US`, and RTL stylesheet PRESENT. Earlier host output identified active ACF **6.8.10**.
+- **Theme release tests PASS**: editor bootstrap **14** synthetic assertions, Persian legal search **11** assertions, native editorial/RTL checks, WP-CLI `PREFLIGHT_SUMMARY: fails=0 warnings=0`.
+- **Core source tests PASS**: `PHP_LINT_OK: 12 files`, `CORE_POLICY_SMOKE_OK: 40 checks`. The Core policy tests are synthetic; passing does NOT establish role/data privacy, concurrency or E2E behavior with real WordPress users.
+- **Core plugin installed NO / active NO**, installed version MISSING; intake option values UNKNOWN because options have not been configured. Never claim Core is active or an actual legal workflow is production ready.
+- Noted a locale reporting discrepancy: diagnostic's `get_locale()` returned `en_US` while the preflight emitted zero warnings for its `WPLANG` option check. Investigate the option versus runtime locale before claiming the dashboard is Persian.
+- Next stage is a controlled **inactive plugin install** with backup/rollback checks; only after this, evaluate isolated staging activation and real-user permission tests. No new Cron, Actions or secrets.
+
