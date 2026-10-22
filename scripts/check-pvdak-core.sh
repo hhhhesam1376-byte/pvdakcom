@@ -55,4 +55,13 @@ if [[ ! -f "$PRIVACY_TEST" ]]; then
 fi
 php -l "$PRIVACY_TEST" >/dev/null
 PVDAK_CORE_SOURCE="$ROOT/pvdak-core.php" php -d display_errors=stderr -d log_errors=1 -d error_log=/dev/stderr "$PRIVACY_TEST"
+# The real database-backed fixture must NEVER run in this production diagnostic.
+# Validate only its syntax so staging can use it when independently provisioned.
+STAGING_E2E="$SCRIPT_DIR/pvdak-staging-multiuser-e2e.php"
+if [[ ! -f "$STAGING_E2E" ]]; then
+  echo "FAIL: isolated staging privacy test definition missing" >&2
+  exit 1
+fi
+php -l "$STAGING_E2E" >/dev/null
+echo "STAGING_MULTIUSER_SCRIPT_LINT_OK (NOT RUN: isolated staging required)"
 echo "NOTE: synthetic privacy tests do not substitute for live cross-account browser sessions or concurrent DB tests."
