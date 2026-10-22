@@ -28,6 +28,11 @@ if [[ ! -f "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php" ]]; then
   exit 1
 fi
 php "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php"
+if [[ ! -s "$THEME/category.php" ]] || [[ ! -s "$THEME/assets/css/pvdak-editorial.css" ]]; then
+  echo "FAIL: native editorial category archive or styling is missing" >&2
+  exit 1
+fi
+echo "PASS: editorial Category archive and RTL styles found."
 if [[ ! -s "$THEME/rtl.css" ]] || ! grep -Fq "pvdak-rtl" "$THEME/functions.php" ||
    ! grep -Fq '<html lang="fa-IR" dir="rtl">' "$THEME/header.php"; then
   echo "FAIL: Persian/RTL assets or document language are not deployed correctly." >&2
