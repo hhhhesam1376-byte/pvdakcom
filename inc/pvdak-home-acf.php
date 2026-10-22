@@ -256,7 +256,23 @@ function pvdak_home_admin_landing() {
         return;
     }
     echo '<div class="wrap pvdak-home-editor"><h1>محتوای صفحه اصلی PVDak</h1>';
-    echo '<p>عنوان‌ها، متن‌ها، لینک‌ها و تصاویر صفحه اصلی را از همین بخش تغییر دهید و ذخیره کنید.</p>';
+    echo '<p>این صفحه فقط برای چیدمان و متن‌های ثابت است. مطالب مجله، اطلاعیه‌ها، لندینگ‌ها و پرسش‌ها را در بخش‌های اصلی وردپرس ثبت کنید؛ کارت‌های صفحه اصلی خودکار به‌روز می‌شوند.</p>';
+    echo '<div class="pvdak-editor-navigation" style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 22px">';
+    if ( current_user_can( 'edit_pages' ) ) {
+        echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'edit.php?post_type=page' ) ) . '">برگه‌ها و لندینگ‌های حقوقی</a>';
+    }
+    if ( current_user_can( 'edit_posts' ) ) {
+        echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'edit.php' ) ) . '">مقالات مجله و اطلاعیه‌ها</a>';
+        echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'edit-tags.php?taxonomy=category' ) ) . '">دسته‌بندی نوشته‌ها</a>';
+    }
+    if ( current_user_can( 'upload_files' ) ) {
+        echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'upload.php' ) ) . '">کتابخانه تصاویر</a>';
+    }
+    if ( current_user_can( 'edit_theme_options' ) ) {
+        echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'nav-menus.php' ) ) . '">فهرست‌های سایت</a>';
+    }
+    echo '</div>';
+    echo '<div class="notice notice-info inline"><p><strong>راهنمای مدیریت:</strong> برای «موضوعات حقوقی» برگه مادر و فرزند بسازید؛ برای «مجله» و «اطلاعیه‌ها» نوشته‌ها را در دسته‌های جدا منتشر کنید؛ برای «پرسش‌های متداول» از برگه‌های فرزند یک برگه مادر استفاده کنید. این بخش فقط انتخاب می‌کند که چه محتوایی کجا نمایش داده شود. فرم درخواست حقوقی و احراز صلاحیت حرفه‌ای هنوز منتشر نشده‌اند.</p></div>';
 
     if ( ! function_exists( 'acf_form' ) || ! function_exists( 'acf_add_local_field_group' ) ) {
         echo '<div class="notice notice-warning"><p>افزونه Advanced Custom Fields (ACF) باید فعال باشد. پس از فعال‌سازی صفحه را دوباره باز کنید.</p></div>';
