@@ -66,7 +66,16 @@ if ! mv -- "$STAGE" "$DEST"; then
     exit 1
 fi
 if ! wp plugin is-installed pvdak-core --path="$WP_ROOT"; then
-    echo "ERROR: WordPress did not recognize the copied Core plugin." >&2
+    echo "ERROR: WordPress did not recognize the copied Core plugin; attempting rollback." >&2
+    if [[ -d "$DEST" ]]; then
+        FAILED_DIR="$(mktemp -d "$PLUGINS/.pvdak-core-invalid.XXXXXX")"
+        mv -- "$DEST" "$FAILED_DIR/failed-plugin"
+        echo "Failed source retained for inspection: $FAILED_DIR"
+    fi
+    if [[ -n "$BACKUP" && -d "$BACKUP" ]]; then
+        mv -- "$BACKUP" "$DEST"
+        echo "ROLLBACK_OK: previous inactive Core restored"
+    fi
     exit 1
 fi
 echo "INSTALLED_INACTIVE_SOURCE: $DEST"
