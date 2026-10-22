@@ -21,7 +21,8 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
         ),
     ) );
     return array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type ) {
-        return pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type );
+        return pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) &&
+            pvdak_core_capacity_available( $profile->ID );
     } ) );
 }
 
@@ -69,7 +70,7 @@ function pvdak_core_assignment_admin_page() {
         return (int) $p->post_author !== $requester;
     } ) );
     if ( ! $candidates ) {
-        echo '<div class="notice notice-info inline"><p>هیچ پروفایل حرفه‌ای واجد شرایط داخلی برای این موضوع یافت نشد. وضعیت بررسی، تعیین حوزه تخصصی و بررسی مستقل صلاحیت را در پروفایل متقاضیان کنترل کنید.</p></div></div>';
+        echo '<div class="notice notice-info inline"><p>متخصصی با تخصص مرتبط، تأیید داخلی و ظرفیت پذیرش آزاد پیدا نشد. وضعیت عضویت، تخصص و ظرفیت پرونده‌های فعال را در مدیریت پروفایل‌ها بررسی کنید.</p></div></div>';
         return;
     }
     if ( isset( $_GET['pvdak_assignment_error'] ) ) {
@@ -86,7 +87,7 @@ function pvdak_core_assignment_admin_page() {
             ' — پرونده #' . esc_html( $profile->ID ) . '</option>';
     }
     echo '</select></td></tr></table>';
-    echo '<p>قبل از ادامه، اطلاعات صلاحیت و امکان قبول پرونده باید خارج از این نسخه به‌صورت مستقل بررسی شود. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند.</p>';
+    echo '<p>قبل از ادامه، اطلاعات صلاحیت و امکان قبول پرونده باید خارج از این نسخه به‌صورت مستقل بررسی شود. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند. ظرفیت هر متخصص هنگام ارسال دوباره بررسی می‌شود.</p>';
     submit_button( 'ثبت انتساب داخلی (بدون اطلاع‌رسانی)' );
     echo '</form></div>';
 }
@@ -111,6 +112,7 @@ function pvdak_core_assign_request() {
          'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ||
          get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ||
          ! pvdak_core_profile_referral_eligible( $profile_id, $landing_id, $type ) ||
+         ! pvdak_core_capacity_available( $profile_id ) ||
          (int) get_post_field( 'post_author', $request_id ) === (int) get_post_field( 'post_author', $profile_id ) ) {
         wp_safe_redirect( add_query_arg( 'pvdak_assignment_error', 'invalid', $return ) );
         exit;
