@@ -45,4 +45,14 @@ php -l "$POLICY_TEST" >/dev/null || { echo "FAIL: policy test has PHP syntax err
 # the checkout has been updated (cron uses git fetch + archive).
 # Explicit PHP diagnostics are surfaced even when host php.ini hides warnings.
 PVDAK_CORE_SOURCE="$ROOT/pvdak-core.php" php -d display_errors=stderr -d log_errors=1 -d error_log=/dev/stderr "$POLICY_TEST"
-echo "NOTE: lint and configuration checks do not substitute for role isolation, privacy or end-to-end tests."
+# Run TWO synthetic logged-in account views of the actual bundled Core.
+# The fixture deliberately injects a foreign record into a query and tries
+# a forged professional profile link; both must remain hidden.
+PRIVACY_TEST="$SCRIPT_DIR/../tests/pvdak-core/two-account-privacy-smoke.php"
+if [[ ! -f "$PRIVACY_TEST" ]]; then
+  echo "FAIL: two-account synthetic privacy regression is missing" >&2
+  exit 1
+fi
+php -l "$PRIVACY_TEST" >/dev/null
+PVDAK_CORE_SOURCE="$ROOT/pvdak-core.php" php -d display_errors=stderr -d log_errors=1 -d error_log=/dev/stderr "$PRIVACY_TEST"
+echo "NOTE: synthetic privacy tests do not substitute for live cross-account browser sessions or concurrent DB tests."
