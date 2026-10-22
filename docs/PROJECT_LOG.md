@@ -163,3 +163,23 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - GitHub source writes and reference consistency checks succeeded.
 - **No live php -l, WordPress form submission, role isolation test or Core activation completed**. Core is source code only until installed and enabled by an authorized operator. Production intake should remain OFF. The maintenance screen remains configured.
 - Next step: deploy theme 0.8.1 via existing `deploy.sh` and perform `scripts/check-pvdak.sh`; run Core read-only lint and staged tests independently before enabling.
+
+## 2026-10-22 — CLIENT-PORTAL-010 (Theme 0.8.2 / Core 0.4.0)
+
+### Completed in GitHub
+- Added `packages/pvdak-core/includes/portal.php`: private `[pvdak_account_dashboard]` shortcode showing current user's **own** recent requests, status counts, membership application status and links to published workflows. Disabled intake actions are omitted; visitor must log in.
+- Updated `header.php` to link signed-in users to the published `my-pvdak-account` page, retaining normal WordPress fallback if the page/Core are unavailable.
+- Added sixth **draft** page to the one-click Core setup, without automatic publication.
+- Rebuilt request-manager metabox with allowed transition graph, a private staff-only note field, latest note log and status audit history. `matched` intentionally unavailable for newly reviewed cases because real professional verification/assignment is not yet implemented.
+- Added `packages/pvdak-core/includes/triage.php`: administrator-only triage overview with counts by case state, plus type/status filters in the WordPress request list.
+- Added a `wp_insert_post_data` defense-in-depth guard to block unintended publication/scheduling of `pvdak_request` and `pvdak_professional` records.
+- Personalized forms/dashboard pages send no-cache headers; private account and personal request pages also send noindex.
+- Changed submission success feedback to a short-lived one-time per-user receipt created **only after a successful insert**, not a URL query parameter.
+- Added standalone source policy checks in `tests/pvdak-core/policy-smoke.php`, run via `scripts/check-pvdak-core.sh` when available; they test defaults, private status behavior and allowed state transitions without database writes.
+- Added RTL responsive dashboard CSS, updated Core README and expanded acceptance checklist.
+
+### Verification and rollout boundaries
+- GitHub commits and source reference checks completed; code is pushed to main.
+- **No PHP interpreter or live WordPress runtime tests on the production server have been executed in this turn.** Source policy tests have been authored but their pass results are not yet confirmed. The user still needs to run read-only lint and staged acceptance tests after the existing Cron deploy.
+- Core remains uninstalled/unactivated on production; both intake settings are OFF by default. Maintenance mode is unchanged.
+- No automated case matching, verified professional directory, payment or sensitive file upload currently exists. Do not accept real confidential information until privacy/security tests pass.
