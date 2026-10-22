@@ -173,6 +173,7 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Rebuilt request-manager metabox with allowed transition graph, a private staff-only note field, latest note log and status audit history. `matched` intentionally unavailable for newly reviewed cases because real professional verification/assignment is not yet implemented.
 - Added `packages/pvdak-core/includes/triage.php`: administrator-only triage overview with counts by case state, plus type/status filters in the WordPress request list.
 - Added a `wp_insert_post_data` defense-in-depth guard to block unintended publication/scheduling of `pvdak_request` and `pvdak_professional` records.
+- Added 20-item pagination for the user's own case-history list and disabled false success confirmations coming only from URL parameters.
 - Personalized forms/dashboard pages send no-cache headers; private account and personal request pages also send noindex.
 - Changed submission success feedback to a short-lived one-time per-user receipt created **only after a successful insert**, not a URL query parameter.
 - Added standalone source policy checks in `tests/pvdak-core/policy-smoke.php`, run via `scripts/check-pvdak-core.sh` when available; they test defaults, private status behavior and allowed state transitions without database writes.
