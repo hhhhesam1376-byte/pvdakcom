@@ -20,11 +20,25 @@ while IFS= read -r -d '' file; do
     php -l "$file" >/dev/null
 done < <(find "$SRC" -type f -name '*.php' -print0)
 echo "SOURCE_LINT_OK"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SMOKE="$SCRIPT_DIR/../tests/pvdak-core/policy-smoke.php"
+if [[ ! -f "$SMOKE" ]]; then
+    echo "STOP: required Core policy test is absent" >&2
+    exit 1
+fi
+php -l "$SMOKE" >/dev/null
+php "$SMOKE" >/dev/null || { echo "STOP: Core policy checks failed" >&2; exit 1; }
+echo "SOURCE_POLICY_SMOKE_OK"
 echo "SOURCE=$SRC"
 echo "DEST=$DEST"
 if [[ "$ACTION" != "--install" ]]; then
     echo "DRY_RUN: no changes made. Use --install to copy source WITHOUT activation."
     exit 0
+fi
+if ! command -v wp >/dev/null 2>&1 || [[ ! -f "$WP_ROOT/wp-config.php" ]] ||
+   ! wp core is-installed --path="$WP_ROOT" >/dev/null 2>&1; then
+    echo "STOP: WordPress and WP-CLI must be available before installing a plugin" >&2
+    exit 1
 fi
 if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
     if wp plugin is-active pvdak-core --path="$WP_ROOT" 2>/dev/null; then
@@ -49,6 +63,10 @@ if ! mv -- "$STAGE" "$DEST"; then
         mv -- "$BACKUP" "$DEST"
     fi
     echo "ERROR: install failed; previous plugin restored when possible." >&2
+    exit 1
+fi
+if ! wp plugin is-installed pvdak-core --path="$WP_ROOT"; then
+    echo "ERROR: WordPress did not recognize the copied Core plugin." >&2
     exit 1
 fi
 echo "INSTALLED_INACTIVE_SOURCE: $DEST"
