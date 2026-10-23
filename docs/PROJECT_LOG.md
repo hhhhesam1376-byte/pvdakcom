@@ -552,3 +552,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Theme version 0.8.20; added source regression checks. **This is a draft commit object, NOT a main-branch update, release, or live test.** Site still runs 0.8.19 until separate approval and deployment.
 
 - Draft follow-up: corrected magazine query to fetch up to 5 posts when no featured override exists (otherwise 1 featured + only 3 side cards would appear). Also avoided nesting a nav element inside WordPress comments pagination. Added explicit approval checklist docs/PENDING_APPROVAL.md.
+
+
+## 2026-10-23 — DRAFT-PV-FAVICON-049 (pending review, no deployment)
+- Added theme-contained `assets/icons/pvdak-pv.svg` temporary two-tone vector favicon (white P, gold V, dark emerald/navy background) with small-size legibility. No external assets or CDN.
+- The classic theme emits the icon in wp_head, login_head and admin_head, suppressing duplicate native WP favicon tags without changing WordPress site_icon option. The standalone maintenance page also emits the icon explicitly because it bypasses wp_head.
+- Added G to docs/PENDING_APPROVAL.md; 0.8.20 draft already contains A–F. Existing real production main and website remain unchanged until the user requests review/publish.

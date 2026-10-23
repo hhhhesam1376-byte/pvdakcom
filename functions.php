@@ -78,3 +78,26 @@ function pvdak_home_assets() {
     }
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
+
+// Temporary PV favicon bundled in the theme, including login/admin tabs.
+// Preserve the WordPress site_icon option untouched for an eventual real brand.
+function pvdak_pv_favicon_url() {
+    return get_template_directory_uri() . '/assets/icons/pvdak-pv.svg';
+}
+function pvdak_pv_favicon_markup() {
+    printf(
+        '<link rel="icon" href="%s" type="image/svg+xml" sizes="any">' . "\n",
+        esc_url( pvdak_pv_favicon_url() )
+    );
+}
+// Prevent conflicting old favicon links from WordPress while this temporary
+// theme icon is in use; no database mutations, plugins, CDN or separate assets.
+function pvdak_pv_disable_core_icon_markup() {
+    remove_action( 'wp_head', 'wp_site_icon', 99 );
+    remove_action( 'login_head', 'wp_site_icon', 99 );
+    remove_action( 'admin_head', 'wp_site_icon', 99 );
+}
+add_action( 'after_setup_theme', 'pvdak_pv_disable_core_icon_markup', 20 );
+add_action( 'wp_head', 'pvdak_pv_favicon_markup', 99 );
+add_action( 'login_head', 'pvdak_pv_favicon_markup', 99 );
+add_action( 'admin_head', 'pvdak_pv_favicon_markup', 99 );

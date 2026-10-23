@@ -59,6 +59,7 @@ function pvdak_maintenance_render() {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow,noarchive">
+    <link rel="icon" href="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/pvdak-pv.svg' ); ?>" type="image/svg+xml" sizes="any">
     <title>در حال توسعه | PVDak</title>
     <style>
         :root { color-scheme: dark; }
