@@ -1,10 +1,12 @@
-/* PVDak home topics: Persian search + dependency-free RTL swiper-style carousel.
- * Seven visible topics on desktop, four on tablet, two on small screens.
- * Infinite loop reorders the real Page elements after each transition, without
- * duplicated links, network/CDN libraries or invisible focusable clones.
+/* PVDak homepage: REAL Swiper.js 14.3.0 + Persian landing search.
+ * Never substitute a hand-coded scrolling animation for the Swiper runtime.
+ * A readable, one-row scroll fallback remains ONLY if both CDNs fail.
  */
 (function () {
     'use strict';
+
+    var SWIPER_FALLBACK_URL = 'https://unpkg.com/swiper@14.3.0/swiper-bundle.min.js';
+    var SWIPER_FALLBACK_CSS = 'https://unpkg.com/swiper@14.3.0/swiper-bundle.min.css';
 
     function normalize(s) {
         return String(s || '').toLocaleLowerCase()
@@ -14,220 +16,181 @@
             .replace(/\s+/g, ' ').trim();
     }
 
-    function setupSwiper(field) {
-        var slider = document.querySelector('[data-pvdak-swiper]');
-        if (!slider) { return null; }
-        var track = slider.querySelector('[data-pvdak-swiper-track]');
+    function topicSetup() {
+        var form = document.querySelector('.pvdak-home-search');
+        var field = document.getElementById('pvdak-topic-input');
+        var section = document.getElementById('topics');
+        var container = document.querySelector('[data-pvdak-swiper]');
+        var track = container && container.querySelector('[data-pvdak-swiper-track]');
+        var slides = track ? Array.prototype.slice.call(track.querySelectorAll('[data-pvdak-topic]')) : [];
+        var empty = document.getElementById('pvdak-search-empty');
+        var controls = document.querySelector('.pvdak-topics-controls');
         var prev = document.querySelector('[data-pvdak-topic-prev]');
         var next = document.querySelector('[data-pvdak-topic-next]');
-        var controls = document.querySelector('.pvdak-topics-controls');
-        if (!track || !prev || !next || !controls) { return null; }
+        if (!container || !track || !slides.length) { return; }
 
-        var original = Array.prototype.slice.call(track.querySelectorAll('[data-pvdak-topic]'));
-        var busy = false;
-        var hovered = false;
-        var focused = false;
-        var swipeX = null;
-        var swiped = false;
-        var transitionHandler = null;
-        var transitionTimer = null;
-        var reduceMotion = window.matchMedia &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var swiper = null;
+        var reduceMotion = !!(window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        var prefersReduced = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)');
+        var hadFocus = false;
 
-        function visibleItems() {
-            return Array.prototype.filter.call(track.children, function (card) {
-                return !card.hidden;
-            });
-        }
-        function visibleCount() {
+        function visibleSlots() {
             if (window.matchMedia('(max-width: 600px)').matches) { return 2; }
             if (window.matchMedia('(max-width: 1024px)').matches) { return 4; }
             return 7;
         }
-        function canRotate() {
-            return visibleItems().length > visibleCount();
+        function hasQuery() {
+            return !!(field && normalize(field.value));
         }
-        function cardStep() {
-            var first = visibleItems()[0];
-            if (!first) { return 0; }
-            var styles = window.getComputedStyle(track);
-            return first.getBoundingClientRect().width +
-                (parseFloat(styles.columnGap || styles.gap) || 0);
+        function canSlide() {
+            return slides.filter(function (slide) { return !slide.hidden; }).length > visibleSlots();
         }
-        function clearTransition() {
-            if (transitionHandler) {
-                track.removeEventListener('transitionend', transitionHandler);
-                transitionHandler = null;
+        function stop() {
+            if (swiper) {
+                swiper.destroy(true, true);
+                swiper = null;
             }
-            if (transitionTimer !== null) {
-                window.clearTimeout(transitionTimer);
-                transitionTimer = null;
-            }
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
-            busy = false;
+            container.classList.remove('is-ready');
+            if (controls) { controls.hidden = true; }
         }
-        function finishOnTransition(callback) {
-            var ended = false;
-            function finish() {
-                if (ended) { return; }
-                ended = true;
-                if (transitionHandler) {
-                    track.removeEventListener('transitionend', transitionHandler);
-                    transitionHandler = null;
-                }
-                if (transitionTimer !== null) {
-                    window.clearTimeout(transitionTimer);
-                    transitionTimer = null;
-                }
-                callback();
-                busy = false;
-            }
-            transitionHandler = function (event) {
-                if (event.target === track && event.propertyName === 'transform') {
-                    finish();
-                }
-            };
-            track.addEventListener('transitionend', transitionHandler);
-            transitionTimer = window.setTimeout(finish, 650);
-        }
-        function forward() {
-            if (busy || !canRotate()) { return; }
-            var cards = visibleItems();
-            var first = cards[0];
-            var step = cardStep();
-            if (!first || step <= 0) { return; }
-            if (reduceMotion) {
-                track.appendChild(first);
+        function initSwiper() {
+            if (swiper || typeof window.Swiper !== 'function' || hasQuery() || !canSlide()) {
+                if (controls) { controls.hidden = true; }
                 return;
             }
-            busy = true;
-            track.style.transition = 'transform 470ms ease';
-            track.style.transform = 'translateX(' + step + 'px)';
-            finishOnTransition(function () {
-                track.style.transition = 'none';
-                track.appendChild(first);
-                track.style.transform = 'translateX(0px)';
+
+            // All slides are original published WordPress Page links.
+            // Swiper itself owns transitions, loop, drag, and autoplay.
+            swiper = new window.Swiper(container, {
+                direction: 'horizontal',
+                slidesPerView: 7,
+                slidesPerGroup: 1,
+                spaceBetween: 12,
+                speed: reduceMotion ? 0 : 650,
+                loop: true,
+                watchOverflow: true,
+                grabCursor: true,
+                allowTouchMove: true,
+                keyboard: { enabled: true, onlyInViewport: true },
+                navigation: {
+                    nextEl: next,
+                    prevEl: prev
+                },
+                autoplay: reduceMotion ? false : {
+                    delay: 3400,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                },
+                a11y: {
+                    enabled: true,
+                    prevSlideMessage: 'موضوع قبلی',
+                    nextSlideMessage: 'موضوع بعدی'
+                },
+                breakpoints: {
+                    0: { slidesPerView: 2, spaceBetween: 9 },
+                    601: { slidesPerView: 4, spaceBetween: 12 },
+                    1025: { slidesPerView: 7, spaceBetween: 12 }
+                }
             });
-        }
-        function backward() {
-            if (busy || !canRotate()) { return; }
-            var cards = visibleItems();
-            var last = cards[cards.length - 1];
-            var first = cards[0];
-            var step = cardStep();
-            if (!last || !first || step <= 0) { return; }
-            track.insertBefore(last, first);
-            if (reduceMotion) { return; }
-            busy = true;
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(' + step + 'px)';
-            // Flush initial offset before smoothly sliding back to the start.
-            void track.offsetWidth;
-            track.style.transition = 'transform 470ms ease';
-            track.style.transform = 'translateX(0px)';
-            finishOnTransition(function () {
-                track.style.transition = 'none';
-                track.style.transform = 'translateX(0px)';
-            });
-        }
-        function refresh() {
-            clearTransition();
-            // Return to stable WordPress ordering when searching/resizing.
-            original.forEach(function (card) { track.appendChild(card); });
-            var enabled = canRotate();
-            controls.hidden = !enabled;
-            prev.disabled = !enabled;
-            next.disabled = !enabled;
-        }
-        function autoplayAllowed() {
-            return !reduceMotion && !document.hidden && !hovered && !focused &&
-                !(field && normalize(field.value)) && canRotate();
+            container.classList.add('is-ready');
+            if (controls) { controls.hidden = false; }
         }
 
-        slider.classList.add('is-ready');
-        refresh();
-
-        next.addEventListener('click', forward);
-        prev.addEventListener('click', backward);
-        slider.addEventListener('mouseenter', function () { hovered = true; });
-        slider.addEventListener('mouseleave', function () { hovered = false; });
-        slider.addEventListener('focusin', function () { focused = true; });
-        slider.addEventListener('focusout', function () {
-            window.setTimeout(function () {
-                focused = slider.contains(document.activeElement);
-            }, 0);
-        });
-        slider.addEventListener('pointerdown', function (event) {
-            if (event.pointerType === 'touch' || event.pointerType === 'pen') {
-                swipeX = event.clientX;
-                swiped = false;
+        function syncSwiper() {
+            // Loop mode and hidden slides should not mix: fully destroy it while
+            // search results are being filtered, and reinitialize after reset.
+            if (hasQuery()) {
+                stop();
+                return;
             }
-        });
-        slider.addEventListener('pointerup', function (event) {
-            if (swipeX === null) { return; }
-            var distance = event.clientX - swipeX;
-            swipeX = null;
-            if (Math.abs(distance) > 45) {
-                swiped = true;
-                if (distance > 0) { forward(); } else { backward(); }
-            }
-        });
-        slider.addEventListener('pointercancel', function () { swipeX = null; });
-        slider.addEventListener('click', function (event) {
-            if (swiped) {
-                event.preventDefault();
-                event.stopPropagation();
-                swiped = false;
-            }
-        }, true);
-        window.addEventListener('resize', refresh);
-        // A single local timer; no network dependency. Stops naturally when
-        // there are not enough pages or a visitor is using the controls.
-        window.setInterval(function () {
-            if (autoplayAllowed()) { forward(); }
-        }, 3400);
-        return { refresh: refresh };
-    }
-
-    function ready() {
-        var form = document.querySelector('.pvdak-home-search');
-        var field = document.getElementById('pvdak-topic-input');
-        var section = document.getElementById('topics');
-        var items = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-topic]'));
-        var empty = document.getElementById('pvdak-search-empty');
-        var swiper = setupSwiper(field);
-        if (!form || !field || !section || !items.length) { return; }
+            slides.forEach(function (slide) { slide.hidden = false; });
+            if (swiper && !canSlide()) { stop(); }
+            if (!swiper) { initSwiper(); }
+        }
 
         function filterTopics() {
-            var term = normalize(field.value);
+            var term = field ? normalize(field.value) : '';
+            // Stop loop and restore original unmodified Page nodes before hiding.
+            if (swiper) { stop(); }
             var found = 0;
-            items.forEach(function (item) {
-                var visible = !term || normalize(item.textContent).indexOf(term) !== -1;
-                item.hidden = !visible;
-                if (visible) { found++; }
+            slides.forEach(function (slide) {
+                var okay = !term || normalize(slide.textContent).indexOf(term) !== -1;
+                slide.hidden = !okay;
+                if (okay) { found++; }
             });
             if (empty) { empty.hidden = found !== 0; }
-            if (swiper) { swiper.refresh(); }
-            return found;
+            if (!term) { syncSwiper(); }
         }
 
-        field.addEventListener('input', filterTopics);
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-            filterTopics();
-            section.scrollIntoView({
-                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                block: 'start'
+        function updateAutoplay() {
+            if (!swiper || !swiper.autoplay || reduceMotion) { return; }
+            if (document.hidden || hadFocus) { swiper.autoplay.pause(); }
+            else { swiper.autoplay.resume(); }
+        }
+
+        if (controls) { controls.hidden = true; }
+        if (field && form && section) {
+            field.addEventListener('input', filterTopics);
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                filterTopics();
+                section.scrollIntoView({
+                    behavior: reduceMotion ? 'auto' : 'smooth',
+                    block: 'start'
+                });
             });
+            var query = new URLSearchParams(window.location.search).get('pvdak_topic');
+            if (query) { field.value = query; }
+        }
+
+        document.addEventListener('visibilitychange', updateAutoplay);
+        container.addEventListener('focusin', function () {
+            hadFocus = true;
+            updateAutoplay();
         });
-        var params = new URLSearchParams(window.location.search);
-        var start = params.get('pvdak_topic');
-        if (start) { field.value = start; filterTopics(); }
+        container.addEventListener('focusout', function () {
+            window.setTimeout(function () {
+                hadFocus = container.contains(document.activeElement);
+                updateAutoplay();
+            }, 0);
+        });
+        window.addEventListener('resize', function () {
+            if (!swiper && !hasQuery()) { initSwiper(); }
+            if (swiper && !canSlide()) { stop(); }
+        });
+        if (prefersReduced && typeof prefersReduced.addEventListener === 'function') {
+            prefersReduced.addEventListener('change', function (event) {
+                reduceMotion = event.matches;
+                stop();
+                syncSwiper();
+            });
+        }
+        filterTopics();
+        if (typeof window.Swiper === 'function') { initSwiper(); return; }
+
+        // If the main jsDelivr script could not load (blocked CDN, timeout),
+        // retry one pinned CDN. The real Swiper code remains mandatory for
+        // sliding behavior; without either provider the cards stay accessible.
+        var backupCss = document.createElement('link');
+        backupCss.rel = 'stylesheet';
+        backupCss.href = SWIPER_FALLBACK_CSS;
+        document.head.appendChild(backupCss);
+        var backupScript = document.createElement('script');
+        backupScript.src = SWIPER_FALLBACK_URL;
+        backupScript.async = true;
+        backupScript.onload = function () { syncSwiper(); };
+        backupScript.onerror = function () {
+            if (controls) { controls.hidden = true; }
+            container.classList.add('pvdak-swiper-unavailable');
+        };
+        document.head.appendChild(backupScript);
     }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', ready);
+        document.addEventListener('DOMContentLoaded', topicSetup);
     } else {
-        ready();
+        topicSetup();
     }
 }());
