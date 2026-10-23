@@ -62,6 +62,7 @@ function pvdak_support_ticket_form(){
             <span><?php echo esc_html($entry['text']); ?></span></li>
           <?php endforeach; ?></ol>
         <?php elseif(is_string($reply) && $reply!==''): ?><p>پاسخ پشتیبانی: <?php echo esc_html($reply); ?></p><?php endif; ?>
+        <?php if('closed'===$state): ?><p class="pvdak-static-note">این گفتگو توسط پشتیبانی بسته شده است؛ برای موضوع جدید تیکت تازه ثبت کنید.</p><?php else: ?>
         <form method="post" action="<?php echo esc_url($url); ?>" class="pvdak-forms pvdak-ticket-followup">
           <input type="hidden" name="action" value="pvdak_support_followup">
           <input type="hidden" name="ticket_id" value="<?php echo esc_attr($item->ID); ?>">
@@ -69,7 +70,7 @@ function pvdak_support_ticket_form(){
           <label for="pvdak-followup-<?php echo esc_attr($item->ID); ?>">پاسخ یا توضیح تکمیلی</label>
           <textarea id="pvdak-followup-<?php echo esc_attr($item->ID); ?>" name="followup_body" minlength="2" maxlength="2500" rows="3" required></textarea>
           <button type="submit">ارسال پاسخ</button>
-        </form></li>
+        </form><?php endif; ?></li>
       <?php endforeach; ?></ul><?php endif;?>
     </section>
     <?php return ob_get_clean();
@@ -118,7 +119,8 @@ function pvdak_support_followup() {
     check_admin_referer('pvdak_support_followup_'.$id,'_pvdak_followup_nonce');
     $ticket=$id?get_post($id):null;
     if (!$ticket || 'pvdak_support_ticket'!==$ticket->post_type ||
-        'private'!==$ticket->post_status || (int)$ticket->post_author!==get_current_user_id()) {
+        'private'!==$ticket->post_status || (int)$ticket->post_author!==get_current_user_id() ||
+        'closed'===get_post_meta($id,'_pvdak_support_status',true)) {
         wp_die('دسترسی به این پیام مجاز نیست.','',array('response'=>403));
     }
     $raw=wp_unslash($_POST['followup_body']??'');
@@ -146,6 +148,12 @@ function pvdak_support_reply_box_html($post){
     $reply=get_post_meta($post->ID,'_pvdak_support_reply',true);
     echo '<label for="pvdak_support_answer">پاسخ قابل مشاهده فقط برای فرستنده</label>';
     echo '<textarea id="pvdak_support_answer" name="pvdak_support_answer" style="width:100%" rows="5">'.esc_textarea($reply).'</textarea>';
+    $state=get_post_meta($post->ID,'_pvdak_support_status',true);
+    echo '<p><label for="pvdak_support_state">وضعیت گفتگو</label><select id="pvdak_support_state" name="pvdak_support_state">';
+    foreach(array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده شده','closed'=>'بسته شده') as $key=>$label){
+        echo '<option value="'.esc_attr($key).'" '.selected($state,$key,false).'>'.esc_html($label).'</option>';
+    }
+    echo '</select></p>';
 }
 function pvdak_support_save_reply($post_id,$post){
     if(!current_user_can('manage_options')||wp_is_post_revision($post_id)||
@@ -160,7 +168,31 @@ function pvdak_support_save_reply($post_id,$post){
     if ($reply !== $old && $reply !== '') {
         if (!pvdak_support_append_message($post_id,'staff',$reply))return;
     }
+    $raw_state=wp_unslash($_POST['pvdak_support_state']??'');
+    $requested_state=is_string($raw_state)?sanitize_key($raw_state):'';
+    $state=in_array($requested_state,array('open','answered','closed'),true)?
+        $requested_state:($reply?'answered':'open');
     update_post_meta($post_id,'_pvdak_support_reply',$reply);
-    update_post_meta($post_id,'_pvdak_support_status', $reply?'answered':'open');
+    update_post_meta($post_id,'_pvdak_support_status',$state);
 }
 add_action('save_post_pvdak_support_ticket','pvdak_support_save_reply',10,2);
+
+/** Staff-only list columns, with no ticket text or user email in the list. */
+function pvdak_support_admin_columns($columns) {
+    if(!current_user_can('manage_options'))return $columns;
+    $columns['pvdak_support_status']='وضعیت گفتگو';
+    $columns['pvdak_support_message_count']='پیام‌ها';
+    return $columns;
+}
+add_filter('manage_pvdak_support_ticket_posts_columns','pvdak_support_admin_columns');
+function pvdak_support_admin_column($column,$post_id) {
+    if(!current_user_can('manage_options'))return;
+    if('pvdak_support_status'===$column){
+        $state=get_post_meta($post_id,'_pvdak_support_status',true);
+        $labels=array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده‌شده','closed'=>'بسته‌شده');
+        echo esc_html($labels[$state]??'در انتظار بررسی');
+    } elseif('pvdak_support_message_count'===$column){
+        echo esc_html(count(get_post_meta($post_id,'_pvdak_support_message',false)));
+    }
+}
+add_action('manage_pvdak_support_ticket_posts_custom_column','pvdak_support_admin_column',10,2);

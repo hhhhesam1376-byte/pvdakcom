@@ -662,3 +662,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Client dashboard now shows a non-intake notice and dates for only the authenticated user's own requests. The fallback correctly distinguishes login success from the separately deployed Core plugin.
 - Professional portal hides sensitive-looking capacity/subscription panels until the member's own application status is approved; even approved pages contain aggregates, not case descriptions.
 - Source-only checks pending; no main branch update, server deployment, account-data change or public intake activation.
+
+
+## 2026-10-23 — NEXT-BATCH-065 (v0.8.28 draft, staff tickets and entitlement)
+- Added staff-only ticket admin list columns, clear open/answered/closed statuses, a close/reopen selector, and prevented follow-ups on closed threads with both UI and server-side owner/status checks. Full private thread remains author-only.
+- Manual subscription update now rejects incoherent active plans (expired/missing date, zero quota, no tier) and appends an audit record for every actual change; gate still defaults OFF.
+- Historical monthly assignment audit iteration is paginated in 100-ID blocks instead of allocating an unbounded list; existing one-case-one-month consumption semantics unchanged.
+- The internal manager matching dropdown reuses its per-request load snapshot, while final assignment is revalidated inside the existing advisory DB lock. No automated assignment, notices to lawyers, or public case data exposure.
+- Code prepared on draft only. Core installation, PHP syntax and DB concurrency tests still pending.

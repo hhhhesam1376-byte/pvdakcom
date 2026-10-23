@@ -29,15 +29,19 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
     $profile_id = absint( $profile_id );
     if ( ! $profile_id ) { return 0; }
     // Audits are immutable history: count even if a case was later unassigned.
+    $page = 1;
+    $batch_size = 100;
+    $used = 0;
+    // Bound peak memory, even when a large archive contains historical audits.
+    do {
     $ids = get_posts( array( 'post_type'=>'pvdak_request', 'post_status'=>'private',
-        'posts_per_page'=>-1, 'fields'=>'ids','no_found_rows'=>true,
+        'posts_per_page'=>$batch_size, 'paged'=>$page,'fields'=>'ids','no_found_rows'=>true,
         'meta_query'=>array(
             array('key'=>'_pvdak_assignment_audit','compare'=>'EXISTS')
         ),
         'suppress_filters'=>false ) );
     $first = gmdate( 'Y-m-01 00:00:00' );
     $next = gmdate( 'Y-m-01 00:00:00', strtotime('+1 month', strtotime($first.' UTC')) );
-    $used = 0;
     foreach ( $ids as $id ) {
         $entries = get_post_meta( absint( $id ), '_pvdak_assignment_audit', false );
         foreach ( $entries as $a ) {
@@ -49,6 +53,8 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
             }
         }
     }
+    $page++;
+    } while(count($ids)===$batch_size);
     return $used;
 }
 function pvdak_core_subscription_allows_new_assignment( $profile_id ) {
@@ -102,9 +108,25 @@ function pvdak_core_subscription_save( $post_id ) {
        !in_array($plan,array('none','basic','standard','advanced'),true)||
        !ctype_digit($limit)||(int)$limit>100||
        ($date!==''&&(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date)||!checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4)))))return;
+    // An active manual plan must be internally coherent; never promise access
+    // for a missing tier, zero quota, empty or already expired end date.
+    if ('active'===$state &&
+        ('none'===$plan || (int)$limit===0 || $date==='' || $date<current_time('Y-m-d')))return;
+    $old=array(
+        'state'=>get_post_meta($post_id,'_pvdak_subscription_state',true),
+        'plan'=>pvdak_core_subscription_plan($post_id),
+        'quota'=>pvdak_core_subscription_monthly_quota($post_id),
+        'expires'=>pvdak_core_subscription_expiry($post_id)
+    );
+    $next=array('state'=>$state,'plan'=>$plan,'quota'=>(int)$limit,'expires'=>$date);
+    if($old===$next)return;
     update_post_meta($post_id,'_pvdak_subscription_state',$state);
     update_post_meta($post_id,'_pvdak_subscription_plan',$plan);
     update_post_meta($post_id,'_pvdak_subscription_monthly_quota',(int)$limit);
     update_post_meta($post_id,'_pvdak_subscription_expires',$date);
+    add_post_meta($post_id,'_pvdak_subscription_audit',array(
+        'previous'=>$old,'next'=>$next,'by'=>get_current_user_id(),
+        'at'=>current_time('mysql',true)
+    ),false);
 }
 add_action('save_post_pvdak_professional','pvdak_core_subscription_save',24);
