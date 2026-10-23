@@ -513,3 +513,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Next: user runs existing `deploy.sh` and archives `scripts` to execute one-time host vendor installer; **expected** `SWIPER_LOCAL_ASSETS_OK`, `Local Swiper library: PASS` and `PVDAK_SWIPER_LOCAL_OK`. If CDN origins are unreachable from the server too, the installer stops and the next diagnostic will correctly fail; a verified alternate acquisition path would be required. Do not say Swiper is locally installed until user provides that output.
 - Existing 4 editor-selected Pages, WordPress primary menu, legal topic Pages, Core 0.8.0, maintenance and disabled intakes unchanged. Existing 15-minute deploy route preserved, installed files persist outside theme release folder.
 
+
+
+## 2026-10-23 — SWIPER-ADMIN-LOCAL-PROVISION-044 (v0.8.16, host verification pending)
+- Kept existing main branch, cPanel theme Cron, 15-minute deployment, maintenance, Core 0.8.0, WordPress content and the persistent uploads/pvdak-static/swiper-14.3.0 destination unchanged.
+- Added inc/pvdak-swiper-local.php: admin-only, transient-throttled one-time acquisition of official Swiper 14.3.0 files over HTTPS (cdnjs/jsDelivr/unpkg), checking minimum size, expected content and required MIT license. Stages files before placing JS/CSS/LICENSE and writes SHA256SUMS completion marker last. No browser-side CDN, new cron, keys, WP users, cases, intake or membership effects.
+- pvdak_home_assets() only enqueues vendor assets after shared file-size/marker validation, followed by existing local pvdak-home.js; former private scripts/pvdak-install-swiper-local.sh is still available and unchanged.
+- Source-only regression checks strengthened for one-time admin acquisition and no frontend CDN dependency; theme version 0.8.16. This DOES NOT prove successful installation: only a logged-in admin visit to WordPress after deployment can trigger PHP-side acquisition; if host outbound CDNs fail, the same-origin files remain absent. Do not claim carousel works until host PVDAK_SWIPER_LOCAL_OK and visual autoplay/loop checks.

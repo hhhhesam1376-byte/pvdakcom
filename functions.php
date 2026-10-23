@@ -34,6 +34,7 @@ add_action( 'wp_enqueue_scripts', 'pvdak_assets' );
 require_once get_template_directory() . '/pvdak-maintenance.php';
 
 /* Homepage content and editor (ACF Free-compatible). */
+require_once get_template_directory() . '/inc/pvdak-swiper-local.php';
 require_once get_template_directory() . '/inc/pvdak-home-acf.php';
 require_once get_template_directory() . '/inc/pvdak-home-quick-links.php';
 require_once get_template_directory() . '/inc/pvdak-legal-landings.php';
@@ -44,18 +45,12 @@ require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
-        // Real pinned Swiper.js served ONLY from our own WordPress domain.
-        // Stored in wp-content/uploads/pvdak-static to survive theme Cron releases.
-        // One-time installer: private scripts/pvdak-install-swiper-local.sh.
-        // Missing assets must not silently fall back to an inaccessible CDN.
+        // Always use the same local host directory. Admin visits can provision
+        // the pinned vendor files; private shell installer remains supported.
         $uploads = wp_get_upload_dir();
         $vendor_rel = '/pvdak-static/swiper-14.3.0';
-        $vendor_dir = isset( $uploads['basedir'] ) ? $uploads['basedir'] . $vendor_rel : '';
         $vendor_url = isset( $uploads['baseurl'] ) ? $uploads['baseurl'] . $vendor_rel : '';
-        $have_swiper = $vendor_dir && $vendor_url &&
-            is_file( $vendor_dir . '/swiper-bundle.min.js' ) &&
-            is_file( $vendor_dir . '/swiper-bundle.min.css' ) &&
-            is_file( $vendor_dir . '/LICENSE' );
+        $have_swiper = $vendor_url && pvdak_swiper_vendor_ready();
         if ( $have_swiper ) {
             wp_enqueue_style(
                 'pvdak-swiper',
