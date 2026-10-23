@@ -470,3 +470,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Theme version bumped `0.8.10 → 0.8.11` (Core `0.8.0` remains unchanged). No real WordPress data, menu assignment, 17 Page records, WP settings, private requests, users, intakes, or maintenance mode changed by assistant. Existing 15-minute Cron and `deploy.sh` workflow preserved.
 - Next: user deploys/checks new theme with existing publisher and private status script; confirm `PVDAK_MEGA_NAV_OK: checks=13`, no pre-existing test regressions; verify primary menu `pvdak-main` has actual child items, hover reveals 2-column dropdown and keyboard/mobile are usable. Do not open intake or disable maintenance.
 
+## 2026-10-23 — DYNAMIC-MEGA-NAV-HOST-039 (host confirmation at 09:13:25Z)
+- User host shell reported `DEPLOY_OK 10d76bf14f8f7efadf36d7fe5f6ce71148b0b1f0`; existing deployment script took backup `/home/amirhoseainsabet/.pvdak-deploy/backups/20261023T091325Z-10d76bf14f8f`.
+- Theme **0.8.11** source with WordPress `primary` two-column RTL CSS mega dropdown is now deployed. Deployment command returned to shell; user entered `^C` afterward, not evidence of a deploy failure.
+- **Not yet verified:** live browser hover/focus/touch rendering, actual `pvdak-main` assigned location, child menu items, or `PVDAK_MEGA_NAV_OK: checks=13` from the current host diagnostic. Do not represent them as tested.
+- Production Core **0.8.0** and intake options remain last-known off, not directly re-tested after this deployment; public maintenance kept unchanged by theme update.
+- To verify quickly after deploy: browser refresh and mouse hover on parent with assigned WP child items; optionally run existing private `pvdak-status.sh --test` workflow for 13 static assertions and all previous health checks.
+
