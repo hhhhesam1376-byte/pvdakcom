@@ -14,9 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                     <?php wp_nav_menu(array('theme_location'=>'footer','container'=>false,'menu_class'=>'menu','fallback_cb'=>false,'depth'=>1)); ?>
                 </nav>
             <?php else : ?>
-                <p>همراه مسیر حقوقی شما</p>
-                <a href="<?php echo esc_url(home_url('/#services')); ?>">خدمات حقوقی</a>
-                <a href="<?php echo esc_url(home_url('/#community')); ?>">همکاری با ما</a>
+                <p>آشنایی با خدمات و مطالب پویش</p>
+                <?php foreach ( array_slice( pvdak_default_navigation_links(), 0, 3 ) as $link ): ?>
+                  <a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a>
+                <?php endforeach; ?>
             <?php endif; ?>
         </div>
         <nav class="pvdak-footer-public" aria-label="اطلاعات سایت">

@@ -10,6 +10,7 @@ $paths = array(
   'contact'=>'page-templates/pvdak-contact.php',
   'header'=>'header.php',
   'footer'=>'footer.php',
+  'nav'=>'inc/pvdak-navigation-links.php',
   'assets'=>'functions.php',
   'javascript'=>'assets/js/pvdak-account.js',
   'css'=>'style.css',
@@ -54,8 +55,11 @@ $checks = array(
     strpos($v['register'],"pvdak_public_page_url( 'privacy-policy' )")!==false &&
     strpos($v['contact'],"pvdak_public_page_url( 'privacy-policy' )")!==false,
   'Primary and footer links come from published Pages' =>
-    strpos($v['header'],'pvdak_public_page_url( $slug )')!==false &&
-    strpos($v['footer'],"pvdak_public_page_url( 'account-login' )")!==false,
+    substr_count($v['header'],'pvdak_default_navigation_links()')===2 &&
+    strpos($v['footer'],'pvdak_default_navigation_links()')!==false &&
+    strpos($v['footer'],"pvdak_public_page_url( 'account-login' )")!==false &&
+    strpos($v['nav'],'pvdak_public_page_url( $slug )')!==false &&
+    strpos($v['nav'],'get_term_link(')!==false,
   'Interaction script is locally scoped and layouts responsive' =>
     strpos($v['assets'],"'pvdak-account-interactions'")!==false &&
     strpos($v['assets'],'is_page( array( \'account-login\'')!==false &&

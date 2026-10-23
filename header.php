@@ -31,16 +31,9 @@ $auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_ur
                 wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'menu', 'fallback_cb'=>false ) );
             else : ?>
                 <ul class="menu">
-                    <li><a href="<?php echo esc_url( home_url('/#services') ); ?>">خدمات حقوقی</a></li>
-                    <li><a href="<?php echo esc_url( home_url('/#topics') ); ?>">موضوعات</a></li>
-                    <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
-                    <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
-                    <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
-<?php foreach ( array( 'about-us' => 'درباره ما', 'contact-us' => 'تماس با ما' ) as $slug => $label ) :
-  $page_url = pvdak_public_page_url( $slug );
-  if ( ! $page_url ) { continue; } ?>
-<li><a href="<?php echo esc_url( $page_url ); ?>"><?php echo esc_html( $label ); ?></a></li>
-<?php endforeach; ?>
+                    <?php foreach ( pvdak_default_navigation_links() as $link ): ?>
+                    <li><a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a></li>
+                    <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
         </nav>
@@ -53,16 +46,9 @@ $auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_ur
                         wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'pvdak-mobile-links', 'fallback_cb'=>false ) );
                     else : ?>
                         <ul class="pvdak-mobile-links">
-                            <li><a href="<?php echo esc_url( home_url('/#services') ); ?>">خدمات حقوقی</a></li>
-                            <li><a href="<?php echo esc_url( home_url('/#topics') ); ?>">موضوعات</a></li>
-                            <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
-                            <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
-                            <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
-<?php foreach ( array( 'about-us' => 'درباره ما', 'contact-us' => 'تماس با ما' ) as $slug => $label ) :
-  $page_url = pvdak_public_page_url( $slug );
-  if ( ! $page_url ) { continue; } ?>
-<li><a href="<?php echo esc_url( $page_url ); ?>"><?php echo esc_html( $label ); ?></a></li>
-<?php endforeach; ?>
+                            <?php foreach ( pvdak_default_navigation_links() as $link ): ?>
+                            <li><a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a></li>
+                            <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
                 </nav>
