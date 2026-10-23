@@ -695,3 +695,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Identified a stale-version-marker failure mode in `inc/pvdak-public-pages.php`: the `_pvdak_public_pages_bootstrap=0.8.26` option short-circuited future reconciliation, even when Pages were missing. Removed the early exit. Every normal authorized admin visit now checks only known slugs; missing Pages are seeded, existing published/draft/trashed Pages are never edited.
 - The read-only preflight and private post-Core acceptance report now include all seeded Pages, their published/missing status and bootstrap marker, with instructions for one wp-admin visit. PHP/WordPress runtime verification of this patch and seven Page creations is pending; this draft is NOT published.
 - Updated theme version/source regression expectations to 0.8.29. Core remains 0.8.2. No new pipeline, keys, SMTP changes, role changes or public intake activation.
+
+
+## 2026-10-23 — PAGE-BOOTSTRAP-REGRESSION-070 (draft only)
+- Added eight synthetic assertions demonstrating that a stale 0.8.26 completion marker no longer blocks creation of the seven missing Pages.
+- Demonstrates that draft and trashed Pages are preserved, the new 0.8.29 marker is written only when complete, and a later missing Page is reconciled even with a current marker.
+- Wired the regression into the pre-existing read-only source test script. No production Page content was created, modified or deleted by ChatGPT.
