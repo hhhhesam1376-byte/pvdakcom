@@ -530,11 +530,6 @@ a.pvdak-magazine-aside-card:hover .pvdak-magazine-card-cta > span { transform:tr
   gap:16px;position:relative;list-style:none;
   margin:0;padding:0;counter-reset:none;
 }
-.pvdak-process-timeline .pvdak-process-grid::before {
-  content:"";position:absolute;z-index:0;top:66px;left:5%;right:5%;
-  height:2px;background:linear-gradient(90deg,rgba(232,188,120,.7),rgba(138,223,202,.8));
-  pointer-events:none;
-}
 .pvdak-process-timeline .pvdak-process-step {
   position:relative;z-index:1;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-start;gap:0;
@@ -597,7 +592,6 @@ a.pvdak-magazine-aside-card:hover .pvdak-magazine-card-cta > span { transform:tr
 .pvdak-process-timeline .pvdak-process-step:nth-child(4) .pvdak-process-step-decoration{background:#f5c89d}
 @media(max-width:980px) {
   .pvdak-process-timeline .pvdak-process-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-  .pvdak-process-timeline .pvdak-process-grid::before{display:none}
   .pvdak-process-timeline .pvdak-process-step{min-height:200px}
 }
 @media(max-width:620px) {

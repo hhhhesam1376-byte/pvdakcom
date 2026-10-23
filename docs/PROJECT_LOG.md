@@ -572,3 +572,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - User explicitly approved publishing all eight pending UI/editorial changes A–H together. Scheduled fast-forward from the completed draft chain to the existing `main` branch; existing 15-minute private cPanel cron/deploy path is unchanged.
 - Theme v0.8.20 includes custom Swiper arrows, centered topic card art, five real WordPress post cards with fully clickable images, single article/related posts/native comments layout, PV favicon (including maintenance page), and premium four-step timeline. The seeded five WP posts remain unchanged and comment settings are preserved.
 - Note: GitHub main update is NOT equivalent to successful host deployment; verify `DEPLOY_OK` for release SHA and check article pages and new styles after cPanel fetch. The theme runner includes PHP syntax checks and rollback.
+
+
+## 2026-10-23 — DRAFT-PROCESS-CONNECTOR-052 (v0.8.21, pending approval)
+- User screenshot shows an unexpected horizontal line crossing all four translucent process cards and icons. Root cause: `.pvdak-process-timeline .pvdak-process-grid::before` line at top:66px. Removed the pseudo-element from versioned `style.css` and helper CSS file, as well as its now-unused responsive override. Per-card accent bars, titles, steps, SVGs, accessibility and responsive layout remain unchanged.
+- Theme version raised to 0.8.21 for cache invalidation; regression assertion now enforces that the connector line is absent. Added `docs/PENDING_APPROVAL_NEXT.md` with one pending change.
+- DO NOT publish to main until the user explicitly instructs to do so, because the established 15-minute cPanel cron auto-deploys main.
