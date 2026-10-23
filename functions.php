@@ -34,7 +34,6 @@ add_action( 'wp_enqueue_scripts', 'pvdak_assets' );
 require_once get_template_directory() . '/pvdak-maintenance.php';
 
 /* Homepage content and editor (ACF Free-compatible). */
-require_once get_template_directory() . '/inc/pvdak-swiper-local.php';
 require_once get_template_directory() . '/inc/pvdak-home-acf.php';
 require_once get_template_directory() . '/inc/pvdak-home-quick-links.php';
 require_once get_template_directory() . '/inc/pvdak-legal-landings.php';
@@ -45,12 +44,13 @@ require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
-        // Always use the same local host directory. Admin visits can provision
-        // the pinned vendor files; private shell installer remains supported.
-        $uploads = wp_get_upload_dir();
-        $vendor_rel = '/pvdak-static/swiper-14.3.0';
-        $vendor_url = isset( $uploads['baseurl'] ) ? $uploads['baseurl'] . $vendor_rel : '';
-        $have_swiper = $vendor_url && pvdak_swiper_vendor_ready();
+        // All structural Swiper assets ship inside this versioned WordPress theme.
+        $vendor_rel = '/assets/vendor/swiper-14.3.0';
+        $vendor_dir = get_template_directory() . $vendor_rel;
+        $vendor_url = get_template_directory_uri() . $vendor_rel;
+        $have_swiper = is_readable( $vendor_dir . '/swiper-bundle.min.js' ) &&
+            is_readable( $vendor_dir . '/swiper-bundle.min.css' ) &&
+            is_readable( $vendor_dir . '/LICENSE' );
         if ( $have_swiper ) {
             wp_enqueue_style(
                 'pvdak-swiper',

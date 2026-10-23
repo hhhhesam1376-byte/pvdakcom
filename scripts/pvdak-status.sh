@@ -93,11 +93,11 @@ if [[ -f "$THEME/rtl.css" ]]; then
 else
   value "RTL stylesheet" "MISSING"
 fi
-SWIPER_LOCAL="$WP_ROOT/wp-content/uploads/pvdak-static/swiper-14.3.0"
+SWIPER_LOCAL="$THEME/assets/vendor/swiper-14.3.0"
 if [[ -s "$SWIPER_LOCAL/swiper-bundle.min.js" && -s "$SWIPER_LOCAL/swiper-bundle.min.css" && -s "$SWIPER_LOCAL/LICENSE" ]]; then
-  value "Swiper 14.3.0 local files" "PRESENT (same-origin, persistent)"
+  value "Swiper 14.3.0 theme files" "PRESENT (bundled in theme)"
 else
-  value "Swiper 14.3.0 local files" "MISSING (run private vendor installer)"
+  value "Swiper 14.3.0 theme files" "MISSING (theme release incomplete)"
 fi
 if command -v php >/dev/null 2>&1; then
   value "PHP CLI version" "$(php -r 'echo PHP_VERSION;' 2>/dev/null)"
@@ -119,10 +119,10 @@ if [[ "$MODE" == "--test" ]]; then
         -s "$SWIPER_LOCAL/LICENSE" ]] &&
      [[ $(wc -c < "$SWIPER_LOCAL/swiper-bundle.min.js") -ge 120000 ]] &&
      [[ $(wc -c < "$SWIPER_LOCAL/swiper-bundle.min.css") -ge 10000 ]]; then
-    value "Local Swiper library" "PASS"
-    echo "PVDAK_SWIPER_LOCAL_OK: JS and CSS installed in persistent WordPress assets (read-only)"
+    value "Bundled Swiper library" "PASS"
+    echo "PVDAK_SWIPER_LOCAL_OK: JS and CSS shipped in active WordPress theme (read-only)"
   else
-    value "Local Swiper library" "FAIL (real Swiper not installed locally)"
+    value "Bundled Swiper library" "FAIL (Swiper bundle missing from active theme)"
     failure=1
   fi
   run_test() {

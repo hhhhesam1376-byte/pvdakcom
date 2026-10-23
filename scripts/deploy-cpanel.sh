@@ -48,7 +48,7 @@ cleanup() {
   trap - EXIT
   if (( PUBLISHING == 1 && rc != 0 )); then
     log "Deployment failed; restoring $BACKUP"
-    if rsync -a --delete "$BACKUP/" "$TARGET/"; then
+    if rsync -a --delete --chmod=D755,F644 "$BACKUP/" "$TARGET/"; then
       log "ROLLBACK_OK"
     else
       log "ROLLBACK_FAILED: restore the private backup manually"
@@ -83,7 +83,7 @@ cp -a "$TARGET/." "$BACKUP/"
 rm -rf "$STAGE/.github" "$STAGE/scripts" "$STAGE/docs"
 rm -f "$STAGE/.gitignore" "$STAGE/.cpanel.yml" "$STAGE/README.md" "$STAGE/CHANGELOG.md"
 PUBLISHING=1
-rsync -rlt --delete-delay --delay-updates --chmod=D755,F644 "$STAGE/" "$TARGET/"
+rsync -rltp --delete-delay --delay-updates --chmod=D755,F644 "$STAGE/" "$TARGET/"
 health || die "Site health check failed after deployment"
 printf '%s\n' "$SHA" > "$STATE/deployed.tmp"
 mv -f "$STATE/deployed.tmp" "$STATE/deployed"
