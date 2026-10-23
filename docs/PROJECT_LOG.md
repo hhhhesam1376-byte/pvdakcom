@@ -670,3 +670,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Historical monthly assignment audit iteration is paginated in 100-ID blocks instead of allocating an unbounded list; existing one-case-one-month consumption semantics unchanged.
 - The internal manager matching dropdown reuses its per-request load snapshot, while final assignment is revalidated inside the existing advisory DB lock. No automated assignment, notices to lawyers, or public case data exposure.
 - Code prepared on draft only. Core installation, PHP syntax and DB concurrency tests still pending.
+
+
+## 2026-10-23 — NEXT-BATCH-066 (v0.8.28 / Core source 0.8.2, staff-only launch report)
+- Added Tools > آمادگی PVDak as a staff-only read-only report: version, maintenance/intake/registration/quota switches, relevant Page publication states, editor links and policy-draft flags. No user identities, protected legal requests, or private case text are read or displayed.
+- Preliminary privacy/terms Pages now show a visible editorial notice until the site owner finalizes text; existing content is not overwritten. No invented addresses, official claims or compliance promises.
+- Source Core version incremented to 0.8.2 for matching/subscription/admin changes; still not installed by the theme-only Cron, and no runtime or external mail tests have been executed.
