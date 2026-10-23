@@ -79,7 +79,7 @@ function pvdak_editor_example_legal_topics() {
  * Only newly created samples receive a marker (for noindex while empty).
  */
 function pvdak_editor_seed_example_legal_topics( $parent_id ) {
-    $result = array( 'created' => 0, 'existing' => 0, 'failed' => 0 );
+    $result = array( 'created' => 0, 'existing' => 0, 'unpublished' => 0, 'failed' => 0 );
     $parent_id = absint( $parent_id );
     if ( ! $parent_id || 'publish' !== get_post_status( $parent_id ) ) {
         $result['failed'] = count( pvdak_editor_example_legal_topics() );
@@ -90,6 +90,9 @@ function pvdak_editor_seed_example_legal_topics( $parent_id ) {
         $existing = get_page_by_path( $path, OBJECT, 'page' );
         if ( $existing && 'trash' !== $existing->post_status ) {
             $result['existing']++;
+            if ( 'publish' !== $existing->post_status ) {
+                $result['unpublished']++;
+            }
             continue;
         }
         $id = pvdak_editor_find_or_create_page(
@@ -149,7 +152,7 @@ function pvdak_editor_bootstrap_card() {
         if ( '1' === $result ) {
             echo '<div class="notice notice-success inline"><p>لندینگ‌های نمونه بررسی و موارد گمشده ایجاد شدند. فهرست برگه‌ها را بازبینی کنید.</p></div>';
         } elseif ( 'error' === $result ) {
-            echo '<div class="notice notice-error inline"><p>برخی لندینگ‌ها ساخته نشدند. وضعیت برگه مادر و لاگ وردپرس را بررسی کنید.</p></div>';
+            echo '<div class="notice notice-error inline"><p>برخی لندینگ‌ها هنوز قابل نمایش نیستند. ممکن است برگه‌ای از قبل پیش‌نویس باشد؛ انتشار یا ویرایش آن فقط با تصمیم مدیر انجام می‌شود.</p></div>';
         }
     }
     echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -247,6 +250,7 @@ function pvdak_editor_publish_sample_topics() {
         pvdak_editor_prefill_acf( $home_id, 'legal_topics_parent_page', $parent );
     }
     $okay = 0 === $result['failed'] &&
+        0 === $result['unpublished'] &&
         count( pvdak_editor_example_legal_topics() ) === $result['created'] + $result['existing'];
     wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&pvdak_samples=' . ( $okay ? '1' : 'error' ) ) );
     exit;
