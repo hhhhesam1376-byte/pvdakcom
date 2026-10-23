@@ -589,7 +589,7 @@ a.pvdak-magazine-aside-card:hover .pvdak-magazine-card-cta > span { transform:tr
   margin:0;color:#c4dce1;font-size:12px;line-height:1.9;text-align:center;font-weight:400;
 }
 .pvdak-process-timeline .pvdak-process-step-decoration {
-  display:block;width:30px;height:3px;margin-top:auto;transform:translateY(12px);
+  display:block;width:30px;height:3px;margin-top:auto;margin-bottom:0;transform:translateY(12px);
   border-radius:99px;background:#e5bd7f;opacity:.78;
 }
 .pvdak-process-timeline .pvdak-process-step:nth-child(2) .pvdak-process-step-decoration{background:#96d9c5}
