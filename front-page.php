@@ -113,10 +113,10 @@ $svg_icons = array(
     </div>
 
     <?php if ( $legal_pages ): ?>
-    <div class="pvdak-topics-swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
-      <div class="pvdak-home-topics" data-pvdak-swiper-track>
+    <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
+      <div class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $legal_page ): ?>
-          <a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
+          <a class="pvdak-home-topic swiper-slide" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
             <?php echo pvdak_legal_topic_svg( pvdak_legal_topic_icon( $legal_page->ID ) ); ?>
             <span><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
           </a>
