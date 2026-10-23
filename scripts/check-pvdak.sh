@@ -28,6 +28,12 @@ if [[ ! -f "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php" ]]; then
   exit 1
 fi
 php "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php"
+if [[ ! -f "$THEME/tests/pvdak-theme/homepage-layout-smoke.php" ]]; then
+  echo "FAIL: four-Page and topic carousel homepage smoke test is missing" >&2
+  exit 1
+fi
+php -l "$THEME/tests/pvdak-theme/homepage-layout-smoke.php" >/dev/null
+php "$THEME/tests/pvdak-theme/homepage-layout-smoke.php"
 if [[ ! -f "$THEME/tests/pvdak-theme/navigation-smoke.php" ]] ||
    ! grep -Fq 'grid-template-columns: repeat(2, minmax(0, 1fr))' "$THEME/style.css"; then
   echo "FAIL: WordPress mega-navigation is missing from the main theme stylesheet or private regression test is unavailable" >&2
