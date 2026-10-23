@@ -20,10 +20,22 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
             array( 'key' => '_pvdak_referral_cleared', 'value' => '1' ),
         ),
     ) );
-    return array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type ) {
+    $eligible = array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type ) {
         return pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) &&
             pvdak_core_capacity_available( $profile->ID );
     } ) );
+    // Fair ordering for the manager only, NOT automatic assignment:
+    // least active internal load first; stable tie break by profile ID.
+    $load = array();
+    foreach ( $eligible as $profile ) {
+        $load[ (int)$profile->ID ] = pvdak_core_active_assignment_count( $profile->ID );
+    }
+    usort( $eligible, function( $a, $b ) use ( $load ) {
+        $aa = $load[(int)$a->ID];
+        $bb = $load[(int)$b->ID];
+        return $aa === $bb ? ((int)$a->ID <=> (int)$b->ID) : ($aa <=> $bb);
+    } );
+    return $eligible;
 }
 
 function pvdak_core_assignment_admin_page_register() {
@@ -89,7 +101,7 @@ function pvdak_core_assignment_admin_page() {
     echo '<select id="pvdak_profile_id" name="profile_id" required><option value="">انتخاب کنید</option>';
     foreach ( $candidates as $profile ) {
         echo '<option value="' . esc_attr( $profile->ID ) . '">' . esc_html( $profile->post_title ) .
-            ' — پرونده #' . esc_html( $profile->ID ) . '</option>';
+            ' — پرونده #' . esc_html( $profile->ID ) . ' | فعال: '.esc_html(pvdak_core_active_assignment_count($profile->ID)).' از '.esc_html(pvdak_core_capacity_limit($profile->ID)).'</option>';
     }
     echo '</select></td></tr></table>';
     echo '<p>قبل از ادامه، اطلاعات صلاحیت و امکان قبول پرونده باید خارج از این نسخه به‌صورت مستقل بررسی شود. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند. ظرفیت هر متخصص هنگام ارسال دوباره بررسی می‌شود.</p>';

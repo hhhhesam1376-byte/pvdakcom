@@ -54,6 +54,20 @@ function pvdak_core_professional_dashboard() {
         $limit = pvdak_core_capacity_limit( $profile_id );
         $active = pvdak_core_active_assignment_count( $profile_id );
         $accepting = pvdak_core_capacity_accepting( $profile_id );
+        if ( function_exists( 'pvdak_core_subscription_plan' ) ) {
+            $plans = array('none'=>'بدون طرح','basic'=>'پایه','standard'=>'استاندارد','advanced'=>'پیشرفته');
+            $sub_plan = pvdak_core_subscription_plan($profile_id);
+            $sub_state = get_post_meta($profile_id,'_pvdak_subscription_state',true);
+            $sub_expiry = pvdak_core_subscription_expiry($profile_id);
+            $sub_quota = pvdak_core_subscription_monthly_quota($profile_id);
+            $sub_used = pvdak_core_subscription_gate_on()?pvdak_core_subscription_month_assignments($profile_id):0;
+            $html .= '<h3>طرح و سهمیه ثبت‌شده</h3>';
+            $html .= '<p>طرح: <strong>'.esc_html($plans[$sub_plan]).'</strong> · وضعیت: <strong>'.esc_html($sub_state?:'غیرفعال').'</strong></p>';
+            $html .= '<p>انقضا: '.esc_html($sub_expiry?:'تنظیم نشده').' · سقف ماهانه: '.esc_html($sub_quota).'</p>';
+            $html .= '<p><small>'.(pvdak_core_subscription_gate_on() ?
+                'انتساب‌های ثبت‌شده این ماه: '.esc_html($sub_used).'؛ مدیریت طرح فقط توسط مدیر.' :
+                'کنترل اشتراک فعلاً غیرفعال است؛ این اطلاعات نمایشی، پرداخت یا دسترسی تأییدشده نیست.').'</small></p>';
+        }
         $html .= '<h3>وضعیت ظرفیت داخلی</h3>';
         $html .= '<p>حداکثر پرونده هم‌زمان: <strong>' . esc_html( $limit ) . '</strong> — پرونده‌های منتسب و فعال: <strong>' .
             esc_html( $active ) . '</strong></p>';

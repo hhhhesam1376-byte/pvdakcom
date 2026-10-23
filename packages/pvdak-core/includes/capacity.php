@@ -44,6 +44,9 @@ function pvdak_core_active_assignment_count( $profile_id ) {
 }
 
 function pvdak_core_capacity_available( $profile_id ) {
+    // Subscription enforcement is an explicit default-OFF manager switch.
+    if ( function_exists( 'pvdak_core_subscription_allows_new_assignment' ) &&
+         ! pvdak_core_subscription_allows_new_assignment( $profile_id ) ) { return false; }
     if ( ! pvdak_core_capacity_accepting( $profile_id ) ) { return false; }
     $limit = pvdak_core_capacity_limit( $profile_id );
     return $limit > 0 && pvdak_core_active_assignment_count( $profile_id ) < $limit;

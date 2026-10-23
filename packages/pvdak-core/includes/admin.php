@@ -18,6 +18,10 @@ function pvdak_core_register_settings() {
             return '1' === (string) $value ? '1' : '0';
         },
     ) );
+    register_setting( 'pvdak_core_settings', 'pvdak_core_subscription_gate_enabled', array(
+        'type'=>'string', 'default'=>'0',
+        'sanitize_callback'=>function($v){return '1'===(string)$v?'1':'0';}
+    ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_member_intake_enabled', array(
         'type' => 'string',
         'default' => '0',
@@ -54,7 +58,8 @@ function pvdak_core_settings_page() {
         'صلاحیت ارجاع داخلی' => 'تأیید دستی مجزا از درخواست عضویت و تأیید اداری',
         'ارجاع کنترل‌شده' => 'فقط به وکیل دارای تأیید داخلی، تخصص مرتبط و ظرفیت آزاد؛ بدون ارسال محتوای پرونده',
         'کنترل ظرفیت و پنل همکاری' => 'کنترل داخلی و آمار تجمیعی؛ فاقد دسترسی به محتوای پرونده',
-        'استعلام رسمی، ارجاع خودکار، سهمیه مالی، پرداخت و انجمن' => 'هنوز پیاده‌سازی نشده',
+        'اشتراک و سهمیه دستی' => 'نمونه اولیه با کنترل اختیاریِ پیش‌فرض خاموش؛ بدون پرداخت یا تمدید خودکار',
+        'استعلام رسمی، ارجاع خودکار، پرداخت و انجمن' => 'هنوز پیاده‌سازی نشده',
     );
     foreach( $items as $name => $status ) {
         echo '<tr><th scope="row">' . esc_html( $name ) . '</th><td>' . esc_html( $status ) . '</td></tr>';
@@ -86,6 +91,12 @@ function pvdak_core_settings_page() {
     if ( defined( 'PVDAK_CORE_DISABLE_INTAKE' ) && PVDAK_CORE_DISABLE_INTAKE ) {
         echo '<p><strong>قفل اضطراری فعال:</strong> تعریف PVDAK_CORE_DISABLE_INTAKE در wp-config.php اجازه ثبت درخواست نمی‌دهد.</p>';
     }
+    echo '<p>کنترل آزمایشی سهمیه اشتراک فقط پس از تست کامل:</p>';
+    echo '<input type="hidden" name="pvdak_core_subscription_gate_enabled" value="0">';
+    echo '<label><input type="checkbox" name="pvdak_core_subscription_gate_enabled" value="1" ' .
+         checked( pvdak_core_subscription_gate_on(), true, false ) .
+         '> فعال‌کردن محدودیت طرح/انقضا/سهمیه در ارجاع داخلی (پیش‌فرض خاموش)</label>';
+    echo '<p class="description">فعال‌سازی بدون تعیین دستی طرح معتبر و تاریخ انقضا، همه ارجاع‌های جدید را متوقف می‌کند. پرداخت آنلاین وجود ندارد.</p>';
     submit_button( 'ذخیره تنظیمات' );
     echo '</form>';
     echo '<h2>ساخت برگه‌های خدمات (بدون انتشار عمومی)</h2>';
