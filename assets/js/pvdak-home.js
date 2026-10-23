@@ -60,7 +60,10 @@
 
             // All slides are original published WordPress Page links.
             // Swiper itself owns transitions, loop, drag, and autoplay.
-            swiper = new window.Swiper(container, {
+            // Apply ready-state layout BEFORE Swiper measures widths and gaps.
+            container.classList.add('is-ready');
+            try {
+                swiper = new window.Swiper(container, {
                 direction: 'horizontal',
                 slidesPerView: 7,
                 slidesPerGroup: 1,
@@ -90,8 +93,15 @@
                     601: { slidesPerView: 4, spaceBetween: 12 },
                     1025: { slidesPerView: 7, spaceBetween: 12 }
                 }
-            });
-            container.classList.add('is-ready');
+                });
+            } catch (error) {
+                container.classList.remove('is-ready');
+                swiper = null;
+                if (window.console && typeof window.console.warn === 'function') {
+                    window.console.warn('PVDAK_SWIPER_INIT_FAILED:', error);
+                }
+                return;
+            }
             if (controls) { controls.hidden = false; }
         }
 
