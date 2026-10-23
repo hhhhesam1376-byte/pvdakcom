@@ -455,3 +455,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Synthetic editor test was expanded to 27 checks; includes preexisting draft not published and reported as such, the 17 exact labels in user order, and an empty Page's noindex behavior.
 - Version **0.8.10** is committed to `main` and will be deployed by the existing 15-minute cron or one manual `deploy.sh` run. Until a new terminal output and admin button execution is observed, the last confirmed host theme remains **0.8.9**, the 17 database records remain **NOT CONFIRMED**, and Core **0.8.0** continues active/unchanged with intake disabled and maintenance enabled.
 
+## 2026-10-23 — LANDING-CODE-HOST-DEPLOY-037 (verified deployment at 08:10:18 UTC)
+- User reported `DEPLOY_OK a42e72dc65ba1ac49bbd9ec7d960a38e1afa4421` from existing `$HOME/.pvdak-deploy/deploy.sh`; automatic versioned rollout and rollback backup `/home/amirhoseainsabet/.pvdak-deploy/backups/20261023T081018Z-a42e72dc65ba` confirmed by host output.
+- The pushed theme is code version **0.8.10** with the administrator-only, nonce-protected `pvdak_editor_publish_sample_topics` action and 17 exact legal topic names. Deployment alone does NOT create database Pages or prove the 27-check updated editor test passes.
+- **Outstanding:** an authenticated administrator must use `wp-admin/admin.php?page=pvdak-home-content` → `ایجاد ۱۷ لندینگ نمونه قابل نمایش` while maintenance ON and both intake modes OFF. Then confirm readiness **17 of 17** and the theme test summary. No report of user clicking this action yet; published child Page count remains unverified.
+- Installed PVDak Core is last reported **0.8.0** and unchanged by theme-only deployment. No new Cron, Actions, secrets or database writes were made by this assistant.
+
