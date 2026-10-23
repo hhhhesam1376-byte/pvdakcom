@@ -7,6 +7,18 @@ function pvdak_home_readiness_items() {
     $has_front = 'page' === get_option( 'show_on_front' ) && 'page' === get_post_type( $front );
     $topics_root = function_exists( 'pvdak_legal_topics_root_id' ) ? pvdak_legal_topics_root_id() : 0;
     $topics_count = $topics_root ? count( pvdak_legal_topic_pages( $topics_root ) ) : 0;
+    $sample_total = function_exists( 'pvdak_editor_example_legal_topics' ) ?
+        count( pvdak_editor_example_legal_topics() ) : 0;
+    $sample_ready = 0;
+    if ( $topics_root && $sample_total && function_exists( 'pvdak_editor_child_path' ) ) {
+        foreach ( pvdak_editor_example_legal_topics() as $slug => $label ) {
+            $page = get_page_by_path( pvdak_editor_child_path( $topics_root, $slug ), OBJECT, 'page' );
+            if ( $page && 'publish' === $page->post_status &&
+                 (int) $page->post_parent === (int) $topics_root ) {
+                $sample_ready++;
+            }
+        }
+    }
 
     $magazine_term = pvdak_home_selected_category( 'magazine_category' );
     $magazine_count = count( pvdak_home_category_posts( 'magazine_category', 1 ) );
@@ -46,6 +58,8 @@ function pvdak_home_readiness_items() {
         array( 'برگه مادر موضوعات حقوقی', $topics_root > 0,
             $topics_root ? 'برگه مادر آماده است' : 'در همین صفحه دکمه «آماده‌سازی ساختار محتوایی» را بزنید', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'لندینگ‌های موضوعات حقوقی', $topics_count > 0, $topics_count . ' برگه فرزند منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
+        array( '۱۷ لندینگ نمونه موضوعی', $sample_total > 0 && $sample_ready === $sample_total,
+            $sample_ready . ' از ' . $sample_total . ' لندینگ نمونه منتشرشده (برای تکمیل در همین صفحه دکمه نمونه‌ها را بزنید)', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های پویش', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'پرسش‌های متداول', $faq_count > 0, $faq_count . ' برگه پرسش/پاسخ منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
