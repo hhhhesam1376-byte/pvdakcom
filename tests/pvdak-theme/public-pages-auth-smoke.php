@@ -48,5 +48,5 @@ pvdak_public_smoke_require( false !== strpos( $code['login'], '$admin_preview' )
  false !== strpos( $code['footer'], "'legal-faq'=>'پرسش‌های متداول'" ),
  'Site owner can safely preview login UI and footer includes FAQ' );
 pvdak_public_smoke_require( false !== strpos( $code['footer'], 'pvdak-footer-public' ) &&
- false !== strpos( $code['theme'], 'Version: 0.8.26' ), 'Footer links and theme cache version' );
+ false !== strpos( $code['theme'], 'Version: 0.8.28' ), 'Footer links and theme cache version' );
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";

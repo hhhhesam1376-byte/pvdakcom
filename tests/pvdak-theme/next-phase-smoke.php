@@ -62,5 +62,5 @@ test_check(false!==strpos($ticket,"check_admin_referer('pvdak_support_followup_'
     'Follow-up requires nonce');
 test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')"),
     'Registration stays OFF by default');
-test_check(false!==strpos($theme,'Version: 0.8.27'),'Draft version incremented');
+test_check(false!==strpos($theme,'Version: 0.8.28'),'Draft version incremented');
 echo "PVD_NEXT_PHASE_TEST_OK: {$count} checks (mocked email/token + static privacy checks).\n";

@@ -676,3 +676,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added Tools > آمادگی PVDak as a staff-only read-only report: version, maintenance/intake/registration/quota switches, relevant Page publication states, editor links and policy-draft flags. No user identities, protected legal requests, or private case text are read or displayed.
 - Preliminary privacy/terms Pages now show a visible editorial notice until the site owner finalizes text; existing content is not overwritten. No invented addresses, official claims or compliance promises.
 - Source Core version incremented to 0.8.2 for matching/subscription/admin changes; still not installed by the theme-only Cron, and no runtime or external mail tests have been executed.
+
+
+## 2026-10-23 — NEXT-BATCH-067 (source regressions)
+- Added 10 source-only regression checks for login, email, client/professional dashboards, private support, staff controls, locked matching, subscription audit, provisional Pages and readiness report.
+- Updated previous feature/public-page/mock test version expectations to Theme 0.8.28 and Core source 0.8.2; guarded non-string user type metadata on the administrative Users table.
+- Linked new test to existing private batch preflight. This is NOT PHP lint, browser or WordPress integration testing and main is unchanged.

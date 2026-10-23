@@ -102,7 +102,7 @@ function pvdak_verification_users_value($value,$column,$user_id) {
     if('pvdak_requested_role'===$column){
         $raw=get_user_meta($user_id,'_pvdak_self_reported_category',true);
         $labels=array('client'=>'مراجعه‌کننده','lawyer'=>'متقاضی وکیل','trainee'=>'متقاضی کارآموز','student'=>'دانشجوی حقوق');
-        return isset($labels[$raw])?$labels[$raw]:'—';
+        return is_string($raw) && isset($labels[$raw]) ? $labels[$raw] : '—';
     }
     return $value;
 }

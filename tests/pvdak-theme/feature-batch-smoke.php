@@ -1,6 +1,6 @@
 <?php
 /**
- * Read-only static acceptance assertions for feature batch 0.8.26.
+ * Read-only static acceptance assertions for feature batch 0.8.28.
  * Does not connect to WordPress or create/delete real users, cases or tickets.
  */
 $root = dirname(__DIR__, 2);
@@ -73,8 +73,8 @@ $checks = array(
         false !== strpos($data['core_subscription'],"'active' !== get_post_meta") &&
         false !== strpos($data['core_subscription'],"pvdak_core_subscription_month_assignments"),
     'Theme and Core versioned in one proposed review batch' =>
-        false !== strpos($data['css'],'Version: 0.8.27') &&
-        false !== strpos($data['core'],'Version: 0.8.1') &&
+        false !== strpos($data['css'],'Version: 0.8.28') &&
+        false !== strpos($data['core'],'Version: 0.8.2') &&
         false !== strpos($data['core'],"includes/subscriptions.php"),
     'Private account screens never cached/indexed' =>
         false !== strpos($data['tools'],'nocache_headers()') &&
