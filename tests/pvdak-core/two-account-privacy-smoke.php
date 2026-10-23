@@ -16,7 +16,13 @@ function register_deactivation_hook() {}
 function get_option( $name, $default = false ) { return $default; }
 function absint( $v ) { return abs( (int) $v ); }
 function esc_html( $v ) { return htmlspecialchars( (string) $v, ENT_QUOTES, 'UTF-8' ); }
+function esc_attr( $v ) { return esc_html( $v ); }
 function esc_url( $v ) { return esc_html( $v ); }
+function get_the_date( $format = '', $post = 0 ) {
+    // The real dashboard renders a date label for each request. Supply a
+    // deterministic fake so privacy assertions exercise its complete HTML.
+    return 'Y-m-d' === $format ? '2026-10-23' : '2026/10/23';
+}
 function get_permalink( $id = 0 ) { return 'https://example.invalid/account'; }
 function wp_login_url( $url = '' ) { return 'https://example.invalid/login'; }
 function remove_query_arg( $key, $url = '' ) { return $url; }
@@ -176,6 +182,9 @@ $GLOBALS['viewer_id'] = 33;
 $forged = pvdak_core_professional_dashboard();
 pvdak_privacy_assert( false === strpos( $forged, 'BETA_CITY_ONLY' ), 'Forged cross-owner professional link rejected' );
 pvdak_privacy_assert( $GLOBALS['write_attempts'] === 0, 'Read-only simulated views do not attempt writes' );
-$expected = 22; // 4 anonymous/option checks + 8 for each user + 2 forged/write checks.
+pvdak_privacy_assert( '2026-10-23' === get_the_date( 'Y-m-d', 1101 ) &&
+    '2026/10/23' === get_the_date( 'Y/m/d', 2202 ),
+    'Date formatting mock covers both dashboard date formats' );
+$expected = 23; // 4 anonymous + 8 per user + 3 forged/write/date checks.
 pvdak_privacy_assert( $checks === $expected, 'Exact synthetic assertion count executed' );
-echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=23 (synthetic; no real accounts, data or writes)\n";
+echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=24 (synthetic; no real accounts, data or writes)\n";

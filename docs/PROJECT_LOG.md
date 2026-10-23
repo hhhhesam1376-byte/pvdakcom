@@ -727,3 +727,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Operator reran source tests with NAV's obsolete 0.8.12 literal patched only in an ephemeral archive. NAV 13 checks passed, then the next layout test failed at an obsolete exact string `stroke="#134a51"`.
 - Verified all four inline process stage icons are present in `front-page.php` and the step's icon SCSS selector exists in `style.css`. Stage four's badge intentionally uses `fill="#134a51"` with inherited `stroke="currentColor"`.
 - Updated only the source regression to accept either valid fill or stroke accent, while still demanding both stage-specific paths and scoped CSS. No homepage graphic, live theme or Core plugin change; next full PHP source-suite execution remains necessary.
+
+
+## 2026-10-23 — TWO-ACCOUNT-FIXTURE-075 (draft only)
+- Operator confirmed initial source suite and all subsequent layout/editor/Core policy checks passed (12,15,10,13,41,27,40 respectively); no final `PVDAK_TWO_ACCOUNT_PRIVACY_OK` nor `PVDAK_BATCH_PREFLIGHT_OK` appeared.
+- Source analysis found the synthetic privacy test had not registered `esc_attr()` or `get_the_date()` WordPress stand-ins even though Core 0.8.28-era dashboards now render request dates. This can cause PHP fatal at the final mocked two-account stage. The exact exit/fatal stderr is not yet supplied.
+- Added deterministic no-data fixtures for both function calls, one mock date assertion, and corrected the synthetic assertion-count expectation (24 including final count guard). Core permission logic is not loosened.
+- Draft change only; no production site, plugins, cases or database modified. Isolated test on host remains required; don't claim passing until `PVDAK_BATCH_PREFLIGHT_OK` prints.

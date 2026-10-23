@@ -37,3 +37,8 @@
 ## 2026-10-23 — آزمون صفحه اصلی
 - `PVDAK_MEGA_NAV_OK: checks=13` on host in a temporary test archive, confirming the earlier NAV failure was a stale test literal.
 - `LAYOUT_FAIL: All process stages have dedicated native SVG iconography` caused by stale expectation of `stroke="#134a51"` instead of actual badge `fill="#134a51"` on the existing fourth step. A precise source-only assertion fix is prepared as draft, not deployed.
+
+
+## 2026-10-23 — تست دو حساب آخرین مرحله بسته
+- گزارش هاست تا `CORE_POLICY_SMOKE_OK: 40 checks` رسیده اما `PVDAK_TWO_ACCOUNT_PRIVACY_OK` و `PVDAK_BATCH_PREFLIGHT_OK` چاپ نشده است.
+- از نظر سورس، شبیه‌ساز WordPress در تست `two-account-privacy-smoke.php` توابع `esc_attr` و `get_the_date` را برای داشبورد تاریخ‌دار جدید تعریف نکرده بود؛ احتمال توقف با خطای PHP وجود دارد. اصلاح و بررسی بازگشتی در پیش‌نویس انجام شد؛ خروجی واقعی آزمون جداگانه لازم است.
