@@ -646,7 +646,8 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
   transform: translateX(0);
 }
 .pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic {
-  flex: 0 0 calc((100% - (var(--pvdak-topic-visible) - 1) * var(--pvdak-topic-gap)) / var(--pvdak-topic-visible));
+  /* Fixed seven-up width uses broadly supported calc() without CSS level-4 arithmetic. */
+  flex: 0 0 calc((100% - 72px) / 7);
   width: auto;
   min-width: 0;
   max-width: none;
@@ -688,11 +689,12 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
   color: #075a52;
 }
 @media (max-width: 1024px) {
-  .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 4; }
+   .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 4; }
+  .pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic { flex-basis: calc((100% - 36px) / 4); }
 }
 @media (max-width: 600px) {
   .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 2; --pvdak-topic-gap: 9px; }
-  .pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic { min-height: 105px; }
+   .pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic { min-height: 105px; flex-basis: calc((100% - 9px) / 2); }
   .pvdak-home-quick-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
