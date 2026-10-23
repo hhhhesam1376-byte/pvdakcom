@@ -43,9 +43,25 @@ function pvdak_support_ticket_form(){
     $user=get_current_user_id();
     $raw_page=isset($_GET['ticket_page']) && is_scalar($_GET['ticket_page']) ? wp_unslash($_GET['ticket_page']) : '1';
     $page=max(1,min(1000,absint($raw_page)));
-    $items=get_posts(array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
+    $raw_status=isset($_GET['ticket_status']) && is_string($_GET['ticket_status']) ? sanitize_key(wp_unslash($_GET['ticket_status'])) : '';
+    $filter=in_array($raw_status,array('open','answered','closed'),true) ? $raw_status : '';
+    $raw_order=isset($_GET['ticket_order']) && is_string($_GET['ticket_order']) ? sanitize_key(wp_unslash($_GET['ticket_order'])) : '';
+    $order='asc'===$raw_order ? 'ASC' : 'DESC';
+    $raw_search=isset($_GET['ticket_search']) && is_string($_GET['ticket_search']) ? sanitize_text_field(wp_unslash($_GET['ticket_search'])) : '';
+    $search=pvdak_support_length($raw_search)<=80 ? trim($raw_search) : '';
+    $query=array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
         'posts_per_page'=>11,'offset'=>($page-1)*10,'author'=>$user,
-        'orderby'=>'date','order'=>'DESC','no_found_rows'=>true,'suppress_filters'=>false));
+        'orderby'=>'date','order'=>$order,'no_found_rows'=>true,'suppress_filters'=>false);
+    if($filter)$query['meta_query']=array(array('key'=>'_pvdak_support_status','value'=>$filter,'compare'=>'='));
+    if($search!=='')$query['s']=$search;
+    $items=get_posts($query);
+    $filters=array();
+    if($filter)$filters['ticket_status']=$filter;
+    if('ASC'===$order)$filters['ticket_order']='asc';
+    if($search!=='')$filters['ticket_search']=$search;
+    $filtered_base=add_query_arg($filters,pvdak_auth_account_url());
+    $open_raw=isset($_GET['ticket_open']) && is_scalar($_GET['ticket_open']) ? wp_unslash($_GET['ticket_open']) : 0;
+    $open_id=absint($open_raw);
     $has_next=count($items)>10;
     $items=array_slice($items,0,10);
     $url=admin_url('admin-post.php');
@@ -66,9 +82,34 @@ function pvdak_support_ticket_form(){
       <small id="pvdak-ticket-count" class="pvdak-ticket-counter" data-pvdak-count-for="support-message">حداکثر ۲۵۰۰ نویسه</small>
       <button type="submit">ثبت پیام پشتیبانی</button></form>
 
-      <h3 id="pvdak-ticket-list-title">پیام‌های اخیر</h3>
+      <h3 id="pvdak-ticket-list-title">پیام‌های پشتیبانی</h3>
+      <form method="get" action="<?php echo esc_url(pvdak_auth_account_url()); ?>" class="pvdak-ticket-filters" role="search" aria-label="جستجو و فیلتر پیام‌های خودم">
+        <label for="pvdak-ticket-search">جستجو در پیام‌ها
+          <input id="pvdak-ticket-search" type="search" name="ticket_search" value="<?php echo esc_attr($search); ?>" maxlength="80" placeholder="عنوان یا متن پیام">
+        </label>
+        <label for="pvdak-ticket-filter">وضعیت
+          <select id="pvdak-ticket-filter" name="ticket_status">
+            <option value="">همه وضعیت‌ها</option>
+            <?php foreach(array('open','answered','closed') as $option): ?>
+              <option value="<?php echo esc_attr($option); ?>" <?php selected($filter,$option); ?>><?php echo esc_html(pvdak_support_status_label($option)); ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label for="pvdak-ticket-order">ترتیب
+          <select id="pvdak-ticket-order" name="ticket_order">
+            <option value="desc" <?php selected($order,'DESC'); ?>>جدیدترین</option>
+            <option value="asc" <?php selected($order,'ASC'); ?>>قدیمی‌ترین</option>
+          </select>
+        </label>
+        <button type="submit">اعمال فیلتر</button>
+        <?php if($filters): ?><a class="pvdak-ticket-reset" href="<?php echo esc_url(pvdak_auth_account_url().'#pvdak-support'); ?>">پاک‌کردن فیلترها</a><?php endif; ?>
+      </form>
+      <p class="pvdak-ticket-result-summary" role="status">
+        <?php echo esc_html(number_format_i18n(count($items))); ?> پیام در این صفحه
+        <?php if($filters): ?> (نتیجه فیلتر فعلی)<?php endif; ?>
+      </p>
       <?php if(!$items): ?>
-        <p class="pvdak-ticket-empty"><?php echo $page>1?'در این صفحه پیامی وجود ندارد؛ به صفحه قبل بازگردید.':'هنوز پیامی ثبت نشده است؛ می‌توانید از فرم بالا اولین پیام خود را بفرستید.'; ?></p>
+        <p class="pvdak-ticket-empty"><?php echo esc_html($page>1?'در این صفحه پیامی وجود ندارد؛ به صفحه قبل بازگردید.':($filters?'پیامی با این شرایط پیدا نشد؛ فیلترها را تغییر دهید.':'هنوز پیامی ثبت نشده است؛ می‌توانید از فرم بالا اولین پیام خود را بفرستید.')); ?></p>
       <?php else: ?>
       <ul class="pvdak-ticket-list" aria-labelledby="pvdak-ticket-list-title"><?php foreach($items as $item):
         if((int)$item->post_author!==$user)continue;
@@ -78,7 +119,7 @@ function pvdak_support_ticket_form(){
         $message_count=is_array($messages)?count($messages):0;
         ?>
         <li id="pvdak-ticket-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-item">
-          <details class="pvdak-ticket-details">
+          <details class="pvdak-ticket-details"<?php echo $open_id===(int)$item->ID ? ' open' : ''; ?>>
             <summary class="pvdak-ticket-summary">
               <span class="pvdak-ticket-title"><?php echo esc_html(get_the_title($item->ID)); ?></span>
               <span class="pvdak-ticket-status pvdak-ticket-status--<?php echo esc_attr($state); ?>"><?php echo esc_html(pvdak_support_status_label($state)); ?></span>
@@ -86,7 +127,7 @@ function pvdak_support_ticket_form(){
               <?php if($message_count):?><small class="pvdak-ticket-count"><?php echo esc_html(number_format_i18n($message_count)); ?> پیام در گفتگو</small><?php endif;?>
             </summary>
             <div class="pvdak-ticket-body">
-              <p class="pvdak-ticket-original"><?php echo esc_html(get_post_field('post_content',$item->ID)); ?></p>
+              <p class="pvdak-ticket-original"><strong>پیام اولیه شما</strong><br><?php echo esc_html(get_post_field('post_content',$item->ID)); ?></p>
               <?php if($messages): ?>
                 <?php if($message_count>30):?><p class="pvdak-ticket-history-note">۳۰ پیام آخر این گفتگو نمایش داده می‌شود.</p><?php endif;?>
                 <ol class="pvdak-ticket-conversation" aria-label="گفتگوی پشتیبانی">
@@ -107,10 +148,15 @@ function pvdak_support_ticket_form(){
                 <form method="post" action="<?php echo esc_url($url); ?>" class="pvdak-forms pvdak-ticket-followup" data-pvdak-support-form>
                   <input type="hidden" name="action" value="pvdak_support_followup">
                   <input type="hidden" name="ticket_id" value="<?php echo esc_attr($item->ID); ?>">
+                  <input type="hidden" name="ticket_page" value="<?php echo esc_attr($page); ?>">
+                  <input type="hidden" name="ticket_status" value="<?php echo esc_attr($filter); ?>">
+                  <input type="hidden" name="ticket_order" value="<?php echo esc_attr(strtolower($order)); ?>">
+                  <input type="hidden" name="ticket_search" value="<?php echo esc_attr($search); ?>">
                   <?php wp_nonce_field('pvdak_support_followup_'.$item->ID,'_pvdak_followup_nonce'); ?>
                   <label for="pvdak-followup-<?php echo esc_attr($item->ID); ?>">پاسخ یا توضیح تکمیلی</label>
                   <textarea id="pvdak-followup-<?php echo esc_attr($item->ID); ?>" name="followup_body" minlength="2" maxlength="2500" rows="3" aria-describedby="pvdak-followup-count-<?php echo esc_attr($item->ID); ?>" required></textarea>
-                  <small id="pvdak-followup-count-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-counter" data-pvdak-count-for="pvdak-followup-<?php echo esc_attr($item->ID); ?>">حداکثر ۲۵۰۰ نویسه</small>
+                  <small id="pvdak-followup-count-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-counter" data-pvdak-count-for="pvdak-followup-<?php echo esc_attr($item->ID); ?>" aria-live="polite">حداکثر ۲۵۰۰ نویسه</small>
+                  <p class="pvdak-ticket-privacy">در پاسخ تکمیلی نیز اطلاعات یا مدارک پرونده قضایی را وارد نکنید.</p>
                   <button type="submit">ارسال پاسخ</button>
                 </form>
               <?php endif; ?>
@@ -121,9 +167,9 @@ function pvdak_support_ticket_form(){
       <?php endif; ?>
       <?php if($page>1 || $has_next): ?>
       <nav class="pvdak-ticket-pagination" aria-label="صفحه‌بندی پیام‌های پشتیبانی">
-        <?php if($page>1):?><a rel="prev" href="<?php echo esc_url(add_query_arg('ticket_page',$page-1,pvdak_auth_account_url()).'#pvdak-support'); ?>">صفحه قبل</a><?php endif;?>
+        <?php if($page>1):?><a rel="prev" href="<?php echo esc_url(add_query_arg('ticket_page',$page-1,$filtered_base).'#pvdak-support'); ?>">صفحه قبل</a><?php endif;?>
         <span aria-current="page">صفحه <?php echo esc_html(number_format_i18n($page)); ?></span>
-        <?php if($has_next):?><a rel="next" href="<?php echo esc_url(add_query_arg('ticket_page',$page+1,pvdak_auth_account_url()).'#pvdak-support'); ?>">صفحه بعد</a><?php endif;?>
+        <?php if($has_next):?><a rel="next" href="<?php echo esc_url(add_query_arg('ticket_page',$page+1,$filtered_base).'#pvdak-support'); ?>">صفحه بعد</a><?php endif;?>
       </nav>
       <?php endif; ?>
     </section>
@@ -153,7 +199,10 @@ function pvdak_support_new(){
         'comment_status'=>'closed'),true);
     if(is_wp_error($id)||!$id){delete_transient($key);}
     else{update_post_meta($id,'_pvdak_support_status','open');}
-    wp_safe_redirect(add_query_arg('support',is_wp_error($id)||!$id?'failed':'new_sent',$base).'#pvdak-support');exit;
+    $success=!is_wp_error($id)&&$id;
+    $destination=add_query_arg('support',$success?'new_sent':'failed',$base);
+    if($success)$destination=add_query_arg('ticket_open',absint($id),$destination);
+    wp_safe_redirect($destination.($success?'#pvdak-ticket-'.absint($id):'#pvdak-support'));exit;
 }
 add_action('admin_post_pvdak_support_new','pvdak_support_new');
 /**
@@ -191,7 +240,18 @@ function pvdak_support_followup() {
         if($ok)update_post_meta($id,'_pvdak_support_status','open');
         else delete_transient($key);
     }
-    wp_safe_redirect(add_query_arg('support',$ok?'followup_sent':'failed',pvdak_auth_account_url()).'#pvdak-support');
+    // Rebuild return URL from allowlisted controls, never accept a client-supplied URL.
+    $return=array('support'=>$ok?'followup_sent':'failed');
+    $posted_page=isset($_POST['ticket_page']) && is_scalar($_POST['ticket_page']) ? absint(wp_unslash($_POST['ticket_page'])) : 1;
+    if($posted_page>1 && $posted_page<=1000)$return['ticket_page']=$posted_page;
+    $posted_status=isset($_POST['ticket_status']) && is_string($_POST['ticket_status']) ? sanitize_key(wp_unslash($_POST['ticket_status'])) : '';
+    if(in_array($posted_status,array('open','answered','closed'),true))$return['ticket_status']=$posted_status;
+    $posted_order=isset($_POST['ticket_order']) && is_string($_POST['ticket_order']) ? sanitize_key(wp_unslash($_POST['ticket_order'])) : '';
+    if('asc'===$posted_order)$return['ticket_order']='asc';
+    $posted_search=isset($_POST['ticket_search']) && is_string($_POST['ticket_search']) ? sanitize_text_field(wp_unslash($_POST['ticket_search'])) : '';
+    if($posted_search!=='' && pvdak_support_length($posted_search)<=80)$return['ticket_search']=$posted_search;
+    $return['ticket_open']=$id;
+    wp_safe_redirect(add_query_arg($return,pvdak_auth_account_url()).'#pvdak-ticket-'.$id);
     exit;
 }
 add_action('admin_post_pvdak_support_followup','pvdak_support_followup');
@@ -205,7 +265,29 @@ function pvdak_support_reply_box_html($post){
     wp_nonce_field('pvdak_support_reply_'.$post->ID,'_pvdak_reply_nonce');
     $reply=get_post_meta($post->ID,'_pvdak_support_reply',true);
     echo '<label for="pvdak_support_answer">پاسخ قابل مشاهده فقط برای فرستنده</label>';
-    echo '<textarea id="pvdak_support_answer" name="pvdak_support_answer" style="width:100%" rows="5">'.esc_textarea($reply).'</textarea>';
+    echo '<textarea id="pvdak_support_answer" name="pvdak_support_answer" style="width:100%" rows="5" maxlength="2500" placeholder="پاسخ جدید را اینجا بنویسید؛ متن قبلی دوباره ارسال نمی‌شود."></textarea>';
+    echo '<p class="description">این گفتگو فقط برای صاحب حساب و مدیر قابل مشاهده است. مدارک پرونده قضایی را اینجا دریافت نکنید.</p>';
+    if(is_string($reply) && $reply!=='')echo '<p><strong>آخرین پاسخ ثبت‌شده:</strong> '.esc_html($reply).'</p>';
+    $thread=get_post_meta($post->ID,'_pvdak_support_message',false);
+    if(is_array($thread) && $thread) {
+        echo '<h4>تاریخچه گفتگو (حداکثر ۳۰ پیام اخیر)</h4><ol style="max-height:360px;overflow:auto;direction:rtl">';
+        foreach(array_slice($thread,-30) as $entry) {
+            if(!is_array($entry) || !isset($entry['role'],$entry['text']) || !is_string($entry['text']) || !in_array($entry['role'],array('staff','user'),true))continue;
+            $who='staff'===$entry['role']?'پشتیبانی':'کاربر';
+            $when=isset($entry['at']) && is_string($entry['at']) ? $entry['at'] : '';
+            echo '<li style="margin:8px 0;padding:8px;border:1px solid #ddd"><strong>'.esc_html($who).'</strong> <small>'.esc_html($when).'</small><p style="white-space:pre-wrap">'.esc_html($entry['text']).'</p></li>';
+        }
+        echo '</ol>';
+    }
+    $events=get_post_meta($post->ID,'_pvdak_support_status_event',false);
+    if(is_array($events) && $events) {
+        echo '<details><summary>تاریخچه تغییر وضعیت</summary><ol>';
+        foreach(array_slice($events,-15) as $event) {
+            if(!is_array($event))continue;
+            echo '<li>'.esc_html(pvdak_support_status_label($event['from']??'')).' ← '.esc_html(pvdak_support_status_label($event['to']??'')).' — '.esc_html($event['at']??'').'</li>';
+        }
+        echo '</ol></details>';
+    }
     $state=get_post_meta($post->ID,'_pvdak_support_status',true);
     echo '<p><label for="pvdak_support_state">وضعیت گفتگو</label><select id="pvdak_support_state" name="pvdak_support_state">';
     foreach(array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده شده','closed'=>'بسته شده') as $key=>$label){
@@ -214,7 +296,7 @@ function pvdak_support_reply_box_html($post){
     echo '</select></p>';
 }
 function pvdak_support_save_reply($post_id,$post){
-    if(!current_user_can('manage_options')||wp_is_post_revision($post_id)||
+    if(!current_user_can('manage_options')||wp_is_post_revision($post_id)||wp_is_post_autosave($post_id)||
         !isset($_POST['_pvdak_reply_nonce']) || !is_string($_POST['_pvdak_reply_nonce'])||
         !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_pvdak_reply_nonce'])),'pvdak_support_reply_'.$post_id))return;
     $raw=wp_unslash($_POST['pvdak_support_answer']??'');
@@ -222,16 +304,22 @@ function pvdak_support_save_reply($post_id,$post){
     $reply=sanitize_textarea_field($raw);
     if (pvdak_support_length($reply)>2500)return;
     $old=get_post_meta($post_id,'_pvdak_support_reply',true);
-    // Editing other ticket properties does not send a duplicate response.
-    if ($reply !== $old && $reply !== '') {
+    // Composer starts empty. Only explicitly submitted non-empty text appends a new response.
+    if ($reply !== '') {
         if (!pvdak_support_append_message($post_id,'staff',$reply))return;
     }
     $raw_state=wp_unslash($_POST['pvdak_support_state']??'');
     $requested_state=is_string($raw_state)?sanitize_key($raw_state):'';
     $state=in_array($requested_state,array('open','answered','closed'),true)?
         $requested_state:($reply?'answered':'open');
-    update_post_meta($post_id,'_pvdak_support_reply',$reply);
+    // Sending a staff reply resolves the waiting state unless the operator closes it.
+    if($reply!=='' && 'open'===$state)$state='answered';
+    $previous=pvdak_support_status_key(get_post_meta($post_id,'_pvdak_support_status',true));
+    if($reply!=='')update_post_meta($post_id,'_pvdak_support_reply',$reply);
     update_post_meta($post_id,'_pvdak_support_status',$state);
+    if($state!==$previous)add_post_meta($post_id,'_pvdak_support_status_event',array(
+        'from'=>$previous,'to'=>$state,'at'=>current_time('mysql',true),'actor'=>get_current_user_id()
+    ),false);
 }
 add_action('save_post_pvdak_support_ticket','pvdak_support_save_reply',10,2);
 

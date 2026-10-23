@@ -41,7 +41,9 @@
     var field = id ? document.getElementById(id) : null;
     if (!field || field.tagName !== 'TEXTAREA') return;
     var length = Array.from(field.value).length;
-    counter.textContent = length.toLocaleString('fa-IR') + ' / ۲۵۰۰ نویسه';
+    var limit = field.maxLength > 0 ? field.maxLength : 2500;
+    counter.textContent = length.toLocaleString('fa-IR') + ' / ' + limit.toLocaleString('fa-IR') + ' نویسه';
+    counter.classList.toggle('pvdak-ticket-counter--near', length >= Math.floor(limit * 0.9));
   }
   document.querySelectorAll('[data-pvdak-count-for]').forEach(function (counter) {
     var field = document.getElementById(counter.getAttribute('data-pvdak-count-for'));
@@ -58,6 +60,12 @@
       button.setAttribute('aria-disabled', 'true');
     });
   });
+  // Only focus the server result after an actual support form submission.
+  var params = new URLSearchParams(window.location.search);
+  if (params.has('support')) {
+    var notice = document.getElementById('pvdak-support-notice');
+    if (notice) notice.focus({ preventScroll: true });
+  }
   window.addEventListener('pageshow', function () {
     document.querySelectorAll('form[data-pvdak-support-form] button[type="submit"]').forEach(function (button) {
       button.disabled = false;

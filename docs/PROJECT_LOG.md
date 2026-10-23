@@ -765,3 +765,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Private per-author ticket pagination, native disclosure cards, status/date/history, safe notices, Unicode length checks, privacy hints, counters, admin-only status filtering and responsive scoped styling.
 - Added 20 source-only assertions to existing read-only test runner; JavaScript syntax checked in generation context. PHP lint, WP integration and browser tests are pending; no claim of runtime passing.
 - Main/live theme, Core, maintenance, intake, registration, database, server settings and deployment unchanged.
+
+
+## 2026-10-23 — TICKET-DISCOVERY-082 (feature branch only)
+- Improved owner-scoped ticket discovery with status, search, oldest/newest sort, retained filters during pagination, reset link, context-aware empty state and page result count.
+- Added authorized ticket deep links, preserving current filter/page/search after a follow-up; redirects are built only from allowlisted parameters, not supplied URLs.
+- Staff composer now starts empty to prevent accidental duplicate replies; staff can inspect last 30 conversation messages and a private status-change audit history. A new staff reply marks a waiting ticket answered unless closed.
+- Added ticket reply privacy reminder, dynamic character limits, near-limit warning, accessible focus on submission result, responsive filter controls and 21 new static regression assertions.
+- Source-only modifications. PHP lint, read-only smoke suite, real WordPress two-account behavior and browser checks are pending. No changes to main, live site, Core, registrations, intakes, maintenance, cron, database or server.
