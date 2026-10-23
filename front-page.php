@@ -9,7 +9,7 @@ $community_img= pvdak_home_image_url('community_image');
 
 /* Native WordPress content: published posts/categories and child FAQ pages. */
 $magazine_feature = pvdak_home_selected_post( 'magazine_featured_post' );
-$magazine_other   = pvdak_home_category_posts( 'magazine_category', 3, $magazine_feature ? array( $magazine_feature->ID ) : array() );
+$magazine_other   = pvdak_home_category_posts( 'magazine_category', 5, $magazine_feature ? array( $magazine_feature->ID ) : array() );
 if ( ! $magazine_feature && $magazine_other ) {
     $magazine_feature = array_shift( $magazine_other );
 }
@@ -107,9 +107,20 @@ $svg_icons = array(
   <section id="topics" class="pvdak-home-section pvdak-topics-section" aria-labelledby="topics-title">
     <div class="pvdak-home-section-head">
       <h2 id="topics-title"><?php echo esc_html( pvdak_home_value( 'topics_title' ) ); ?></h2>
-      <?php if ( $legal_parent_id ): ?>
-        <a class="pvdak-section-aside" href="<?php echo esc_url( get_permalink( $legal_parent_id ) ); ?>">همه موضوعات ←</a>
-      <?php endif; ?>
+      <div class="pvdak-topics-head-actions">
+        <div class="pvdak-topics-controls" aria-label="کنترل اسلایدر موضوعات" hidden>
+          <span class="pvdak-topics-swipe-hint" aria-hidden="true">موضوعات را ورق بزنید</span>
+          <button type="button" class="pvdak-topics-control pvdak-topics-control--prev" data-pvdak-topic-prev aria-label="موضوع قبلی">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
+          </button>
+          <button type="button" class="pvdak-topics-control pvdak-topics-control--next" data-pvdak-topic-next aria-label="موضوع بعدی">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7" /></svg>
+          </button>
+        </div>
+        <?php if ( $legal_parent_id ): ?>
+          <a class="pvdak-section-aside" href="<?php echo esc_url( get_permalink( $legal_parent_id ) ); ?>">همه موضوعات ←</a>
+        <?php endif; ?>
+      </div>
     </div>
 
     <?php if ( $legal_pages ): ?>
@@ -124,10 +135,6 @@ $svg_icons = array(
           </a>
         <?php endforeach; ?>
       </div>
-    </div>
-    <div class="pvdak-topics-controls" aria-label="کنترل اسلایدر موضوعات">
-      <button type="button" class="pvdak-topics-control" data-pvdak-topic-prev aria-label="موضوع قبلی">→</button>
-      <button type="button" class="pvdak-topics-control" data-pvdak-topic-next aria-label="موضوع بعدی">←</button>
     </div>
     <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد.</p>
     <?php elseif ( '' !== $legal_search_term && $all_legal_pages ): ?>
@@ -165,26 +172,37 @@ $svg_icons = array(
     </div>
     <?php if ( $magazine_feature ): ?>
       <div class="pvdak-magazine-layout">
-        <article class="pvdak-magazine-feature <?php echo has_post_thumbnail( $magazine_feature->ID ) ? 'has-image' : ''; ?>">
+        <a class="pvdak-magazine-feature <?php echo has_post_thumbnail( $magazine_feature->ID ) ? 'has-image' : ''; ?>" href="<?php echo esc_url( get_permalink( $magazine_feature->ID ) ); ?>" aria-label="<?php echo esc_attr( 'مطالعه مقاله: ' . get_the_title( $magazine_feature->ID ) ); ?>">
           <?php if ( has_post_thumbnail( $magazine_feature->ID ) ): ?>
             <?php echo get_the_post_thumbnail( $magazine_feature->ID, 'large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
           <?php endif; ?>
-          <div class="pvdak-magazine-feature-content">
-            <h3><?php echo esc_html( get_the_title( $magazine_feature->ID ) ); ?></h3>
-            <p><?php echo esc_html( pvdak_home_post_summary( $magazine_feature, 23 ) ); ?></p>
-            <a href="<?php echo esc_url( get_permalink( $magazine_feature->ID ) ); ?>">مطالعه مقاله ←</a>
+          <span class="pvdak-magazine-feature-badge">مقاله منتخب</span>
+          <span class="pvdak-magazine-feature-content">
+            <span class="pvdak-magazine-feature-meta"><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C, $magazine_feature->ID ) ); ?>"><?php echo esc_html( get_the_date( '', $magazine_feature->ID ) ); ?></time><span class="pvdak-magazine-meta-dot" aria-hidden="true"></span>مجله حقوقی</span>
+            <strong class="pvdak-magazine-feature-title"><?php echo esc_html( get_the_title( $magazine_feature->ID ) ); ?></strong>
+            <span class="pvdak-magazine-feature-summary"><?php echo esc_html( pvdak_home_post_summary( $magazine_feature, 23 ) ); ?></span>
+            <span class="pvdak-magazine-card-cta">مطالعه مقاله <span aria-hidden="true">←</span></span>
+          </span>
+        </a>
+        <?php if ( $magazine_other ): ?>
+          <div class="pvdak-magazine-aside">
+            <?php foreach ( array_slice( $magazine_other, 0, 4 ) as $magazine_post ): ?>
+              <a class="pvdak-magazine-aside-card" href="<?php echo esc_url( get_permalink( $magazine_post->ID ) ); ?>" aria-label="<?php echo esc_attr( 'مطالعه مقاله: ' . get_the_title( $magazine_post->ID ) ); ?>">
+                <span class="pvdak-magazine-aside-picture" aria-hidden="true">
+                  <?php if ( has_post_thumbnail( $magazine_post->ID ) ): ?>
+                    <?php echo get_the_post_thumbnail( $magazine_post->ID, 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
+                  <?php else: ?><span class="pvdak-magazine-image-fallback"></span><?php endif; ?>
+                </span>
+                <span class="pvdak-magazine-aside-body">
+                  <span class="pvdak-magazine-aside-date"><?php echo esc_html( get_the_date( '', $magazine_post->ID ) ); ?></span>
+                  <strong class="pvdak-magazine-aside-title"><?php echo esc_html( get_the_title( $magazine_post->ID ) ); ?></strong>
+                  <span class="pvdak-magazine-aside-summary"><?php echo esc_html( pvdak_home_post_summary( $magazine_post, 12 ) ); ?></span>
+                  <span class="pvdak-magazine-card-cta">مطالعه مطلب <span aria-hidden="true">←</span></span>
+                </span>
+              </a>
+            <?php endforeach; ?>
           </div>
-        </article>
-        <div class="pvdak-magazine-aside">
-          <?php foreach ( array_slice( $magazine_other, 0, 2 ) as $index => $magazine_post ): ?>
-            <article class="pvdak-magazine-aside-card pvdak-magazine-aside-card--<?php echo esc_attr( $index + 1 ); ?>">
-              <span class="pvdak-magazine-aside-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><?php echo $svg_icons['document']; ?></svg></span>
-              <h3><?php echo esc_html( get_the_title( $magazine_post->ID ) ); ?></h3>
-              <p><?php echo esc_html( pvdak_home_post_summary( $magazine_post, 14 ) ); ?></p>
-              <a href="<?php echo esc_url( get_permalink( $magazine_post->ID ) ); ?>">مطالعه مطلب ←</a>
-            </article>
-          <?php endforeach; ?>
-        </div>
+        <?php endif; ?>
       </div>
     <?php else: ?>
       <p class="pvdak-legal-topics-setup">برای نمایش مجله، در پیشخوان «نوشته‌ها ← دسته‌ها» دسته مجله را بسازید، چند مقاله منتشر کنید و در «محتوای صفحه اصلی» آن دسته را انتخاب کنید.</p>

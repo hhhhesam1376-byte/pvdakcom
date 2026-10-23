@@ -541,3 +541,14 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Prepared an *explicit*, one-time private WP-CLI `scripts/pvdak-seed-demo-blog.php` to publish exactly five marked Lorem ipsum blog posts plus five original GD-generated JPEG featured images into the active magazine category and prefill ACF only if empty. Uses existing static homepage and selected category. Re-run is idempotent by fixed post slugs and _pvdak_demo_blog marker; existing non-demo content is never overwritten. Sample posts have noindex,nofollow and clearly state they are placeholders.
 - This script is **not run by normal theme deploy or the public website**. It must be invoked explicitly using `wp eval-file` as the existing cPanel account, only while the maintenance gate is on and legal/member intakes are off, with GD/ACF available. No WordPress post/attachment changes are made by merely pushing the files.
 - Theme 0.8.19; source assertions updated; no confirmation of production WordPress sample publication or live carousel yet.
+
+
+## 2026-10-23 — DESIGN-BATCH-048 (v0.8.20, DRAFT — not deployed)
+- User requested batched fixes and explicit review BEFORE any public deployment. Keep `main` untouched until the user approves; established private cPanel deploy cron reads only `main`.
+- [1] Swiper: moved visible custom SVG prev/next buttons into section heading with bold gradient styling, hover/focus states, RTL-aware chevrons, keyboard labels; original true Swiper navigation handles, 6/3/2 counts and 3000ms autoplay remain.
+- [2] Legal-topic SVG card badges, headings, captions and links now center aligned. No changes to original editable WordPress Page data.
+- [3] Homepage magazine: 1 visually featured plus 4 side articles from the selected magazine category (real WordPress Posts), all full-card links and all image-backed; responsive 2x2 grid and mobile stacked list; no hardcoded demo IDs or data overrides.
+- [4] Single article: breadcrumb, excerpt, publication date, reading time, high-quality featured image, long-form text layout, taxonomy tags, related posts from same category excluding current and limited to published posts; dedicated WordPress-native comment template and responsive forms. Existing per-post comment settings are respected; old demo posts remain comments CLOSED until the site editor enables them deliberately. Site maintenance and legal/member intake remain unchanged.
+- Theme version 0.8.20; added source regression checks. **This is a draft commit object, NOT a main-branch update, release, or live test.** Site still runs 0.8.19 until separate approval and deployment.
+
+- Draft follow-up: corrected magazine query to fetch up to 5 posts when no featured override exists (otherwise 1 featured + only 3 side cards would appear). Also avoided nesting a nav element inside WordPress comments pagination. Added explicit approval checklist docs/PENDING_APPROVAL.md.

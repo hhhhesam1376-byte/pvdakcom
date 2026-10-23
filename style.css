@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.19
+Version: 0.8.20
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -860,4 +860,242 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
 @media (prefers-reduced-motion: reduce) {
   .pvdak-topics-section .pvdak-home-topic,
   .pvdak-topics-section .pvdak-topic-card__icon { transition: none !important; }
+}
+
+
+/* 0.8.20 — explicit Swiper direction controls and centered topic artwork. */
+.pvdak-topics-section .pvdak-home-section-head {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+.pvdak-topics-head-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; }
+.pvdak-topics-section .pvdak-topics-controls,
+.pvdak-topics-section .pvdak-topics-swiper.is-ready + .pvdak-topics-controls { display: none; }
+.pvdak-topics-section .pvdak-topics-controls:not([hidden]) {
+  display: inline-flex; align-items: center; flex-direction: row; gap: 9px; margin: 0;
+}
+.pvdak-topics-swipe-hint { margin-inline-end: 6px; font-size: 11px; font-weight: 750; color: #62818a; }
+.pvdak-topics-section button.pvdak-topics-control {
+  width: 45px; height: 45px; flex: 0 0 45px; border-radius: 15px;
+  display: inline-grid; place-items: center;
+  padding: 0; border: 1px solid #b8d8d2; background: #fff; color: #11695f;
+  box-shadow: 0 5px 13px rgba(12,61,68,.09);
+  transition: color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+  cursor: pointer;
+}
+.pvdak-topics-section button.pvdak-topics-control--next {
+  background: linear-gradient(145deg,#0d7c72,#12536b); color: white; border-color: #176e69;
+  box-shadow: 0 7px 18px rgba(9,94,93,.24);
+}
+.pvdak-topics-section button.pvdak-topics-control svg {
+  width: 21px; height: 21px; display: block; fill: none; stroke: currentColor;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.pvdak-topics-section button.pvdak-topics-control:hover,
+.pvdak-topics-section button.pvdak-topics-control:focus-visible {
+  transform: translateY(-2px); border-color: #0e766e; background: #e9f7f3; color: #0a655b;
+  box-shadow: 0 10px 19px rgba(9,94,93,.17);
+}
+.pvdak-topics-section button.pvdak-topics-control--next:hover,
+.pvdak-topics-section button.pvdak-topics-control--next:focus-visible {
+  background: linear-gradient(145deg,#095e58,#0b4155); color:#fff;
+}
+.pvdak-topics-section button.pvdak-topics-control.swiper-button-disabled { opacity:.4; cursor:not-allowed; }
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide {
+  align-items: center; text-align: center;
+}
+.pvdak-topics-section .pvdak-topic-card__icon {
+  display:grid; place-items:center; margin-inline:auto; padding:0;
+}
+.pvdak-topics-section .pvdak-topic-card__icon svg {
+  display:block; width:32px; height:32px; margin:auto; flex-shrink:0;
+}
+.pvdak-topics-section .pvdak-topic-card__title,
+.pvdak-topics-section .pvdak-topic-card__caption {
+  width: 100%; text-align:center; margin-inline:auto;
+}
+.pvdak-topics-section .pvdak-topic-card__footer {
+  justify-content:center; margin-inline:auto;
+}
+@media(max-width:650px) {
+  .pvdak-topics-head-actions { gap:9px; }
+  .pvdak-topics-swipe-hint { display:none; }
+  .pvdak-topics-section button.pvdak-topics-control { width:39px;height:39px;flex-basis:39px;border-radius:13px; }
+}
+
+/* The entire magazine card is a single accessible article link. */
+.pvdak-magazine-layout {
+  display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+  gap:18px; min-height:480px;
+}
+a.pvdak-magazine-feature {
+  min-height:480px; display:flex; align-items:flex-end; position:relative;
+  isolation:isolate; overflow:hidden; color:#fff; border-radius:24px;
+  background:linear-gradient(150deg,#1d525b,#102c3c);
+  text-decoration:none;
+  box-shadow:0 12px 36px rgba(18,53,64,.1);
+  transition:transform .25s ease,box-shadow .25s ease;
+}
+a.pvdak-magazine-feature > img { inset:0;position:absolute;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform .4s ease; }
+a.pvdak-magazine-feature::before {
+  content:""; position:absolute; inset:0;z-index:-1;
+  background:linear-gradient(0deg,rgba(4,24,36,.94) 0%,rgba(4,24,36,.60) 44%,rgba(4,24,36,.08) 95%);
+}
+.pvdak-magazine-feature-badge {
+  position:absolute; top:21px; right:21px; padding:7px 15px;
+  background:rgba(255,255,255,.92); color:#115a57; border-radius:50px;
+  font-size:11px;font-weight:800;
+}
+a.pvdak-magazine-feature .pvdak-magazine-feature-content {
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  padding:30px 30px 28px; width:100%; text-align:right;
+}
+.pvdak-magazine-feature-meta { display:flex;gap:10px;align-items:center;font-size:12px;color:#c9e9e5; }
+.pvdak-magazine-meta-dot { width:5px;height:5px;border-radius:50%;background:#e5bc78; }
+a.pvdak-magazine-feature .pvdak-magazine-feature-title {
+  display:block; font-size:clamp(20px,2.2vw,27px);line-height:1.6;font-weight:850;color:#fff;
+}
+.pvdak-magazine-feature-summary { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:1.9;color:#dfebec; }
+.pvdak-magazine-card-cta { display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#086d65; }
+.pvdak-magazine-feature .pvdak-magazine-card-cta { color:#d6f2df; }
+.pvdak-magazine-card-cta > span { font-size:20px;line-height:1;transition:transform .2s ease; }
+.pvdak-magazine-aside { display:grid; grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px; }
+a.pvdak-magazine-aside-card {
+  display:flex;flex-direction:column; padding:0; gap:0;min-height:226px;
+  background:#fff;border:1px solid #dbe9e8;border-radius:19px;overflow:hidden;
+  text-align:right;text-decoration:none;color:#173b48;
+  box-shadow:0 5px 18px rgba(20,52,65,.05);
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+a.pvdak-magazine-aside-card .pvdak-magazine-aside-picture {
+  display:block;position:relative;width:100%;height:113px;flex:0 0 113px;
+  background:linear-gradient(135deg,#d4eae5,#27636a);overflow:hidden;
+}
+.pvdak-magazine-aside-picture img {display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}
+.pvdak-magazine-image-fallback {display:block;width:100%;height:100%;background:linear-gradient(135deg,#8ebbb4,#113f4e)}
+a.pvdak-magazine-aside-card .pvdak-magazine-aside-body {
+  display:flex;flex-direction:column;align-items:flex-start;gap:6px; padding:13px 15px 14px;flex:1;min-width:0;width:100%;
+}
+.pvdak-magazine-aside-date {font-size:10px;color:#748990}
+.pvdak-magazine-aside-title {
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  color:#16394b;font-weight:850;font-size:13px;line-height:1.6;
+}
+.pvdak-magazine-aside-summary {font-size:11px;color:#69828b;display:none}
+.pvdak-magazine-aside-card .pvdak-magazine-card-cta { margin-top:auto;font-size:11px; }
+a.pvdak-magazine-aside-card:hover,a.pvdak-magazine-aside-card:focus-visible {
+  transform:translateY(-4px); box-shadow:0 13px 28px rgba(18,53,64,.12);border-color:#82c6ba;
+}
+a.pvdak-magazine-feature:hover,a.pvdak-magazine-feature:focus-visible {
+  transform:translateY(-3px);box-shadow:0 19px 42px rgba(18,53,64,.18);
+}
+a.pvdak-magazine-feature:hover > img,a.pvdak-magazine-aside-card:hover img { transform:scale(1.055); }
+a.pvdak-magazine-feature:hover .pvdak-magazine-card-cta > span,
+a.pvdak-magazine-aside-card:hover .pvdak-magazine-card-cta > span { transform:translateX(-4px); }
+@media(max-width:1000px) {
+  .pvdak-magazine-layout {grid-template-columns:1fr;min-height:0;}
+  a.pvdak-magazine-feature {min-height:370px;}
+  .pvdak-magazine-aside {grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;}
+}
+@media(max-width:550px) {
+  .pvdak-magazine-layout {gap:12px;}
+  a.pvdak-magazine-feature {min-height:320px;border-radius:18px;}
+  a.pvdak-magazine-feature .pvdak-magazine-feature-content {padding:23px 20px;}
+  .pvdak-magazine-aside {grid-template-columns:1fr;gap:12px;}
+  a.pvdak-magazine-aside-card {display:grid;grid-template-columns:120px minmax(0,1fr);min-height:136px;}
+  a.pvdak-magazine-aside-card .pvdak-magazine-aside-picture {height:100%;min-height:136px;flex-basis:auto;}
+  a.pvdak-magazine-aside-card .pvdak-magazine-aside-body {padding:13px 12px;}
+  .pvdak-magazine-aside-summary {display:none;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .pvdak-magazine-aside-card,.pvdak-magazine-feature,.pvdak-magazine-aside-card img,.pvdak-magazine-feature img {transition:none !important}
+}
+
+
+/* 0.8.20 — Long-form editorial article, related posts and native WP comments. */
+.pvdak-article-page {direction:rtl;padding-block:35px 60px}
+.pvdak-editorial-article {max-width:1000px;margin-inline:auto;color:#243b48}
+.pvdak-article-hero {padding:clamp(23px,5vw,46px);border-radius:24px;background:linear-gradient(140deg,#f0f8f5,#f9faf9);border:1px solid #e2ece9;text-align:right}
+.pvdak-article-breadcrumb {display:flex;align-items:center;flex-wrap:wrap;gap:9px;color:#789097;font-size:12px;margin-bottom:25px}
+.pvdak-article-breadcrumb a {color:#0c736b;text-decoration:none}
+.pvdak-article-breadcrumb [aria-current="page"] {max-width:45ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvdak-article-eyebrow {display:inline-flex;align-items:center;gap:6px;color:#117e72;background:#e1f1eb;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:800}
+.pvdak-article-hero h1 {font-size:clamp(28px,4vw,42px);line-height:1.6;color:#113747;margin:17px 0}
+.pvdak-article-deck {font-size:16px;color:#5a747e;line-height:2;max-width:760px}
+.pvdak-article-deck p {margin:0}
+.pvdak-article-byline {margin-top:19px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;color:#617d85;font-size:12px}
+.pvdak-article-byline a {color:#0e746c;text-decoration:none}
+.pvdak-article-dot {width:5px;height:5px;display:inline-block;background:#bdc9c7;border-radius:50%}
+.pvdak-article-cover {margin:24px 0 0;overflow:hidden;border-radius:24px;background:#e2eeec}
+.pvdak-article-cover img {display:block;width:100%;max-height:520px;height:auto;aspect-ratio:16/9;object-fit:cover}
+.pvdak-article-reading {max-width:800px;margin:0 auto}
+.pvdak-editorial-article .entry-content {padding:25px 0 12px;font-size:16px;line-height:2.25;overflow-wrap:break-word}
+.pvdak-editorial-article .entry-content p {margin:0 0 1.45em}
+.pvdak-editorial-article .entry-content h2,.pvdak-editorial-article .entry-content h3 {color:#123d4c}
+.pvdak-editorial-article .entry-content blockquote {margin:24px 0;padding:13px 24px;border-right:4px solid #0d8777;border-radius:0 12px 12px 0;background:#f0f8f5;color:#315d60;font-size:17px}
+.pvdak-editorial-article .entry-content :where(figure,img) {max-width:100%;height:auto}
+.pvdak-editorial-article .entry-taxonomies {display:flex;flex-direction:column;gap:9px;border-top:1px solid #dce9e5;padding-top:24px;margin:16px 0 0}
+.pvdak-editorial-article .entry-taxonomies strong {font-size:13px;color:#183d47}
+.pvdak-article-taxonomy-links,.pvdak-article-tags>div {display:flex;gap:8px;flex-wrap:wrap}
+.pvdak-article-taxonomy-links a,.pvdak-article-tags a {background:#eaf5f0;color:#146e64;border-radius:99px;padding:4px 13px;text-decoration:none;font-size:12px}
+.pvdak-related-articles,.pvdak-article-comments,.pvdak-article-comments-closed {max-width:1000px;margin:52px auto 0}
+.pvdak-related-heading,.pvdak-comments-heading {display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.pvdak-related-heading h2,.pvdak-comments-heading h2,.pvdak-article-comments-closed h2 {color:#123747;font-size:25px;margin:10px 0 0}
+.pvdak-related-heading>span,.pvdak-comments-heading>span {color:#7d9095;font-size:12px}
+.pvdak-related-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+a.pvdak-related-card {display:flex;flex-direction:column;background:white;border:1px solid #dce9e6;border-radius:18px;overflow:hidden;color:#173d48;text-decoration:none;box-shadow:0 5px 19px rgba(15,58,71,.04);transition:transform .2s ease,box-shadow .2s ease}
+a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:translateY(-4px);box-shadow:0 15px 32px rgba(15,58,71,.12)}
+.pvdak-related-picture {display:block;height:175px;overflow:hidden;background:#d4e7e1}
+.pvdak-related-picture img,.pvdak-related-image-fallback {width:100%;height:100%;display:block;object-fit:cover}
+.pvdak-related-image-fallback {background:linear-gradient(120deg,#277d76,#102d41)}
+.pvdak-related-card-body {padding:18px;display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:7px}
+.pvdak-related-date {color:#81969b;font-size:11px}
+.pvdak-related-card-body strong {font-size:16px;line-height:1.8;font-weight:850;color:#163d4b}
+.pvdak-related-excerpt {font-size:12px;line-height:2;color:#647f85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pvdak-related-cta {margin-top:auto;font-size:12px;font-weight:800;color:#0b806e}
+.pvdak-article-post-navigation {max-width:1000px;margin:32px auto}
+.pvdak-article-post-navigation .nav-links {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pvdak-article-post-navigation a {display:block;text-decoration:none;background:#f3f8f7;border:1px solid #e0eeea;border-radius:15px;padding:15px 19px;color:#123e49}
+.pvdak-post-nav-label {display:block;font-size:11px;color:#65928b;margin-bottom:5px}
+.pvdak-article-post-navigation strong {font-size:13px;line-height:1.6}
+.pvdak-article-comments {padding:25px 30px;border:1px solid #dcebe6;background:#fff;border-radius:22px;box-shadow:0 6px 20px rgba(20,52,63,.04)}
+.pvdak-article-comments-closed {padding:25px 30px;background:#f5f8f7;border:1px solid #e1ece8;border-radius:18px}
+.pvdak-article-comments-closed p,.pvdak-comments-closed {font-size:13px;color:#687d86}
+.pvdak-comment-list {list-style:none;padding:0;margin:0 0 25px}
+.pvdak-comment-list .comment {list-style:none;margin:0 0 13px;padding:18px 21px;background:#f6faf9;border:1px solid #e2edeb;border-radius:13px}
+.pvdak-comment-list .children {list-style:none;margin:12px 20px 0 0;padding:0}
+.pvdak-comment-list .comment-body {overflow-wrap:break-word}
+.pvdak-comment-list .comment-author {display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700}
+.pvdak-comment-list .comment-author img {border-radius:50%}
+.pvdak-comment-list .comment-meta {font-size:11px}
+.pvdak-comment-list .comment-meta a {color:#68858b;text-decoration:none}
+.pvdak-comment-list .comment-content {font-size:13px;line-height:2;color:#3c5d69}
+.pvdak-comment-list .reply a {font-size:12px;color:#06776e;text-decoration:none}
+.pvdak-comments-pagination {margin-bottom:15px}
+.pvdak-comment-form {margin-top:24px;display:grid;gap:10px}
+.pvdak-comment-form label {display:block;font-size:13px;font-weight:800;margin-bottom:7px;color:#284b58}
+.pvdak-comment-form :where(textarea,input[type=text],input[type=email],input[type=url]) {display:block;width:100%;padding:13px 14px;background:#f9fcfb;border:1px solid #cddfdc;border-radius:11px;font:inherit;color:#213d47}
+.pvdak-comment-form textarea {resize:vertical;min-height:130px}
+.pvdak-comment-form :where(textarea,input):focus-visible {border-color:#10887b;outline:2px solid rgba(16,136,123,.2)}
+.pvdak-comment-form .form-submit {margin:0}
+.pvdak-comment-form .pvdak-comment-submit {border:0;border-radius:99px;background:linear-gradient(130deg,#0e7e72,#0f5264);color:white;padding:12px 27px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.pvdak-comment-form .pvdak-comment-submit:hover {filter:brightness(1.1)}
+.pvdak-comment-help,.pvdak-comment-form .comment-notes {font-size:12px;line-height:2;color:#6c818a}
+@media(max-width:780px) {
+  .pvdak-related-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pvdak-article-cover,.pvdak-article-hero {border-radius:18px}
+}
+@media(max-width:560px) {
+  .pvdak-article-page {padding-block:18px 42px}
+  .pvdak-article-hero {padding:22px 18px}
+  .pvdak-article-breadcrumb [aria-current="page"] {max-width:22ch}
+  .pvdak-article-hero h1 {font-size:27px}
+  .pvdak-related-grid {grid-template-columns:1fr}
+  .pvdak-related-card {display:grid;grid-template-columns:115px 1fr}
+  .pvdak-related-picture {height:100%;min-height:150px}
+  .pvdak-related-card-body {padding:12px}
+  .pvdak-article-comments {padding:19px 16px;border-radius:16px}
+  .pvdak-article-post-navigation .nav-links {grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce) {
+  .pvdak-related-card {transition:none !important}
 }
