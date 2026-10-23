@@ -586,3 +586,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - `single.php` puts comments immediately after article; `comments.php` surfaces the form before the existing comments, with a contextual editor-only hint and safe privacy text. `content-single.php` provides a #respond link where commenting is available. Related-post eyebrow "ادامه مطالعه" removed; plain "مقالات مرتبط" remains.
 - Restrained editorial title scale to 24–33px desktop / 21–25px mobile, subtle header surface, lighter margins, 395px maximum cover, 755px reading column, and more compact comment/related cards. Updated `style.css` and editorial stylesheet; theme v0.8.22, with new regression checks.
 - Pending approval items 2–5 added to docs/PENDING_APPROVAL_NEXT.md together with earlier line-removal item 1. NO change to main, cron, deployment path, public maintenance, intake or real WordPress post data. PHP host/browser checks remain pending.
+
+
+## 2026-10-23 — DRAFT-PUBLIC-PAGES-AUTH-054 (0.8.23; HOLD)
+- Added WP-native about/contact/provisional privacy/provisional terms Pages, branded /account-login/ and /my-pvdak-account/ templates, and footer information links. Missing Pages will be provisioned once on the next administrator wp-admin visit after actual deployment, without changing existing Pages, menu selections or WP users. Provisional policies are noindex; no invented contact details.
+- Header login now uses site Page, not wp-login.php, while logged-in account goes to PVDak Core dashboard or a protected fallback Page. Frontend Core wp_login_url links are filtered but official wp-admin login stays available for site owners. Authentication uses wp_signon/cookies and nonce, no separate credentials, SMS or registration.
+- Contact form uses nonce, server validation, hidden trap, transient throttle, wp_mail to WordPress admin email; maintenance mode restricts access to admin preview. No legal/membership intake enabled or altered.
+- Theme 0.8.23 is a standalone draft commit, NOT on main; existing production code and auto-deploy stay unchanged until explicit publish approval. Added checklist items 6-9 alongside previous 5.

@@ -1,0 +1,30 @@
+<?php
+/** WordPress-backed branded PVDak login; WP administrators retain their native access. */
+if(!defined('ABSPATH')){exit;}
+function pvdak_auth_login_url(){return pvdak_public_page_url('account-login')?:home_url('/account-login/');}
+function pvdak_auth_account_url(){
+  $core=function_exists('pvdak_core_account_url')?pvdak_core_account_url():'';
+  return $core?: (pvdak_public_page_url('my-pvdak-account')?:home_url('/my-pvdak-account/'));
+}
+function pvdak_frontend_login_url($url,$redirect,$force_reauth){
+  if(is_admin()||wp_doing_ajax()||(defined('WP_CLI')&&WP_CLI))return $url;
+  return pvdak_auth_login_url();
+}
+add_filter('login_url','pvdak_frontend_login_url',10,3);
+function pvdak_login_handle(){
+  if('POST'!==($_SERVER['REQUEST_METHOD']??''))wp_die('Invalid method','',array('response'=>405));
+  check_admin_referer('pvdak_login','_pvdak_login_nonce');
+  if(is_user_logged_in()){wp_safe_redirect(pvdak_auth_account_url());exit;}
+  $identity=trim((string)wp_unslash($_POST['login_identity']??''));
+  $pass=(string)wp_unslash($_POST['login_password']??'');
+  if(!$identity||!$pass||strlen($identity)>250){
+    wp_safe_redirect(add_query_arg('error','1',pvdak_auth_login_url()));exit;
+  }
+  $user=wp_signon(array('user_login'=>$identity,'user_password'=>$pass,
+     'remember'=>isset($_POST['login_remember'])),is_ssl());
+  if(is_wp_error($user)){wp_safe_redirect(add_query_arg('error','1',pvdak_auth_login_url()));exit;}
+  wp_set_current_user($user->ID);
+  wp_safe_redirect(pvdak_auth_account_url());exit;
+}
+add_action('admin_post_nopriv_pvdak_login','pvdak_login_handle');
+add_action('admin_post_pvdak_login','pvdak_login_handle');

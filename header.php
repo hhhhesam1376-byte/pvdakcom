@@ -2,11 +2,7 @@
 /** PVDak classic theme header. Navigation is managed under Appearance > Menus. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 $auth_label = is_user_logged_in() ? 'پنل کاربری' : 'ورود به حساب';
-$auth_url = is_user_logged_in() ? admin_url() : wp_login_url( home_url( '/' ) );
-if ( is_user_logged_in() && function_exists( 'pvdak_core_account_url' ) ) {
-    $portal_url = pvdak_core_account_url();
-    if ( $portal_url ) { $auth_url = $portal_url; }
-}
+$auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_url();
 ?>
 <!doctype html>
 <html lang="fa-IR" dir="rtl">
@@ -40,6 +36,8 @@ if ( is_user_logged_in() && function_exists( 'pvdak_core_account_url' ) ) {
                     <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
                     <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
                     <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
+<li><a href="<?php echo esc_url(home_url('/about-us/')); ?>">درباره ما</a></li>
+<li><a href="<?php echo esc_url(home_url('/contact-us/')); ?>">تماس با ما</a></li>
                 </ul>
             <?php endif; ?>
         </nav>
@@ -57,6 +55,8 @@ if ( is_user_logged_in() && function_exists( 'pvdak_core_account_url' ) ) {
                             <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
                             <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
                             <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
+<li><a href="<?php echo esc_url(home_url('/about-us/')); ?>">درباره ما</a></li>
+<li><a href="<?php echo esc_url(home_url('/contact-us/')); ?>">تماس با ما</a></li>
                         </ul>
                     <?php endif; ?>
                 </nav>

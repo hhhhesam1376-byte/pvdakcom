@@ -19,6 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <a href="<?php echo esc_url(home_url('/#community')); ?>">همکاری با ما</a>
             <?php endif; ?>
         </div>
+        <nav class="pvdak-footer-public" aria-label="اطلاعات سایت">
+          <?php foreach(array('about-us'=>'درباره ما','contact-us'=>'تماس با ما','privacy-policy'=>'حریم خصوصی','terms-of-use'=>'شرایط استفاده') as $slug=>$label):
+             $url=pvdak_public_page_url($slug); if(!$url)continue; ?>
+            <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
+          <?php endforeach; ?>
+        </nav>
         <div class="pvdak-footer-address">
             <span>نشانی اینترنتی</span>
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html(wp_parse_url(home_url('/'), PHP_URL_HOST)); ?></a>
