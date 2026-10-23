@@ -758,3 +758,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Root cause for current pretty-URL 404 is WordPress's Plain permalink configuration, not a proven theme/Core defect. Safe remediation should back up existing `.htaccess` and previous permalink setting, change single-site structure to `/%postname%/`, generate Apache/LiteSpeed rewrite rules and verify friendly routes plus maintenance/noindex before calling fixed.
 - WP-CLI's `--hard` flush may require `apache_modules: [mod_rewrite]` in its CLI config to update .htaccess; do not assume command success proves web routing. Do not disable maintenance, intake, signup, subscription gates, rewrite webserver config broadly or modify unrelated directives.
 - Code and production unchanged by assistant; next operator action is guarded permalink repair with backup and read-only verification.
+
+
+## 2026-10-23 — TICKET-EXPERIENCE-081 (draft only)
+- 20 account/ticket improvements implemented on feature branch; full list in `docs/WORK_BATCH_081.md`.
+- Private per-author ticket pagination, native disclosure cards, status/date/history, safe notices, Unicode length checks, privacy hints, counters, admin-only status filtering and responsive scoped styling.
+- Added 20 source-only assertions to existing read-only test runner; JavaScript syntax checked in generation context. PHP lint, WP integration and browser tests are pending; no claim of runtime passing.
+- Main/live theme, Core, maintenance, intake, registration, database, server settings and deployment unchanged.

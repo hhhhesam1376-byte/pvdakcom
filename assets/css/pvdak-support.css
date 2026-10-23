@@ -1,0 +1,31 @@
+/* Scoped, progressively enhanced support experience; never applied site-wide. */
+.pvdak-support{min-width:0}
+.pvdak-ticket-privacy{font-size:12px;line-height:1.9;color:#6a6260;background:#fff8ed;border-inline-start:3px solid #d4a15b;border-radius:8px;padding:9px 12px;margin:10px 0}
+.pvdak-ticket-counter{display:block;color:#667e85;font-size:11px;text-align:end;margin:4px 0 10px;font-variant-numeric:tabular-nums}
+.pvdak-ticket-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:12px;min-width:0}
+.pvdak-ticket-item{border:1px solid #dce9e5;border-radius:14px;background:#fbfdfc;overflow:hidden;min-width:0}
+.pvdak-ticket-summary{display:flex;align-items:center;gap:9px 14px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;min-height:54px;list-style-position:inside}
+.pvdak-ticket-summary:hover,.pvdak-ticket-summary:focus-visible{background:#f0f8f5}
+.pvdak-ticket-title{font-weight:850;color:#163d49;overflow-wrap:anywhere;flex:1 1 190px}
+.pvdak-ticket-date,.pvdak-ticket-count{font-size:11px;color:#637a81;white-space:nowrap}
+.pvdak-ticket-status{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+.pvdak-ticket-status--open{background:#fff2d9;color:#81540d}
+.pvdak-ticket-status--answered{background:#e3f5ed;color:#126c4c}
+.pvdak-ticket-status--closed{background:#e9eef2;color:#4c6270}
+.pvdak-ticket-body{padding:0 17px 17px;border-top:1px solid #e2eeea;min-width:0}
+.pvdak-ticket-original{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f8f7;border-radius:9px;padding:13px;line-height:2}
+.pvdak-ticket-conversation{padding:0;list-style:none;display:grid;gap:10px;margin:14px 0}
+.pvdak-ticket-conversation li{padding:11px 13px;border:1px solid #e0ebe7;border-radius:11px;background:#fff;overflow-wrap:anywhere}
+.pvdak-ticket-conversation li.pvdak-ticket-staff{background:#edf8f3;border-color:#cfe9dd}
+.pvdak-ticket-conversation strong{font-size:12px;color:#174b4a}
+.pvdak-ticket-conversation time{display:inline-block;margin-inline-start:10px;font-size:11px;color:#627d7d}
+.pvdak-ticket-conversation p{margin:5px 0 0;white-space:pre-wrap;font-size:13px;line-height:1.9}
+.pvdak-ticket-history-note,.pvdak-ticket-empty{font-size:12px;color:#6a7e83}
+.pvdak-ticket-followup{padding-top:13px;border-top:1px solid #e4efeb}
+.pvdak-ticket-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;font-size:12px}
+.pvdak-ticket-pagination a{border:1px solid #cfe3dc;padding:7px 13px;border-radius:9px;text-decoration:none;font-weight:750}
+.pvdak-ticket-pagination a:hover{background:#ecf6f3}
+.pvdak-ticket-pagination span{color:#59727a}
+.pvdak-support button[disabled]{opacity:.55;cursor:wait}
+@media(max-width:560px){.pvdak-ticket-summary{padding:12px;gap:7px}.pvdak-ticket-title{flex-basis:100%}.pvdak-ticket-body{padding-inline:12px}.pvdak-ticket-conversation time{display:block;margin-inline-start:0}}
+@media(prefers-reduced-motion:reduce){.pvdak-ticket-item *{scroll-behavior:auto}}

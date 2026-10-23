@@ -90,7 +90,7 @@ add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
 
 /** Tiny progressive enhancement on account credential screens only. */
 function pvdak_account_form_assets() {
-    if ( is_page( array( 'account-login', 'account-recovery', 'account-register' ) ) ) {
+    if ( is_page( array( 'account-login', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
         wp_enqueue_script(
             'pvdak-account-interactions',
             get_template_directory_uri() . '/assets/js/pvdak-account.js',
@@ -101,6 +101,19 @@ function pvdak_account_form_assets() {
     }
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_account_form_assets' );
+
+/** Load private ticket UI styling only on the personal account screen. */
+function pvdak_support_ticket_assets() {
+    if ( is_page( 'my-pvdak-account' ) ) {
+        wp_enqueue_style(
+            'pvdak-support-tickets',
+            get_template_directory_uri() . '/assets/css/pvdak-support.css',
+            array( 'pvdak-rtl' ),
+            wp_get_theme()->get( 'Version' )
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'pvdak_support_ticket_assets' );
 
 
 // Temporary PV favicon bundled in the theme, including login/admin tabs.
