@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.12
+Version: 0.8.13
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -601,3 +601,100 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
   }
 }
 
+
+
+/* PVDak 0.8.13 — clean hero, exactly four quick links and looping topic slider. */
+.pvdak-home-hero__content .pvdak-home-process-hint {
+  margin-top: 26px;
+}
+.pvdak-home-quick-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pvdak-quick-admin-note {
+  margin: -26px auto 24px;
+  max-width: 1060px;
+  padding: 14px 18px;
+  border: 1px dashed #a7c9bf;
+  border-radius: 12px;
+  background: #f3faf7;
+  color: #31625d;
+  font-size: 13px;
+}
+.pvdak-topics-section .pvdak-topics-swiper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  direction: rtl;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #9cbdb7 transparent;
+}
+.pvdak-topics-section .pvdak-topics-swiper.is-ready {
+  overflow: hidden;
+}
+.pvdak-topics-section .pvdak-home-topics {
+  --pvdak-topic-gap: 12px;
+  --pvdak-topic-visible: 7;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  direction: rtl;
+  width: 100%;
+  gap: var(--pvdak-topic-gap);
+  min-width: 0;
+  transform: translateX(0);
+}
+.pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic {
+  flex: 0 0 calc((100% - (var(--pvdak-topic-visible) - 1) * var(--pvdak-topic-gap)) / var(--pvdak-topic-visible));
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 118px;
+  overflow-wrap: anywhere;
+  scroll-snap-align: start;
+}
+.pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic[hidden] {
+  display: none !important;
+}
+.pvdak-topics-controls {
+  display: none;
+  direction: rtl;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 14px;
+}
+.pvdak-topics-section .pvdak-topics-swiper.is-ready + .pvdak-topics-controls:not([hidden]) {
+  display: flex;
+}
+.pvdak-topics-control {
+  width: 35px;
+  height: 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c6dfd8;
+  background: #fff;
+  border-radius: 50%;
+  color: #087f72;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+.pvdak-topics-control:hover,
+.pvdak-topics-control:focus-visible {
+  background: #e7f5f1;
+  border-color: #087f72;
+  color: #075a52;
+}
+@media (max-width: 1024px) {
+  .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 4; }
+}
+@media (max-width: 600px) {
+  .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 2; --pvdak-topic-gap: 9px; }
+  .pvdak-topics-section .pvdak-home-topics > .pvdak-home-topic { min-height: 105px; }
+  .pvdak-home-quick-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pvdak-topics-section .pvdak-home-topics { transition: none !important; }
+}
