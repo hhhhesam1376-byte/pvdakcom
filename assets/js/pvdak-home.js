@@ -1,12 +1,9 @@
-/* PVDak homepage: REAL Swiper.js 14.3.0 + Persian landing search.
- * Never substitute a hand-coded scrolling animation for the Swiper runtime.
- * A readable, one-row scroll fallback remains ONLY if both CDNs fail.
+/* PVDak homepage: real locally-hosted Swiper 14.3.0 + Persian landing search.
+ * The browser no longer requests external JS or CSS CDNs.
+ * A readable one-row scroll fallback is used if local assets are missing.
  */
 (function () {
     'use strict';
-
-    var SWIPER_FALLBACK_URL = 'https://unpkg.com/swiper@14.3.0/swiper-bundle.min.js';
-    var SWIPER_FALLBACK_CSS = 'https://unpkg.com/swiper@14.3.0/swiper-bundle.min.css';
 
     function normalize(s) {
         return String(s || '').toLocaleLowerCase()
@@ -168,24 +165,16 @@
             });
         }
         filterTopics();
-        if (typeof window.Swiper === 'function') { initSwiper(); return; }
-
-        // If the main jsDelivr script could not load (blocked CDN, timeout),
-        // retry one pinned CDN. The real Swiper code remains mandatory for
-        // sliding behavior; without either provider the cards stay accessible.
-        var backupCss = document.createElement('link');
-        backupCss.rel = 'stylesheet';
-        backupCss.href = SWIPER_FALLBACK_CSS;
-        document.head.appendChild(backupCss);
-        var backupScript = document.createElement('script');
-        backupScript.src = SWIPER_FALLBACK_URL;
-        backupScript.async = true;
-        backupScript.onload = function () { syncSwiper(); };
-        backupScript.onerror = function () {
-            if (controls) { controls.hidden = true; }
+        if (typeof window.Swiper === 'function') {
+            initSwiper();
+        } else {
+            // Fail transparently, not by pretending that scroll = Swiper.
+            // The real bundle is installed once via the private host installer.
             container.classList.add('pvdak-swiper-unavailable');
-        };
-        document.head.appendChild(backupScript);
+            if (window.console && typeof window.console.warn === 'function') {
+                window.console.warn('PVDAK_SWIPER_MISSING: local Swiper vendor bundle was not loaded.');
+            }
+        }
     }
 
     if (document.readyState === 'loading') {
