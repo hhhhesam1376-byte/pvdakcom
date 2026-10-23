@@ -12,13 +12,15 @@ function pvdak_public_page_seeds() {
     'privacy-policy'=>array('حریم خصوصی','page-templates/pvdak-information.php','<h2>اطلاع‌رسانی اولیه</h2><p>این متن اولیه باید پیش از شروع رسمی خدمات بازبینی شود. ورود حساب کاربری از سازوکار وردپرس استفاده می‌کند و فرم عمومی تماس برای پیام‌های غیرحساس است.</p><p>جزئیات نگهداری داده‌ها و حقوق کاربران قبل از راه‌اندازی توسط مدیر تکمیل می‌شود.</p>'),
     'terms-of-use'=>array('شرایط استفاده','page-templates/pvdak-information.php','<h2>پیش‌نویس شرایط</h2><p>این متن اولیه شرایط نهایی خدمات محسوب نمی‌شود. مطالب نمونه، مشاوره اختصاصی نیستند و پذیرش درخواست تا زمان راه‌اندازی غیرفعال است.</p>'),
     'legal-faq'=>array('پرسش‌های متداول','page-templates/pvdak-information.php','<h2>راهنمای استفاده از سایت</h2><p>این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است.</p><h2>آیا اکنون امکان ثبت درخواست حقوقی وجود دارد؟</h2><p>خیر؛ ثبت درخواست و عضویت تا پایان آزمایش و راه‌اندازی رسمی غیرفعال است.</p><h2>چگونه با پویش ارتباط بگیرم؟</h2><p>برای بازخورد عمومی از صفحه تماس با ما استفاده کنید. لطفاً اطلاعات محرمانه پرونده‌ها را وارد نکنید.</p>'),
+    'account-recovery'=>array('بازیابی رمز عبور','page-templates/pvdak-recovery.php',''),
+    'account-profile'=>array('پروفایل من','page-templates/pvdak-profile.php',''),
     'account-login'=>array('ورود به حساب','page-templates/pvdak-login.php',''),
     'my-pvdak-account'=>array('پنل کاربری','page-templates/pvdak-account.php',''),
   );
 }
 function pvdak_public_create_missing_pages() {
   if ( ! is_admin() || wp_doing_ajax() || ! current_user_can('manage_options') || ! current_user_can('publish_pages')
-       || '0.8.23' === get_option('_pvdak_public_pages_bootstrap') ) { return; }
+       || '0.8.25' === get_option('_pvdak_public_pages_bootstrap') ) { return; }
   $complete = true;
   foreach(pvdak_public_page_seeds() as $slug=>$p) {
     $existing = get_page_by_path($slug,OBJECT,'page');
@@ -32,7 +34,7 @@ function pvdak_public_create_missing_pages() {
       update_post_meta($id,'_pvdak_provisional_policy','1');
     }
   }
-  if ($complete) {update_option('_pvdak_public_pages_bootstrap','0.8.23',false);}
+  if ($complete) {update_option('_pvdak_public_pages_bootstrap','0.8.25',false);}
 }
 add_action('admin_init','pvdak_public_create_missing_pages',20);
 function pvdak_public_policy_noindex($robots) {

@@ -604,3 +604,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 ## 2026-10-23 — DRAFT-CLEAR-HOMEPAGE-ENTRY-055 (0.8.24, NOT DEPLOYED)
 - Replaced role-oriented 'از کدام مسیر وارد می‌شوید' section with three accessible full-card action links to legal topic index, magazine, and signed-in account/login. No fictitious route choices, disabled form or unfinished registration. Premium SVG cards, mobile layout, reduced-motion styling. Old ACF inputs remain stored but homepage no longer displays them, as the new destinations are functional site navigation.
 - Legacy ACF defaults title updated for future admin copy; theme version 0.8.24. Main remains untouched and maintenance ON.
+
+
+## 2026-10-23 — DRAFT-ACCOUNT-TOOLS-056 (0.8.25, NOT DEPLOYED)
+- Added a WordPress-native branded password recovery request/reset page using retrieve_password/get_password_reset_key core flow, check_password_reset_key and reset_password, generic non-enumerating message, 90-second throttling, nonce-protected POST, minimum 12-character new password, native email transport, no external credentials.
+- Added a private account profile editor for logged-in user display_name only; username/role/verified email are not user-modifiable. Account shortcut links and login recovery link, no-cache and noindex on auth/profile/account routes. New Pages provisioned only from admin_init after future release, no WordPress data changes yet.
+- Recovery is subject to configured WP outgoing mail. Real delivery/reset and rate-limiting must be tested before site launch.

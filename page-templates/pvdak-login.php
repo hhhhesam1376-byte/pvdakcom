@@ -21,7 +21,8 @@ get_header(); ?>
 <label for="pvdak-password">رمز عبور</label><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" required>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit">ورود به حساب ←</button></form>
-<p class="pvdak-login-help">ثبت‌نام و ورود پیامکی فعلاً فعال نیست. برای مشکل دسترسی از <a href="<?php echo esc_url(pvdak_public_page_url('contact-us')?:home_url('/contact-us/')); ?>">تماس با ما</a> استفاده کنید.</p>
+<?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
+<p class="pvdak-login-help"><a href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a> · ثبت‌نام و ورود پیامکی فعلاً فعال نیست. برای مشکل دسترسی از <a href="<?php echo esc_url(pvdak_public_page_url('contact-us')?:home_url('/contact-us/')); ?>">تماس با ما</a> استفاده کنید.</p>
 </section>
 <aside class="pvdak-login-art"><span>PV</span><h2>مسیر روشن پیگیری</h2><p>محیط اختصاصی و فارسی برای مشاهده امکانات فعال حساب کاربری پویش.</p></aside>
 </div></main><?php get_footer(); ?>

@@ -42,6 +42,7 @@ require_once get_template_directory() . '/inc/pvdak-demo-blog-robots.php';
 require_once get_template_directory() . '/inc/pvdak-demo-comment-preview.php';
 require_once get_template_directory() . '/inc/pvdak-public-pages.php';
 require_once get_template_directory() . '/inc/pvdak-auth.php';
+require_once get_template_directory() . '/inc/pvdak-account-tools.php';
 require_once get_template_directory() . '/inc/pvdak-home-collections.php';
 require_once get_template_directory() . '/inc/pvdak-home-readiness.php';
 // Optional admin starter: native Page and Post Category content structure.

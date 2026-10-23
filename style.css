@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.24
+Version: 0.8.25
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1384,3 +1384,10 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
 @media(max-width:1040px){.pvdak-start-here-grid{grid-template-columns:1fr;gap:12px}a.pvdak-start-card{min-height:124px;padding:21px}}
 @media(max-width:620px){.pvdak-start-here .pvdak-start-here-heading h2{font-size:23px}a.pvdak-start-card{border-radius:16px;gap:12px;padding:17px 15px}.pvdak-start-icon{width:52px;height:52px;flex-basis:52px;border-radius:15px}.pvdak-start-icon svg{width:30px;height:30px}.pvdak-start-info strong{font-size:15px}}
 @media(prefers-reduced-motion:reduce){a.pvdak-start-card{transition:none}a.pvdak-start-card:hover{transform:none}}
+
+/* 0.8.25 account recovery/profile, native WP auth safety. */
+.pvdak-account-shortcuts{display:flex;gap:10px;flex-wrap:wrap;margin:0 auto 18px;max-width:880px}
+.pvdak-account-shortcuts a{background:#e9f5f0;color:#176d65;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:800;text-decoration:none}
+.pvdak-account-shortcuts a:hover{background:#d5eae4}
+.pvdak-recovery-panel{max-width:580px;margin:26px auto 60px}
+.pvdak-recovery-panel h1{font-size:25px;line-height:1.5;color:#193c4b}
