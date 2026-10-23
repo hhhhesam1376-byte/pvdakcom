@@ -18,12 +18,12 @@ function pvdak_home_defaults() {
         'service_3_description' => 'برای طرح پرسش و دریافت پاسخ',
         'audiences_title' => 'می‌خواهید چه کاری انجام دهید؟',
         'audiences_intro' => 'دسترسی سریع به قسمت‌های اصلی سایت',
-        'audience_1_title' => 'مردم و درخواست‌کنندگان',
-        'audience_1_description' => 'ثبت نیاز حقوقی و پیگیری درخواست‌ها',
-        'audience_2_title' => 'وکلا و کارآموزان',
-        'audience_2_description' => 'تخصص، اشتراک و درخواست‌های مرتبط',
-        'audience_3_title' => 'دانشجویان حقوق',
-        'audience_3_description' => 'عضویت و همراهی با جامعه حقوقی',
+        'audience_1_title' => 'موضوع حقوقی‌ام را پیدا کنم',
+        'audience_1_description' => 'از میان موضوعات حقوقی، حوزه موردنظر را پیدا کنید.',
+        'audience_2_title' => 'مقاله و راهنما بخوانم',
+        'audience_2_description' => 'در مجله حقوقی، یادداشت‌ها و مطالب آموزشی را دنبال کنید.',
+        'audience_3_title' => 'حساب کاربری‌ام را ببینم',
+        'audience_3_description' => 'اگر حساب دارید، از پنل وضعیت و اطلاعات خود را ببینید.',
         'topics_title' => 'برای چه موضوعی به کمک نیاز دارید؟',
         'process_title' => 'از یک درخواست تا یک همراه متخصص',
         'step_1_title' => 'ثبت نیاز شما',
@@ -78,6 +78,27 @@ function pvdak_home_defaults() {
         'faq_3_question' => 'چطور وضعیت درخواست خود را پیگیری کنم؟',
     );
 }
+/**
+ * Preserve intentional custom editorial copy while hiding obsolete role copy.
+ * Destinations are resolved by the theme and never become dead user-configured
+ * placeholder URL fields.
+ */
+function pvdak_home_start_copy( $name, $new_default ) {
+    $legacy = array(
+        'audiences_title' => 'از کدام مسیر وارد می‌شوید؟',
+        'audiences_intro' => 'خدمات متناسب با نقش شما',
+        'audience_1_title' => 'مردم و درخواست‌کنندگان',
+        'audience_1_description' => 'ثبت نیاز حقوقی و پیگیری درخواست‌ها',
+        'audience_2_title' => 'وکلا و کارآموزان',
+        'audience_2_description' => 'تخصص، اشتراک و درخواست‌های مرتبط',
+        'audience_3_title' => 'دانشجویان حقوق',
+        'audience_3_description' => 'عضویت و همراهی با جامعه حقوقی',
+    );
+    $saved = trim( (string) pvdak_home_value( $name, $new_default ) );
+    return '' === $saved || ( isset( $legacy[ $name ] ) && $saved === $legacy[ $name ] ) ?
+        $new_default : $saved;
+}
+
 function pvdak_home_value( $name, $default = null ) {
     if ( null === $default ) {
         $defaults = pvdak_home_defaults();
@@ -124,18 +145,16 @@ function pvdak_register_home_acf_fields() {
     $fields[] = array( 'key' => 'field_pvdak_home_service_3_title', 'label' => 'خدمت 3 — عنوان', 'name' => 'service_3_title', 'type' => 'text', 'default_value' => isset($defaults['service_3_title']) ? $defaults['service_3_title'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_service_3_description', 'label' => 'خدمت 3 — توضیح کوتاه', 'name' => 'service_3_description', 'type' => 'text', 'default_value' => isset($defaults['service_3_description']) ? $defaults['service_3_description'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_service_3_url', 'label' => 'خدمت 3 — آدرس صفحه مقصد', 'name' => 'service_3_url', 'type' => 'url', 'default_value' => isset($defaults['service_3_url']) ? $defaults['service_3_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_tab_audiences', 'label' => '۳. گروه‌های کاربران', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_audiences', 'label' => '۳. سه دسترسی کاربردی صفحه اصلی', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_start_notice', 'label' => 'لینک‌های واقعی', 'name' => '', 'type' => 'message', 'message' => 'دکمه‌های این سه کارت به موضوعات حقوقی، مجله و حساب کاربری سایت متصل‌اند؛ لینک‌های قدیمی انتخاب نقش دیگر استفاده نمی‌شوند.' );
     $fields[] = array( 'key' => 'field_pvdak_home_audiences_title', 'label' => 'تیتر بخش', 'name' => 'audiences_title', 'type' => 'text', 'default_value' => isset($defaults['audiences_title']) ? $defaults['audiences_title'] : '' );
     $fields[] = array( 'key' => 'field_pvdak_home_audiences_intro', 'label' => 'توضیح کوتاه', 'name' => 'audiences_intro', 'type' => 'text', 'default_value' => isset($defaults['audiences_intro']) ? $defaults['audiences_intro'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_1_title', 'label' => 'گروه 1 — عنوان', 'name' => 'audience_1_title', 'type' => 'text', 'default_value' => isset($defaults['audience_1_title']) ? $defaults['audience_1_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_1_description', 'label' => 'گروه 1 — توضیح', 'name' => 'audience_1_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_1_description']) ? $defaults['audience_1_description'] : '', 'rows' => 3 );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_1_url', 'label' => 'گروه 1 — لینک', 'name' => 'audience_1_url', 'type' => 'url', 'default_value' => isset($defaults['audience_1_url']) ? $defaults['audience_1_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_2_title', 'label' => 'گروه 2 — عنوان', 'name' => 'audience_2_title', 'type' => 'text', 'default_value' => isset($defaults['audience_2_title']) ? $defaults['audience_2_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_2_description', 'label' => 'گروه 2 — توضیح', 'name' => 'audience_2_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_2_description']) ? $defaults['audience_2_description'] : '', 'rows' => 3 );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_2_url', 'label' => 'گروه 2 — لینک', 'name' => 'audience_2_url', 'type' => 'url', 'default_value' => isset($defaults['audience_2_url']) ? $defaults['audience_2_url'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_3_title', 'label' => 'گروه 3 — عنوان', 'name' => 'audience_3_title', 'type' => 'text', 'default_value' => isset($defaults['audience_3_title']) ? $defaults['audience_3_title'] : '' );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_3_description', 'label' => 'گروه 3 — توضیح', 'name' => 'audience_3_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_3_description']) ? $defaults['audience_3_description'] : '', 'rows' => 3 );
-    $fields[] = array( 'key' => 'field_pvdak_home_audience_3_url', 'label' => 'گروه 3 — لینک', 'name' => 'audience_3_url', 'type' => 'url', 'default_value' => isset($defaults['audience_3_url']) ? $defaults['audience_3_url'] : '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_1_title', 'label' => 'کارت 1 — عنوان', 'name' => 'audience_1_title', 'type' => 'text', 'default_value' => isset($defaults['audience_1_title']) ? $defaults['audience_1_title'] : '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_1_description', 'label' => 'کارت 1 — توضیح', 'name' => 'audience_1_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_1_description']) ? $defaults['audience_1_description'] : '', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_2_title', 'label' => 'کارت 2 — عنوان', 'name' => 'audience_2_title', 'type' => 'text', 'default_value' => isset($defaults['audience_2_title']) ? $defaults['audience_2_title'] : '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_2_description', 'label' => 'کارت 2 — توضیح', 'name' => 'audience_2_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_2_description']) ? $defaults['audience_2_description'] : '', 'rows' => 3 );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_3_title', 'label' => 'کارت 3 — عنوان', 'name' => 'audience_3_title', 'type' => 'text', 'default_value' => isset($defaults['audience_3_title']) ? $defaults['audience_3_title'] : '' );
+    $fields[] = array( 'key' => 'field_pvdak_home_audience_3_description', 'label' => 'کارت 3 — توضیح', 'name' => 'audience_3_description', 'type' => 'textarea', 'default_value' => isset($defaults['audience_3_description']) ? $defaults['audience_3_description'] : '', 'rows' => 3 );
     $fields[] = array( 'key' => 'field_pvdak_tab_topics', 'label' => '۴. لندینگ‌های حقوقی', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_topics_title', 'label' => 'عنوان این قسمت در صفحه اصلی', 'name' => 'topics_title', 'type' => 'text', 'default_value' => isset($defaults['topics_title']) ? $defaults['topics_title'] : '' );
     $fields[] = array(

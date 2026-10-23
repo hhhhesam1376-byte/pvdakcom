@@ -32,6 +32,7 @@ $checks = array(
     'Simplified homepage entry is 3 explicit links' =>
         false !== strpos($data['front'],'می‌خواهید چه کاری انجام دهید؟') &&
         false !== strpos($data['front'],'pvdak-start-here-grid') &&
+        false !== strpos($data['front'],'pvdak_home_start_copy(') &&
         false !== strpos($data['front'],'pvdak_auth_login_url()') &&
         false === strpos($data['front'],'از کدام مسیر وارد می‌شوید؟'),
     'Auth is based on WordPress credentials, no parallel login database' =>

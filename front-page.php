@@ -84,23 +84,23 @@ $svg_icons = array(
   // Three real destinations, not a required choice of role or a disabled intake form.
   $pvdak_getting_started = array(
       array(
-          'title' => 'موضوع حقوقی‌ام را پیدا کنم',
-          'desc' => 'از میان موضوعات حقوقی، حوزه موردنظر را پیدا کنید.',
+          'title' => pvdak_home_start_copy( 'audience_1_title', 'موضوع حقوقی‌ام را پیدا کنم' ),
+          'desc' => pvdak_home_start_copy( 'audience_1_description', 'از میان موضوعات حقوقی، حوزه موردنظر را پیدا کنید.' ),
           'cta' => 'مشاهده موضوعات',
           'url' => ( function_exists( 'pvdak_legal_topics_root_id' ) && pvdak_legal_topics_root_id() ) ?
               get_permalink( pvdak_legal_topics_root_id() ) : home_url( '/#topics' ),
           'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="21" cy="21" r="12"/><path d="m30 30 11 11M16 21h10M21 16v10"/></svg>',
       ),
       array(
-          'title' => 'مقاله و راهنما بخوانم',
-          'desc' => 'در مجله حقوقی، یادداشت‌ها و مطالب آموزشی را دنبال کنید.',
+          'title' => pvdak_home_start_copy( 'audience_2_title', 'مقاله و راهنما بخوانم' ),
+          'desc' => pvdak_home_start_copy( 'audience_2_description', 'در مجله حقوقی، یادداشت‌ها و مطالب آموزشی را دنبال کنید.' ),
           'cta' => 'ورود به مجله',
           'url' => home_url( '/#magazine' ),
           'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11h15c3 0 5 2 5 5v25c0-4-3-6-7-6H7V11ZM41 11H27v30c0-4 3-6 7-6h7V11ZM14 19h7m-7 6h7m13-6h-4m4 6h-4"/></svg>',
       ),
       array(
-          'title' => 'حساب کاربری‌ام را ببینم',
-          'desc' => 'اگر حساب دارید، از پنل وضعیت و اطلاعات خود را ببینید.',
+          'title' => pvdak_home_start_copy( 'audience_3_title', 'حساب کاربری‌ام را ببینم' ),
+          'desc' => pvdak_home_start_copy( 'audience_3_description', 'اگر حساب دارید، از پنل وضعیت و اطلاعات خود را ببینید.' ),
           'cta' => is_user_logged_in() ? 'پنل من' : 'ورود به حساب',
           'url' => is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_url(),
           'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="16" r="8"/><path d="M9 41v-4c0-9 7-13 15-13s15 4 15 13v4M13 40h22"/></svg>',
@@ -110,8 +110,8 @@ $svg_icons = array(
   <section id="services" class="pvdak-home-section pvdak-audiences pvdak-start-here" aria-labelledby="audiences-title">
     <div class="pvdak-home-section-head pvdak-start-here-heading">
       <div><span class="pvdak-start-here-kicker">دسترسی سریع</span>
-        <h2 id="audiences-title">می‌خواهید چه کاری انجام دهید؟</h2>
-        <p>بدون انتخاب نقش یا ثبت‌نام اجباری، مستقیم به بخش موردنیازتان بروید.</p>
+        <h2 id="audiences-title"><?php echo esc_html( pvdak_home_start_copy( 'audiences_title', 'می‌خواهید چه کاری انجام دهید؟' ) ); ?></h2>
+        <p><?php echo esc_html( pvdak_home_start_copy( 'audiences_intro', 'بدون انتخاب نقش یا ثبت‌نام اجباری، مستقیم به بخش موردنیازتان بروید.' ) ); ?></p>
       </div>
     </div>
     <div class="pvdak-start-here-grid">

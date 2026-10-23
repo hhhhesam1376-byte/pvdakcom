@@ -631,3 +631,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - This only prepares the batch for administrator review. It does NOT update GitHub main, cron, site, users, passwords, Core plugin version on host, intake settings, registrations, or public maintenance.
 
 - Corrected optional monthly quota accounting: queries immutable assignment-audit entries independently of the current assigned-profile meta. Revoked/reassigned cases still consume the originating professional's recorded month quota; default-OFF gate unchanged.
+
+- Polished homepage starter integration with WP ACF: card titles and descriptions remain editable; legacy saved role defaults are auto-normalized on read without overwriting DB. Removed misleading unused URL inputs from ACF UI and renamed the admin tab. Destination URLs remain safe site routes.
