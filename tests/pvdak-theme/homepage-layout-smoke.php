@@ -90,6 +90,7 @@ pvdak_layout_expect( false !== strpos( $css, 'flex-flow: row nowrap' ) &&
 pvdak_layout_expect( false !== strpos( $js, 'new window.Swiper(container' ) &&
     false !== strpos( $js, 'loop: true' ) &&
     false !== strpos( $js, 'autoplay:' ) &&
+    false !== strpos( $js, 'delay: 3000' ) &&
     false !== strpos( $js, 'breakpoints:' ) &&
     false === strpos( $js, 'track.appendChild(first)' ),
     'Native Swiper runtime owns autoplay, responsive layout and infinite loop' );

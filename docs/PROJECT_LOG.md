@@ -527,3 +527,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - `functions.php` enqueues Swiper from the active theme path ahead of `pvdak-home.js`. Removed admin downloader inclusion and obsolete module. Existing uploaded Swiper files are no longer used, and no WordPress uploads/media are removed.
 - Existing private deploy runner uses `umask 077` and `rsync -rlt --chmod=D755,F644` without `-p`; new files can become mode 0600. Repository copy updated to `rsync -rltp --chmod=D755,F644` and safe rollback mode handling. **Updating the GitHub copy does not automatically replace the existing private runner.** Operator must review/install it at the same private path and run normal deploy. No new workflow/cron/access keys.
 - Updated read-only checks for bundled library. No change to PVDak Core, maintenance mode, intake flags, menu contents, database or registered users. Push alone does not certify live HTTP assets or actual autoplay.
+
+
+## 2026-10-23 — SWIPER-AUTOPLAY-046 (v0.8.18, deployment pending)
+- User confirmed production deploy `26db39d4c787`: DEPLOY_OK and HTTP 200 for RTL, homepage JS and both bundled Swiper assets.
+- Reduced Swiper autoplay interval from `3400` to exactly `3000` milliseconds in `assets/js/pvdak-home.js`; slide animation speed and responsive behavior are unchanged. Existing hover/focus/background/reduced-motion pauses still apply.
+- Theme bumped to `0.8.18` to invalidate cached local JS; updated homepage source assertion to require `delay: 3000`. No changes to Core, deployment script/cron, WordPress content, maintenance, requests, menus, or media. Run existing `$HOME/.pvdak-deploy/deploy.sh` for publication.
