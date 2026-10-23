@@ -64,6 +64,17 @@ function pvdak_support_ticket_form(){
     $open_id=absint($open_raw);
     $has_next=count($items)>10;
     $items=array_slice($items,0,10);
+    // A direct link to an owned ticket remains usable even after its status
+    // changes and it no longer matches the currently selected filters.
+    $focused_ticket=false;
+    if($open_id && !in_array($open_id,wp_list_pluck($items,'ID'),true)) {
+        $focused=get_post($open_id);
+        if($focused && 'pvdak_support_ticket'===$focused->post_type &&
+            'private'===$focused->post_status && (int)$focused->post_author===$user) {
+            array_unshift($items,$focused);
+            $focused_ticket=true;
+        }
+    }
     $url=admin_url('admin-post.php');
     ob_start(); ?>
     <section id="pvdak-support" class="pvdak-support" aria-labelledby="pvdak-support-title">
@@ -105,8 +116,9 @@ function pvdak_support_ticket_form(){
         <?php if($filters): ?><a class="pvdak-ticket-reset" href="<?php echo esc_url(pvdak_auth_account_url().'#pvdak-support'); ?>">پاک‌کردن فیلترها</a><?php endif; ?>
       </form>
       <p class="pvdak-ticket-result-summary" role="status">
-        <?php echo esc_html(number_format_i18n(count($items))); ?> پیام در این صفحه
+        <?php echo esc_html(number_format_i18n(count($items)-($focused_ticket?1:0))); ?> پیام در این صفحه
         <?php if($filters): ?> (نتیجه فیلتر فعلی)<?php endif; ?>
+        <?php if($focused_ticket): ?>؛ گفتگو انتخاب‌شده نیز به‌صورت جداگانه در ابتدای فهرست نمایش داده شده است.<?php endif; ?>
       </p>
       <?php if(!$items): ?>
         <p class="pvdak-ticket-empty"><?php echo esc_html($page>1?'در این صفحه پیامی وجود ندارد؛ به صفحه قبل بازگردید.':($filters?'پیامی با این شرایط پیدا نشد؛ فیلترها را تغییر دهید.':'هنوز پیامی ثبت نشده است؛ می‌توانید از فرم بالا اولین پیام خود را بفرستید.')); ?></p>
@@ -237,8 +249,13 @@ function pvdak_support_followup() {
     if (pvdak_support_length($text)>=2 && pvdak_support_length($text)<=2500 && !get_transient($key)) {
         set_transient($key,'1',45);
         $ok=pvdak_support_append_message($id,'user',$text);
-        if($ok)update_post_meta($id,'_pvdak_support_status','open');
-        else delete_transient($key);
+        if($ok) {
+            $previous=pvdak_support_status_key(get_post_meta($id,'_pvdak_support_status',true));
+            update_post_meta($id,'_pvdak_support_status','open');
+            if($previous!=='open')add_post_meta($id,'_pvdak_support_status_event',array(
+                'from'=>$previous,'to'=>'open','at'=>current_time('mysql',true),'actor'=>get_current_user_id()
+            ),false);
+        } else delete_transient($key);
     }
     // Rebuild return URL from allowlisted controls, never accept a client-supplied URL.
     $return=array('support'=>$ok?'followup_sent':'failed');
@@ -296,6 +313,8 @@ function pvdak_support_reply_box_html($post){
     echo '</select></p>';
 }
 function pvdak_support_save_reply($post_id,$post){
+    static $processed=array();
+    if(isset($processed[$post_id]))return;
     if(!current_user_can('manage_options')||wp_is_post_revision($post_id)||wp_is_post_autosave($post_id)||
         !isset($_POST['_pvdak_reply_nonce']) || !is_string($_POST['_pvdak_reply_nonce'])||
         !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_pvdak_reply_nonce'])),'pvdak_support_reply_'.$post_id))return;
@@ -303,7 +322,7 @@ function pvdak_support_save_reply($post_id,$post){
     if(!is_string($raw))return;
     $reply=sanitize_textarea_field($raw);
     if (pvdak_support_length($reply)>2500)return;
-    $old=get_post_meta($post_id,'_pvdak_support_reply',true);
+    $processed[$post_id]=true;
     // Composer starts empty. Only explicitly submitted non-empty text appends a new response.
     if ($reply !== '') {
         if (!pvdak_support_append_message($post_id,'staff',$reply))return;

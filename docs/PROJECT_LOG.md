@@ -773,3 +773,4 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Staff composer now starts empty to prevent accidental duplicate replies; staff can inspect last 30 conversation messages and a private status-change audit history. A new staff reply marks a waiting ticket answered unless closed.
 - Added ticket reply privacy reminder, dynamic character limits, near-limit warning, accessible focus on submission result, responsive filter controls and 21 new static regression assertions.
 - Source-only modifications. PHP lint, read-only smoke suite, real WordPress two-account behavior and browser checks are pending. No changes to main, live site, Core, registrations, intakes, maintenance, cron, database or server.
+- Follow-up corrections: authorized focused ticket display across filters, user follow-up status audit, and same-request admin save idempotency. These are still source-only changes.

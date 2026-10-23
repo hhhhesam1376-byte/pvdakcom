@@ -54,6 +54,9 @@ $checks=array(
  'dynamic counter limit'=>strpos($s['js'],'field.maxLength > 0')!==false,
  'near limit visual'=>strpos($s['css'],'.pvdak-ticket-counter--near')!==false,
  'focus server notice'=>strpos($s['js'],"params.has('support')")!==false,
+ 'owned focused ticket'=>strpos($s['support'],"(int)\$focused->post_author===\$user")!==false,
+ 'followup audit'=>strpos($s['support'],"'to'=>'open'")!==false,
+ 'save idempotency'=>strpos($s['support'],'static $processed=array()')!==false,
  'admin filter and scoped assets'=>strpos($s['support'],"add_action('restrict_manage_posts'")!==false &&
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
