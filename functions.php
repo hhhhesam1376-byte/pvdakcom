@@ -18,6 +18,8 @@ function pvdak_assets() {
 	wp_enqueue_style( 'pvdak-style', get_stylesheet_uri(), array(), wp_get_theme()->get( 'Version' ) );
 	// Always load the Persian RTL layer, even before WordPress is switched from en_US.
 	wp_enqueue_style( 'pvdak-rtl', get_template_directory_uri() . '/rtl.css', array( 'pvdak-style' ), wp_get_theme()->get( 'Version' ) );
+	// Versioned WordPress primary mega-menu; CSS only (hover + keyboard focus).
+	wp_enqueue_style( 'pvdak-navigation', get_template_directory_uri() . '/assets/css/pvdak-navigation.css', array( 'pvdak-rtl' ), wp_get_theme()->get( 'Version' ) );
 	if ( is_category() || is_archive() || is_home() || is_single() ) {
 		// Native WordPress Posts/Categories, separate from legal landing Pages.
 		wp_enqueue_style( 'pvdak-editorial', get_template_directory_uri() . '/assets/css/pvdak-editorial.css', array( 'pvdak-rtl' ), wp_get_theme()->get( 'Version' ) );
