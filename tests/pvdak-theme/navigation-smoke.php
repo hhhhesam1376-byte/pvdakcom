@@ -9,7 +9,7 @@ if ( ! is_string( $root ) || ! is_dir( $root ) ) {
     exit( 2 );
 }
 $files = array(
-    'css' => $root . '/assets/css/pvdak-navigation.css',
+    'css' => $root . '/style.css',
     'func' => $root . '/functions.php',
     'header' => $root . '/header.php',
     'rtl' => $root . '/rtl.css',
@@ -33,11 +33,13 @@ function pvdak_nav_assert( $okay, $label ) {
         exit( 1 );
     }
 }
-pvdak_nav_assert( false !== strpos( $functions, "'pvdak-navigation'" ) &&
-    false !== strpos( $functions, "'/assets/css/pvdak-navigation.css'" ),
-    'Mega CSS is enqueued on all frontend pages' );
-pvdak_nav_assert( false !== strpos( $functions, "array( 'pvdak-rtl' )" ),
-    'Mega CSS loads after the RTL presentation layer' );
+pvdak_nav_assert( false !== strpos( $functions, "'pvdak-style'" ) &&
+    false !== strpos( $functions, 'get_stylesheet_uri()' ),
+    'Mega navigation is delivered by the standard WordPress theme stylesheet' );
+pvdak_nav_assert( false !== strpos( $css, 'Version: 0.8.12' ) &&
+    false === strpos( $functions, "'pvdak-navigation'" ) &&
+    false === strpos( $functions, "/assets/css/pvdak-navigation.css" ),
+    'Main versioned CSS is the single source and no extra stylesheet fetch remains' );
 pvdak_nav_assert( 2 === substr_count( $header, "has_nav_menu( 'primary' )" ) &&
     2 === substr_count( $header, "'theme_location'=>'primary'" ),
     'Both desktop and mobile use the WordPress primary menu location' );
