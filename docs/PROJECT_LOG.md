@@ -566,3 +566,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Updated source smoke checks and `docs/PENDING_APPROVAL.md`. All A–H are still draft only; `main` and its existing production deploy path remain unchanged. No WordPress content/options, maintenance, Core or user intake state changed. User will authorize publication as a separate step after review.
 
 - Small compatibility fix: clears legacy direct-child step span margin for the new visual progress decoration to keep equal card heights on mobile.
+
+
+## 2026-10-23 — RELEASE-APPROVAL-051 (v0.8.20)
+- User explicitly approved publishing all eight pending UI/editorial changes A–H together. Scheduled fast-forward from the completed draft chain to the existing `main` branch; existing 15-minute private cPanel cron/deploy path is unchanged.
+- Theme v0.8.20 includes custom Swiper arrows, centered topic card art, five real WordPress post cards with fully clickable images, single article/related posts/native comments layout, PV favicon (including maintenance page), and premium four-step timeline. The seeded five WP posts remain unchanged and comment settings are preserved.
+- Note: GitHub main update is NOT equivalent to successful host deployment; verify `DEPLOY_OK` for release SHA and check article pages and new styles after cPanel fetch. The theme runner includes PHP syntax checks and rollback.
