@@ -30,3 +30,10 @@ Maintain maintenance ON, registration/intakes OFF, quota gate OFF and payment di
 - The main source runner was blocked first by two outdated test expectations and then ended without the consolidated success sentinel; each subsequent individual component was inspected/tested separately. Avoid implying the entire unmodified runner succeeded.
 - Before opening site: review Privacy Policy page 3 text; keep maintenance/registration/intakes/quota restrictions.
 - Next safe host action: anonymous HTTP headers for home and account URL, plus REST anonymous result. Do not log session cookies, user names, private ticket content or legal case metadata.
+
+
+## Anonymous HTTP routing triage (2026-10-23)
+- Homepage `/`: HTTP/2 200, no-store/private cache control, and X-Robots-Tag noindex/nofollow/noarchive (expected temporary landing).
+- Branded login `/account-login/`, account `/my-pvdak-account/` and `/wp-json/`: HTTP/2 404 despite published pages from WP-CLI. Do not mark as tested/healthy.
+- Compare plain query-string routes (WordPress) against pretty paths; inspect permalink structure and WordPress-managed rewrite block read-only before any fix. REST error expected from maintenance is a WordPress error (e.g. 503); 404 alone is not proof of REST gate execution.
+- No rewrite flush, cache purge, public intake enable, or direct edits to .htaccess yet.

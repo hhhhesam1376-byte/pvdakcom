@@ -742,3 +742,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - The consolidated test runner has **not** printed `PVDAK_BATCH_PREFLIGHT_OK`; only individual components have proved passing. Do not describe this as a real two-account browser/privacy acceptance.
 - Previously verified live WordPress preflight remained 37 checks, 0 fails, 0 warnings (theme 0.8.28, Core 0.8.2); public maintenance remains enabled; registrations, both intakes and subscription enforcement remain OFF.
 - Next: anonymous HTTP routing/cache/REST check from host, then controlled E2E with two synthetic logins and ticket ownership on a separate staging WP install. Keep all real client/legal data private. No new workflows, secrets or deployments.
+
+
+## 2026-10-23 — ANONYMOUS-HTTP-TRIAGE-077 (read-only operator observation)
+- The live anonymous `curl` check from cPanel returned `/` HTTP/2 200 with `cache-control: no-cache, must-revalidate, max-age=0, no-store, private` and `x-robots-tag: noindex, nofollow, noarchive`. Maintenance placeholder is functioning on homepage.
+- `/account-login/`, `/my-pvdak-account/`, and `/wp-json/` each returned HTTP/2 404. The public Pages are published according to earlier 37/0/0 WP-CLI preflight; these 404s should NOT be called passing accessibility or REST restrictions.
+- Theme template redirects through `pvdak-maintenance.php` at `template_redirect`, and REST maintenance guard returns 503 on anonymous WP REST access; the observed common 404 may indicate that friendly-path requests never reach WordPress (permalink/rewrite/.htaccess/vhost route), but this is UNCONFIRMED. Do not guess root cause or run rewrite flush/htaccess replacement blindly.
+- Next safe diagnosis: inspect WP-CLI `permalink_structure`, real `get_permalink()` values, presence of rewrite directives, then compare request status of `/?pagename=account-login` and `/?rest_route=/` with pretty paths. Avoid logging cookies, user details or private content.
+- No server config or WP settings changed; public maintenance and all intake/registration/quota gates remain OFF.
