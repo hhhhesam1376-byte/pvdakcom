@@ -781,3 +781,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Cards show only escaped title, reference ID, state, type, date and published topic title. No case descriptions, internal notes, or other owners' requests are rendered; no intake switch changed.
 - Added responsive RTL CSS and 30 source-only regression checks to existing read-only runner. PHP lint, actual WordPress/two-account, permalink, and mobile checks still **pending**.
 - Core plugin source modified on feature branch only; a future Core release requires separate controlled deployment and acceptance. Main/live, maintenance, registration, intake, data, server and cron unchanged.
+
+
+## 2026-10-24 — PROFESSIONAL-PORTAL-084 (feature branch only)
+- Implemented 20 applicant-only professional dashboard UX, accessibility, state and capacity/subscription clarity improvements. See `docs/WORK_BATCH_084.md`.
+- Rechecks application owner/type/private-or-draft before rendering; no client identity, case details, assignment IDs, verification claims or billing functionality exposed.
+- Added 30 static source checks to the existing read-only batch runner; PHP lint, actual WordPress/two-account, browser and capacity/quota tests still pending.
+- No changes to main, live site, maintenance, signup, intake, stored records, server, cron or payment settings.

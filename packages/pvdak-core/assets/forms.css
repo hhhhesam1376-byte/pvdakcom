@@ -71,3 +71,34 @@
 .pvdak-core-request-card dt{color:#617780}
 .pvdak-core-request-card dd{margin:0;color:#183f49;font-weight:700;overflow-wrap:anywhere}
 @media(max-width:650px){.pvdak-core-request-filters,.pvdak-core-request-card dl{grid-template-columns:1fr}.pvdak-core-request-filters button{width:100%}.pvdak-core-request-cards .pvdak-core-request-card{padding:13px}}
+
+
+/* Professional membership portal — applicant-only, read-only. */
+.pvdak-core-professional{width:min(100%,1000px)}
+.pvdak-core-prof-status{display:flex;align-items:center;flex-wrap:wrap;gap:8px 15px;padding:15px 18px;border-radius:14px;background:#eff7f4;border-inline-start:4px solid #087f72}
+.pvdak-core-prof-status-label{font-size:13px;color:#42616b}
+.pvdak-core-prof-status strong{color:#0a5b51}
+.pvdak-core-prof-status--rejected{background:#fff2ef;border-color:#aa5448}
+.pvdak-core-prof-status--rejected strong{color:#8b3d32}
+.pvdak-core-prof-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.pvdak-core-prof-facts>div{min-width:0;border:1px solid #e0ece7;border-radius:12px;padding:12px 15px;background:#fbfefd}
+.pvdak-core-prof-facts dt{font-size:12px;color:#587078}
+.pvdak-core-prof-facts dd{margin:6px 0 0;font-weight:700;overflow-wrap:anywhere}
+.pvdak-core-prof-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0;margin:14px 0}
+.pvdak-core-prof-steps li{border-radius:12px;border:1px solid #dbe9e4;padding:13px 10px;text-align:center;font-size:13px;color:#5a6f73}
+.pvdak-core-prof-steps .is-done{background:#e9f5ee;border-color:#c6e3d4;color:#156357}
+.pvdak-core-prof-steps .is-current{background:#0c8173;border-color:#0c8173;color:#fff;font-weight:700}
+.pvdak-core-prof-guidance{border-inline-start:3px solid #178578;padding:9px 15px;background:#f3f9f6}
+.pvdak-core-prof-section{border-top:1px solid #e2ede7;margin-top:24px;padding-top:4px}
+.pvdak-core-prof-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pvdak-core-prof-numbers>div{display:grid;gap:5px;background:#f2f8f5;border-radius:12px;padding:12px}
+.pvdak-core-prof-numbers strong{font-size:24px;color:#0c7267}
+.pvdak-core-prof-numbers span{font-size:12px;color:#4e6970}
+.pvdak-core-prof-meter{display:grid;gap:7px;margin-top:16px;font-size:13px;font-weight:700}
+.pvdak-core-prof-meter progress{width:100%;height:13px;accent-color:#087f72}
+.pvdak-core-prof-hint{background:#f1f7f4;padding:10px 13px;border-radius:10px}
+.pvdak-core-prof-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.pvdak-core-prof-links a{display:inline-flex;align-items:center;min-height:44px;padding:9px 15px;border:1px solid #a8d1c5;border-radius:10px;color:#11675c;text-decoration:none;font-weight:700}
+.pvdak-core-prof-links a:hover{background:#e7f4ee}
+.pvdak-core-prof-links a:focus-visible{outline:3px solid #0c8173;outline-offset:3px}
+@media(max-width:650px){.pvdak-core-prof-facts{grid-template-columns:1fr}.pvdak-core-prof-steps{grid-template-columns:1fr}.pvdak-core-prof-steps li{text-align:start}.pvdak-core-prof-numbers{grid-template-columns:1fr}.pvdak-core-prof-numbers>div{display:flex;justify-content:space-between;align-items:center}.pvdak-core-prof-links a{width:100%;justify-content:center}}
