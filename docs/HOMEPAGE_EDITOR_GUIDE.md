@@ -68,6 +68,29 @@
 
 آزمون جدید `tests/pvdak-theme/homepage-layout-smoke.php` شامل ۱۸ بررسی ایستای ساختار و شبیه‌سازی انتخاب‌های چهارگانه است و در مسیر `scripts/check-pvdak.sh` فراخوانی می‌شود. چرخش و ظاهر نهایی باید پس از استقرار واقعی با مرورگر بررسی شوند.
 
+## نصب واقعی فایل‌های محلی Swiper — نسخه 0.8.15
+
+نسخه 0.8.14 لینک JS/CSS را از CDN مرورگر فراخوانی می‌کرد؛ فایل‌های Swiper را در خود WordPress قرار نداده بود. برای برطرف‌کردن وابستگی به CDN، نسخه 0.8.15 فقط فایل‌های **واقعاً موجود روی هاست** را از مسیر زیر فراخوانی می‌کند:
+
+`wp-content/uploads/pvdak-static/swiper-14.3.0/swiper-bundle.min.js`
+`wp-content/uploads/pvdak-static/swiper-14.3.0/swiper-bundle.min.css`
+
+این پوشه مستقل از فایل‌های قابل‌تعویض قالب است تا با انتشار بعدی Cron حذف نشود. فایل نصب‌کننده در `scripts/pvdak-install-swiper-local.sh` داخل مخزن GitHub قرار دارد؛ آن را **یک بار روی هاست** اجرا کنید. نصب‌کننده از سرویس‌های رسمی نسخه ثابت 14.3.0 دریافت می‌کند، فایل‌های JS/CSS و مجوز MIT را بررسی می‌کند و در پایان `SWIPER_LOCAL_ASSETS_OK` گزارش می‌دهد.
+
+```bash
+bash "$HOME/.pvdak-deploy/deploy.sh" && (
+  set -euo pipefail
+  R="$HOME/repositories/pvdakcom"
+  D="$(mktemp -d "$HOME/.pvdak-deploy/pvdak-swiper-setup.XXXXXX")"
+  trap 'rm -rf -- "$D"' EXIT
+  git -C "$R" archive refs/remotes/pvdak-deploy/main scripts | tar -xf - -C "$D"
+  bash "$D/scripts/pvdak-install-swiper-local.sh"
+  bash "$D/scripts/pvdak-status.sh" --test
+)
+```
+
+این عملیات **هیچ دیتابیس، صفحه حقوقی، کاربر یا تنظیم پذیرش را تغییر نمی‌دهد**. گزارش جدید `Local Swiper library: PASS` و `PVDAK_SWIPER_LOCAL_OK` باید نشان داده شود. بدون آن حتی نسخه جدید قالب به صورت واقعی Swiper کار نخواهد کرد. اگر اتصال خروجی خود هاست هم مسدود باشد، نصب‌کننده خطا می‌دهد؛ نباید با خطا به‌عنوان نصب موفق ادامه داد.
+
 ## اصلاح Swiper رسمی — 0.8.14
 
 پیاده‌سازی اولیه 0.8.13 **Swiper.js نبود** و اسکرول ساده/انیمیشن اختصاصی به نظر می‌رسید. در نسخه 0.8.14 با `swiper`، `swiper-wrapper` و `swiper-slide` رسمی جایگزین شد. بارگذاری کتابخانه **Swiper 14.3.0** در صفحه اصلی و قبل از اسکریپت اختصاصی انجام می‌شود؛ اگر CDN نخست مسدود باشد یک CDN پشتیبان تلاش می‌شود. با هر دو CDN ناموفق، حرکت خودکار Swiper فعال نخواهد شد و فهرست برای دسترسی به لینک‌ها قابل اسکرول می‌ماند.
