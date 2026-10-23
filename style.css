@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.21
+Version: 0.8.22
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1229,4 +1229,95 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
 @media(prefers-reduced-motion:reduce) {
   .pvdak-process-timeline .pvdak-process-step{transition:none!important}
   .pvdak-process-timeline .pvdak-process-step:hover{transform:none}
+}
+
+
+/* 0.8.22: calmer editorial title scale and a clear, near-article comment form. */
+.pvdak-article-page{padding-block:26px 55px}
+.pvdak-editorial-article{max-width:930px}
+.pvdak-article-hero{
+  position:relative;overflow:hidden;
+  padding:clamp(19px,2.9vw,31px) clamp(20px,3.1vw,35px) 27px;
+  background:linear-gradient(115deg,#f9fbfa,#f1f7f5);
+  border:1px solid #e1ebe8;border-radius:17px;
+  box-shadow:0 5px 20px rgba(14,50,58,.035);
+}
+.pvdak-article-hero::before{
+  content:"";position:absolute;inset:0 0 auto;height:3px;
+  background:linear-gradient(90deg,#d7e8df,#0b806f,#153e55);
+}
+.pvdak-article-breadcrumb{font-size:11.5px;gap:8px;margin:0 0 15px;color:#718a8b;line-height:1.6}
+.pvdak-article-breadcrumb a{color:#42766e}
+.pvdak-article-breadcrumb [aria-current="page"]{max-width:38ch}
+.pvdak-article-hero .pvdak-article-eyebrow{
+  background:transparent;padding:0;border:0;border-radius:0;
+  color:#0e796c;font-size:12px;font-weight:750;
+}
+.pvdak-article-hero h1{
+  font-size:clamp(24px,2.45vw,33px);line-height:1.65;
+  margin:7px 0 9px;max-width:35ch;
+  color:#173c4a;font-weight:800;letter-spacing:0;
+}
+.pvdak-article-deck{font-size:13.5px;line-height:1.95;color:#68818a;max-width:68ch}
+.pvdak-article-deck p{margin:0}
+.pvdak-article-byline{margin-top:15px;gap:10px;flex-wrap:wrap;font-size:11.5px;color:#667e85}
+.pvdak-article-comments-link{
+  display:inline-flex;align-items:center;min-height:30px;
+  background:#e1f1eb;border:1px solid #c3ded4;border-radius:99px;
+  color:#0c766a!important;text-decoration:none;padding:2px 12px;font-weight:800;
+}
+.pvdak-article-comments-link:hover{background:#d2eae0}
+.pvdak-article-cover{max-width:930px;margin:16px auto 0;border-radius:15px}
+.pvdak-article-cover img{max-height:395px;aspect-ratio:16/9;object-fit:cover;border-radius:15px}
+.pvdak-article-reading{max-width:755px}
+.pvdak-editorial-article .entry-content{padding-top:20px;font-size:15.5px;line-height:2.12}
+.pvdak-editorial-article .entry-content blockquote{font-size:15px;padding:12px 19px;border-radius:9px}
+.pvdak-related-articles,.pvdak-article-comments{max-width:930px;margin:34px auto 0}
+.pvdak-related-heading h2,.pvdak-comments-heading h2{margin:0;font-size:21px}
+.pvdak-related-heading>span,.pvdak-comments-heading>span{font-size:11.5px}
+.pvdak-article-comments{
+  border-radius:18px;border:1px solid #dce9e5;
+  padding:24px 26px;background:#fff;
+  box-shadow:0 5px 23px rgba(15,55,66,.045);
+}
+.pvdak-comments-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:17px;
+  border-bottom:1px solid #e5eeeb;padding-bottom:15px;
+}
+.pvdak-comments-heading p{font-size:12px;color:#73878e;margin:4px 0 0;line-height:1.9}
+.pvdak-comments-compose{
+  background:#f6faf8;padding:18px 21px;
+  border:1px solid #e2ebe8;border-radius:14px;
+}
+.pvdak-comment-form{margin-top:13px}
+.pvdak-comment-form .comment-reply-title{margin:0 0 8px;font-size:17px;color:#163d48}
+.pvdak-comment-form .comment-form-comment{margin:4px 0 7px}
+.pvdak-comment-form textarea{background:#fff;min-height:118px;font-size:14px}
+.pvdak-comment-form .pvdak-comment-submit{padding:10px 25px;font-size:13px}
+.pvdak-comments-preview-hint{
+  display:block;margin:0 0 10px;padding:9px 13px;
+  border-radius:10px;background:#e2f4ee;color:#236a62;font-size:12px;line-height:1.8;
+}
+.pvdak-comment-list-title{margin:24px 0 12px;font-size:16px;color:#1b4651}
+.pvdak-related-heading{margin-bottom:14px}
+.pvdak-related-grid{gap:14px}
+.pvdak-related-card-body strong{font-size:14px}
+.pvdak-related-picture{height:155px}
+.pvdak-related-card-body{padding:14px}
+.pvdak-article-post-navigation{max-width:930px;margin:24px auto}
+@media(max-width:620px){
+  .pvdak-article-page{padding-block:14px 40px}
+  .pvdak-article-hero{padding:17px 18px 19px;border-radius:14px}
+  .pvdak-article-breadcrumb [aria-current="page"]{max-width:17ch}
+  .pvdak-article-hero h1{font-size:clamp(21px,5.3vw,25px);margin:6px 0}
+  .pvdak-article-deck{font-size:12.5px}
+  .pvdak-article-byline{gap:7px}
+  .pvdak-article-cover,.pvdak-article-cover img{border-radius:12px}
+  .pvdak-article-cover img{max-height:255px}
+  .pvdak-editorial-article .entry-content{font-size:14.5px;line-height:2.05}
+  .pvdak-article-comments{padding:18px 13px;border-radius:15px}
+  .pvdak-comments-compose{padding:14px 12px}
+  .pvdak-related-heading h2,.pvdak-comments-heading h2{font-size:19px}
+  .pvdak-related-picture{min-height:135px}
 }
