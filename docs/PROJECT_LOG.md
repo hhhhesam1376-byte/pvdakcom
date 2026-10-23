@@ -595,3 +595,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Theme 0.8.23 is a standalone draft commit, NOT on main; existing production code and auto-deploy stay unchanged until explicit publish approval. Added checklist items 6-9 alongside previous 5.
 
 - Post-build refinement: footer grid now accommodates its fourth information-links column on desktop and stays usable on tablets/mobile, with a clear heading for the links.
+
+- Input hardening: reject array-shaped login/contact POST values before passing them to WordPress string sanitizers, avoiding malformed-request PHP warnings or errors.

@@ -52,9 +52,12 @@ function pvdak_contact_handle() {
   check_admin_referer('pvdak_contact_form','_pvdak_contact_nonce');
   $url=pvdak_public_page_url('contact-us')?:home_url('/');
   if(!empty($_POST['contact_website'])) {wp_safe_redirect(add_query_arg('sent','1',$url));exit;}
-  $name=sanitize_text_field(wp_unslash($_POST['contact_name']??''));
-  $email=sanitize_email(wp_unslash($_POST['contact_email']??''));
-  $msg=sanitize_textarea_field(wp_unslash($_POST['contact_message']??''));
+  $raw_name=wp_unslash($_POST['contact_name']??'');
+  $raw_email=wp_unslash($_POST['contact_email']??'');
+  $raw_message=wp_unslash($_POST['contact_message']??'');
+  $name=is_string($raw_name)?sanitize_text_field($raw_name):'';
+  $email=is_string($raw_email)?sanitize_email($raw_email):'';
+  $msg=is_string($raw_message)?sanitize_textarea_field($raw_message):'';
   if(!$name || strlen($name)>100 || !is_email($email) || strlen($msg)<10 || strlen($msg)>3500
      || !isset($_POST['contact_consent'])) {
     wp_safe_redirect(add_query_arg('sent','invalid',$url));exit;

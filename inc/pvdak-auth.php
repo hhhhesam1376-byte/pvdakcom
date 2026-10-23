@@ -15,8 +15,10 @@ function pvdak_login_handle(){
   if('POST'!==($_SERVER['REQUEST_METHOD']??''))wp_die('Invalid method','',array('response'=>405));
   check_admin_referer('pvdak_login','_pvdak_login_nonce');
   if(is_user_logged_in()){wp_safe_redirect(pvdak_auth_account_url());exit;}
-  $identity=trim((string)wp_unslash($_POST['login_identity']??''));
-  $pass=(string)wp_unslash($_POST['login_password']??'');
+  $raw_identity=wp_unslash($_POST['login_identity']??'');
+  $raw_pass=wp_unslash($_POST['login_password']??'');
+  $identity=is_string($raw_identity)?trim($raw_identity):'';
+  $pass=is_string($raw_pass)?$raw_pass:'';
   if(!$identity||!$pass||strlen($identity)>250){
     wp_safe_redirect(add_query_arg('error','1',pvdak_auth_login_url()));exit;
   }
