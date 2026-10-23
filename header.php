@@ -36,8 +36,11 @@ $auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_ur
                     <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
                     <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
                     <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
-<li><a href="<?php echo esc_url(home_url('/about-us/')); ?>">درباره ما</a></li>
-<li><a href="<?php echo esc_url(home_url('/contact-us/')); ?>">تماس با ما</a></li>
+<?php foreach ( array( 'about-us' => 'درباره ما', 'contact-us' => 'تماس با ما' ) as $slug => $label ) :
+  $page_url = pvdak_public_page_url( $slug );
+  if ( ! $page_url ) { continue; } ?>
+<li><a href="<?php echo esc_url( $page_url ); ?>"><?php echo esc_html( $label ); ?></a></li>
+<?php endforeach; ?>
                 </ul>
             <?php endif; ?>
         </nav>
@@ -55,8 +58,11 @@ $auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_ur
                             <li><a href="<?php echo esc_url( home_url('/#magazine') ); ?>">مجله</a></li>
                             <li><a href="<?php echo esc_url( home_url('/#forum') ); ?>">انجمن وکلا</a></li>
                             <li><a href="<?php echo esc_url( home_url('/#community') ); ?>">همکاری با ما</a></li>
-<li><a href="<?php echo esc_url(home_url('/about-us/')); ?>">درباره ما</a></li>
-<li><a href="<?php echo esc_url(home_url('/contact-us/')); ?>">تماس با ما</a></li>
+<?php foreach ( array( 'about-us' => 'درباره ما', 'contact-us' => 'تماس با ما' ) as $slug => $label ) :
+  $page_url = pvdak_public_page_url( $slug );
+  if ( ! $page_url ) { continue; } ?>
+<li><a href="<?php echo esc_url( $page_url ); ?>"><?php echo esc_html( $label ); ?></a></li>
+<?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
                 </nav>

@@ -7,7 +7,8 @@ if(!defined('ABSPATH'))exit;
 get_header();
 $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash($_GET['state'])):'';
 ?>
-<main id="main-content" class="container pvdak-static" tabindex="-1">
+<main id="main-content" class="container pvdak-static pvdak-register-page" tabindex="-1">
+<nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( pvdak_auth_login_url() ); ?>">ورود به حساب</a><span aria-hidden="true"> / </span><span aria-current="page">ثبت‌نام</span></nav>
 <header class="pvdak-static-head"><span>حساب تازه</span><h1>ثبت‌نام در پویش</h1><p>ایجاد حساب پس از فعال‌سازی رسمی ثبت‌نام امکان‌پذیر می‌شود.</p></header>
 <div class="pvdak-static-body pvdak-recovery-panel">
 <?php if(!pvdak_registration_open()): ?>
@@ -23,13 +24,17 @@ $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash(
   <div class="pvdak-honeypot" aria-hidden="true"><input name="register_site" tabindex="-1" autocomplete="off"></div>
   <label for="register-user">نام کاربری</label><input id="register-user" name="register_username" minlength="3" maxlength="50" autocomplete="username" required>
   <label for="register-email">ایمیل</label><input id="register-email" type="email" name="register_email" autocomplete="email" required>
-  <label for="register-password">رمز عبور (حداقل ۱۲ نویسه)</label><input id="register-password" type="password" name="register_password" minlength="12" autocomplete="new-password" required>
+  <label for="register-password">رمز عبور (حداقل ۱۲ نویسه)</label><div class="pvdak-password-field"><input id="register-password" type="password" name="register_password" minlength="12" autocomplete="new-password" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="register-password" aria-controls="register-password" aria-pressed="false">نمایش</button></div>
   <label for="register-role">نوع استفاده موردنظر</label><select id="register-role" name="register_role" required>
     <option value="client">مراجعه‌کننده</option><option value="lawyer">متقاضی همکاری به‌عنوان وکیل</option>
     <option value="trainee">متقاضی همکاری کارآموز</option><option value="student">دانشجوی حقوق</option>
   </select>
   <p class="pvdak-static-note">انتخاب عنوان وکیل یا کارآموز صرفاً اظهار علاقه است؛ تأیید رسمی و دسترسی پرونده‌ها بعداً توسط مدیر بررسی می‌شود.</p>
-  <label class="pvdak-check"><input type="checkbox" name="register_consent" required><span>قوانین و حریم خصوصی اولیه را خوانده‌ام و با ساخت حساب موافقم.</span></label>
+  <label class="pvdak-check"><input type="checkbox" name="register_consent" required><span>با ساخت حساب و شرایط اعلام‌شده موافقم. <?php
+    $terms_url = pvdak_public_page_url( 'terms-of-use' );
+    $privacy_url = pvdak_public_page_url( 'privacy-policy' );
+    if ( $terms_url ): ?><a href="<?php echo esc_url( $terms_url ); ?>">شرایط استفاده</a><?php endif; ?>
+    <?php if ( $privacy_url ): ?><a href="<?php echo esc_url( $privacy_url ); ?>">حریم خصوصی</a><?php endif; ?></span></label>
   <button type="submit">ایجاد حساب</button>
 </form>
 <hr>

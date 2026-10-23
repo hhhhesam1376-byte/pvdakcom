@@ -6,6 +6,7 @@
 if(!defined('ABSPATH'))exit;
 get_header(); ?>
 <main id="main-content" class="container pvdak-static" tabindex="-1">
+<nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">خانه</a><span aria-hidden="true"> / </span><span aria-current="page"><?php echo esc_html( get_the_title() ); ?></span></nav>
 <?php while(have_posts()):the_post(); ?>
 <header class="pvdak-static-head"><span>پویش وکلای دادگستری کشور</span><h1><?php the_title(); ?></h1></header>
 <article <?php post_class('pvdak-static-body'); ?>>

@@ -20,6 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             <?php endif; ?>
         </div>
         <nav class="pvdak-footer-public" aria-label="اطلاعات سایت">
+          <?php $account_link = is_user_logged_in() ? pvdak_public_page_url( 'my-pvdak-account' ) : pvdak_public_page_url( 'account-login' );
+          if ( $account_link ): ?><a class="pvdak-footer-account-link" href="<?php echo esc_url( $account_link ); ?>"><?php echo is_user_logged_in() ? 'پنل من' : 'ورود به حساب'; ?></a><?php endif; ?>
           <strong>لینک‌های مهم</strong>
           <?php foreach(array('about-us'=>'درباره ما','contact-us'=>'تماس با ما','legal-faq'=>'پرسش‌های متداول','privacy-policy'=>'حریم خصوصی','terms-of-use'=>'شرایط استفاده') as $slug=>$label):
              $url=pvdak_public_page_url($slug); if(!$url)continue; ?>
