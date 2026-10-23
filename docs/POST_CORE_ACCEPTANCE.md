@@ -37,3 +37,9 @@ Maintain maintenance ON, registration/intakes OFF, quota gate OFF and payment di
 - Branded login `/account-login/`, account `/my-pvdak-account/` and `/wp-json/`: HTTP/2 404 despite published pages from WP-CLI. Do not mark as tested/healthy.
 - Compare plain query-string routes (WordPress) against pretty paths; inspect permalink structure and WordPress-managed rewrite block read-only before any fix. REST error expected from maintenance is a WordPress error (e.g. 503); 404 alone is not proof of REST gate execution.
 - No rewrite flush, cache purge, public intake enable, or direct edits to .htaccess yet.
+
+
+## Confirmed permalink blocker: 2026-10-23
+- `permalink_structure` is empty (Plain); missing WordPress rewrite directives; published account Pages use `?page_id=67` and `?page_id=68`.
+- Pretty /account-login/, /my-pvdak-account/ and /wp-json/ returned 404 under Plain permalinks. Query-string Pages 200; `/?rest_route=/` returned 503 under anonymous maintenance gate.
+- Fix requires safe, backed-up change to `/%postname%/` with generation and verification of .htaccess; no theme/Core update necessary. When maintenance is enabled, pretty URL 200 only confirms placeholder rendering, not actual login/dashboard workflow.
