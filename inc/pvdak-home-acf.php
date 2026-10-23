@@ -178,14 +178,28 @@ function pvdak_register_home_acf_fields() {
     $fields[] = array( 'key' => 'field_pvdak_tab_faq', 'label' => '۸. پرسش‌های متداول', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_title', 'name' => 'faq_title', 'label' => 'عنوان بخش پرسش‌های متداول', 'type' => 'text', 'default_value' => 'پیش از شروع، بیشتر بدانید' );
     $fields[] = array( 'key' => 'field_pvdak_home_faq_parent_page', 'name' => 'faq_parent_page', 'label' => 'برگه مادر پرسش‌های متداول', 'type' => 'post_object', 'post_type' => array( 'page' ), 'post_status' => array( 'publish' ), 'return_format' => 'id', 'ui' => 1, 'allow_null' => 1, 'instructions' => 'یک برگه مادر بسازید و هر پرسش را یک برگه فرزند آن قرار دهید؛ عنوان برگه سؤال و محتوای برگه پاسخ است.' );
-    $fields[] = array( 'key' => 'field_pvdak_tab_quick', 'label' => '۹. دسترسی‌های سریع', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_quick', 'label' => '۹. چهار دسترسی سریع زیر بنر', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array(
         'key' => 'field_pvdak_home_quick_menu_guide',
-        'label' => 'مدیریت از فهرست وردپرس',
+        'label' => 'انتخاب دقیق چهار برگه',
         'name' => '',
         'type' => 'message',
-        'message' => 'برای اضافه/حذف/مرتب‌سازی چهار دسترسی سریع زیر بنر، به نمایش ← فهرست‌ها بروید و فهرست دلخواه را به جایگاه «دسترسی‌های سریع صفحه اصلی» اختصاص دهید. تا زمانی که فهرست تنظیم نشده باشد، مقادیر قدیمی برای جلوگیری از خالی شدن صفحه نمایش داده می‌شوند.',
+        'message' => 'چهار برگه منتشرشده دلخواه را به ترتیب در کادرهای زیر انتخاب کنید. عنوان و لینک هر کارت خودکار از همان برگه می‌آید. موارد تکراری و منتشرنشده نمایش داده نمی‌شوند. تا پیش از اولین انتخاب، حداکثر چهار برگه اول فهرست «دسترسی‌های سریع صفحه اصلی» (در صورت وجود) به‌طور موقت نمایش داده می‌شود؛ دیگر هیچ‌وقت کل فهرست به این نوار وارد نمی‌شود.',
     );
+    for ( $quick_slot = 1; $quick_slot <= 4; $quick_slot++ ) {
+        $fields[] = array(
+            'key' => 'field_pvdak_home_quick_page_' . $quick_slot,
+            'label' => 'جایگاه ' . $quick_slot . ' — انتخاب برگه',
+            'name' => 'quick_page_' . $quick_slot,
+            'type' => 'post_object',
+            'post_type' => array( 'page' ),
+            'post_status' => array( 'publish' ),
+            'return_format' => 'id',
+            'ui' => 1,
+            'allow_null' => 1,
+            'instructions' => 'فقط برگه منتشرشده. برای چهار کارت، هر چهار جایگاه را پر کنید.',
+        );
+    }
     $fields[] = array( 'key' => 'field_pvdak_tab_notices', 'label' => '۹. اطلاعیه‌ها و تازه‌های پویش', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
     $fields[] = array( 'key' => 'field_pvdak_home_news_title', 'name' => 'news_title', 'label' => 'عنوان بخش تازه‌ها', 'type' => 'text', 'default_value' => 'تازه‌های پویش و اطلاعیه‌ها' );
     $fields[] = array( 'key' => 'field_pvdak_home_notice_heading', 'name' => 'notice_heading', 'label' => 'عنوان تابلوی اطلاعیه‌ها', 'type' => 'text', 'default_value' => 'تابلوی اطلاعیه‌های پویش' );
