@@ -774,3 +774,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added ticket reply privacy reminder, dynamic character limits, near-limit warning, accessible focus on submission result, responsive filter controls and 21 new static regression assertions.
 - Source-only modifications. PHP lint, read-only smoke suite, real WordPress two-account behavior and browser checks are pending. No changes to main, live site, Core, registrations, intakes, maintenance, cron, database or server.
 - Follow-up corrections: authorized focused ticket display across filters, user follow-up status audit, and same-request admin save idempotency. These are still source-only changes.
+
+
+## 2026-10-24 — PRIVATE-REQUEST-HISTORY-083 (feature branch only)
+- Rebuilt `pvdak_my_requests` into owner-scoped, private request history with status/type/search/order filters, safe 10-item pagination, Plain permalink GET routing, result counts, reset and out-of-range recovery.
+- Cards show only escaped title, reference ID, state, type, date and published topic title. No case descriptions, internal notes, or other owners' requests are rendered; no intake switch changed.
+- Added responsive RTL CSS and 30 source-only regression checks to existing read-only runner. PHP lint, actual WordPress/two-account, permalink, and mobile checks still **pending**.
+- Core plugin source modified on feature branch only; a future Core release requires separate controlled deployment and acceptance. Main/live, maintenance, registration, intake, data, server and cron unchanged.

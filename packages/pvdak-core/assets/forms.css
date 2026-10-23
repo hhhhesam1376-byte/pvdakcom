@@ -45,3 +45,29 @@
 .pvdak-core-topic-list{display:flex;flex-wrap:wrap;gap:9px;list-style:none;padding:0}
 .pvdak-core-topic-list li{border-radius:50px;background:#e5f3ed;color:#17655d;padding:6px 13px;font-size:13px}
 .pvdak-core-link{display:inline-flex;color:#087f72;font-weight:700}
+
+
+/* Private legal request history — isolated from the public magazine. */
+.pvdak-core-request-history{width:min(100%,1000px)}
+.pvdak-core-request-privacy{padding:10px 14px;border-inline-start:3px solid #0c8778;background:#f0f8f4;border-radius:8px}
+.pvdak-core-request-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0;align-items:end}
+.pvdak-core-request-filters label{display:grid;gap:6px;font-size:13px;font-weight:700;min-width:0}
+.pvdak-core-request-filters :is(input,select){width:100%;min-width:0;min-height:44px;border:1px solid #b6cec8;border-radius:10px;padding:9px 11px;font:inherit;background:#fff;color:#153e4b}
+.pvdak-core-request-filters :is(input,select,button,a):focus-visible,.pvdak-core-pagination a:focus-visible{outline:3px solid #138d7d;outline-offset:3px}
+.pvdak-core-request-filters button{min-height:44px;padding:10px 20px;border:0;border-radius:10px;background:#087f72;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.pvdak-core-request-filters button:hover{background:#06685e}
+.pvdak-core-request-reset{display:inline-flex;align-items:center;justify-content:center;min-height:44px;color:#17665f;font-size:13px}
+.pvdak-core-request-count{color:#516b72;font-size:13px}
+.pvdak-core-request-cards{margin:12px 0}
+.pvdak-core-request-cards .pvdak-core-request-card{display:block;min-width:0;padding:17px;border:1px solid #dcebe5}
+.pvdak-core-request-card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.pvdak-core-request-card-head strong{font-size:15px;overflow-wrap:anywhere}
+.pvdak-core-request-state{display:inline-flex;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:750;background:#e8f4ef;color:#116c60}
+.pvdak-core-request-state--closed{background:#f0f1f2;color:#53626a}
+.pvdak-core-request-state--review,.pvdak-core-request-state--matched{background:#fff4df;color:#87550d}
+.pvdak-core-request-state--answered{background:#e7f1fc;color:#275e90}
+.pvdak-core-request-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}
+.pvdak-core-request-card dl>div{display:flex;gap:8px;flex-wrap:wrap;min-width:0;font-size:12px}
+.pvdak-core-request-card dt{color:#617780}
+.pvdak-core-request-card dd{margin:0;color:#183f49;font-weight:700;overflow-wrap:anywhere}
+@media(max-width:650px){.pvdak-core-request-filters,.pvdak-core-request-card dl{grid-template-columns:1fr}.pvdak-core-request-filters button{width:100%}.pvdak-core-request-cards .pvdak-core-request-card{padding:13px}}

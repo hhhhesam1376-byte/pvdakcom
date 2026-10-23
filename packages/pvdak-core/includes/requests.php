@@ -124,56 +124,135 @@ function pvdak_core_handle_request() {
 }
 add_action( 'admin_post_pvdak_core_submit_request', 'pvdak_core_handle_request' );
 
+/**
+ * Private, owner-scoped request history. Never render case descriptions,
+ * attachments, internal notes or unpublished legal landing titles.
+ */
 function pvdak_core_my_requests() {
     if ( ! is_user_logged_in() ) {
         return '<p>برای دیدن درخواست‌های خود <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">وارد شوید</a>.</p>';
     }
     $user_id = get_current_user_id();
-    $page = isset( $_GET['pvdak_page'] ) && is_scalar( $_GET['pvdak_page'] ) ?
-        max( 1, min( 1000, absint( wp_unslash( $_GET['pvdak_page'] ) ) ) ) : 1;
-    $query = new WP_Query( array(
+    $types = pvdak_core_request_types();
+    $statuses = pvdak_core_request_statuses();
+
+    $raw_page = isset( $_GET['pvdak_page'] ) && is_scalar( $_GET['pvdak_page'] ) ? wp_unslash( $_GET['pvdak_page'] ) : 1;
+    $page = max( 1, min( 1000, absint( $raw_page ) ) );
+    $raw_type = isset( $_GET['request_type'] ) && is_string( $_GET['request_type'] ) ? sanitize_key( wp_unslash( $_GET['request_type'] ) ) : '';
+    $type_filter = isset( $types[$raw_type] ) ? $raw_type : '';
+    $raw_status = isset( $_GET['request_status'] ) && is_string( $_GET['request_status'] ) ? sanitize_key( wp_unslash( $_GET['request_status'] ) ) : '';
+    $status_filter = isset( $statuses[$raw_status] ) ? $raw_status : '';
+    $raw_order = isset( $_GET['request_order'] ) && is_string( $_GET['request_order'] ) ? sanitize_key( wp_unslash( $_GET['request_order'] ) ) : '';
+    $order = 'asc' === $raw_order ? 'ASC' : 'DESC';
+    $raw_search = isset( $_GET['request_search'] ) && is_string( $_GET['request_search'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['request_search'] ) ) ) : '';
+    $search_length = preg_match_all( '/./us', $raw_search );
+    $search = false !== $search_length && $search_length <= 80 ? $raw_search : '';
+
+    $args = array(
         'post_type' => 'pvdak_request',
         'post_status' => 'private',
         'author' => $user_id,
-        'posts_per_page' => 20,
+        'posts_per_page' => 10,
         'paged' => $page,
         'orderby' => 'date',
-        'order' => 'DESC',
+        'order' => $order,
+        'ignore_sticky_posts' => true,
         'no_found_rows' => false,
         'suppress_filters' => false,
-    ) );
+    );
+    $meta = array( 'relation' => 'AND' );
+    if ( $type_filter ) { $meta[] = array( 'key' => '_pvdak_request_type', 'value' => $type_filter, 'compare' => '=' ); }
+    if ( $status_filter ) { $meta[] = array( 'key' => '_pvdak_request_state', 'value' => $status_filter, 'compare' => '=' ); }
+    if ( count( $meta ) > 1 ) { $args['meta_query'] = $meta; }
+    if ( '' !== $search ) { $args['s'] = $search; }
+    $query = new WP_Query( $args );
     $items = array();
     foreach ( $query->posts as $item ) {
-        if ( 'pvdak_request' === $item->post_type && (int) $item->post_author === $user_id ) {
+        // Defense in depth against third-party query filters or stale records.
+        if ( 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
+            (int) $item->post_author === $user_id ) {
             $items[] = $item;
         }
     }
+    $total = max( 0, (int) $query->found_posts );
+    $pages = max( 1, (int) $query->max_num_pages );
+    $base = get_permalink();
+    $filters = array();
+    if ( $type_filter ) { $filters['request_type'] = $type_filter; }
+    if ( $status_filter ) { $filters['request_status'] = $status_filter; }
+    if ( 'ASC' === $order ) { $filters['request_order'] = 'asc'; }
+    if ( '' !== $search ) { $filters['request_search'] = $search; }
+    $filtered_url = add_query_arg( $filters, $base );
+
+    $html = '<section id="pvdak-requests" class="pvdak-core-panel pvdak-core-request-history" aria-labelledby="pvdak-requests-heading">';
+    $html .= '<h2 id="pvdak-requests-heading">درخواست‌های من</h2>';
+    $html .= '<p class="pvdak-core-request-privacy">فقط درخواست‌های متعلق به حساب شما نمایش داده می‌شود. شرح محرمانه، یادداشت داخلی و اطلاعات اشخاص دیگر در این فهرست نمایش داده نمی‌شود.</p>';
+    $html .= '<form method="get" action="' . esc_url( $base ) . '" class="pvdak-core-request-filters" role="search" aria-label="فیلتر درخواست‌های شخصی">';
+    // Browsers discard query parameters from the action URL of a GET form.
+    // Preserve WordPress Plain permalink routing without altering site settings.
+    if ( ! get_option( 'permalink_structure' ) && is_page() ) {
+        $html .= '<input type="hidden" name="page_id" value="' . esc_attr( get_queried_object_id() ) . '">';
+    }
+    $html .= '<label for="pvdak-request-search">جستجو در درخواست‌ها<input id="pvdak-request-search" type="search" name="request_search" value="' . esc_attr( $search ) . '" maxlength="80" placeholder="عنوان یا متن درخواست"></label>';
+    $html .= '<label for="pvdak-request-type">نوع درخواست<select id="pvdak-request-type" name="request_type"><option value="">همه انواع</option>';
+    foreach ( $types as $key => $label ) {
+        $html .= '<option value="' . esc_attr( $key ) . '" ' . selected( $type_filter, $key, false ) . '>' . esc_html( $label ) . '</option>';
+    }
+    $html .= '</select></label><label for="pvdak-request-status">وضعیت<select id="pvdak-request-status" name="request_status"><option value="">همه وضعیت‌ها</option>';
+    foreach ( $statuses as $key => $label ) {
+        $html .= '<option value="' . esc_attr( $key ) . '" ' . selected( $status_filter, $key, false ) . '>' . esc_html( $label ) . '</option>';
+    }
+    $html .= '</select></label><label for="pvdak-request-order">ترتیب<select id="pvdak-request-order" name="request_order">';
+    $html .= '<option value="desc" ' . selected( $order, 'DESC', false ) . '>جدیدترین</option>';
+    $html .= '<option value="asc" ' . selected( $order, 'ASC', false ) . '>قدیمی‌ترین</option></select></label>';
+    $html .= '<button type="submit">اعمال فیلتر</button>';
+    if ( $filters ) { $html .= '<a class="pvdak-core-request-reset" href="' . esc_url( $base . '#pvdak-requests' ) . '">پاک‌کردن فیلترها</a>'; }
+    $html .= '</form>';
+
+    $html .= '<p class="pvdak-core-request-count" role="status">' . esc_html( number_format_i18n( count( $items ) ) ) .
+        ' درخواست در این صفحه از ' . esc_html( number_format_i18n( $total ) ) . ' نتیجه</p>';
     if ( ! $items ) {
-        return '<div class="pvdak-core-panel"><h2>درخواست‌های من</h2><p>در این صفحه درخواستی یافت نشد.</p></div>';
+        $html .= '<p class="pvdak-core-empty">' .
+            ( $page > $pages && $total > 0 ? 'شماره صفحه خارج از محدوده نتایج است.' :
+                ( $filters ? 'درخواستی با این فیلترها پیدا نشد.' : 'هنوز درخواستی ثبت نشده است.' ) ) . '</p>';
+        if ( $page > $pages && $total > 0 ) {
+            $html .= '<p><a class="pvdak-core-link" href="' .
+                esc_url( add_query_arg( 'pvdak_page', $pages, $filtered_url ) . '#pvdak-requests' ) .
+                '">رفتن به آخرین صفحه موجود</a></p>';
+        }
+    } else {
+        $html .= '<ul class="pvdak-core-requests pvdak-core-request-cards">';
+        foreach ( $items as $item ) {
+            $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
+            $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
+            $state_key = isset( $statuses[$state] ) ? $state : 'submitted';
+            $topic_id = absint( get_post_meta( $item->ID, '_pvdak_legal_landing_id', true ) );
+            $topic = $topic_id && 'page' === get_post_type( $topic_id ) && 'publish' === get_post_status( $topic_id ) ?
+                get_the_title( $topic_id ) : '';
+            $html .= '<li class="pvdak-core-request-card"><div class="pvdak-core-request-card-head"><strong>' .
+                esc_html( get_the_title( $item->ID ) ) . '</strong><span class="pvdak-core-request-state pvdak-core-request-state--' .
+                esc_attr( $state_key ) . '">' . esc_html( isset( $statuses[$state] ) ? $statuses[$state] : 'ثبت‌شده' ) . '</span></div>';
+            $html .= '<dl><div><dt>شماره پیگیری</dt><dd>' . esc_html( number_format_i18n( $item->ID ) ) . '</dd></div>';
+            $html .= '<div><dt>نوع درخواست</dt><dd>' . esc_html( isset( $types[$type] ) ? $types[$type] : 'درخواست حقوقی' ) . '</dd></div>';
+            $html .= '<div><dt>تاریخ ثبت</dt><dd><time datetime="' . esc_attr( get_the_date( 'Y-m-d', $item->ID ) ) .
+                '">' . esc_html( get_the_date( 'j F Y', $item->ID ) ) . '</time></dd></div>';
+            if ( '' !== $topic ) { $html .= '<div><dt>موضوع حقوقی</dt><dd>' . esc_html( $topic ) . '</dd></div>'; }
+            $html .= '</dl></li>';
+        }
+        $html .= '</ul>';
     }
-    $types = pvdak_core_request_types();
-    $statuses = pvdak_core_request_statuses();
-    $html = '<div class="pvdak-core-panel"><h2>درخواست‌های من</h2><ul class="pvdak-core-requests">';
-    foreach ( $items as $item ) {
-        $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
-        $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
-        $html .= '<li><strong>' . esc_html( get_the_title( $item->ID ) ) . '</strong><span>' .
-            esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'درخواست حقوقی' ) . ' · ' .
-            esc_html( isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'ثبت‌شده' ) . '</span></li>';
-    }
-    $html .= '</ul>';
-    if ( (int) $query->max_num_pages > 1 ) {
-        $base = remove_query_arg( 'pvdak_page' );
+    if ( $pages > 1 && $page <= $pages ) {
         $links = paginate_links( array(
-            'base' => add_query_arg( 'pvdak_page', '%#%', $base ),
+            'base' => add_query_arg( 'pvdak_page', '%#%', $filtered_url ),
             'current' => $page,
-            'total' => (int) $query->max_num_pages,
-            'prev_text' => 'قبلی',
-            'next_text' => 'بعدی',
+            'total' => $pages,
+            'prev_text' => 'صفحه قبل',
+            'next_text' => 'صفحه بعد',
+            'add_fragment' => '#pvdak-requests',
         ) );
         if ( $links ) { $html .= '<nav class="pvdak-core-pagination" aria-label="صفحه‌های درخواست‌های من">' . $links . '</nav>'; }
     }
-    return $html . '</div>';
+    return $html . '</section>';
 }
 add_shortcode( 'pvdak_my_requests', 'pvdak_core_my_requests' );
 
