@@ -112,7 +112,9 @@ pvdak_layout_expect( false !== strpos( $functions, "array( 'pvdak-swiper' )" ) &
     false === strpos( $js, 'unpkg.com' ) &&
     false === strpos( $js, 'cdn.jsdelivr.net' ),
     'Initializer is ordered after local Swiper and no browser CDN dependency remains' );
-$installer_path = $root . '/scripts/pvdak-install-swiper-local.sh';
+$private_scripts = getenv( 'PVDAK_PRIVATE_SCRIPTS' );
+$installer_path = ( $private_scripts ? rtrim( $private_scripts, '/' ) : $root . '/scripts' ) .
+    '/pvdak-install-swiper-local.sh';
 pvdak_layout_expect( is_file( $installer_path ) &&
     false !== strpos( file_get_contents( $installer_path ), 'swiper-14.3.0' ) &&
     false !== strpos( file_get_contents( $installer_path ), 'SHA256SUMS' ),
