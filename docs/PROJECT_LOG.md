@@ -682,3 +682,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added 10 source-only regression checks for login, email, client/professional dashboards, private support, staff controls, locked matching, subscription audit, provisional Pages and readiness report.
 - Updated previous feature/public-page/mock test version expectations to Theme 0.8.28 and Core source 0.8.2; guarded non-string user type metadata on the administrative Users table.
 - Linked new test to existing private batch preflight. This is NOT PHP lint, browser or WordPress integration testing and main is unchanged.
+
+
+## 2026-10-23 — CORE-UPGRADE-ACCEPTANCE-068 (draft)
+- User supplied proof of active Core 0.8.2 with rollback backup core-upgrade-hk6xg2a1. Theme 0.8.28 was verified deployed at release SHA 63e836be.
+- Prepared read-only WordPress post-upgrade audit for versions, safety gates, private content types, role capabilities, account functions, assignment lock and nine Pages. No real case/user content printed.
+- Prepared static test and E2E checklist. Neither WP-CLI audit nor real mail, multi-account or DB concurrency tests were executed by ChatGPT. Draft changes not on main.
