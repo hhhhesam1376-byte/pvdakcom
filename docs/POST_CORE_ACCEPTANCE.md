@@ -21,3 +21,12 @@ Separately test, with synthetic accounts only:
 8. Mobile, accessibility, HTTP/cache headers and server logs.
 
 Maintain maintenance ON, registration/intakes OFF, quota gate OFF and payment disabled. No new workflow, secrets or Cron.
+
+
+## Operator updates 2026-10-23
+
+- Live preflight passed: 37 checks, 0 failures, 0 warnings.
+- The two-account synthetic privacy smoke passed independently: `PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=23 expected=23` followed by `PRIVACY_TEST_COMPLETED`.
+- The main source runner was blocked first by two outdated test expectations and then ended without the consolidated success sentinel; each subsequent individual component was inspected/tested separately. Avoid implying the entire unmodified runner succeeded.
+- Before opening site: review Privacy Policy page 3 text; keep maintenance/registration/intakes/quota restrictions.
+- Next safe host action: anonymous HTTP headers for home and account URL, plus REST anonymous result. Do not log session cookies, user names, private ticket content or legal case metadata.

@@ -734,3 +734,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Source analysis found the synthetic privacy test had not registered `esc_attr()` or `get_the_date()` WordPress stand-ins even though Core 0.8.28-era dashboards now render request dates. This can cause PHP fatal at the final mocked two-account stage. The exact exit/fatal stderr is not yet supplied.
 - Added deterministic no-data fixtures for both function calls, one mock date assertion, and corrected the synthetic assertion-count expectation (24 including final count guard). Core permission logic is not loosened.
 - Draft change only; no production site, plugins, cases or database modified. Isolated test on host remains required; don't claim passing until `PVDAK_BATCH_PREFLIGHT_OK` prints.
+
+
+## 2026-10-23 — SYNTHETIC-PRIVACY-PASS-076 (host output; draft log only)
+- Operator completed isolated two-account synthetic privacy regression on an ephemeral copy of deployed main with deterministic WordPress stubs for `esc_attr` and `get_the_date`: `PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=23 expected=23` and `PRIVACY_TEST_COMPLETED`. Test exited successfully.
+- Earlier individual suites also reported 12 initial static, 15 mock email/token, 10 next-phase, 13 navigation, 41 homepage, 27 editor bootstrap, 40 Core policy checks. The first two stale source assertions (0.8.12 CSS and stage icon fill) were patched only inside the ephemeral test copy.
+- The consolidated test runner has **not** printed `PVDAK_BATCH_PREFLIGHT_OK`; only individual components have proved passing. Do not describe this as a real two-account browser/privacy acceptance.
+- Previously verified live WordPress preflight remained 37 checks, 0 fails, 0 warnings (theme 0.8.28, Core 0.8.2); public maintenance remains enabled; registrations, both intakes and subscription enforcement remain OFF.
+- Next: anonymous HTTP routing/cache/REST check from host, then controlled E2E with two synthetic logins and ticket ownership on a separate staging WP install. Keep all real client/legal data private. No new workflows, secrets or deployments.
