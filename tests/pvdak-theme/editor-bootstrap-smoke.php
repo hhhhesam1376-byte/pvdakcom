@@ -15,7 +15,11 @@ $GLOBALS['next_term_id'] = 200;
 $GLOBALS['post_changes'] = 0;
 $GLOBALS['field_changes'] = 0;
 $GLOBALS['sample_meta'] = array();
+$GLOBALS['queried_page'] = null;
 
+class WP_Post {}
+function is_singular( $type = '' ) { return 'page' === $type; }
+function get_queried_object() { return $GLOBALS['queried_page']; }
 function add_action() {}
 function add_filter() {}
 function get_post_status( $id ) {
@@ -48,7 +52,11 @@ function get_post_field( $field, $id ) {
 function wp_insert_post( $args, $return_error = false ) {
     $id = ++$GLOBALS['next_page_id'];
     $GLOBALS['post_changes']++;
-    $GLOBALS['pages'][ $id ] = (object) array_merge( $args, array( 'ID' => $id ) );
+    $post = new WP_Post();
+    foreach ( array_merge( $args, array( 'ID' => $id ) ) as $key => $value ) {
+        $post->$key = $value;
+    }
+    $GLOBALS['pages'][ $id ] = $post;
     return $id;
 }
 function get_term_by( $field, $slug, $taxonomy ) {
@@ -135,6 +143,14 @@ foreach ( $samples as $slug => $title ) {
 pvdak_editor_expect( $published, 'Every sample belongs to root and has published Page status' );
 pvdak_editor_expect( $unwritten, 'No fabricated substantive legal advice is published' );
 pvdak_editor_expect( $tagged, 'Every new empty sample is marked for search-engine noindex' );
+$GLOBALS['queried_page'] = get_page_by_path( 'legal-topics/tax-law', OBJECT, 'page' );
+$robots_empty = pvdak_editor_sample_landing_robots( array() );
+pvdak_editor_expect( isset( $robots_empty['noindex'] ) && $robots_empty['noindex'] === true,
+    'An empty published sample landing is noindex' );
+$GLOBALS['queried_page']->post_content = 'Reviewed editorial article';
+$robots_edited = pvdak_editor_sample_landing_robots( array() );
+pvdak_editor_expect( ! isset( $robots_edited['noindex'] ),
+    'Adding substantive content removes sample-specific noindex without altering metadata' );
 $before_repeat = $GLOBALS['post_changes'];
 $repeat = pvdak_editor_seed_example_legal_topics( $parent );
 pvdak_editor_expect( 0 === $repeat['created'] && 17 === $repeat['existing'] &&
