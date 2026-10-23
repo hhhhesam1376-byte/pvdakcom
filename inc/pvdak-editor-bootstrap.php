@@ -225,11 +225,22 @@ function pvdak_editor_publish_sample_topics() {
         wp_die( 'اجازه مدیریت برگه‌های نمونه را ندارید.', '', array( 'response' => 403 ) );
     }
     check_admin_referer( 'pvdak_editor_publish_sample_topics' );
+    // Samples are published as empty navigation Pages. Require the public
+    // maintenance gate and closed forms before enabling these seed pages.
+    if ( ! function_exists( 'pvdak_maintenance_enabled' ) || ! pvdak_maintenance_enabled() ||
+         ( function_exists( 'pvdak_core_intake_open' ) && pvdak_core_intake_open() ) ||
+         ( function_exists( 'pvdak_core_member_intake_open' ) && pvdak_core_member_intake_open() ) ) {
+        wp_die( 'برای ساخت نمونه‌ها ابتدا صفحه تعمیرات را روشن و پذیرش اطلاعات را غیرفعال نگه دارید.', '', array( 'response' => 403 ) );
+    }
 
-    $parent = pvdak_editor_find_or_create_page(
-        'legal-topics', 'موضوعات حقوقی', 'publish', 0,
-        'page-templates/legal-topics-index.php'
-    );
+    // Reuse an editorially selected and published legal topic parent first.
+    $parent = function_exists( 'pvdak_legal_topics_root_id' ) ? pvdak_legal_topics_root_id() : 0;
+    if ( ! $parent ) {
+        $parent = pvdak_editor_find_or_create_page(
+            'legal-topics', 'موضوعات حقوقی', 'publish', 0,
+            'page-templates/legal-topics-index.php'
+        );
+    }
     $result = pvdak_editor_seed_example_legal_topics( $parent );
     $home_id = function_exists( 'pvdak_home_page_id' ) ? pvdak_home_page_id() : 0;
     if ( $home_id && $parent && 'publish' === get_post_status( $parent ) ) {
