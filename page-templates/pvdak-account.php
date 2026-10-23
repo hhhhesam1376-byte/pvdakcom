@@ -17,5 +17,9 @@ get_header(); ?>
 <div class="pvdak-static-body"><?php if(shortcode_exists('pvdak_account_dashboard')): ?>
 <?php echo do_shortcode('[pvdak_account_dashboard]'); ?>
 <?php else: ?><p>حساب شما فعال است؛ خدمات تخصصی پنل در حال تکمیل هستند.</p><?php endif; ?></div>
+<?php if(shortcode_exists('pvdak_professional_dashboard') && function_exists('pvdak_core_existing_application') && pvdak_core_existing_application(get_current_user_id())): ?>
+  <div class="pvdak-account-more"><?php echo do_shortcode('[pvdak_professional_dashboard]'); ?></div>
+<?php endif; ?>
+<div class="pvdak-account-more"><?php echo do_shortcode('[pvdak_support_tickets]'); ?></div>
 <p><a href="<?php echo esc_url(wp_logout_url(pvdak_auth_login_url())); ?>">خروج از حساب</a></p>
 </main><?php get_footer(); ?>

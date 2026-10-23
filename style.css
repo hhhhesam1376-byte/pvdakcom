@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.25
+Version: 0.8.26
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1391,3 +1391,13 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
 .pvdak-account-shortcuts a:hover{background:#d5eae4}
 .pvdak-recovery-panel{max-width:580px;margin:26px auto 60px}
 .pvdak-recovery-panel h1{font-size:25px;line-height:1.5;color:#193c4b}
+
+/* Private ticket summaries and gated signup */
+.pvdak-account-more{max-width:880px;margin:22px auto;padding:25px;background:#fff;border:1px solid #dce9e5;border-radius:19px}
+.pvdak-account-more h2{color:#153b4b;font-size:21px}
+.pvdak-account-more h3{font-size:17px;color:#153b4b}
+.pvdak-ticket-list{display:grid;gap:12px;margin:17px 0 0;padding:0;list-style:none}
+.pvdak-ticket-list>li{border:1px solid #dceae6;background:#f4faf8;border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:7px}
+.pvdak-ticket-list strong{font-size:14px}.pvdak-ticket-list small{font-size:12px;color:#638781}
+.pvdak-ticket-list p{font-size:13px;line-height:2;margin:0}
+.pvdak-forms select{width:100%;border:1px solid #cddfda;border-radius:11px;background:#fbfdfc;padding:12px;font:inherit;color:#163a4a}
