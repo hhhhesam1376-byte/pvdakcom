@@ -31,6 +31,11 @@ pvdak_public_smoke_require( false !== strpos( $code['auth'], 'wp_signon(' ) &&
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
 }
+pvdak_public_smoke_require(
+ false === strpos( $code['pages'], "|| '0.8.26' === get_option('_pvdak_public_pages_bootstrap')" ) &&
+ false !== strpos( $code['pages'], "update_option('_pvdak_public_pages_bootstrap','0.8.29'" ) &&
+ false !== strpos( $code['pages'], "'publish' !== $existing->post_status" ),
+ 'Page bootstrap must recover missing slugs even after legacy completion marker without overwriting existing Pages' );
 pvdak_public_smoke_require( false !== strpos( $code['pages'], "add_action('admin_init'" ) &&
  false !== strpos( $code['pages'], 'get_page_by_path(' ) &&
  false !== strpos( $code['pages'], "current_user_can('manage_options')" ) &&

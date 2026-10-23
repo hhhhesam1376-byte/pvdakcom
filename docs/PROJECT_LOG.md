@@ -701,3 +701,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added eight synthetic assertions demonstrating that a stale 0.8.26 completion marker no longer blocks creation of the seven missing Pages.
 - Demonstrates that draft and trashed Pages are preserved, the new 0.8.29 marker is written only when complete, and a later missing Page is reconciled even with a current marker.
 - Wired the regression into the pre-existing read-only source test script. No production Page content was created, modified or deleted by ChatGPT.
+
+
+## 2026-10-23 — POST-CORE-PREFLIGHT-071 (37 / 0 / 7)
+- Host operator executed original WP-CLI preflight: 37 checks, 0 fails, 7 Page publication warnings; 0.8.28 theme, 0.8.2 Core loaded, registration/member intake/case intake/quota OFF; admin case permissions and advisory lock present.
+- Draft v0.8.29 Page reconciliation fix/source smoke added without touching live `main`. Latest pending-approval table now distinguishes confirmed host results from missing browser/email/privacy/concurrency tests.
+- Next action on current live release is a real authorized admin dashboard visit for the existing admin_init seeder, then rerun read-only page state check. If the option marker prematurely blocks seeding, draft fix should be reviewed and released separately. No user Pages have been modified by the assistant.
