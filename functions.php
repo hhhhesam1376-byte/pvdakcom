@@ -44,11 +44,28 @@ require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
-        // Homepage CSS is bundled into root style.css to survive partial theme deploys.
+        // Use the ACTUAL Swiper.js bundle (not a simulated scroll carousel).
+        // Pin a patched release for repeatable behavior and security.
+        // CDN backup on failure is handled in pvdak-home.js; no new plugin,
+        // cron or third-party PHP bootstrap is needed.
+        $swiper_version = '14.3.0';
+        wp_enqueue_style(
+            'pvdak-swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@' . $swiper_version . '/swiper-bundle.min.css',
+            array( 'pvdak-rtl' ),
+            $swiper_version
+        );
+        wp_enqueue_script(
+            'pvdak-swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@' . $swiper_version . '/swiper-bundle.min.js',
+            array(),
+            $swiper_version,
+            true
+        );
         wp_enqueue_script(
             'pvdak-home-search',
             get_template_directory_uri() . '/assets/js/pvdak-home.js',
-            array(),
+            array( 'pvdak-swiper' ),
             wp_get_theme()->get( 'Version' ),
             true
         );
