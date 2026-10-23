@@ -22,8 +22,8 @@ if ( ! $related ) { return; }
 ?>
 <section class="pvdak-related-articles" aria-labelledby="pvdak-related-title">
     <div class="pvdak-related-heading">
-        <div><span class="pvdak-article-eyebrow">ادامه مطالعه</span><h2 id="pvdak-related-title">مقالات مرتبط</h2></div>
-        <span>مطالب بیشتری از همین دسته‌بندی</span>
+        <div><h2 id="pvdak-related-title">مقالات مرتبط</h2></div>
+        <span>مقاله‌های دیگر از همین موضوع</span>
     </div>
     <div class="pvdak-related-grid">
         <?php foreach ( $related as $item ): ?>

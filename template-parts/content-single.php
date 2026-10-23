@@ -17,7 +17,7 @@ $article_minutes = max( 1, (int) ceil( ( is_array( $article_words ) ? count( $ar
             <?php endif; ?>
             <span aria-current="page"><?php echo esc_html( get_the_title() ); ?></span>
         </nav>
-        <span class="pvdak-article-eyebrow">از مجله حقوقی</span>
+        <span class="pvdak-article-eyebrow">مجله حقوقی</span>
         <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
         <?php if ( has_excerpt() ): ?>
             <div class="pvdak-article-deck"><?php the_excerpt(); ?></div>
@@ -29,6 +29,10 @@ $article_minutes = max( 1, (int) ceil( ( is_array( $article_words ) ? count( $ar
             <?php if ( $article_category ): ?>
                 <span class="pvdak-article-dot" aria-hidden="true"></span>
                 <a href="<?php echo esc_url( get_category_link( $article_category->term_id ) ); ?>"><?php echo esc_html( $article_category->name ); ?></a>
+            <?php endif; ?>
+            <?php if ( comments_open() ): ?>
+                <span class="pvdak-article-dot" aria-hidden="true"></span>
+                <a class="pvdak-article-comments-link" href="#respond">ثبت دیدگاه</a>
             <?php endif; ?>
         </div>
     </header>
