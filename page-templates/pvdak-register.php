@@ -13,7 +13,11 @@ $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash(
 <?php if(!pvdak_registration_open()): ?>
   <div class="pvdak-static-note" role="status">ثبت‌نام در حال حاضر غیرفعال است. تا اعلام راه‌اندازی رسمی، هیچ حساب جدیدی از این فرم ساخته نمی‌شود.</div>
 <?php else: ?>
-<?php if('received'===$state):?><p class="pvdak-static-note" role="status">درخواست ثبت‌نام دریافت شد. نوع همکاری انتخابی شما هنوز بررسی یا تأیید نشده است.</p><?php elseif($state):?><p class="pvdak-static-error" role="alert">اطلاعات را بررسی کنید؛ ممکن است نام کاربری/ایمیل تکراری باشد یا محدودیت ارسال فعال باشد.</p><?php endif; ?>
+<?php if('received'===$state):?><p class="pvdak-static-note" role="status">حساب ایجاد شد. برای ورود باید ایمیل حساب را از طریق پیوند ارسال‌شده تأیید کنید؛ نوع همکاری اعلامی هنوز تأیید نشده است.</p>
+<?php elseif('verified'===$state):?><p class="pvdak-static-note" role="status">ایمیل تأیید شد. اکنون می‌توانید وارد حساب شوید.</p>
+<?php elseif('resent'===$state):?><p class="pvdak-static-note" role="status">اگر ایمیل متعلق به حساب تأییدنشده باشد، پیوند تازه ارسال خواهد شد.</p>
+<?php elseif('invalid_token'===$state):?><p class="pvdak-static-error" role="alert">پیوند تأیید معتبر نیست یا منقضی شده است. پیوند تازه درخواست کنید.</p>
+<?php elseif($state):?><p class="pvdak-static-error" role="alert">اطلاعات ثبت‌نام را بررسی کنید یا بعداً دوباره تلاش کنید.</p><?php endif; ?>
 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pvdak-forms">
   <input type="hidden" name="action" value="pvdak_register"><?php wp_nonce_field('pvdak_register','_pvdak_register_nonce'); ?>
   <div class="pvdak-honeypot" aria-hidden="true"><input name="register_site" tabindex="-1" autocomplete="off"></div>
@@ -27,6 +31,15 @@ $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash(
   <p class="pvdak-static-note">انتخاب عنوان وکیل یا کارآموز صرفاً اظهار علاقه است؛ تأیید رسمی و دسترسی پرونده‌ها بعداً توسط مدیر بررسی می‌شود.</p>
   <label class="pvdak-check"><input type="checkbox" name="register_consent" required><span>قوانین و حریم خصوصی اولیه را خوانده‌ام و با ساخت حساب موافقم.</span></label>
   <button type="submit">ایجاد حساب</button>
-</form><?php endif; ?>
+</form>
+<hr>
+<h2>دریافت دوباره پیوند تأیید ایمیل</h2>
+<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pvdak-forms">
+<input type="hidden" name="action" value="pvdak_verify_resend"><?php wp_nonce_field('pvdak_verify_resend','_pvdak_verify_nonce'); ?>
+<label for="pvdak-resend-email">ایمیل ثبت‌نام</label>
+<input id="pvdak-resend-email" name="verify_email" type="email" autocomplete="email" required>
+<button type="submit">ارسال مجدد پیوند تأیید</button>
+</form>
+<?php endif; ?>
 <p><a href="<?php echo esc_url(pvdak_auth_login_url()); ?>">قبلاً حساب داشته‌ام</a></p>
 </div></main><?php get_footer(); ?>

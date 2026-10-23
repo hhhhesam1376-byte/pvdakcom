@@ -44,6 +44,7 @@ require_once get_template_directory() . '/inc/pvdak-public-pages.php';
 require_once get_template_directory() . '/inc/pvdak-auth.php';
 require_once get_template_directory() . '/inc/pvdak-account-tools.php';
 require_once get_template_directory() . '/inc/pvdak-registration.php';
+require_once get_template_directory() . '/inc/pvdak-email-verification.php';
 require_once get_template_directory() . '/inc/pvdak-support-tickets.php';
 require_once get_template_directory() . '/inc/pvdak-home-collections.php';
 require_once get_template_directory() . '/inc/pvdak-home-readiness.php';

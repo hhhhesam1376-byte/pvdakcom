@@ -638,3 +638,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 ## 2026-10-23 — RELEASE-INSTRUCTION-060 (Theme 0.8.26)
 - User directed work to proceed ('برو توکارش') after the proposed controlled review/release. Prepare fast-forward on existing main only, with established 15-minute cPanel theme cron. No new workflow, keys, credentials, or new branch.
 - Explicit release scope: theme + bundled Core source, NOT installed Core plugin. Core 0.8.1 active upgrade remains pending; intake/registration/payment gates remain OFF and maintenance ON. Runtime PHP, browser, mail and user-role acceptance tests remain unverified until cPanel release is confirmed.
+
+
+## 2026-10-23 — NEXT-BATCH-061 (v0.8.27 draft, email verification)
+- Added hashed, one-time 24-hour email verification tokens and generic throttled resend on the opt-in registration page. New accounts are marked pending and prevented from authenticating via wp_authenticate_user until verification. Verification state does NOT imply lawyer/professional credentials. No existing users are flagged. The registration feature remains CLOSED by default and while maintenance is on.
+- Added registration UI messages and no plaintext token storage; requires working outgoing WordPress mail and future runtime acceptance before opening registration. Change is a standalone draft commit; no main or live deployment.

@@ -44,6 +44,7 @@ function pvdak_register_submit() {
     }
     update_user_meta($user,'_pvdak_self_reported_category',$claim);
     update_user_meta($user,'_pvdak_email_verification_pending','1');
+    pvdak_email_verification_issue($user);
     wp_safe_redirect(add_query_arg('state','received',$url));exit;
 }
 add_action('admin_post_nopriv_pvdak_register','pvdak_register_submit');
