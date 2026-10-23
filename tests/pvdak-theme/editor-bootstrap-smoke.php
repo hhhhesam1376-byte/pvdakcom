@@ -14,8 +14,20 @@ $GLOBALS['next_page_id'] = 100;
 $GLOBALS['next_term_id'] = 200;
 $GLOBALS['post_changes'] = 0;
 $GLOBALS['field_changes'] = 0;
+$GLOBALS['sample_meta'] = array();
 
 function add_action() {}
+function add_filter() {}
+function get_post_status( $id ) {
+    return isset( $GLOBALS['pages'][ $id ] ) ? $GLOBALS['pages'][ $id ]->post_status : false;
+}
+function update_post_meta( $id, $key, $value ) {
+    if ( ! isset( $GLOBALS['sample_meta'][ $id ] ) ) { $GLOBALS['sample_meta'][ $id ] = array(); }
+    $GLOBALS['sample_meta'][ $id ][ $key ] = $value;
+}
+function get_post_meta( $id, $key, $single = true ) {
+    return isset( $GLOBALS['sample_meta'][ $id ][ $key ] ) ? $GLOBALS['sample_meta'][ $id ][ $key ] : '';
+}
 function absint( $v ) { return abs( (int) $v ); }
 function current_user_can() { return true; }
 function get_current_user_id() { return 1; }
@@ -89,5 +101,55 @@ pvdak_editor_expect( pvdak_editor_prefill_acf( 9, 'legal_topics_parent_page', $p
 pvdak_editor_expect( ! pvdak_editor_prefill_acf( 9, 'legal_topics_parent_page', $child ), 'Existing ACF selection never overwritten' );
 pvdak_editor_expect( 1 === $GLOBALS['field_changes'], 'ACF edits are non-destructive' );
 pvdak_editor_expect( ! pvdak_editor_prefill_acf( 0, 'faq_parent_page', 5 ), 'No homepage ID means no ACF writes' );
+
+// New 17-title landing sample fixture: separate titles, stable slugs,
+// published without legal text, and never modify existing editorial records.
+$samples = pvdak_editor_example_legal_topics();
+pvdak_editor_expect( 17 === count( $samples ), 'Exactly 17 requested legal sample landing titles' );
+pvdak_editor_expect( 17 === count( array_unique( array_values( $samples ) ) ), 'All 17 original labels remain distinct' );
+pvdak_editor_expect( 17 === count( array_unique( array_keys( $samples ) ) ), 'All 17 sample slugs are unique' );
+$requested = array(
+    'حقوقی', 'کیفری', 'خانواده', 'ثبتی', 'ملکی', 'حقوق اطفال و نوجوانان',
+    'حقوق اراضی', 'حقوق مالیات', 'حقوق بشر', 'حقوق شرکت ها',
+    'حقوق مالکیت معنوی', 'حقوق ثبت', 'حقوق خانواده', 'حقوق کیفری',
+    'حقوق بیمه', 'حقوق ورزشی', 'حقوق کار',
+);
+pvdak_editor_expect( $requested === array_values( $samples ), 'Requested topic titles and their order are preserved' );
+$seed = pvdak_editor_seed_example_legal_topics( $parent );
+pvdak_editor_expect( 17 === $seed['created'] && 0 === $seed['existing'] && 0 === $seed['failed'],
+    'All missing sample landing Pages are generated' );
+$published = true;
+$unwritten = true;
+$tagged = true;
+foreach ( $samples as $slug => $title ) {
+    $item = get_page_by_path( 'legal-topics/' . $slug, OBJECT, 'page' );
+    if ( ! $item || $item->post_title !== $title || 'publish' !== $item->post_status ||
+         (int) $item->post_parent !== $parent ) {
+        $published = false;
+    }
+    if ( ! $item || '' !== $item->post_content ) { $unwritten = false; }
+    if ( ! $item || '1' !== get_post_meta( $item->ID, '_pvdak_sample_landing', true ) ) {
+        $tagged = false;
+    }
+}
+pvdak_editor_expect( $published, 'Every sample belongs to root and has published Page status' );
+pvdak_editor_expect( $unwritten, 'No fabricated substantive legal advice is published' );
+pvdak_editor_expect( $tagged, 'Every new empty sample is marked for search-engine noindex' );
+$before_repeat = $GLOBALS['post_changes'];
+$repeat = pvdak_editor_seed_example_legal_topics( $parent );
+pvdak_editor_expect( 0 === $repeat['created'] && 17 === $repeat['existing'] &&
+    $before_repeat === $GLOBALS['post_changes'], 'Repeated sample action is idempotent' );
+$draft_sample = get_page_by_path( 'legal-topics/company-law', OBJECT, 'page' );
+$draft_sample->post_status = 'draft';
+$draft_sample->post_content = 'Existing editorial content';
+$protected = pvdak_editor_seed_example_legal_topics( $parent );
+pvdak_editor_expect( 17 === $protected['existing'] && 0 === $protected['created'] &&
+    'draft' === $draft_sample->post_status && 'Existing editorial content' === $draft_sample->post_content,
+    'A pre-existing edited draft is never automatically published or rewritten' );
+$root_draft = $GLOBALS['pages'][ $parent ]->post_status;
+$GLOBALS['pages'][ $parent ]->post_status = 'draft';
+$blocked = pvdak_editor_seed_example_legal_topics( $parent );
+pvdak_editor_expect( 17 === $blocked['failed'], 'Unpublished legal topics parent prevents publishing children' );
+$GLOBALS['pages'][ $parent ]->post_status = $root_draft;
 
 echo "PVDAK_EDITOR_BOOTSTRAP_OK: {$checks} checks (synthetic WordPress only).\n";
