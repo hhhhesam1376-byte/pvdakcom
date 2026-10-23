@@ -58,54 +58,27 @@ $svg_icons = array(
         <input id="pvdak-topic-input" type="search" name="pvdak_topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
         <button type="submit">جست‌وجو</button>
       </form>
-      <div class="pvdak-home-hero-actions">
-        <?php
-        $symbol_names=array(1=>'scales',2=>'chat',3=>'question');
-        for($i=1;$i<=3;$i++):
-            $url=pvdak_home_service_url($i);
-            $title=pvdak_home_value("service_{$i}_title");
-            $symbol='<svg viewBox="0 0 24 24" aria-hidden="true">'. $svg_icons[$symbol_names[$i]] . '</svg>';
-        ?>
-          <?php if($url): ?><a class="pvdak-home-hero-action" href="<?php echo esc_url($url); ?>">
-          <?php else: ?><span class="pvdak-home-hero-action">
-          <?php endif; ?>
-            <?php echo $symbol; ?><span><?php echo esc_html($title); ?></span><span class="pvdak-arrow" aria-hidden="true">←</span>
-          <?php if($url): ?></a><?php else: ?></span><?php endif; ?>
-        <?php endfor; ?>
-      </div>
       <p class="pvdak-home-process-hint"><?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
     </div>
   </section>
 
-  <nav class="pvdak-home-quick-actions" aria-label="دسترسی‌های سریع">
+  <?php $quick_pages = pvdak_home_quick_pages(); ?>
+  <?php if ( $quick_pages ): ?>
+  <nav class="pvdak-home-quick-actions" aria-label="چهار دسترسی سریع منتخب">
     <?php
     $quick_symbols = array( 'document', 'question', 'briefcase', 'chat' );
-    $menu_locations = get_nav_menu_locations();
-    $quick_items = ! empty( $menu_locations['pvdak_quick'] ) ? wp_get_nav_menu_items( (int) $menu_locations['pvdak_quick'] ) : array();
-    if ( is_array( $quick_items ) && $quick_items ):
-        $position = 0;
-        foreach ( $quick_items as $quick_item ):
-            if ( empty( $quick_item->url ) ) { continue; }
-            $symbol = $svg_icons[ $quick_symbols[ $position % 4 ] ];
-            $position++;
+    foreach ( $quick_pages as $index => $quick_page ):
+        $symbol = $svg_icons[ $quick_symbols[ $index % 4 ] ];
     ?>
-        <a href="<?php echo esc_url( $quick_item->url ); ?>">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
-            <span><?php echo esc_html( $quick_item->title ); ?></span>
-        </a>
-    <?php endforeach; else:
-        // Legacy fallback while the client configures the dedicated WordPress menu.
-        for ( $i = 1; $i <= 4; $i++ ):
-            $title = pvdak_home_value( "quick_{$i}_title" );
-            $url = pvdak_home_value( "quick_{$i}_url", '' );
-            $symbol = $svg_icons[ $quick_symbols[ $i - 1 ] ];
-    ?>
-        <?php if ( $url ): ?><a href="<?php echo esc_url( $url ); ?>"><?php else: ?><span><?php endif; ?>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
-            <span><?php echo esc_html( $title ); ?></span>
-        <?php if ( $url ): ?></a><?php else: ?></span><?php endif; ?>
-    <?php endfor; endif; ?>
+      <a href="<?php echo esc_url( $quick_page['url'] ); ?>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
+        <span><?php echo esc_html( $quick_page['title'] ); ?></span>
+      </a>
+    <?php endforeach; ?>
   </nav>
+  <?php elseif ( current_user_can( 'edit_pages' ) ): ?>
+  <p class="pvdak-quick-admin-note">برای نمایش چهار دسترسی سریع، در «محتوای صفحه اصلی ← چهار دسترسی سریع زیر بنر» چهار برگه منتشرشده انتخاب کنید.</p>
+  <?php endif; ?>
 
   <section id="services" class="pvdak-home-section pvdak-audiences" aria-labelledby="audiences-title">
     <div class="pvdak-home-section-head">
@@ -140,13 +113,19 @@ $svg_icons = array(
     </div>
 
     <?php if ( $legal_pages ): ?>
-    <div class="pvdak-home-topics">
-      <?php foreach ( $legal_pages as $legal_page ): ?>
-        <a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
-          <?php echo pvdak_legal_topic_svg( pvdak_legal_topic_icon( $legal_page->ID ) ); ?>
-          <span><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
-        </a>
-      <?php endforeach; ?>
+    <div class="pvdak-topics-swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
+      <div class="pvdak-home-topics" data-pvdak-swiper-track>
+        <?php foreach ( $legal_pages as $legal_page ): ?>
+          <a class="pvdak-home-topic" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
+            <?php echo pvdak_legal_topic_svg( pvdak_legal_topic_icon( $legal_page->ID ) ); ?>
+            <span><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <div class="pvdak-topics-controls" aria-label="کنترل اسلایدر موضوعات">
+      <button type="button" class="pvdak-topics-control" data-pvdak-topic-prev aria-label="موضوع قبلی">→</button>
+      <button type="button" class="pvdak-topics-control" data-pvdak-topic-next aria-label="موضوع بعدی">←</button>
     </div>
     <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد.</p>
     <?php elseif ( '' !== $legal_search_term && $all_legal_pages ): ?>
