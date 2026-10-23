@@ -648,3 +648,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 ## 2026-10-23 — NEXT-BATCH-062 (v0.8.27 draft, support conversations)
 - Upgraded native private support tickets to staff/customer back-and-forth thread: only owning logged-in author may POST follow-ups (nonce + ownership/type/private checks + cooldown), and only administrators may add staff replies. Every message is add_post_meta append-only, avoiding lost-message races. Maximum size capped, last 30 messages displayed, legacy single staff replies preserved.
 - Ticket mail/case intake remain separate; no open public API, no public CPT archive and no cross-account thread display. Site runtime two-account privacy tests still required before release.
+
+
+## 2026-10-23 — NEXT-BATCH-063 (0.8.27 draft, read-only acceptance)
+- Expanded PHP WordPress preflight with checks for signup gate, email verification, ticket handler, key Pages, maintenance state and bundled-vs-active Core version (no sensitive records shown).
+- Added synthetic PHP test for pending-user login rejection, hashed/expiring verification tokens, fake outbound mail, and ticket ownership/source controls; no real accounts or email sent. Wired into private read-only batch script.
+- Updated 10-item priority checklist with precise code-vs-runtime status. Draft remains off main. Actual PHP interpreter, WordPress runtime, Cron, SMTP and browser tests NOT executed during authoring.

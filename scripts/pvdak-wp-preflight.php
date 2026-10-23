@@ -55,9 +55,33 @@ if ( function_exists( 'pvdak_legal_topic_pages' ) ) {
     }
 }
 
+// Read-only launch gates and conditional feature checks (no user IDs or case data).
+pvdak_preflight_check( 'Registration remains closed until administrator approves',
+    ! function_exists('pvdak_registration_open') || ! pvdak_registration_open() );
+pvdak_preflight_check( 'New-account verification hooks loaded',
+    function_exists('pvdak_email_verification_issue') &&
+    function_exists('pvdak_email_verification_auth_gate') );
+pvdak_preflight_check( 'Private support thread handler present',
+    function_exists('pvdak_support_followup') && function_exists('pvdak_support_append_message') );
+pvdak_preflight_check( 'No public WordPress self-registration enabled yet',
+    ! (bool) get_option('users_can_register', false), false );
+pvdak_preflight_check( 'Default newsletter/case intake untouched; maintenance currently ON',
+    ! function_exists('pvdak_maintenance_enabled') || pvdak_maintenance_enabled(), false );
+foreach(array('account-login','account-recovery','account-profile','my-pvdak-account','contact-us','privacy-policy','terms-of-use') as $slug) {
+    $page=get_page_by_path($slug,OBJECT,'page');
+    pvdak_preflight_check('Published content Page: '.$slug,
+        $page && 'publish' === $page->post_status, false);
+}
+WP_CLI::line('THEME_VERSION: '.(string) $theme->get('Version'));
+WP_CLI::line('CORE_SOURCE_BUNDLED: '.(
+    is_readable(get_template_directory().'/packages/pvdak-core/pvdak-core.php')?'PRESENT':'MISSING'));
+WP_CLI::line('CORE_INSTALLED_VERSION: '.(defined('PVDAK_CORE_VERSION') ? PVDAK_CORE_VERSION : 'NOT_ACTIVE'));
+
 $core = function_exists( 'pvdak_core_register_post_types' );
 WP_CLI::line( 'CORE: ' . ( $core ? 'ACTIVE - inspect below' : 'INACTIVE - Core tests SKIPPED' ) );
 if ( $core ) {
+    pvdak_preflight_check( 'Manual subscription gate remains disabled',
+        ! function_exists('pvdak_core_subscription_gate_on') || ! pvdak_core_subscription_gate_on() );
     pvdak_preflight_check( 'Core default legal intake disabled until approved',
         ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() );
     pvdak_preflight_check( 'Core default professional intake disabled until approved',
