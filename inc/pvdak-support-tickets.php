@@ -25,7 +25,9 @@ function pvdak_support_ticket_register(){
 add_action('init','pvdak_support_ticket_register');
 /** Count Persian/Unicode characters rather than UTF-8 bytes when available. */
 function pvdak_support_length($value) {
-    return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+    if (function_exists('mb_strlen'))return mb_strlen($value, 'UTF-8');
+    $count=preg_match_all('/./us',$value);
+    return false===$count ? strlen($value) : $count;
 }
 /** Keep all client-visible status labels on an explicit allowlist. */
 function pvdak_support_status_label($status) {
