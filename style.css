@@ -1356,3 +1356,8 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
 .pvdak-footer-public a:hover{text-decoration:underline}
 @media(max-width:780px){.pvdak-contact-grid,.pvdak-login-grid{grid-template-columns:1fr}.pvdak-login-art{padding:28px}.pvdak-static{padding-block:20px 45px}}
 @media(max-width:540px){.pvdak-static-head{padding:21px 18px}.pvdak-static-body{padding:22px 17px}.pvdak-login-grid{border-radius:15px}}
+
+/* Four footer groups after adding editable information pages. */
+@media(min-width:901px){.pvdak-footer-layout{grid-template-columns:1.2fr 1fr .9fr .7fr;gap:24px}}
+@media(min-width:621px) and (max-width:900px){.pvdak-footer-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}
+.pvdak-footer-public strong{font-size:14px;color:#fff;margin-bottom:5px}

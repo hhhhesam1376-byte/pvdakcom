@@ -593,3 +593,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Header login now uses site Page, not wp-login.php, while logged-in account goes to PVDak Core dashboard or a protected fallback Page. Frontend Core wp_login_url links are filtered but official wp-admin login stays available for site owners. Authentication uses wp_signon/cookies and nonce, no separate credentials, SMS or registration.
 - Contact form uses nonce, server validation, hidden trap, transient throttle, wp_mail to WordPress admin email; maintenance mode restricts access to admin preview. No legal/membership intake enabled or altered.
 - Theme 0.8.23 is a standalone draft commit, NOT on main; existing production code and auto-deploy stay unchanged until explicit publish approval. Added checklist items 6-9 alongside previous 5.
+
+- Post-build refinement: footer grid now accommodates its fourth information-links column on desktop and stays usable on tablets/mobile, with a clear heading for the links.
