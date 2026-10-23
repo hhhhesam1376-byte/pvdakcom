@@ -599,3 +599,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Input hardening: reject array-shaped login/contact POST values before passing them to WordPress string sanitizers, avoiding malformed-request PHP warnings or errors.
 
 - Added FAQ native root Page to the missing-page list (preserves any previously created legal-faq Page), conditional FAQ footer link, and a safe admin-only ?preview=1 UI mode for the branded login so the manager can inspect the design while remaining signed in during maintenance. Real credential testing still requires the appropriate independent acceptance environment.
+
+
+## 2026-10-23 — DRAFT-CLEAR-HOMEPAGE-ENTRY-055 (0.8.24, NOT DEPLOYED)
+- Replaced role-oriented 'از کدام مسیر وارد می‌شوید' section with three accessible full-card action links to legal topic index, magazine, and signed-in account/login. No fictitious route choices, disabled form or unfinished registration. Premium SVG cards, mobile layout, reduced-motion styling. Old ACF inputs remain stored but homepage no longer displays them, as the new destinations are functional site navigation.
+- Legacy ACF defaults title updated for future admin copy; theme version 0.8.24. Main remains untouched and maintenance ON.

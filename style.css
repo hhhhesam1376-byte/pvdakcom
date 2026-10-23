@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.23
+Version: 0.8.24
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1361,3 +1361,26 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
 @media(min-width:901px){.pvdak-footer-layout{grid-template-columns:1.2fr 1fr .9fr .7fr;gap:24px}}
 @media(min-width:621px) and (max-width:900px){.pvdak-footer-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}
 .pvdak-footer-public strong{font-size:14px;color:#fff;margin-bottom:5px}
+
+
+/* 0.8.24: Three meaningful action cards instead of a confusing role chooser. */
+.pvdak-start-here-heading{margin-bottom:19px}
+.pvdak-start-here-heading>div{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.pvdak-start-here .pvdak-start-here-kicker{font-size:12px;font-weight:850;color:#0c8475}
+.pvdak-start-here .pvdak-start-here-heading h2{margin:0;font-size:clamp(23px,2.4vw,29px);line-height:1.55;color:#153947}
+.pvdak-start-here .pvdak-start-here-heading p{font-size:13px;color:#607780;margin:0;line-height:1.8}
+.pvdak-start-here-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+a.pvdak-start-card{position:relative;display:flex;align-items:flex-start;gap:16px;min-height:173px;padding:25px 23px 20px;background:linear-gradient(155deg,#fff,#f4faf8);border:1px solid #d7e9e3;border-radius:21px;text-decoration:none;color:#163d49;box-shadow:0 7px 25px rgba(14,61,66,.045);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;overflow:hidden}
+a.pvdak-start-card:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#0e9c8c,#236879,#e6b66e)}
+a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-4px);border-color:#80c6b9;box-shadow:0 18px 32px rgba(13,54,65,.11)}
+.pvdak-start-icon{width:62px;height:62px;display:grid;place-items:center;flex:0 0 62px;border-radius:18px;background:#e3f4ee;color:#137e72}
+.pvdak-start-icon svg{width:37px;height:37px;display:block;stroke:currentColor}
+.pvdak-start-card--2 .pvdak-start-icon{background:#eaf0fa;color:#426e9c}
+.pvdak-start-card--3 .pvdak-start-icon{background:#f5efdf;color:#9b753f}
+.pvdak-start-info{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0}
+.pvdak-start-info strong{font-size:17px;line-height:1.6;font-weight:850;color:#163b4b}
+.pvdak-start-info small{font-size:12px;line-height:1.9;color:#70868b}
+.pvdak-start-cta{font-size:12px;font-weight:800;color:#087c70;margin-top:7px}
+@media(max-width:1040px){.pvdak-start-here-grid{grid-template-columns:1fr;gap:12px}a.pvdak-start-card{min-height:124px;padding:21px}}
+@media(max-width:620px){.pvdak-start-here .pvdak-start-here-heading h2{font-size:23px}a.pvdak-start-card{border-radius:16px;gap:12px;padding:17px 15px}.pvdak-start-icon{width:52px;height:52px;flex-basis:52px;border-radius:15px}.pvdak-start-icon svg{width:30px;height:30px}.pvdak-start-info strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){a.pvdak-start-card{transition:none}a.pvdak-start-card:hover{transform:none}}

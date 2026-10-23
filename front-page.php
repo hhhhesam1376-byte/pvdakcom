@@ -80,22 +80,47 @@ $svg_icons = array(
   <p class="pvdak-quick-admin-note">برای نمایش چهار دسترسی سریع، در «محتوای صفحه اصلی ← چهار دسترسی سریع زیر بنر» چهار برگه منتشرشده انتخاب کنید.</p>
   <?php endif; ?>
 
-  <section id="services" class="pvdak-home-section pvdak-audiences" aria-labelledby="audiences-title">
-    <div class="pvdak-home-section-head">
-      <h2 id="audiences-title"><?php echo esc_html(pvdak_home_value('audiences_title')); ?></h2>
-      <p><?php echo esc_html(pvdak_home_value('audiences_intro')); ?></p>
+  <?php
+  // Three real destinations, not a required choice of role or a disabled intake form.
+  $pvdak_getting_started = array(
+      array(
+          'title' => 'موضوع حقوقی‌ام را پیدا کنم',
+          'desc' => 'از میان موضوعات حقوقی، حوزه موردنظر را پیدا کنید.',
+          'cta' => 'مشاهده موضوعات',
+          'url' => ( function_exists( 'pvdak_legal_topics_root_id' ) && pvdak_legal_topics_root_id() ) ?
+              get_permalink( pvdak_legal_topics_root_id() ) : home_url( '/#topics' ),
+          'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="21" cy="21" r="12"/><path d="m30 30 11 11M16 21h10M21 16v10"/></svg>',
+      ),
+      array(
+          'title' => 'مقاله و راهنما بخوانم',
+          'desc' => 'در مجله حقوقی، یادداشت‌ها و مطالب آموزشی را دنبال کنید.',
+          'cta' => 'ورود به مجله',
+          'url' => home_url( '/#magazine' ),
+          'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11h15c3 0 5 2 5 5v25c0-4-3-6-7-6H7V11ZM41 11H27v30c0-4 3-6 7-6h7V11ZM14 19h7m-7 6h7m13-6h-4m4 6h-4"/></svg>',
+      ),
+      array(
+          'title' => 'حساب کاربری‌ام را ببینم',
+          'desc' => 'اگر حساب دارید، از پنل وضعیت و اطلاعات خود را ببینید.',
+          'cta' => is_user_logged_in() ? 'پنل من' : 'ورود به حساب',
+          'url' => is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_url(),
+          'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="16" r="8"/><path d="M9 41v-4c0-9 7-13 15-13s15 4 15 13v4M13 40h22"/></svg>',
+      ),
+  );
+  ?>
+  <section id="services" class="pvdak-home-section pvdak-audiences pvdak-start-here" aria-labelledby="audiences-title">
+    <div class="pvdak-home-section-head pvdak-start-here-heading">
+      <div><span class="pvdak-start-here-kicker">دسترسی سریع</span>
+        <h2 id="audiences-title">می‌خواهید چه کاری انجام دهید؟</h2>
+        <p>بدون انتخاب نقش یا ثبت‌نام اجباری، مستقیم به بخش موردنیازتان بروید.</p>
+      </div>
     </div>
-    <div class="pvdak-home-grid pvdak-home-grid--3">
-      <?php $audience_icons=array('scales','chat','question'); for($i=1;$i<=3;$i++):
-        $url=pvdak_home_value("audience_{$i}_url",'');
-      ?>
-      <article class="pvdak-home-tile <?php echo 1===$i?'pvdak-home-tile--featured':''; ?>">
-        <span class="pvdak-home-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><?php echo $svg_icons[$audience_icons[$i-1]]; ?></svg></span>
-        <h3><?php echo esc_html(pvdak_home_value("audience_{$i}_title")); ?></h3>
-        <p><?php echo esc_html(pvdak_home_value("audience_{$i}_description")); ?></p>
-        <?php if($url): ?><a class="pvdak-home-text-link" href="<?php echo esc_url($url); ?>">ورود به بخش مربوط ←</a><?php else: ?><span class="pvdak-home-text-link">ورود به بخش مربوط ←</span><?php endif; ?>
-      </article>
-      <?php endfor; ?>
+    <div class="pvdak-start-here-grid">
+    <?php foreach ( $pvdak_getting_started as $index => $item ): ?>
+      <a class="pvdak-start-card pvdak-start-card--<?php echo esc_attr( $index + 1 ); ?>" href="<?php echo esc_url( $item['url'] ); ?>">
+        <span class="pvdak-start-icon" aria-hidden="true"><?php echo $item['icon']; ?></span>
+        <span class="pvdak-start-info"><strong><?php echo esc_html( $item['title'] ); ?></strong><small><?php echo esc_html( $item['desc'] ); ?></small><span class="pvdak-start-cta"><?php echo esc_html( $item['cta'] ); ?> <span aria-hidden="true">←</span></span></span>
+      </a>
+    <?php endforeach; ?>
     </div>
   </section>
 
