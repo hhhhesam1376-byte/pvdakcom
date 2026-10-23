@@ -34,6 +34,10 @@ ACTIVE="$("$WPC" option get stylesheet --path="$WP" --skip-plugins --skip-themes
 timeout 120 git -C "$REPO" fetch --quiet --no-tags "$REMOTE" "+refs/heads/main:refs/remotes/pvdak-deploy/main"
 SHA="$(git -C "$REPO" rev-parse refs/remotes/pvdak-deploy/main)"
 if [[ -f "$STATE/deployed" && "$(cat "$STATE/deployed")" == "$SHA" ]]; then
+  # Older runs with umask 077 and rsync lacking -p may have left 0600 assets.
+  # Repair modes even if the deployed SHA already matches main.
+  find "$TARGET" -type d ! -perm 755 -exec chmod 755 {} +
+  find "$TARGET" -type f ! -perm 644 -exec chmod 644 {} +
   date -u +%FT%TZ > "$STATE/last-check"
   log "UP_TO_DATE $SHA"
   exit 0
