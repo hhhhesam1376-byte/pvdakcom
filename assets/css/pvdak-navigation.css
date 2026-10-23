@@ -71,8 +71,8 @@
     top: calc(100% - 16px); /* overlap header bottom padding: no hover gap */
     left: 50%;
     right: auto;
-    inset-inline-start: auto;
-    inset-inline-end: auto;
+    /* Physical center is independent of RTL inline-start and avoids
+       overriding left:50% with inset-inline-end:auto. */
     transform: translateX(-50%);
     z-index: 80;
     width: min(820px, calc(100vw - 40px));
