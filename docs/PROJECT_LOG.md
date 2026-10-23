@@ -623,3 +623,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added manual subscription records for each professional: plan, state, expiry, monthly referral ceiling; a manager-only metabox saves bounded values. Separate global switch `pvdak_core_subscription_gate_enabled` is default 0, so existing matching eligibility does NOT change until specifically enabled after staging testing. This is NOT a payment/billing/renewal implementation and has NO new purchase route.
 - In optional gate mode, a matching attempt fails closed for missing/expired/inactive plan or monthly quota exhaustion. Counts come from existing UTC audit meta. Existing assignment advisory locks remain, no auto-assignment. Read-only professional dashboard shows the manual plan status without exposing case contents.
 - Core source raised to 0.8.1. It resides in `packages/pvdak-core` and is NOT deployed by the theme-only cPanel cron; do not claim this Core version is live until an explicit safe Core upgrade after backup/lint/tests. Main remains unchanged.
+
+
+## 2026-10-23 — DRAFT-RELEASE-PREFLIGHT-059 (0.8.26 / Core 0.8.1, NOT DEPLOYED)
+- Added read-only source preflight script `scripts/check-batch-readonly.sh`: PHP lint on all repo PHP, existing theme/navigation/editor tests and privacy/Core policy regression, plus new feature-batch smoke.
+- Expanded source checks to assert new 3-action homepage section. Updated public pages/auth smoke expected theme version. Added explicit 10-task review checklist distinguishing implemented code, closed defaults, missing runtime tests and Core installation limitation.
+- This only prepares the batch for administrator review. It does NOT update GitHub main, cron, site, users, passwords, Core plugin version on host, intake settings, registrations, or public maintenance.
