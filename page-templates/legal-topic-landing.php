@@ -35,6 +35,14 @@ while ( have_posts() ) : the_post();
             <?php endif; ?>
         </div>
     </header>
+    <?php
+    // An empty published seed is a navigation/testing placeholder, never
+    // presented as substantive legal guidance.
+    if ( '1' === (string) get_post_meta( $page_id, '_pvdak_sample_landing', true ) &&
+         '' === trim( (string) get_post_field( 'post_content', $page_id ) ) ) :
+    ?>
+        <p class="pvdak-legal-sample-note" role="note">این صفحه یک موضوع نمونه برای تکمیل ساختار سایت است. محتوای تخصصی و منابع آن پس از بررسی و آماده‌سازی منتشر می‌شوند.</p>
+    <?php endif; ?>
     <article class="pvdak-legal-article">
         <div class="entry-content">
             <?php the_content(); ?>
