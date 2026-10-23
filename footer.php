@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         </div>
         <nav class="pvdak-footer-public" aria-label="اطلاعات سایت">
           <strong>لینک‌های مهم</strong>
-          <?php foreach(array('about-us'=>'درباره ما','contact-us'=>'تماس با ما','privacy-policy'=>'حریم خصوصی','terms-of-use'=>'شرایط استفاده') as $slug=>$label):
+          <?php foreach(array('about-us'=>'درباره ما','contact-us'=>'تماس با ما','legal-faq'=>'پرسش‌های متداول','privacy-policy'=>'حریم خصوصی','terms-of-use'=>'شرایط استفاده') as $slug=>$label):
              $url=pvdak_public_page_url($slug); if(!$url)continue; ?>
             <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
           <?php endforeach; ?>

@@ -28,7 +28,7 @@ pvdak_public_smoke_require( false !== strpos( $code['auth'], 'wp_signon(' ) &&
  false !== strpos( $code['auth'], 'check_admin_referer(' ) &&
  false !== strpos( $code['auth'], "add_filter('login_url'" ) &&
  false !== strpos( $code['auth'], 'is_admin()' ), 'Native authenticated login preserves admin access' );
-foreach ( array( 'about-us', 'contact-us', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
+foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
 }
 pvdak_public_smoke_require( false !== strpos( $code['pages'], "add_action('admin_init'" ) &&
@@ -43,6 +43,10 @@ pvdak_public_smoke_require( false !== strpos( $code['contact'], 'pvdak_contact_a
  false !== strpos( $code['contact'], 'contact_consent' ) &&
  false !== strpos( $code['login'], 'autocomplete="current-password"' ) &&
  false !== strpos( $code['account'], "'pvdak_account_dashboard'" ), 'Page templates have expected form and Core dashboard' );
+pvdak_public_smoke_require( false !== strpos( $code['login'], '$admin_preview' ) &&
+ false !== strpos( $code['login'], 'current_user_can(' ) &&
+ false !== strpos( $code['footer'], "'legal-faq'=>'پرسش‌های متداول'" ),
+ 'Site owner can safely preview login UI and footer includes FAQ' );
 pvdak_public_smoke_require( false !== strpos( $code['footer'], 'pvdak-footer-public' ) &&
  false !== strpos( $code['theme'], 'Version: 0.8.23' ), 'Footer links and theme cache version' );
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";

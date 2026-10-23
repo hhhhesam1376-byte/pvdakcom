@@ -597,3 +597,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Post-build refinement: footer grid now accommodates its fourth information-links column on desktop and stays usable on tablets/mobile, with a clear heading for the links.
 
 - Input hardening: reject array-shaped login/contact POST values before passing them to WordPress string sanitizers, avoiding malformed-request PHP warnings or errors.
+
+- Added FAQ native root Page to the missing-page list (preserves any previously created legal-faq Page), conditional FAQ footer link, and a safe admin-only ?preview=1 UI mode for the branded login so the manager can inspect the design while remaining signed in during maintenance. Real credential testing still requires the appropriate independent acceptance environment.

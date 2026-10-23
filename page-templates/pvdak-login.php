@@ -4,13 +4,16 @@
  * Template Post Type: page
  */
 if(!defined('ABSPATH'))exit;
-if(is_user_logged_in()){wp_safe_redirect(pvdak_auth_account_url());exit;}
+$admin_preview = is_user_logged_in() && current_user_can('manage_options') &&
+    isset($_GET['preview']) && '1' === (string) $_GET['preview'];
+if(is_user_logged_in() && !$admin_preview){wp_safe_redirect(pvdak_auth_account_url());exit;}
 get_header(); ?>
 <main id="main-content" class="container pvdak-static pvdak-login-page" tabindex="-1">
 <div class="pvdak-login-grid">
 <section class="pvdak-static-body">
 <span class="pvdak-static-label">حساب کاربری پویش</span><h1>ورود به پنل</h1>
 <p>برای ورود از اطلاعات حساب موجود استفاده کنید.</p>
+<?php if($admin_preview): ?><p class="pvdak-static-note">حالت پیش‌نمایش مدیر فعال است. برای آزمایش ورود واقعی از حساب غیرمدیر در محیط آزمایشی استفاده کنید.</p><?php endif; ?>
 <?php if(isset($_GET['error'])): ?><p class="pvdak-static-error" role="alert">نام کاربری یا رمز عبور درست نیست.</p><?php endif; ?>
 <form method="post" class="pvdak-forms" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 <input type="hidden" name="action" value="pvdak_login"><?php wp_nonce_field('pvdak_login','_pvdak_login_nonce'); ?>
