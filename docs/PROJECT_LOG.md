@@ -707,3 +707,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Host operator executed original WP-CLI preflight: 37 checks, 0 fails, 7 Page publication warnings; 0.8.28 theme, 0.8.2 Core loaded, registration/member intake/case intake/quota OFF; admin case permissions and advisory lock present.
 - Draft v0.8.29 Page reconciliation fix/source smoke added without touching live `main`. Latest pending-approval table now distinguishes confirmed host results from missing browser/email/privacy/concurrency tests.
 - Next action on current live release is a real authorized admin dashboard visit for the existing admin_init seeder, then rerun read-only page state check. If the option marker prematurely blocks seeding, draft fix should be reviewed and released separately. No user Pages have been modified by the assistant.
+
+
+## 2026-10-23 — HOST-PREFLIGHT-CLEARED-072 (verified by operator)
+- Host operator confirmed WordPress page ID 3 (`privacy-policy`, originally `draft`) was published manually after review step. This was NOT created or modified by ChatGPT.
+- Operator ran the read-only live preflight again: **37 checks, 0 failures, 0 warnings**. Active theme 0.8.28 / installed Core 0.8.2; maintenance ON, WordPress and PVDak registration OFF, both intake switches and subscription gate OFF; restricted roles have no case administration permissions.
+- Do not mistake 37/0/0 for end-to-end or legal acceptance: real browser login, password recovery email, verification mail, two-account ticket/request privacy, live locking, manual subscription history, and privacy-policy copy review remain unverified.
+- Theme 0.8.29 draft is now optional, not needed to clear current published Page warnings. Keep main untouched pending explicit user approval for future feature release.

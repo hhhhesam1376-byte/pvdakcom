@@ -1,11 +1,11 @@
 # PVDak — پذیرش پس از نصب قالب 0.8.28 و Core 0.8.2
 
-**گزارش هاست:** `DEPLOY_OK 63e836be`، قالب 0.8.28 فعال، Core 0.8.2 فعال. تست WP-CLI در تاریخ 2026-10-23: **37 بررسی / 0 خطا / 7 هشدار**. افتتاح عمومی هنوز مجاز نیست.
+**گزارش هاست:** `DEPLOY_OK 63e836be`، قالب 0.8.28 فعال، Core 0.8.2 فعال. آخرین تست WP-CLI در تاریخ 2026-10-23: **۳۷ بررسی / ۰ خطا / ۰ هشدار**. افتتاح عمومی هنوز مجاز نیست.
 
 | اولویت | کار | وضعیت | گام بعدی |
 | --- | --- | --- | --- |
 | ۱ | سازگاری قالب/Core و مجوزهای پایه | PASS در هاست | نگهداری نتیجه در لاگ |
-| ۲ | برگه‌های ورود، حساب، تماس، حریم خصوصی و قوانین | ۷ هشدار عدم انتشار | یک بازدید مدیر از wp-admin، سپس بررسی دوباره؛ در صورت marker قدیمی اصلاح در draft 0.8.29 |
+| ۲ | برگه‌های ورود، حساب، تماس، حریم خصوصی و قوانین | ۰ هشدار، همگی منتشرشده | بازبینی حقوقی متن حریم خصوصی و شرایط استفاده پیش از افتتاح |
 | ۳ | ورود، خروج و بازیابی رمز | توابع فعال؛ تست تعامل ندارد | آزمون حساب آزمایشی و ایمیل |
 | ۴ | تأیید ایمیل | هوک بارگذاری می‌شود؛ تحویل ایمیل تست نشده | آزمون انقضا و ارسال مجدد |
 | ۵ | داشبورد مراجعه‌کننده | Core فعال؛ تفکیک واقعی حساب‌ها تست نشده | آزمون با دو کاربر نمونه |
@@ -21,3 +21,8 @@
 - هیچ تغییر در Cron، GitHub Actions، کلیدها یا فعال‌سازی ثبت‌نام و پذیرش پرونده انجام نشده.
 
 به‌روزرسانی `main` فقط با درخواست صریح «منتشر کن» انجام شود.
+
+## مرحله بعد پس از 37/0/0
+- Run the existing source checks from a clean private archive. These PHP mock checks do not create users, messages or cases in live WordPress.
+- Separately plan controlled two-account login/ticket/mail tests with synthetic data in staging. Maintenance currently blocks normal visitor-facing pages, so do not disable it solely for test convenience.
+- The optional unreleased theme 0.8.29 page-bootstrap change is not required to fix a missing Page today; no main update needed.
