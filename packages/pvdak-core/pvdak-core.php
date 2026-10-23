@@ -19,6 +19,7 @@ require_once __DIR__ . '/includes/portal.php';
 require_once __DIR__ . '/includes/triage.php';
 require_once __DIR__ . '/includes/specialties.php';
 require_once __DIR__ . '/includes/license-review.php';
+require_once __DIR__ . '/includes/professional-admin.php';
 require_once __DIR__ . '/includes/capacity.php';
 require_once __DIR__ . '/includes/subscriptions.php';
 require_once __DIR__ . '/includes/professional-portal.php';

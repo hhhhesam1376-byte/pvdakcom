@@ -788,3 +788,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Rechecks application owner/type/private-or-draft before rendering; no client identity, case details, assignment IDs, verification claims or billing functionality exposed.
 - Added 30 static source checks to the existing read-only batch runner; PHP lint, actual WordPress/two-account, browser and capacity/quota tests still pending.
 - No changes to main, live site, maintenance, signup, intake, stored records, server, cron or payment settings.
+
+
+## 2026-10-24 — PROFESSIONAL-ADMIN-085 (feature branch only)
+- Added 20 read-only staff queue enhancements for private professional applications; details in `docs/WORK_BATCH_085.md`.
+- Added scoped admin filters (membership, state, review method, expiry windows, city), protected existing query clauses, reset/accessibility, four review columns, expiry sorting and private bounded audit metabox.
+- Added 26 source-only assertions to the existing batch preflight runner. Local PHP lint of the new source and smoke test passed; full checkout runner, actual WP permissions, browser and two-account tests remain pending.
+- No production deployment, main update, live settings, intake, maintenance, subscription, private records, server or cron changes.
