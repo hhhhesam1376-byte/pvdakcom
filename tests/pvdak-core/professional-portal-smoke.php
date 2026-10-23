@@ -37,6 +37,6 @@ $checks = array(
  'visible keyboard focus' => strpos($css, '.pvdak-core-prof-links a:focus-visible') !== false
 );
 foreach ($checks as $name => $ok) {
-    if (!$ok) { fwrite(STDERR, "PROF_PORTAL_FAIL: \$name\n"); exit(1); }
+    if (!$ok) { fwrite(STDERR, "PROF_PORTAL_FAIL: $name\n"); exit(1); }
 }
 echo 'PVDAK_PROF_PORTAL_SOURCE_OK: ' . count($checks) . " static checks (not WordPress/browser tests)\n";
