@@ -44,28 +44,37 @@ require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
 function pvdak_home_assets() {
     if ( is_front_page() ) {
-        // Use the ACTUAL Swiper.js bundle (not a simulated scroll carousel).
-        // Pin a patched release for repeatable behavior and security.
-        // CDN backup on failure is handled in pvdak-home.js; no new plugin,
-        // cron or third-party PHP bootstrap is needed.
-        $swiper_version = '14.3.0';
-        wp_enqueue_style(
-            'pvdak-swiper',
-            'https://cdn.jsdelivr.net/npm/swiper@' . $swiper_version . '/swiper-bundle.min.css',
-            array( 'pvdak-rtl' ),
-            $swiper_version
-        );
-        wp_enqueue_script(
-            'pvdak-swiper',
-            'https://cdn.jsdelivr.net/npm/swiper@' . $swiper_version . '/swiper-bundle.min.js',
-            array(),
-            $swiper_version,
-            true
-        );
+        // Real pinned Swiper.js served ONLY from our own WordPress domain.
+        // Stored in wp-content/uploads/pvdak-static to survive theme Cron releases.
+        // One-time installer: private scripts/pvdak-install-swiper-local.sh.
+        // Missing assets must not silently fall back to an inaccessible CDN.
+        $uploads = wp_get_upload_dir();
+        $vendor_rel = '/pvdak-static/swiper-14.3.0';
+        $vendor_dir = isset( $uploads['basedir'] ) ? $uploads['basedir'] . $vendor_rel : '';
+        $vendor_url = isset( $uploads['baseurl'] ) ? $uploads['baseurl'] . $vendor_rel : '';
+        $have_swiper = $vendor_dir && $vendor_url &&
+            is_file( $vendor_dir . '/swiper-bundle.min.js' ) &&
+            is_file( $vendor_dir . '/swiper-bundle.min.css' ) &&
+            is_file( $vendor_dir . '/LICENSE' );
+        if ( $have_swiper ) {
+            wp_enqueue_style(
+                'pvdak-swiper',
+                $vendor_url . '/swiper-bundle.min.css',
+                array( 'pvdak-rtl' ),
+                '14.3.0'
+            );
+            wp_enqueue_script(
+                'pvdak-swiper',
+                $vendor_url . '/swiper-bundle.min.js',
+                array(),
+                '14.3.0',
+                true
+            );
+        }
         wp_enqueue_script(
             'pvdak-home-search',
             get_template_directory_uri() . '/assets/js/pvdak-home.js',
-            array( 'pvdak-swiper' ),
+            $have_swiper ? array( 'pvdak-swiper' ) : array(),
             wp_get_theme()->get( 'Version' ),
             true
         );
