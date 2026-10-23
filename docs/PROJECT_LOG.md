@@ -714,3 +714,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Operator ran the read-only live preflight again: **37 checks, 0 failures, 0 warnings**. Active theme 0.8.28 / installed Core 0.8.2; maintenance ON, WordPress and PVDak registration OFF, both intake switches and subscription gate OFF; restricted roles have no case administration permissions.
 - Do not mistake 37/0/0 for end-to-end or legal acceptance: real browser login, password recovery email, verification mail, two-account ticket/request privacy, live locking, manual subscription history, and privacy-policy copy review remain unverified.
 - Theme 0.8.29 draft is now optional, not needed to clear current published Page warnings. Keep main untouched pending explicit user approval for future feature release.
+
+
+## 2026-10-23 — NAV-SMOKE-VERSION-FIX-073 (unreleased draft; no runtime execution yet)
+- Operator ran the source-only batch on production main 63e836be: early source/mocked checks passed, but navigation-smoke stopped on an obsolete exact string assertion `Version: 0.8.12` despite active theme 0.8.28.
+- Source inspection confirms the normal theme `pvdak-style` uses `get_stylesheet_uri()`, bundled mega-navigation CSS remains in `style.css`, and there is no separate navigation stylesheet enqueue.
+- Fixed navigation smoke to read the actual CSS header and require minimum theme 0.8.12 via semantic `version_compare`, allowing 0.8.28+; added lightweight regression and wired into existing script.
+- Operator also confirmed WP-CLI live `PREFLIGHT_SUMMARY: checks=37 fails=0 warnings=0` after publishing their existing privacy-policy Page. No theme/Core deployed, website state changed, or real mail/database/browser test run by assistant.

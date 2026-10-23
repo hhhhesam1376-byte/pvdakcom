@@ -26,3 +26,9 @@
 - Run the existing source checks from a clean private archive. These PHP mock checks do not create users, messages or cases in live WordPress.
 - Separately plan controlled two-account login/ticket/mail tests with synthetic data in staging. Maintenance currently blocks normal visitor-facing pages, so do not disable it solely for test convenience.
 - The optional unreleased theme 0.8.29 page-bootstrap change is not required to fix a missing Page today; no main update needed.
+
+
+## 2026-10-23 — قالب 0.8.28: خطای تشخیص‌داده‌شده در تست ناوبری
+- خروجی آزمون کد روی هاست در `NAV_FAIL` متوقف شد. دلیل قطعی در سورس: تست، نسخه CSS را به مقدار دقیق قدیمی `0.8.12` محدود کرده بود، نه اینکه حداقل نسخه موردنیاز را بسنجد.
+- اصلاح تست و اجرای خودکار جدید فقط در پیش‌نویس ثبت شده است؛ تست‌های بعدی هنوز اجرا نشده‌اند. نیازی به دستکاری CSS زنده یا قطع تعمیرات نیست.
+- برای تشخیص سریع، همین تست را می‌توان فقط در آرشیو موقت و بدون ویرایش `main` اجرا کرد. نتیجه آزمون مرورگر و عملکرد منو همچنان جداگانه است.

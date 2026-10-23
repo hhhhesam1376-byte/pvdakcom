@@ -36,7 +36,12 @@ function pvdak_nav_assert( $okay, $label ) {
 pvdak_nav_assert( false !== strpos( $functions, "'pvdak-style'" ) &&
     false !== strpos( $functions, 'get_stylesheet_uri()' ),
     'Mega navigation is delivered by the standard WordPress theme stylesheet' );
-pvdak_nav_assert( false !== strpos( $css, 'Version: 0.8.12' ) &&
+// Validate the minimum version that introduced bundled mega-nav styling.
+// This is intentionally not tied to a particular *current* theme release.
+$theme_header_version = array();
+pvdak_nav_assert(
+    preg_match( '/^Version:[ \t]*([0-9]+(?:\\.[0-9]+)*)[ \t]*$/mi', $css, $theme_header_version ) === 1 &&
+    version_compare( $theme_header_version[1], '0.8.12', '>=' ) &&
     false === strpos( $functions, "'pvdak-navigation'" ) &&
     false === strpos( $functions, "/assets/css/pvdak-navigation.css" ),
     'Main versioned CSS is the single source and no extra stylesheet fetch remains' );
