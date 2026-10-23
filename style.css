@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.13
+Version: 0.8.14
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -699,4 +699,40 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
 }
 @media (prefers-reduced-motion: reduce) {
   .pvdak-topics-section .pvdak-home-topics { transition: none !important; }
+}
+
+
+/* PVDak 0.8.14: Swiper.js owns all real carousel sliding.
+   These overrides neutralize the old fixed-width pseudo-carousel CSS. */
+.pvdak-topics-section .pvdak-topics-swiper.swiper {
+  width: 100%;
+  overflow: hidden;
+  direction: rtl;
+}
+.pvdak-topics-section .pvdak-topics-swiper.is-ready .pvdak-home-topics.swiper-wrapper {
+  gap: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+  transform: none; /* Swiper's inline transform wins when moving. */
+  transition: none; /* Swiper's inline transition controls its speed. */
+}
+.pvdak-topics-section .pvdak-topics-swiper.is-ready .pvdak-home-topics.swiper-wrapper > .pvdak-home-topic.swiper-slide {
+  flex: 0 0 auto;
+  max-width: none;
+  min-width: 0;
+  width: auto; /* Swiper's measured inline width takes precedence. */
+  height: auto;
+  box-sizing: border-box;
+  scroll-snap-align: none;
+}
+.pvdak-topics-section .pvdak-topics-swiper.is-ready + .pvdak-topics-controls:not([hidden]) {
+  display: flex;
+}
+.pvdak-topics-section .pvdak-topics-controls[hidden] {
+  display: none !important;
+}
+/* No fake movement: on CDN failure remain usable as a scrollable single row. */
+.pvdak-topics-section .pvdak-topics-swiper.pvdak-swiper-unavailable {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
