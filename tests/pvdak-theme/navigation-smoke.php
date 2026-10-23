@@ -40,7 +40,7 @@ pvdak_nav_assert( false !== strpos( $functions, "'pvdak-style'" ) &&
 // This is intentionally not tied to a particular *current* theme release.
 $theme_header_version = array();
 pvdak_nav_assert(
-    preg_match( '/^Version:[ \t]*([0-9]+(?:\\.[0-9]+)*)[ \t]*$/mi', $css, $theme_header_version ) === 1 &&
+    preg_match( '/^Version:[ \t]*([0-9]+(?:[.][0-9]+)*)[ \t]*$/mi', $css, $theme_header_version ) === 1 &&
     version_compare( $theme_header_version[1], '0.8.12', '>=' ) &&
     false === strpos( $functions, "'pvdak-navigation'" ) &&
     false === strpos( $functions, "/assets/css/pvdak-navigation.css" ),

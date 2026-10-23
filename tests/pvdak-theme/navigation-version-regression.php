@@ -6,7 +6,7 @@
 $root = dirname( __DIR__, 2 );
 $source = file_get_contents( $root . '/tests/pvdak-theme/navigation-smoke.php' );
 $css = file_get_contents( $root . '/style.css' );
-if (!preg_match('/^Version:[ \t]*([0-9]+(?:\\.[0-9]+)*)[ \t]*$/mi', $css, $found)) {
+if (!preg_match('/^Version:[ \t]*([0-9]+(?:[.][0-9]+)*)[ \t]*$/mi', $css, $found)) {
     fwrite(STDERR, "NAV_VERSION_FAIL: theme version missing\n"); exit(1);
 }
 $minimum = '0.8.12';
