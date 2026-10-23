@@ -654,3 +654,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Expanded PHP WordPress preflight with checks for signup gate, email verification, ticket handler, key Pages, maintenance state and bundled-vs-active Core version (no sensitive records shown).
 - Added synthetic PHP test for pending-user login rejection, hashed/expiring verification tokens, fake outbound mail, and ticket ownership/source controls; no real accounts or email sent. Wired into private read-only batch script.
 - Updated 10-item priority checklist with precise code-vs-runtime status. Draft remains off main. Actual PHP interpreter, WordPress runtime, Cron, SMTP and browser tests NOT executed during authoring.
+
+
+## 2026-10-23 — NEXT-BATCH-064 (v0.8.28 draft, identity and dashboards)
+- Added branded-login 6-failure/15-minute transient throttle keyed with HMAC rather than raw identity or IP; native WordPress admin login remains untouched, and successful sign-in clears only the associated limit.
+- User list columns now display PVDak email verification and self-declared user type to administrators without granting any legal/professional capability. Email confirmation still does not mean lawyer verification.
+- Client dashboard now shows a non-intake notice and dates for only the authenticated user's own requests. The fallback correctly distinguishes login success from the separately deployed Core plugin.
+- Professional portal hides sensitive-looking capacity/subscription panels until the member's own application status is approved; even approved pages contain aggregates, not case descriptions.
+- Source-only checks pending; no main branch update, server deployment, account-data change or public intake activation.

@@ -14,7 +14,9 @@ get_header(); ?>
 <span class="pvdak-static-label">حساب کاربری پویش</span><h1>ورود به پنل</h1>
 <p>برای ورود از اطلاعات حساب موجود استفاده کنید.</p>
 <?php if($admin_preview): ?><p class="pvdak-static-note">حالت پیش‌نمایش مدیر فعال است. برای آزمایش ورود واقعی از حساب غیرمدیر در محیط آزمایشی استفاده کنید.</p><?php endif; ?>
-<?php if(isset($_GET['error'])): ?><p class="pvdak-static-error" role="alert">نام کاربری یا رمز عبور درست نیست.</p><?php endif; ?>
+<?php if(isset($_GET['error'])): ?>
+<p class="pvdak-static-error" role="alert"><?php echo isset($_GET['error']) && is_string($_GET['error']) && 'slow' === sanitize_key(wp_unslash($_GET['error'])) ? 'تلاش‌های ورود بیش از حد بوده است. چند دقیقه بعد دوباره امتحان کنید.' : 'اطلاعات ورود تأیید نشد. نام کاربری و رمز عبور را بررسی کنید.'; ?></p>
+<?php endif; ?>
 <form method="post" class="pvdak-forms" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 <input type="hidden" name="action" value="pvdak_login"><?php wp_nonce_field('pvdak_login','_pvdak_login_nonce'); ?>
 <label for="pvdak-identity">نام کاربری یا ایمیل</label><input id="pvdak-identity" name="login_identity" autocomplete="username" required>

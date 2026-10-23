@@ -83,3 +83,27 @@ function pvdak_email_verification_resend() {
 }
 add_action('admin_post_nopriv_pvdak_verify_resend', 'pvdak_email_verification_resend');
 add_action('admin_post_pvdak_verify_resend', 'pvdak_email_verification_resend');
+
+/** Admin-only list indicators. These are *not* legal credential approvals. */
+function pvdak_verification_users_column($columns) {
+    if (!current_user_can('list_users'))return $columns;
+    $columns['pvdak_email_status']='تأیید ایمیل PVDak';
+    $columns['pvdak_requested_role']='نوع همکاری اعلامی';
+    return $columns;
+}
+add_filter('manage_users_columns','pvdak_verification_users_column');
+function pvdak_verification_users_value($value,$column,$user_id) {
+    if (!current_user_can('list_users'))return '';
+    if('pvdak_email_status'===$column) {
+        if('1'===(string)get_user_meta($user_id,'_pvdak_email_verification_pending',true))return 'در انتظار تأیید';
+        if(get_user_meta($user_id,'_pvdak_self_reported_category',true))return 'ایمیل تأییدشده';
+        return 'کاربر موجود / نامشخص';
+    }
+    if('pvdak_requested_role'===$column){
+        $raw=get_user_meta($user_id,'_pvdak_self_reported_category',true);
+        $labels=array('client'=>'مراجعه‌کننده','lawyer'=>'متقاضی وکیل','trainee'=>'متقاضی کارآموز','student'=>'دانشجوی حقوق');
+        return isset($labels[$raw])?$labels[$raw]:'—';
+    }
+    return $value;
+}
+add_filter('manage_users_custom_column','pvdak_verification_users_value',10,3);

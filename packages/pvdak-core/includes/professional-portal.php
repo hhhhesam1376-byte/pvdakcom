@@ -37,7 +37,12 @@ function pvdak_core_professional_dashboard() {
         esc_html( get_post_meta( $profile_id, '_pvdak_member_city', true ) ) . '</p></div>';
     $html .= '<p class="pvdak-core-notice">ثبت یا تأیید اداری این درخواست به معنی احراز رسمی پروانه وکالت نیست. تا تکمیل سامانه، جزئیات پرونده مراجعان در این پنل نمایش داده نمی‌شود.</p>';
 
-    if ( 'lawyer' === $member_type ) {
+    // Pending/rejected professional applicants must not see capacity or plan
+    // UI that could be mistaken for permission to receive real case details.
+    if ( 'approved' !== $status ) {
+        $html .= '<p class="pvdak-core-notice">پرونده همکاری هنوز در وضعیت تأییدشده قرار ندارد؛ ظرفیت و ارجاع تخصصی تا بررسی مدیر قابل استفاده نیست.</p>';
+    }
+    if ( 'lawyer' === $member_type && 'approved' === $status ) {
         $ids = pvdak_core_specialty_ids( $profile_id );
         $html .= '<h3>موضوعات تخصص ثبت‌شده توسط مدیر</h3>';
         if ( $ids ) {

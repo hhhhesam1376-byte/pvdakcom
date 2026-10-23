@@ -83,6 +83,9 @@ function pvdak_core_dashboard( $atts = array() ) {
     $html .= '</div>';
 
     $html .= '<h3>آخرین درخواست‌های من</h3>';
+    if ( ! pvdak_core_intake_open() ) {
+        $html .= '<p class="pvdak-core-notice">ثبت درخواست جدید موقتاً غیرفعال است؛ سوابق خودتان همچنان فقط در این حساب نمایش داده می‌شود.</p>';
+    }
     if ( ! $mine ) {
         $html .= '<p class="pvdak-core-empty">هنوز درخواستی ثبت نشده است.</p>';
     } else {
@@ -91,6 +94,7 @@ function pvdak_core_dashboard( $atts = array() ) {
             $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
             $status = get_post_meta( $item->ID, '_pvdak_request_state', true );
             $html .= '<li><strong>' . esc_html( get_the_title( $item->ID ) ) . '</strong>';
+            $html .= '<time datetime="' . esc_attr( get_the_date( 'Y-m-d', $item->ID ) ) . '">' . esc_html( get_the_date( 'Y/m/d', $item->ID ) ) . '</time>';
             $html .= '<span>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'درخواست حقوقی' );
             $html .= ' · ' . esc_html( isset( $statuses[ $status ] ) ? $statuses[ $status ] : 'ثبت‌شده' ) . '</span></li>';
         }

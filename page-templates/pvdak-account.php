@@ -16,7 +16,7 @@ get_header(); ?>
 </nav>
 <div class="pvdak-static-body"><?php if(shortcode_exists('pvdak_account_dashboard')): ?>
 <?php echo do_shortcode('[pvdak_account_dashboard]'); ?>
-<?php else: ?><p>حساب شما فعال است؛ خدمات تخصصی پنل در حال تکمیل هستند.</p><?php endif; ?></div>
+<?php else: ?><p>ورود شما موفق بوده است؛ اما افزونه PVDak Core در حال حاضر داشبورد درخواست‌ها را فراهم نمی‌کند.</p><p class="pvdak-static-note">امکان ثبت درخواست حقوقی تا زمان راه‌اندازی رسمی غیرفعال است.</p><?php endif; ?></div>
 <?php if(shortcode_exists('pvdak_professional_dashboard') && function_exists('pvdak_core_existing_application') && pvdak_core_existing_application(get_current_user_id())): ?>
   <div class="pvdak-account-more"><?php echo do_shortcode('[pvdak_professional_dashboard]'); ?></div>
 <?php endif; ?>
