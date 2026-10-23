@@ -643,3 +643,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 ## 2026-10-23 — NEXT-BATCH-061 (v0.8.27 draft, email verification)
 - Added hashed, one-time 24-hour email verification tokens and generic throttled resend on the opt-in registration page. New accounts are marked pending and prevented from authenticating via wp_authenticate_user until verification. Verification state does NOT imply lawyer/professional credentials. No existing users are flagged. The registration feature remains CLOSED by default and while maintenance is on.
 - Added registration UI messages and no plaintext token storage; requires working outgoing WordPress mail and future runtime acceptance before opening registration. Change is a standalone draft commit; no main or live deployment.
+
+
+## 2026-10-23 — NEXT-BATCH-062 (v0.8.27 draft, support conversations)
+- Upgraded native private support tickets to staff/customer back-and-forth thread: only owning logged-in author may POST follow-ups (nonce + ownership/type/private checks + cooldown), and only administrators may add staff replies. Every message is add_post_meta append-only, avoiding lost-message races. Maximum size capped, last 30 messages displayed, legacy single staff replies preserved.
+- Ticket mail/case intake remain separate; no open public API, no public CPT archive and no cross-account thread display. Site runtime two-account privacy tests still required before release.

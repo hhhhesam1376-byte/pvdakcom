@@ -1401,3 +1401,12 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
 .pvdak-ticket-list strong{font-size:14px}.pvdak-ticket-list small{font-size:12px;color:#638781}
 .pvdak-ticket-list p{font-size:13px;line-height:2;margin:0}
 .pvdak-forms select{width:100%;border:1px solid #cddfda;border-radius:11px;background:#fbfdfc;padding:12px;font:inherit;color:#163a4a}
+
+/* Private support-thread replies on the user's own tickets. */
+.pvdak-ticket-original{background:#fff;padding:12px 14px;border-radius:9px;white-space:pre-wrap}
+.pvdak-ticket-conversation{margin:12px 0;padding:0;display:grid;gap:9px;list-style:none}
+.pvdak-ticket-conversation li{background:#fff;border:1px solid #d9e6e2;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;white-space:pre-wrap}
+.pvdak-ticket-conversation li strong{font-size:12px;color:#0d6b63}
+.pvdak-ticket-conversation li span{font-size:13px;line-height:1.8}
+.pvdak-ticket-followup{margin:12px 0 0;padding-top:10px;border-top:1px solid #d5e6e0}
+.pvdak-ticket-followup button{font-size:12px;padding:8px 18px}
