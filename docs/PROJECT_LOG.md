@@ -558,3 +558,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added theme-contained `assets/icons/pvdak-pv.svg` temporary two-tone vector favicon (white P, gold V, dark emerald/navy background) with small-size legibility. No external assets or CDN.
 - The classic theme emits the icon in wp_head, login_head and admin_head, suppressing duplicate native WP favicon tags without changing WordPress site_icon option. The standalone maintenance page also emits the icon explicitly because it bypasses wp_head.
 - Added G to docs/PENDING_APPROVAL.md; 0.8.20 draft already contains A–F. Existing real production main and website remain unchanged until the user requests review/publish.
+
+
+## 2026-10-23 — DRAFT-PREMIUM-PROCESS-050 (review batch v0.8.20, not deployed)
+- Added item H: visually upgraded the four-step process section in `front-page.php` to four editorial-quality translucent cards against the existing dark navy/teal gradient; four unique stroke SVGs, refined step number pills, consistent centered text, ambient background accents and a connecting desktop progress line.
+- Used semantic `ol/li` rather than an interactive/phony slider: the steps explain sequence and should not swipe or navigate. Preserved all original editable ACF title/description fields and four-step sequence. Responsive two-column grid up to tablet/mobile, one column at tiny widths, accessible reduced-motion styling. Changed `style.css` and mirrored `assets/css/pvdak-home.css`.
+- Updated source smoke checks and `docs/PENDING_APPROVAL.md`. All A–H are still draft only; `main` and its existing production deploy path remain unchanged. No WordPress content/options, maintenance, Core or user intake state changed. User will authorize publication as a separate step after review.

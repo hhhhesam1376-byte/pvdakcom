@@ -151,17 +151,37 @@ $svg_icons = array(
     <?php endif; ?>
   </section>
 
-  <section class="pvdak-home-process" aria-labelledby="process-title">
-    <h2 id="process-title"><?php echo esc_html(pvdak_home_value('process_title')); ?></h2>
-    <div class="pvdak-home-grid pvdak-home-grid--4">
-      <?php for($i=1;$i<=4;$i++): ?>
-      <div class="pvdak-home-step">
-        <span aria-hidden="true"><?php echo esc_html($i); ?></span>
-        <h3><?php echo esc_html(pvdak_home_value("step_{$i}_title")); ?></h3>
-        <p><?php echo esc_html(pvdak_home_value("step_{$i}_description")); ?></p>
+  <?php
+  // Hand-authored inline SVGs; icons are theme assets while titles/descriptions
+  // continue to come from the existing editable ACF homepage fields.
+  $process_icons = array(
+      1 => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="11" y="10" width="26" height="32" rx="5"/><path d="M20 10v-3h8v3M17 21h14M17 28h9M17 35h6"/><path d="m29 31 7-7 4 4-7 7-5 1 1-5Z"/></svg>',
+      2 => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 5c7 5 14 5 18 6v13c0 9-6 15-18 19C12 39 6 33 6 24V11c4-1 11-1 18-6Z"/><path d="m15 23 6 6 12-12"/><path d="M17 11c4-1 5-2 7-3"/></svg>',
+      3 => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="16" r="7"/><path d="M6 37c0-8 6-13 14-13 5 0 9 2 11 6M30 12a6 6 0 0 1 5 11"/><circle cx="36" cy="35" r="8"/><path d="m32 35 3 3 5-6"/></svg>',
+      4 => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 8h30v26H24l-9 7v-7H9V8Z"/><path d="M16 17h16m-16 6h9"/><circle cx="35" cy="33" r="9" fill="#134a51" stroke="currentColor"/><path d="m31 33 3 3 5-6"/></svg>',
+  );
+  ?>
+  <section class="pvdak-home-process pvdak-process-timeline" aria-labelledby="process-title">
+    <div class="pvdak-process-heading">
+      <div>
+        <span class="pvdak-process-eyebrow">مسیر همراهی</span>
+        <h2 id="process-title"><?php echo esc_html( pvdak_home_value( 'process_title' ) ); ?></h2>
       </div>
-      <?php endfor; ?>
+      <span class="pvdak-process-heading-note">چهار گام روشن، از شروع تا پیگیری</span>
     </div>
+    <ol class="pvdak-home-grid pvdak-home-grid--4 pvdak-process-grid" aria-label="چهار مرحله پیگیری درخواست">
+      <?php for ( $i = 1; $i <= 4; $i++ ): ?>
+        <li class="pvdak-home-step pvdak-process-step pvdak-process-step--<?php echo esc_attr( $i ); ?>">
+          <div class="pvdak-process-step-head">
+            <span class="pvdak-process-step-number">مرحله <?php echo esc_html( $i ); ?></span>
+            <span class="pvdak-process-step-icon" aria-hidden="true"><?php echo $process_icons[ $i ]; ?></span>
+          </div>
+          <h3><?php echo esc_html( pvdak_home_value( "step_{$i}_title" ) ); ?></h3>
+          <p><?php echo esc_html( pvdak_home_value( "step_{$i}_description" ) ); ?></p>
+          <span class="pvdak-process-step-decoration" aria-hidden="true"></span>
+        </li>
+      <?php endfor; ?>
+    </ol>
   </section>
 
   <?php if ( $magazine_feature || current_user_can( 'edit_posts' ) ): ?>

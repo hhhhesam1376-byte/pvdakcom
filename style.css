@@ -1099,3 +1099,140 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
 @media(prefers-reduced-motion:reduce) {
   .pvdak-related-card {transition:none !important}
 }
+
+
+/* 0.8.20 process timeline: four visual steps built to match premium topic cards. */
+.pvdak-home-process.pvdak-process-timeline {
+  position:relative;
+  isolation:isolate;
+  min-height:0;
+  margin:52px 36px;
+  padding:clamp(24px,3vw,39px);
+  overflow:hidden;
+  border:1px solid rgba(146,218,212,.17);
+  border-radius:24px;
+  background:linear-gradient(120deg,#102e43 1%,#123d49 47%,#12675f 100%);
+  box-shadow:0 18px 45px rgba(14,55,70,.13);
+}
+.pvdak-process-timeline::before {
+  content:"";position:absolute;pointer-events:none;z-index:-1;
+  width:400px;height:400px;top:-260px;left:-120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(134,236,212,.18),transparent 65%);
+}
+.pvdak-process-timeline::after {
+  content:"";position:absolute;pointer-events:none;z-index:-1;
+  width:320px;height:320px;bottom:-250px;right:-90px;border-radius:50%;
+  background:radial-gradient(circle,rgba(229,182,104,.18),transparent 69%);
+}
+.pvdak-process-heading {
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  flex-wrap:wrap;margin:0 0 28px;text-align:right;
+}
+.pvdak-process-eyebrow {
+  display:inline-flex;align-items:center;gap:7px;
+  margin-bottom:7px;color:#abe2d6;letter-spacing:.01em;
+  font-size:12px;font-weight:800;
+}
+.pvdak-home-process.pvdak-process-timeline h2 {
+  margin:0;font-size:clamp(21px,2.2vw,28px);
+  line-height:1.65;color:#fff;
+}
+.pvdak-process-heading-note {
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid rgba(213,241,232,.19);background:rgba(255,255,255,.065);
+  border-radius:99px;padding:8px 15px;color:#d2eae8;font-size:11px;
+}
+.pvdak-process-timeline .pvdak-process-grid {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;position:relative;list-style:none;
+  margin:0;padding:0;counter-reset:none;
+}
+.pvdak-process-timeline .pvdak-process-grid::before {
+  content:"";position:absolute;z-index:0;top:66px;left:5%;right:5%;
+  height:2px;background:linear-gradient(90deg,rgba(232,188,120,.7),rgba(138,223,202,.8));
+  pointer-events:none;
+}
+.pvdak-process-timeline .pvdak-process-step {
+  position:relative;z-index:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;gap:0;
+  min-width:0;min-height:225px;padding:17px 15px 22px;
+  text-align:center;border:1px solid rgba(208,237,232,.20);
+  border-radius:19px;background:rgba(255,255,255,.075);
+  box-shadow:0 9px 23px rgba(0,17,29,.06);
+  transition:transform .25s ease,background .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+.pvdak-process-timeline .pvdak-process-step:hover {
+  transform:translateY(-5px);
+  background:rgba(255,255,255,.12);
+  border-color:rgba(176,230,215,.47);
+  box-shadow:0 19px 32px rgba(0,17,29,.18);
+}
+.pvdak-process-timeline .pvdak-process-step-head {
+  width:100%;display:flex;flex-direction:column;align-items:center;gap:9px;
+  margin-bottom:16px;
+}
+.pvdak-process-timeline .pvdak-process-step-number {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:25px;padding:2px 10px;
+  background:rgba(195,239,224,.12);border:1px solid rgba(190,228,218,.18);
+  color:#cdece3;border-radius:99px;
+  font-size:10px;font-weight:750;line-height:1.5;
+}
+.pvdak-process-timeline .pvdak-process-step-icon {
+  position:relative;display:grid;place-items:center;
+  width:63px;height:63px;flex:0 0 63px;
+  border-radius:19px;color:#e9d4ab;
+  background:linear-gradient(145deg,rgba(228,186,111,.20),rgba(196,232,224,.12));
+  border:1px solid rgba(239,214,161,.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 7px 13px rgba(0,20,28,.09);
+}
+.pvdak-process-timeline .pvdak-process-step:nth-child(2) .pvdak-process-step-icon {
+  color:#a9ead8;background:linear-gradient(145deg,rgba(74,192,163,.24),rgba(157,213,225,.10));border-color:rgba(142,222,195,.3);
+}
+.pvdak-process-timeline .pvdak-process-step:nth-child(3) .pvdak-process-step-icon {
+  color:#b9dcf4;background:linear-gradient(145deg,rgba(109,171,206,.25),rgba(204,218,236,.11));border-color:rgba(175,217,240,.28);
+}
+.pvdak-process-timeline .pvdak-process-step:nth-child(4) .pvdak-process-step-icon {
+  color:#ffcf9e;background:linear-gradient(145deg,rgba(224,165,105,.26),rgba(224,204,168,.10));border-color:rgba(249,203,150,.29);
+}
+.pvdak-process-timeline .pvdak-process-step-icon svg {
+  width:37px;height:37px;display:block;margin:auto;
+  stroke:currentColor;fill:none;
+}
+.pvdak-process-timeline .pvdak-process-step h3 {
+  margin:0 0 7px;color:#fff;font-size:15px;line-height:1.8;font-weight:850;text-align:center;
+}
+.pvdak-process-timeline .pvdak-process-step p {
+  margin:0;color:#c4dce1;font-size:12px;line-height:1.9;text-align:center;font-weight:400;
+}
+.pvdak-process-timeline .pvdak-process-step-decoration {
+  display:block;width:30px;height:3px;margin-top:auto;transform:translateY(12px);
+  border-radius:99px;background:#e5bd7f;opacity:.78;
+}
+.pvdak-process-timeline .pvdak-process-step:nth-child(2) .pvdak-process-step-decoration{background:#96d9c5}
+.pvdak-process-timeline .pvdak-process-step:nth-child(3) .pvdak-process-step-decoration{background:#a6d6ee}
+.pvdak-process-timeline .pvdak-process-step:nth-child(4) .pvdak-process-step-decoration{background:#f5c89d}
+@media(max-width:980px) {
+  .pvdak-process-timeline .pvdak-process-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+  .pvdak-process-timeline .pvdak-process-grid::before{display:none}
+  .pvdak-process-timeline .pvdak-process-step{min-height:200px}
+}
+@media(max-width:620px) {
+  .pvdak-home-process.pvdak-process-timeline{margin:35px 5px;padding:25px 16px;border-radius:20px}
+  .pvdak-process-heading{margin-bottom:20px}
+  .pvdak-process-heading-note{display:none}
+  .pvdak-process-timeline .pvdak-process-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .pvdak-process-timeline .pvdak-process-step{min-height:207px;padding:13px 9px 21px;border-radius:15px}
+  .pvdak-process-timeline .pvdak-process-step-icon{width:54px;height:54px;flex-basis:54px;border-radius:16px}
+  .pvdak-process-timeline .pvdak-process-step-icon svg{width:31px;height:31px}
+  .pvdak-process-timeline .pvdak-process-step h3{font-size:13px}
+  .pvdak-process-timeline .pvdak-process-step p{font-size:11px}
+}
+@media(max-width:350px) {
+  .pvdak-process-timeline .pvdak-process-grid{grid-template-columns:1fr}
+  .pvdak-process-timeline .pvdak-process-step{min-height:175px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .pvdak-process-timeline .pvdak-process-step{transition:none!important}
+  .pvdak-process-timeline .pvdak-process-step:hover{transform:none}
+}
