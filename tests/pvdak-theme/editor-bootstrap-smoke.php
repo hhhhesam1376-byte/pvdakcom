@@ -160,8 +160,9 @@ $draft_sample->post_status = 'draft';
 $draft_sample->post_content = 'Existing editorial content';
 $protected = pvdak_editor_seed_example_legal_topics( $parent );
 pvdak_editor_expect( 17 === $protected['existing'] && 0 === $protected['created'] &&
+    1 === $protected['unpublished'] &&
     'draft' === $draft_sample->post_status && 'Existing editorial content' === $draft_sample->post_content,
-    'A pre-existing edited draft is never automatically published or rewritten' );
+    'A pre-existing edited draft remains unpublished, is counted, and is never rewritten' );
 $root_draft = $GLOBALS['pages'][ $parent ]->post_status;
 $GLOBALS['pages'][ $parent ]->post_status = 'draft';
 $blocked = pvdak_editor_seed_example_legal_topics( $parent );
