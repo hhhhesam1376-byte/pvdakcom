@@ -6,8 +6,19 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+function pvdak_editor_child_path( $parent_id, $slug ) {
+    $parent_id = absint( $parent_id );
+    if ( ! $parent_id ) { return $slug; }
+    // WordPress Pages can be nested beyond one level. Resolve the full
+    // hierarchy so the idempotent seed never duplicates an existing child.
+    $uri = function_exists( 'get_page_uri' ) ? get_page_uri( $parent_id ) : '';
+    $base = is_string( $uri ) && '' !== trim( $uri, '/' ) ?
+        trim( $uri, '/' ) : get_post_field( 'post_name', $parent_id );
+    return $base . '/' . $slug;
+}
+
 function pvdak_editor_find_or_create_page( $slug, $title, $status = 'publish', $parent = 0, $template = '' ) {
-    $path = $parent ? get_post_field( 'post_name', $parent ) . '/' . $slug : $slug;
+    $path = pvdak_editor_child_path( $parent, $slug );
     $existing = get_page_by_path( $path, OBJECT, 'page' );
     if ( $existing && 'trash' !== $existing->post_status ) {
         return (int) $existing->ID; // Preserve ALL existing content/status/template.
@@ -86,7 +97,7 @@ function pvdak_editor_seed_example_legal_topics( $parent_id ) {
         return $result;
     }
     foreach ( pvdak_editor_example_legal_topics() as $slug => $title ) {
-        $path = get_post_field( 'post_name', $parent_id ) . '/' . $slug;
+        $path = pvdak_editor_child_path( $parent_id, $slug );
         $existing = get_page_by_path( $path, OBJECT, 'page' );
         if ( $existing && 'trash' !== $existing->post_status ) {
             $result['existing']++;
