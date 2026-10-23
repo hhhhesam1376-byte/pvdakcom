@@ -32,3 +32,8 @@
 - خروجی آزمون کد روی هاست در `NAV_FAIL` متوقف شد. دلیل قطعی در سورس: تست، نسخه CSS را به مقدار دقیق قدیمی `0.8.12` محدود کرده بود، نه اینکه حداقل نسخه موردنیاز را بسنجد.
 - اصلاح تست و اجرای خودکار جدید فقط در پیش‌نویس ثبت شده است؛ تست‌های بعدی هنوز اجرا نشده‌اند. نیازی به دستکاری CSS زنده یا قطع تعمیرات نیست.
 - برای تشخیص سریع، همین تست را می‌توان فقط در آرشیو موقت و بدون ویرایش `main` اجرا کرد. نتیجه آزمون مرورگر و عملکرد منو همچنان جداگانه است.
+
+
+## 2026-10-23 — آزمون صفحه اصلی
+- `PVDAK_MEGA_NAV_OK: checks=13` on host in a temporary test archive, confirming the earlier NAV failure was a stale test literal.
+- `LAYOUT_FAIL: All process stages have dedicated native SVG iconography` caused by stale expectation of `stroke="#134a51"` instead of actual badge `fill="#134a51"` on the existing fourth step. A precise source-only assertion fix is prepared as draft, not deployed.

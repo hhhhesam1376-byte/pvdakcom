@@ -191,9 +191,14 @@ pvdak_layout_expect( false !== strpos( $front, 'class="pvdak-home-process pvdak-
     false !== strpos( $front, 'pvdak_home_value( "step_{$i}_title" )' ) &&
     false !== strpos( $front, 'pvdak_home_value( "step_{$i}_description" )' ),
     'Process timeline keeps four editable ACF steps and accessible ordered structure' );
-pvdak_layout_expect( false !== strpos( $front, 'stroke="#134a51"' ) &&
+// Stage four uses a filled badge (fill="#134a51") inside an SVG whose
+// outlines intentionally inherit currentColor. Both variants are valid.
+pvdak_layout_expect(
+    ( false !== strpos( $front, 'fill="#134a51"' ) ||
+      false !== strpos( $front, 'stroke="#134a51"' ) ) &&
     false !== strpos( $front, 'm15 23 6 6 12-12' ) &&
     false !== strpos( $front, 'm32 35 3 3 5-6' ) &&
+    false !== strpos( $front, 'pvdak-process-step-icon' ) &&
     false !== strpos( $css, '.pvdak-process-timeline .pvdak-process-step-icon svg' ),
     'All process stages have dedicated native SVG iconography' );
 pvdak_layout_expect( false === strpos( $css, '.pvdak-process-timeline .pvdak-process-grid::before' ) &&

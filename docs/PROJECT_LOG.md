@@ -721,3 +721,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Source inspection confirms the normal theme `pvdak-style` uses `get_stylesheet_uri()`, bundled mega-navigation CSS remains in `style.css`, and there is no separate navigation stylesheet enqueue.
 - Fixed navigation smoke to read the actual CSS header and require minimum theme 0.8.12 via semantic `version_compare`, allowing 0.8.28+; added lightweight regression and wired into existing script.
 - Operator also confirmed WP-CLI live `PREFLIGHT_SUMMARY: checks=37 fails=0 warnings=0` after publishing their existing privacy-policy Page. No theme/Core deployed, website state changed, or real mail/database/browser test run by assistant.
+
+
+## 2026-10-23 — HOMEPAGE-ICON-SMOKE-074 (draft only)
+- Operator reran source tests with NAV's obsolete 0.8.12 literal patched only in an ephemeral archive. NAV 13 checks passed, then the next layout test failed at an obsolete exact string `stroke="#134a51"`.
+- Verified all four inline process stage icons are present in `front-page.php` and the step's icon SCSS selector exists in `style.css`. Stage four's badge intentionally uses `fill="#134a51"` with inherited `stroke="currentColor"`.
+- Updated only the source regression to accept either valid fill or stroke accent, while still demanding both stage-specific paths and scoped CSS. No homepage graphic, live theme or Core plugin change; next full PHP source-suite execution remains necessary.
