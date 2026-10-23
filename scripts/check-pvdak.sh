@@ -28,6 +28,13 @@ if [[ ! -f "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php" ]]; then
   exit 1
 fi
 php "$THEME/tests/pvdak-theme/legal-topic-search-smoke.php"
+if [[ ! -s "$THEME/assets/css/pvdak-navigation.css" ]] ||
+   [[ ! -f "$THEME/tests/pvdak-theme/navigation-smoke.php" ]]; then
+  echo "FAIL: WordPress mega-navigation styles or regression test missing" >&2
+  exit 1
+fi
+php -l "$THEME/tests/pvdak-theme/navigation-smoke.php" >/dev/null
+PVDAK_THEME_SOURCE="$THEME" php "$THEME/tests/pvdak-theme/navigation-smoke.php"
 if [[ ! -s "$THEME/category.php" ]] || [[ ! -s "$THEME/assets/css/pvdak-editorial.css" ]]; then
   echo "FAIL: native editorial category archive or styling is missing" >&2
   exit 1
