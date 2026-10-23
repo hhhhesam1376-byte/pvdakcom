@@ -633,3 +633,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Corrected optional monthly quota accounting: queries immutable assignment-audit entries independently of the current assigned-profile meta. Revoked/reassigned cases still consume the originating professional's recorded month quota; default-OFF gate unchanged.
 
 - Polished homepage starter integration with WP ACF: card titles and descriptions remain editable; legacy saved role defaults are auto-normalized on read without overwriting DB. Removed misleading unused URL inputs from ACF UI and renamed the admin tab. Destination URLs remain safe site routes.
+
+
+## 2026-10-23 — RELEASE-INSTRUCTION-060 (Theme 0.8.26)
+- User directed work to proceed ('برو توکارش') after the proposed controlled review/release. Prepare fast-forward on existing main only, with established 15-minute cPanel theme cron. No new workflow, keys, credentials, or new branch.
+- Explicit release scope: theme + bundled Core source, NOT installed Core plugin. Core 0.8.1 active upgrade remains pending; intake/registration/payment gates remain OFF and maintenance ON. Runtime PHP, browser, mail and user-role acceptance tests remain unverified until cPanel release is confirmed.
