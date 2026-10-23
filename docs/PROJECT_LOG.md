@@ -629,3 +629,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added read-only source preflight script `scripts/check-batch-readonly.sh`: PHP lint on all repo PHP, existing theme/navigation/editor tests and privacy/Core policy regression, plus new feature-batch smoke.
 - Expanded source checks to assert new 3-action homepage section. Updated public pages/auth smoke expected theme version. Added explicit 10-task review checklist distinguishing implemented code, closed defaults, missing runtime tests and Core installation limitation.
 - This only prepares the batch for administrator review. It does NOT update GitHub main, cron, site, users, passwords, Core plugin version on host, intake settings, registrations, or public maintenance.
+
+- Corrected optional monthly quota accounting: queries immutable assignment-audit entries independently of the current assigned-profile meta. Revoked/reassigned cases still consume the originating professional's recorded month quota; default-OFF gate unchanged.

@@ -28,9 +28,12 @@ function pvdak_core_subscription_expiry( $profile_id ) {
 function pvdak_core_subscription_month_assignments( $profile_id ) {
     $profile_id = absint( $profile_id );
     if ( ! $profile_id ) { return 0; }
+    // Audits are immutable history: count even if a case was later unassigned.
     $ids = get_posts( array( 'post_type'=>'pvdak_request', 'post_status'=>'private',
-        'posts_per_page'=>-1, 'fields'=>'ids','meta_key'=>'_pvdak_assigned_profile_id',
-        'meta_value'=>(string)$profile_id,'no_found_rows'=>true,
+        'posts_per_page'=>-1, 'fields'=>'ids','no_found_rows'=>true,
+        'meta_query'=>array(
+            array('key'=>'_pvdak_assignment_audit','compare'=>'EXISTS')
+        ),
         'suppress_filters'=>false ) );
     $first = gmdate( 'Y-m-01 00:00:00' );
     $next = gmdate( 'Y-m-01 00:00:00', strtotime('+1 month', strtotime($first.' UTC')) );
