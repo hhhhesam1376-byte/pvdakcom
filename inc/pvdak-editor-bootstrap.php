@@ -45,6 +45,80 @@ function pvdak_editor_prefill_acf( $home_id, $field, $value ) {
     return (bool) update_field( 'field_pvdak_home_' . $field, (int) $value, $home_id );
 }
 
+/**
+ * Exact first-round topic labels requested for the site's legal-landing index.
+ * They are Pages below /legal-topics/, NOT WordPress Post categories.
+ * Keep related labels distinct until editors deliberately consolidate them.
+ */
+function pvdak_editor_example_legal_topics() {
+    return array(
+        'civil-law' => 'حقوقی',
+        'criminal-cases' => 'کیفری',
+        'family' => 'خانواده',
+        'registrations' => 'ثبتی',
+        'property-cases' => 'ملکی',
+        'children-and-adolescents-rights' => 'حقوق اطفال و نوجوانان',
+        'land-law' => 'حقوق اراضی',
+        'tax-law' => 'حقوق مالیات',
+        'human-rights' => 'حقوق بشر',
+        'company-law' => 'حقوق شرکت ها',
+        'intellectual-property-law' => 'حقوق مالکیت معنوی',
+        'registration-law' => 'حقوق ثبت',
+        'family-rights' => 'حقوق خانواده',
+        'criminal-law-rights' => 'حقوق کیفری',
+        'insurance-law' => 'حقوق بیمه',
+        'sports-law' => 'حقوق ورزشی',
+        'labor-law' => 'حقوق کار',
+    );
+}
+
+/**
+ * Publish EMPTY illustrative landing Pages so they participate in the theme's
+ * existing search, cards and Core specialty selectors while maintenance is ON.
+ * Existing Pages are never edited, republished, relabelled or overwritten.
+ * Only newly created samples receive a marker (for noindex while empty).
+ */
+function pvdak_editor_seed_example_legal_topics( $parent_id ) {
+    $result = array( 'created' => 0, 'existing' => 0, 'failed' => 0 );
+    $parent_id = absint( $parent_id );
+    if ( ! $parent_id || 'publish' !== get_post_status( $parent_id ) ) {
+        $result['failed'] = count( pvdak_editor_example_legal_topics() );
+        return $result;
+    }
+    foreach ( pvdak_editor_example_legal_topics() as $slug => $title ) {
+        $path = get_post_field( 'post_name', $parent_id ) . '/' . $slug;
+        $existing = get_page_by_path( $path, OBJECT, 'page' );
+        if ( $existing && 'trash' !== $existing->post_status ) {
+            $result['existing']++;
+            continue;
+        }
+        $id = pvdak_editor_find_or_create_page(
+            $slug, $title, 'publish', $parent_id,
+            'page-templates/legal-topic-landing.php'
+        );
+        if ( $id && 'publish' === get_post_status( $id ) ) {
+            update_post_meta( $id, '_pvdak_sample_landing', '1' );
+            $result['created']++;
+        } else {
+            $result['failed']++;
+        }
+    }
+    return $result;
+}
+
+/** Noindex only empty sample landing Pages; edited substantive Pages become indexable. */
+function pvdak_editor_sample_landing_robots( $robots ) {
+    if ( ! is_singular( 'page' ) ) { return $robots; }
+    $post = get_queried_object();
+    if ( $post instanceof WP_Post &&
+         '1' === (string) get_post_meta( $post->ID, '_pvdak_sample_landing', true ) &&
+         '' === trim( (string) $post->post_content ) ) {
+        $robots['noindex'] = true;
+    }
+    return $robots;
+}
+add_filter( 'wp_robots', 'pvdak_editor_sample_landing_robots' );
+
 /** A permanent admin guide with an explicit opt-in starter action. */
 function pvdak_editor_bootstrap_card() {
     if ( ! current_user_can( 'manage_options' ) ) { return; }
@@ -67,7 +141,23 @@ function pvdak_editor_bootstrap_card() {
     wp_nonce_field( 'pvdak_editor_prepare_structure' );
     submit_button( 'آماده‌سازی ساختار محتوایی (بدون انتشار لندینگ‌های نمونه)', 'secondary' );
     echo '</form>';
-    echo '<p><small>برگه‌های مادر تازه در وضعیت منتشرشده ساخته می‌شوند تا در ACF قابل انتخاب باشند؛ محتوای حقوقی نمونه منتشر نمی‌شود. این ابزار تنظیمات Cron، پرداخت، نقش‌ها یا دیتابیس هسته خصوصی را تغییر نمی‌دهد.</small></p>';
+    echo '<p><small>ابزار بالا همچنان فقط چهار پیش‌نویس آموزشی ایجاد می‌کند و محتوای موجود را تغییر نمی‌دهد.</small></p>';
+    echo '<hr><h3>۱۷ لندینگ نمونه برای شروع توسعه</h3>';
+    echo '<p>این دکمه ۱۷ عنوان دقیقاً مطابق فهرست اولیه، در قالب <strong>برگه منتشرشده اما بدون متن تخصصی</strong> زیر «موضوعات حقوقی» ایجاد می‌کند تا کارت‌ها، جست‌وجو و انتخاب تخصص قابل آزمایش باشند. صفحه‌های خالی نمونه تا آماده‌شدن متن واقعی noindex هستند. صفحه‌های قبلی بدون تغییر باقی می‌مانند.</p>';
+    if ( isset( $_GET['pvdak_samples'] ) ) {
+        $result = sanitize_key( wp_unslash( $_GET['pvdak_samples'] ) );
+        if ( '1' === $result ) {
+            echo '<div class="notice notice-success inline"><p>لندینگ‌های نمونه بررسی و موارد گمشده ایجاد شدند. فهرست برگه‌ها را بازبینی کنید.</p></div>';
+        } elseif ( 'error' === $result ) {
+            echo '<div class="notice notice-error inline"><p>برخی لندینگ‌ها ساخته نشدند. وضعیت برگه مادر و لاگ وردپرس را بررسی کنید.</p></div>';
+        }
+    }
+    echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+    echo '<input type="hidden" name="action" value="pvdak_editor_publish_sample_topics">';
+    wp_nonce_field( 'pvdak_editor_publish_sample_topics' );
+    submit_button( 'ایجاد ۱۷ لندینگ نمونه قابل نمایش', 'secondary' );
+    echo '</form>';
+    echo '<p><small>هیچ متن حقوقی ساختگی منتشر نمی‌شود. صفحه تعمیرات، پذیرش پرونده‌ها و تنظیمات افزونه Core تغییر نمی‌کنند.</small></p>';
     echo '</div></div>';
 }
 
@@ -125,3 +215,29 @@ function pvdak_editor_prepare_structure() {
     exit;
 }
 add_action( 'admin_post_pvdak_editor_prepare_structure', 'pvdak_editor_prepare_structure' );
+
+/**
+ * One explicit authorized admin action only. Cron and normal theme page views
+ * never create/update WordPress content.
+ */
+function pvdak_editor_publish_sample_topics() {
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_pages' ) ) {
+        wp_die( 'اجازه مدیریت برگه‌های نمونه را ندارید.', '', array( 'response' => 403 ) );
+    }
+    check_admin_referer( 'pvdak_editor_publish_sample_topics' );
+
+    $parent = pvdak_editor_find_or_create_page(
+        'legal-topics', 'موضوعات حقوقی', 'publish', 0,
+        'page-templates/legal-topics-index.php'
+    );
+    $result = pvdak_editor_seed_example_legal_topics( $parent );
+    $home_id = function_exists( 'pvdak_home_page_id' ) ? pvdak_home_page_id() : 0;
+    if ( $home_id && $parent && 'publish' === get_post_status( $parent ) ) {
+        pvdak_editor_prefill_acf( $home_id, 'legal_topics_parent_page', $parent );
+    }
+    $okay = 0 === $result['failed'] &&
+        count( pvdak_editor_example_legal_topics() ) === $result['created'] + $result['existing'];
+    wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&pvdak_samples=' . ( $okay ? '1' : 'error' ) ) );
+    exit;
+}
+add_action( 'admin_post_pvdak_editor_publish_sample_topics', 'pvdak_editor_publish_sample_topics' );
