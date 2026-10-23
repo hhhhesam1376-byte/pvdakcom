@@ -115,10 +115,12 @@ $svg_icons = array(
     <?php if ( $legal_pages ): ?>
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
       <div class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
-        <?php foreach ( $legal_pages as $legal_page ): ?>
-          <a class="pvdak-home-topic swiper-slide" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
-            <?php echo pvdak_legal_topic_svg( pvdak_legal_topic_icon( $legal_page->ID ) ); ?>
-            <span><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
+        <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>
+          <a class="pvdak-home-topic swiper-slide pvdak-topic-tone-<?php echo esc_attr( ( $topic_index % 6 ) + 1 ); ?>" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
+            <span class="pvdak-topic-card__icon" aria-hidden="true"><?php echo pvdak_topic_card_svg( $legal_page ); ?></span>
+            <span class="pvdak-topic-card__title"><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
+            <span class="pvdak-topic-card__caption"><?php echo esc_html( pvdak_topic_card_caption( $legal_page ) ); ?></span>
+            <span class="pvdak-topic-card__footer" aria-hidden="true">مشاهده موضوع <span>←</span></span>
           </a>
         <?php endforeach; ?>
       </div>

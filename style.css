@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.18
+Version: 0.8.19
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -735,4 +735,129 @@ a.pvdak-home-hero-action:hover{color:#087f72;background:#f2faf5}
 .pvdak-topics-section .pvdak-topics-swiper.pvdak-swiper-unavailable {
   overflow-x: auto;
   overflow-y: hidden;
+}
+
+
+/* 0.8.19 — Premium single-row legal-topic Swiper, six cards on desktop. */
+.pvdak-topics-section .pvdak-home-topics {
+  --pvdak-topic-visible: 6;
+  --pvdak-topic-gap: 14px;
+}
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: right;
+  min-height: 208px;
+  gap: 9px;
+  padding: 17px 16px 14px;
+  border-radius: 20px;
+  border: 1px solid #dce9ea;
+  background: linear-gradient(155deg, #fff 35%, #f4faf9 100%);
+  box-shadow: 0 6px 20px rgba(13,48,60,.06);
+  color: #1a3947;
+  flex-basis: calc((100% - 70px) / 6);
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #0a806f, #31a9a3, #e6b56c);
+}
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  top: -56px;
+  left: -49px;
+  background: radial-gradient(circle, var(--pvdak-topic-halo, #d9f1ed), transparent 72%);
+}
+.pvdak-topics-section .pvdak-topic-tone-1 { --pvdak-topic-color:#0d7e73; --pvdak-topic-halo:#c4f0e8; }
+.pvdak-topics-section .pvdak-topic-tone-2 { --pvdak-topic-color:#2f628f; --pvdak-topic-halo:#dce9fa; }
+.pvdak-topics-section .pvdak-topic-tone-3 { --pvdak-topic-color:#865e9b; --pvdak-topic-halo:#eee3f5; }
+.pvdak-topics-section .pvdak-topic-tone-4 { --pvdak-topic-color:#ae7636; --pvdak-topic-halo:#faeed6; }
+.pvdak-topics-section .pvdak-topic-tone-5 { --pvdak-topic-color:#216d7b; --pvdak-topic-halo:#d6edf2; }
+.pvdak-topics-section .pvdak-topic-tone-6 { --pvdak-topic-color:#98744c; --pvdak-topic-halo:#f3e7d9; }
+.pvdak-topics-section .pvdak-topic-card__icon {
+  display: grid;
+  place-items: center;
+  width: 55px;
+  height: 55px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--pvdak-topic-color, #0d7e73) 24%, white);
+  background: color-mix(in srgb, var(--pvdak-topic-color, #0d7e73) 10%, white);
+  border-radius: 16px;
+  color: var(--pvdak-topic-color, #0d7e73);
+  transition: transform .22s ease;
+}
+.pvdak-topics-section .pvdak-topic-card__icon svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+  color: inherit;
+  stroke: currentColor;
+}
+.pvdak-topics-section .pvdak-topic-card__title {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: #143846;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pvdak-topics-section .pvdak-topic-card__caption {
+  color: #667b84;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pvdak-topics-section .pvdak-topic-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 5px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--pvdak-topic-color, #0d7e73);
+}
+.pvdak-topics-section .pvdak-topic-card__footer span { font-size: 17px; line-height: 1; }
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide:hover,
+.pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide:focus-visible {
+  transform: translateY(-4px);
+  border-color: #98cfc7;
+  box-shadow: 0 17px 35px rgba(17,57,70,.13);
+}
+.pvdak-topics-section .pvdak-home-topic:hover .pvdak-topic-card__icon { transform: translateY(-2px) scale(1.05); }
+@media (max-width: 1100px) {
+  .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 3; --pvdak-topic-gap: 12px; }
+  .pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide { flex-basis: calc((100% - 24px) / 3); }
+}
+@media (max-width: 700px) {
+  .pvdak-topics-section .pvdak-home-topics { --pvdak-topic-visible: 2; --pvdak-topic-gap: 10px; }
+  .pvdak-topics-section .pvdak-home-topics > a.pvdak-home-topic.swiper-slide { flex-basis: calc((100% - 10px) / 2); padding: 14px 12px; min-height: 195px; border-radius: 16px; }
+  .pvdak-topics-section .pvdak-topic-card__icon { width: 49px; height: 49px; }
+  .pvdak-topics-section .pvdak-topic-card__icon svg { width: 29px; height: 29px; }
+  .pvdak-topics-section .pvdak-topic-card__title { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pvdak-topics-section .pvdak-home-topic,
+  .pvdak-topics-section .pvdak-topic-card__icon { transition: none !important; }
 }

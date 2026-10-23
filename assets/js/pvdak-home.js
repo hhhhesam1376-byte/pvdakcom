@@ -34,9 +34,9 @@
         var hadFocus = false;
 
         function visibleSlots() {
-            if (window.matchMedia('(max-width: 600px)').matches) { return 2; }
-            if (window.matchMedia('(max-width: 1024px)').matches) { return 4; }
-            return 7;
+            if (window.matchMedia('(max-width: 700px)').matches) { return 2; }
+            if (window.matchMedia('(max-width: 1100px)').matches) { return 3; }
+            return 6;
         }
         function hasQuery() {
             return !!(field && normalize(field.value));
@@ -65,7 +65,7 @@
             try {
                 swiper = new window.Swiper(container, {
                 direction: 'horizontal',
-                slidesPerView: 7,
+                slidesPerView: 6,
                 slidesPerGroup: 1,
                 spaceBetween: 12,
                 speed: reduceMotion ? 0 : 650,
@@ -90,8 +90,8 @@
                 },
                 breakpoints: {
                     0: { slidesPerView: 2, spaceBetween: 9 },
-                    601: { slidesPerView: 4, spaceBetween: 12 },
-                    1025: { slidesPerView: 7, spaceBetween: 12 }
+                    701: { slidesPerView: 3, spaceBetween: 12 },
+                    1101: { slidesPerView: 6, spaceBetween: 14 }
                 }
                 });
             } catch (error) {
