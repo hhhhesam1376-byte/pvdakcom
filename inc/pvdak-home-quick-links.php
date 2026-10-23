@@ -1,0 +1,54 @@
+<?php
+/**
+ * Homepage quick-access ribbon: at most FOUR real published WordPress Pages.
+ *
+ * ACF home slots take priority; WP Menu's pvdak_quick location is a migration
+ * fallback only when NO custom selection exists. Never list every menu item.
+ * All labels and URLs come from the selected WP content, not hard-coded text.
+ */
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+function pvdak_home_quick_pages() {
+    $slots = array();
+    $any_explicit = false;
+    $seen = array();
+    for ( $i = 1; $i <= 4; $i++ ) {
+        $value = pvdak_home_value( 'quick_page_' . $i, 0 );
+        if ( $value instanceof WP_Post ) { $value = $value->ID; }
+        $id = absint( $value );
+        if ( $id ) { $any_explicit = true; }
+        if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
+            'publish' !== get_post_status( $id ) ) { continue; }
+        $seen[ $id ] = true;
+        $slots[] = array(
+            'title' => get_the_title( $id ),
+            'url' => get_permalink( $id ),
+            'id' => $id,
+        );
+    }
+    if ( $any_explicit ) {
+        return $slots; // Never mix explicit editor selections with old menu items.
+    }
+
+    $locations = get_nav_menu_locations();
+    $menu_id = ! empty( $locations['pvdak_quick'] ) ? absint( $locations['pvdak_quick'] ) : 0;
+    if ( ! $menu_id ) { return array(); }
+    $items = wp_get_nav_menu_items( $menu_id );
+    if ( ! is_array( $items ) ) { return array(); }
+    foreach ( $items as $item ) {
+        // Quick ribbon is for Pages only, not custom links or entire submenus.
+        if ( ! isset( $item->object, $item->object_id ) ||
+             'page' !== $item->object ) { continue; }
+        $id = absint( $item->object_id );
+        if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
+             'publish' !== get_post_status( $id ) ) { continue; }
+        $seen[ $id ] = true;
+        $slots[] = array(
+            'title' => get_the_title( $id ),
+            'url' => get_permalink( $id ),
+            'id' => $id,
+        );
+        if ( count( $slots ) === 4 ) { break; }
+    }
+    return $slots;
+}
