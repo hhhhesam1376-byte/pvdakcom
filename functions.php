@@ -87,6 +87,21 @@ function pvdak_home_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
 
+/** Tiny progressive enhancement on account credential screens only. */
+function pvdak_account_form_assets() {
+    if ( is_page( array( 'account-login', 'account-recovery', 'account-register' ) ) ) {
+        wp_enqueue_script(
+            'pvdak-account-interactions',
+            get_template_directory_uri() . '/assets/js/pvdak-account.js',
+            array(),
+            wp_get_theme()->get( 'Version' ),
+            true
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'pvdak_account_form_assets' );
+
+
 // Temporary PV favicon bundled in the theme, including login/admin tabs.
 // Preserve the WordPress site_icon option untouched for an eventual real brand.
 function pvdak_pv_favicon_url() {

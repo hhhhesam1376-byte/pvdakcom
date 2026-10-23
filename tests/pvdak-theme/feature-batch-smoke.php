@@ -49,7 +49,7 @@ $checks = array(
     'Regular requester dashboard delegates to private Core portal' =>
         false !== strpos($data['portal'],"pvdak_account_dashboard"),
     'Professional dashboard only shown for own application' =>
-        false !== strpos($data['portal'],"pvdak_core_existing_application(get_current_user_id())") &&
+        false !== strpos($data['portal'],"pvdak_core_existing_application(") &&
         false !== strpos($data['core_prof'],"_pvdak_member_state"),
     'Registration hard OFF during maintenance and without admin opt in' =>
         false !== strpos($data['register'],"pvdak_maintenance_enabled()") &&

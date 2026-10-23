@@ -9,6 +9,7 @@ while IFS= read -r -d '' f; do
   php -l "$f" >/dev/null || { echo "FAIL: PHP_PARSE $f" >&2; exit 1; }
 done < <(find "$ROOT" -type f -name '*.php' -print0)
 php "$ROOT/tests/pvdak-theme/feature-batch-smoke.php"
+php "$ROOT/tests/pvdak-theme/account-experience-smoke.php"
 php "$ROOT/tests/pvdak-theme/next-phase-smoke.php"
 php "$ROOT/tests/pvdak-theme/next-ten-smoke.php"
 php "$ROOT/tests/pvdak-theme/post-core-audit-smoke.php"
