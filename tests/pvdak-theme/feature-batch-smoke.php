@@ -73,7 +73,7 @@ $checks = array(
         false !== strpos($data['core_subscription'],"'active' !== get_post_meta") &&
         false !== strpos($data['core_subscription'],"pvdak_core_subscription_month_assignments"),
     'Theme and Core versioned in one proposed review batch' =>
-        false !== strpos($data['css'],'Version: 0.8.28') &&
+        false !== strpos($data['css'],'Version: 0.8.29') &&
         false !== strpos($data['core'],'Version: 0.8.2') &&
         false !== strpos($data['core'],"includes/subscriptions.php"),
     'Private account screens never cached/indexed' =>

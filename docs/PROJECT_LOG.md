@@ -688,3 +688,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - User supplied proof of active Core 0.8.2 with rollback backup core-upgrade-hk6xg2a1. Theme 0.8.28 was verified deployed at release SHA 63e836be.
 - Prepared read-only WordPress post-upgrade audit for versions, safety gates, private content types, role capabilities, account functions, assignment lock and nine Pages. No real case/user content printed.
 - Prepared static test and E2E checklist. Neither WP-CLI audit nor real mail, multi-account or DB concurrency tests were executed by ChatGPT. Draft changes not on main.
+
+
+## 2026-10-23 — PAGE-BOOTSTRAP-RECOVERY-069 (draft theme 0.8.29)
+- Host read-only preflight shows 37 checks, zero failures, seven warnings: expected native Pages for login, recovery, profile, account, contact, privacy and terms are not published. Core 0.8.2 and theme 0.8.28 are active, with maintenance and all intake gates OFF.
+- Identified a stale-version-marker failure mode in `inc/pvdak-public-pages.php`: the `_pvdak_public_pages_bootstrap=0.8.26` option short-circuited future reconciliation, even when Pages were missing. Removed the early exit. Every normal authorized admin visit now checks only known slugs; missing Pages are seeded, existing published/draft/trashed Pages are never edited.
+- The read-only preflight and private post-Core acceptance report now include all seeded Pages, their published/missing status and bootstrap marker, with instructions for one wp-admin visit. PHP/WordPress runtime verification of this patch and seven Page creations is pending; this draft is NOT published.
+- Updated theme version/source regression expectations to 0.8.29. Core remains 0.8.2. No new pipeline, keys, SMTP changes, role changes or public intake activation.

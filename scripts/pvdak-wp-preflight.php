@@ -67,11 +67,21 @@ pvdak_preflight_check( 'No public WordPress self-registration enabled yet',
     ! (bool) get_option('users_can_register', false), false );
 pvdak_preflight_check( 'Default newsletter/case intake untouched; maintenance currently ON',
     ! function_exists('pvdak_maintenance_enabled') || pvdak_maintenance_enabled(), false );
-foreach(array('account-login','account-recovery','account-profile','my-pvdak-account','contact-us','privacy-policy','terms-of-use') as $slug) {
-    $page=get_page_by_path($slug,OBJECT,'page');
-    pvdak_preflight_check('Published content Page: '.$slug,
+// A missing Page needs a real administrator dashboard visit; WP-CLI does
+// not trigger admin_init. Trashed/draft Pages are preserved intentionally.
+WP_CLI::line('PAGE_BOOTSTRAP_MARKER: ' . (string)get_option('_pvdak_public_pages_bootstrap','NONE'));
+$expected = function_exists('pvdak_public_page_seeds')
+    ? array_keys(pvdak_public_page_seeds()) :
+    array('account-login','account-recovery','account-profile','my-pvdak-account',
+          'contact-us','privacy-policy','terms-of-use');
+foreach ($expected as $slug) {
+    $page = get_page_by_path($slug, OBJECT, 'page');
+    $state = $page ? $page->post_status : 'missing';
+    pvdak_preflight_check('Published Page '.$slug.' ('.$state.')',
         $page && 'publish' === $page->post_status, false);
 }
+WP_CLI::line('PAGE_REPAIR_ACTION: Sign in as administrator at /wp-admin/ once;'
+    . ' this safely creates only missing Pages. Re-run read-only preflight.');
 WP_CLI::line('THEME_VERSION: '.(string) $theme->get('Version'));
 WP_CLI::line('CORE_SOURCE_BUNDLED: '.(
     is_readable(get_template_directory().'/packages/pvdak-core/pvdak-core.php')?'PRESENT':'MISSING'));

@@ -60,7 +60,7 @@ $checks = array(
   'Read-only readiness and safe versions' =>
     strpos($s['admin'],"current_user_can('manage_options')")!==false &&
     strpos($s['admin'],'get_page_by_path(')!==false &&
-    strpos($s['theme'],'Version: 0.8.28')!==false &&
+    strpos($s['theme'],'Version: 0.8.29')!==false &&
     strpos($s['core'],'Version: 0.8.2')!==false &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false,
 );

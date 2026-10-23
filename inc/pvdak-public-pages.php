@@ -20,13 +20,19 @@ function pvdak_public_page_seeds() {
   );
 }
 function pvdak_public_create_missing_pages() {
-  if ( ! is_admin() || wp_doing_ajax() || ! current_user_can('manage_options') || ! current_user_can('publish_pages')
-       || '0.8.26' === get_option('_pvdak_public_pages_bootstrap') ) { return; }
+  if ( ! is_admin() || wp_doing_ajax() ||
+       ! current_user_can('manage_options') || ! current_user_can('publish_pages') ) { return; }
+  // A previous one-time completion flag may be stale: Pages can disappear
+  // later, or a partial import can leave them unpublished. Always reconcile.
+  // Only absent slugs are created; existing Pages are never overwritten.
   $complete = true;
   foreach(pvdak_public_page_seeds() as $slug=>$p) {
     $existing = get_page_by_path($slug,OBJECT,'page');
-    if ($existing && 'trash'!==$existing->post_status) { continue; } // Never replace client Pages.
-    if ($existing) { $complete=false; continue; } // Do not silently restore Trash.
+    if ($existing) {
+      // Never replace edited, draft, private or trashed editorial Pages.
+      if ('publish' !== $existing->post_status) { $complete = false; }
+      continue;
+    }
     $id=wp_insert_post(array('post_type'=>'page','post_status'=>'publish','post_name'=>$slug,
       'post_title'=>$p[0],'page_template'=>$p[1],'post_content'=>$p[2],
       'post_author'=>get_current_user_id(),'comment_status'=>'closed','ping_status'=>'closed'),true);
@@ -35,7 +41,9 @@ function pvdak_public_create_missing_pages() {
       update_post_meta($id,'_pvdak_provisional_policy','1');
     }
   }
-  if ($complete) {update_option('_pvdak_public_pages_bootstrap','0.8.26',false);}
+  if ($complete && '0.8.29' !== get_option('_pvdak_public_pages_bootstrap')) {
+    update_option('_pvdak_public_pages_bootstrap','0.8.29',false);
+  }
 }
 add_action('admin_init','pvdak_public_create_missing_pages',20);
 function pvdak_public_policy_noindex($robots) {

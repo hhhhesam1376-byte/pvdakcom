@@ -10,8 +10,9 @@ function pvdak_audit_check($label,$result,$required=true) {
     WP_CLI::line(strtoupper($state).' | '.$label);
 }
 $theme=wp_get_theme();
-pvdak_audit_check('Active PVDak theme 0.8.28',
-    'pvdakcom-main'===$theme->get_stylesheet() && '0.8.28'===$theme->get('Version'));
+pvdak_audit_check('Active PVDak theme at least 0.8.28',
+    'pvdakcom-main'===$theme->get_stylesheet() &&
+    version_compare($theme->get('Version'),'0.8.28','>='));
 pvdak_audit_check('Active Core version 0.8.2',
     defined('PVDAK_CORE_VERSION') && PVDAK_CORE_VERSION==='0.8.2' &&
     in_array('pvdak-core/pvdak-core.php',(array)get_option('active_plugins',array()),true));
@@ -57,10 +58,15 @@ pvdak_audit_check('Assignment locks/capacity/quota loaded',
     function_exists('pvdak_core_subscription_allows_new_assignment'));
 pvdak_audit_check('Database read available',
     isset($GLOBALS['wpdb']) && '1'===(string)$GLOBALS['wpdb']->get_var('SELECT 1'));
-foreach(array('about-us','contact-us','legal-faq','privacy-policy','terms-of-use',
-    'account-login','account-recovery','account-profile','my-pvdak-account') as $slug){
+WP_CLI::line('PAGE_BOOTSTRAP_MARKER: ' . (string)get_option('_pvdak_public_pages_bootstrap','NONE'));
+$expected = function_exists('pvdak_public_page_seeds') ? array_keys(pvdak_public_page_seeds()) :
+    array('about-us','contact-us','legal-faq','privacy-policy','terms-of-use',
+          'account-login','account-recovery','account-profile','my-pvdak-account');
+foreach ($expected as $slug) {
     $page=get_page_by_path($slug,OBJECT,'page');
-    pvdak_audit_check('Page published '.$slug,$page && $page->post_status==='publish',false);
+    $state=$page?$page->post_status:'missing';
+    pvdak_audit_check('Page published '.$slug.' ('.$state.')',
+        $page && $page->post_status==='publish',false);
 }
 $count=$GLOBALS['pvdak_audit'];
 WP_CLI::line(sprintf('PVD_POST_CORE_AUDIT_SUMMARY pass=%d fail=%d warn=%d read_only=yes',
