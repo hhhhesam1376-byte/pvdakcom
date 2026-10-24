@@ -68,5 +68,20 @@ test_check(false!==strpos($ticket,"check_admin_referer('pvdak_support_followup_'
     'Follow-up requires nonce');
 test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')"),
     'Registration stays OFF by default');
+// D14: source-level guardrails; this does not replace a real multi-client WP test.
+$auth=file_get_contents($root.'/inc/pvdak-auth.php');
+$verification=file_get_contents($root.'/inc/pvdak-email-verification.php');
+test_check(false!==strpos($registration, "pvdak_registration_rate_exceeded('signup', 12, 15 * MINUTE_IN_SECONDS)") &&
+    strpos($registration, "pvdak_registration_rate_exceeded('signup'") < strpos($registration, "if (!empty(\$_POST['register_site']))") &&
+    false!==strpos($registration, "hash_hmac('sha256', $scope . '|' . $remote"),
+    'D14 signup IP limiter runs before honeypot and field validation with salted key');
+test_check(false!==strpos($auth, 'pvdak_auth_ip_attempt_key()') &&
+    false!==strpos($auth, 'set_transient($ip_key,$ip_attempts,15*MINUTE_IN_SECONDS)') &&
+    false!==strpos($auth, 'get_transient(pvdak_auth_ip_attempt_key())>=30'),
+    'D14 login IP limiter is enforced across identity rotation');
+test_check(false!==strpos($verification, "pvdak_registration_rate_exceeded('verify-resend', 12, HOUR_IN_SECONDS)") &&
+    strpos($verification, "pvdak_registration_rate_exceeded('verify-resend'") < strpos($verification, 'if (is_email($email))') &&
+    false!==strpos($verification, "add_query_arg('state', 'resent', $url)"),
+    'D14 resend IP ceiling preserves generic response and precedes email lookup');
 test_check(pvdak_test_release_at_least($theme,'0.8.29'),'Draft version incremented');
 echo "PVD_NEXT_PHASE_TEST_OK: {$count} checks (mocked email/token + static privacy checks).\n";
