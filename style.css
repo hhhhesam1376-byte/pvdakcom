@@ -1788,7 +1788,7 @@ body.pvdak-profile-screen .site-footer{
   .pvdak-profile-stat-grid>div{padding-inline:2px}
 }
 @media(max-width:760px){
-  .pvdak-profile-redesign{width:min(100% - 28px,680px);padding-block:16px 28px}
+  .pvdak-profile-redesign{width:min(calc(100% - 28px),680px);padding-block:16px 28px}
   .pvdak-profile-workspace{grid-template-columns:minmax(0,1fr)}
   .pvdak-profile-rail{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
   .pvdak-profile-person-card{padding:20px 13px}
