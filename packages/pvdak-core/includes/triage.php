@@ -221,6 +221,12 @@ function pvdak_core_triage_filter_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
          ! pvdak_core_triage_can_manage() || 'pvdak_request' !== $query->get( 'post_type' ) ) { return; }
     $f = pvdak_core_triage_filters();
+    // Dashboard counters cover private records only. Match that scope for
+    // dashboard-driven links, but preserve an explicit native status tab.
+    if ( array_filter( $f ) && ! $query->get( 'post_status' ) &&
+        ( ! isset( $_GET['post_status'] ) || '' === $_GET['post_status'] ) ) {
+        $query->set( 'post_status', 'private' );
+    }
     $filters = array();
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
