@@ -24,6 +24,7 @@
         var controls = document.querySelector('.pvdak-topics-controls');
         var prev = document.querySelector('[data-pvdak-topic-prev]');
         var next = document.querySelector('[data-pvdak-topic-next]');
+        var clear = document.querySelector('[data-pvdak-clear-search]');
         if (!container || !track || !slides.length) { return; }
 
         var swiper = null;
@@ -34,6 +35,7 @@
         var hadFocus = false;
 
         function visibleSlots() {
+            if (window.matchMedia('(max-width: 400px)').matches) { return 1; }
             if (window.matchMedia('(max-width: 700px)').matches) { return 2; }
             if (window.matchMedia('(max-width: 1100px)').matches) { return 3; }
             return 6;
@@ -89,7 +91,8 @@
                     nextSlideMessage: 'موضوع بعدی'
                 },
                 breakpoints: {
-                    0: { slidesPerView: 2, spaceBetween: 9 },
+                    0: { slidesPerView: 1.15, spaceBetween: 9 },
+                    401: { slidesPerView: 2, spaceBetween: 9 },
                     701: { slidesPerView: 3, spaceBetween: 12 },
                     1101: { slidesPerView: 6, spaceBetween: 14 }
                 }
@@ -128,6 +131,7 @@
                 if (okay) { found++; }
             });
             if (empty) { empty.hidden = found !== 0; }
+            if (clear) { clear.hidden = !term; }
             if (!term) { syncSwiper(); }
         }
 
@@ -139,6 +143,13 @@
 
         if (controls) { controls.hidden = true; }
         if (field && form && section) {
+            if (clear) {
+                clear.addEventListener('click', function () {
+                    field.value = '';
+                    filterTopics();
+                    field.focus();
+                });
+            }
             field.addEventListener('input', filterTopics);
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
@@ -177,6 +188,7 @@
         filterTopics();
         if (typeof window.Swiper === 'function') {
             initSwiper();
+            updateAutoplay();
         } else {
             // Fail transparently, not by pretending that scroll = Swiper.
             // The real bundle is installed once via the private host installer.
