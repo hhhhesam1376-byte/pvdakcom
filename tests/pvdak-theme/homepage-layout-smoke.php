@@ -251,8 +251,10 @@ pvdak_layout_expect(
 );
 pvdak_layout_expect(
     false === strpos( $front, 'pvdak-quick-admin-note' ) &&
-    false === strpos( $front, 'pvdak-legal-topics-setup' ),
-    'Internal admin setup copy is absent from visible homepage markup'
+    false === strpos( $front, 'pvdak-legal-topics-setup' ) &&
+    false === strpos( $front, "|| current_user_can( 'edit_posts' )" ) &&
+    false === strpos( $front, 'برای این بخش دسته «اطلاعیه‌ها»' ),
+    'Unconfigured quick links, editorial and news areas never expose manager instructions'
 );
 pvdak_layout_expect(
     false !== strpos( $css, '.pvdak-home-community .pvdak-community-illustration' ) &&
