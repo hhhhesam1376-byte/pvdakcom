@@ -803,3 +803,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Preserved existing WordPress and triage filters; no case description, internal note or audit body shown; no data mutations or activation of intake.
 - Added 26 static source assertions to existing batch runner. PHP lint and actual WordPress/admin permissions/combined filters/browser tests remain pending.
 - No change to main, live site, maintenance, intake, user data, server, cron, staging or secrets.
+
+## 2026-10-24 — REQUEST-TRIAGE-087 (feature branch only)
+- Implemented 20 read-only management queue improvements (status/type totals, legacy metadata, pending/7-day/30-day backlog, oldest pending date, direct queue links, allowlisted filters, privacy-safe dashboard and responsive/accessibility controls). See `docs/WORK_BATCH_087.md`.
+- Admin aggregate query only counts private requests, requires request-management capability and does not read or print private case bodies or internal notes. Dashboard links use native WordPress admin filters and preserve existing query clauses.
+- Added synthetic non-mutating regression `tests/pvdak-core/triage-overview-smoke.php` and wired it into `scripts/check-batch-readonly.sh`.
+- A source delimiter-balance heuristic passed for both new/modified PHP files. **PHP lint, synthetic regression execution, real WordPress/multiuser, combined filters, SQL performance and browser/mobile acceptance remain unverified.** Do not claim runtime success.
+- Main/live, maintenance, registration, request/professional intake, assignments, user records, DB, server, Cron, staging and secrets unchanged. Core source requires separate controlled deployment when explicitly requested.
