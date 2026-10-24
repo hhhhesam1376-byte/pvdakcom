@@ -24,8 +24,8 @@ function get_post_type( $id ) { return isset( $GLOBALS['quick_test_pages'][ $id 
 function get_post_status( $id ) {
     return isset( $GLOBALS['quick_test_pages'][ $id ] ) ? $GLOBALS['quick_test_pages'][ $id ] : false;
 }
-function get_the_title( $id ) { return 'Published Page ' . $id; }
-function get_permalink( $id ) { return 'https://example.invalid/page-' . $id; }
+function get_the_title( $id ) { return $GLOBALS['quick_test_titles'][$id] ?? ( 'Published Page ' . $id ); }
+function get_permalink( $id ) { return $GLOBALS['quick_test_urls'][$id] ?? ( 'https://example.invalid/page-' . $id ); }
 require dirname( __DIR__, 2 ) . '/inc/pvdak-home-quick-links.php';
 $checks = 0;
 function pvdak_layout_expect( $okay, $message ) {
@@ -57,6 +57,20 @@ pvdak_layout_expect( count( pvdak_home_quick_pages() ) === 3,
 $GLOBALS['quick_test_selection'] = array( 'quick_page_1' => 9 );
 pvdak_layout_expect( array_column( pvdak_home_quick_pages(), 'id' ) === array( 9 ),
     'Incomplete explicit selection never pulls the rest of the old 17-link menu' );
+$GLOBALS['quick_test_selection'] = array( 'quick_page_1' => 9, 'quick_page_2' => 7,
+    'quick_page_3' => 3, 'quick_page_4' => 5 );
+$GLOBALS['quick_test_titles'][7] = '  ';
+pvdak_layout_expect(
+    array_column( pvdak_home_quick_pages(), 'id' ) === array( 9, 3, 5 ),
+    'D08: blank published Page title is not counted as a useful shortcut'
+);
+unset( $GLOBALS['quick_test_titles'][7] );
+$GLOBALS['quick_test_urls'][3] = '';
+pvdak_layout_expect(
+    array_column( pvdak_home_quick_pages(), 'id' ) === array( 9, 7, 5 ),
+    'D08: published Page without a usable permalink is not a quick link'
+);
+unset( $GLOBALS['quick_test_urls'][3] );
 $GLOBALS['quick_test_selection'] = array();
 array_unshift( $GLOBALS['quick_test_menu'], (object) array( 'object' => 'custom', 'object_id' => 0 ) );
 pvdak_layout_expect( count( pvdak_home_quick_pages() ) === 4,
