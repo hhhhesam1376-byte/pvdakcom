@@ -186,6 +186,30 @@ if [[ "$MODE" == "--test" ]]; then
   }
   run_test "Theme release tests" "$SCRIPTS/check-pvdak.sh" "$THEME" "$WP_ROOT"
   run_test "Core source tests" "$SCRIPTS/check-pvdak-core.sh" "$CORE_SOURCE" "$WP_ROOT"
+  # D03: run the repository's EXISTING full read-only regression suite
+  # against the files actually deployed on the host. The private runner
+  # lives outside the published theme; create only an ephemeral copy,
+  # without writing to WordPress or duplicating release pipelines.
+  BATCH_RUNNER="$SCRIPTS/check-batch-readonly.sh"
+  if [[ -r "$BATCH_RUNNER" && -d "$THEME" && -d "$SCRIPTS/../tests" ]]; then
+    AUDIT_TEMP="$(mktemp -d "$HOME/.pvdak-deploy/pvdak-audit.XXXXXXXX" 2>/dev/null || true)"
+    if [[ -n "$AUDIT_TEMP" ]] &&
+       cp -a "$THEME/." "$AUDIT_TEMP/" &&
+       cp -a "$SCRIPTS" "$AUDIT_TEMP/scripts" &&
+       { [[ -d "$AUDIT_TEMP/tests/pvdak-theme" ]] ||
+         cp -a "$SCRIPTS/../tests" "$AUDIT_TEMP/tests"; }; then
+      run_test "D03 full source regression" "$BATCH_RUNNER" "$AUDIT_TEMP"
+    else
+      value "D03 full source regression" "FAIL: private audit copy unavailable"
+      failure=1
+    fi
+    if [[ -n "$AUDIT_TEMP" && -d "$AUDIT_TEMP" && ! -L "$AUDIT_TEMP" ]]; then
+      rm -rf -- "$AUDIT_TEMP"
+    fi
+  else
+    value "D03 full source regression" "FAIL: private suite or source missing"
+    failure=1
+  fi
   # Synthetic negative control for the live WP counter. A deliberately failed
   # assertion must yield 19 checks / 1 failure, not a false 0/0 PASS.
   SELFTEST="$SCRIPTS/pvdak-anonymous-counter-selftest.php"
