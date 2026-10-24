@@ -300,7 +300,23 @@ $svg_icons = array(
         <span class="pvdak-forum-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><?php echo $svg_icons['chat']; ?></svg></span>
         <h3><?php echo esc_html( pvdak_home_value( 'forum_feature_title' ) ); ?><br><?php echo esc_html( pvdak_home_value( 'forum_feature_subtitle' ) ); ?></h3>
         <p><?php echo esc_html( pvdak_home_value( 'forum_feature_description' ) ); ?></p>
-        <?php $forum_url = pvdak_home_value( 'forum_url', '' ); ?>
+        <?php
+        // A manually entered URL is not evidence that the forum workflow
+        // exists. Only link an actual published internal forum Page when the
+        // matching shortcode is installed and rendered from that Page.
+        $forum_url = '';
+        $forum_candidate = pvdak_home_value( 'forum_url', '' );
+        if ( is_string( $forum_candidate ) && '' !== trim( $forum_candidate ) &&
+             shortcode_exists( 'pvdak_forum' ) ) {
+            $forum_id = url_to_postid( $forum_candidate );
+            $forum_page = $forum_id ? get_post( $forum_id ) : null;
+            if ( $forum_page instanceof WP_Post && 'page' === $forum_page->post_type &&
+                 'publish' === $forum_page->post_status &&
+                 has_shortcode( $forum_page->post_content, 'pvdak_forum' ) ) {
+                $forum_url = get_permalink( $forum_page->ID );
+            }
+        }
+        ?>
         <?php if ( $forum_url ): ?><a class="pvdak-forum-button" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( pvdak_home_value( 'forum_feature_button' ) ); ?> ←</a><?php else: ?><span class="pvdak-forum-soon" role="note">انجمن تخصصی در حال آماده‌سازی است</span><?php endif; ?>
       </article>
     </div>
