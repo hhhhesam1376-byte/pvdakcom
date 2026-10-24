@@ -285,4 +285,24 @@ pvdak_layout_expect(
     false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
     'D05: required public Pages must be published with their actual native templates' );
 
+// D05/D08/D10: execute the actual selectors against a synthetic *closed*
+// intake with misleading manual ACF URLs. Neither button may navigate.
+function pvdak_core_intake_open() { return false; }
+function pvdak_core_member_intake_open() { return false; }
+require dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
+$GLOBALS['quick_test_selection']['service_1_url'] = 'https://example.invalid/manual-request';
+$GLOBALS['quick_test_selection']['community_url'] = 'https://example.invalid/manual-registration';
+pvdak_layout_expect(
+    '' === pvdak_home_service_url( 1 ) &&
+    '' === pvdak_home_join_url(),
+    'Closed legal/member intake must win over explicit editor URL overrides'
+);
+$collection_source = file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' );
+pvdak_layout_expect(
+    false !== strpos( $collection_source, "array_filter( $published" ) &&
+    false !== strpos( $collection_source, 'strip_shortcodes( $page->post_content )' ) &&
+    false !== strpos( $collection_source, 'array_slice( $answered, 0, 12 )' ),
+    'Published but empty FAQ Pages cannot appear as blank public accordions'
+);
+
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
