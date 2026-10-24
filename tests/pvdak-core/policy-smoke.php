@@ -122,6 +122,22 @@ function pvdak_expect( $condition, $description ) {
 }
 
 pvdak_expect( count( pvdak_core_request_types() ) === 3, 'Three distinct legal request types' );
+
+pvdak_expect( pvdak_core_request_input_valid( str_repeat( 'آ', 140 ), str_repeat( 'ب', 3000 ) ),
+    'Intake accepts 140/3000 Persian characters within byte limits' );
+pvdak_expect( ! pvdak_core_request_input_valid( str_repeat( 'آ', 141 ), 'شرح' ),
+    'Intake rejects an overlong Persian title even below its byte cap' );
+pvdak_expect( ! pvdak_core_request_input_valid( 'عنوان', str_repeat( 'ب', 3001 ) ),
+    'Intake rejects an overlong Persian description even below its byte cap' );
+pvdak_expect( ! pvdak_core_request_input_valid( '   ', 'شرح' ),
+    'Intake rejects blank titles after trimming' );
+pvdak_expect( 902 === pvdak_core_request_receipt_id( array( 'type' => 'lawyer', 'id' => 902 ), 'lawyer' ),
+    'Valid owner-scoped receipt retains its tracking number' );
+pvdak_expect( 0 === pvdak_core_request_receipt_id( array( 'type' => 'lawyer', 'id' => 902 ), 'question' ),
+    'A different request form cannot consume a lawyer receipt' );
+pvdak_expect( 0 === pvdak_core_request_receipt_id( array( 'type' => 'lawyer', 'id' => 0 ), 'lawyer' ),
+    'An invalid receipt cannot be shown as a successful submission' );
+
 pvdak_expect( count( pvdak_core_member_types() ) === 3, 'Three professional application categories' );
 pvdak_expect( ! pvdak_core_intake_open(), 'Legal request intake starts OFF' );
 pvdak_expect( ! pvdak_core_member_intake_open(), 'Professional onboarding starts OFF' );
