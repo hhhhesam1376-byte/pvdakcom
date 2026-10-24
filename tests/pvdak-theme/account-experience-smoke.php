@@ -15,6 +15,7 @@ $paths = array(
   'assets'=>'functions.php',
   'javascript'=>'assets/js/pvdak-account.js',
   'css'=>'style.css',
+  'homejs'=>'assets/js/pvdak-home.js',
   'editorialcss'=>'assets/css/pvdak-editorial.css',
   'ticketcss'=>'assets/css/pvdak-support.css',
   'card'=>'template-parts/content-card.php',
@@ -28,6 +29,69 @@ foreach ( $paths as $name => $file ) {
   $v[$name] = file_get_contents( $path );
 }
 $checks = array(
+  '098-01 Hero search always has a real fallback mode' =>
+    strpos($v['front'], "name=\"<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>\"")!==false &&
+    strpos($v['front'], "$all_legal_pages ? home_url( '/#topics' ) : home_url( '/' )")!==false,
+  '098-02 Search can be cleared without a page reload' =>
+    strpos($v['front'],'data-pvdak-clear-search')!==false &&
+    strpos($v['homejs'],"clear.addEventListener('click'")!==false,
+  '098-03 Swiper narrow cards use a visible peek and matching breakpoints' =>
+    strpos($v['homejs'],"(max-width: 400px)")!==false &&
+    strpos($v['homejs'],'slidesPerView: 1.15')!==false,
+  '098-04 Swiper focus and hidden tabs do not autoplay unnoticed' =>
+    strpos($v['homejs'],"document.addEventListener('visibilitychange', updateAutoplay)")!==false &&
+    strpos($v['homejs'],'updateAutoplay();')!==false,
+  '098-05 Topic count comes from published matching Pages' =>
+    strpos($v['front'],'count( $legal_pages )')!==false &&
+    strpos($v['front'],'pvdak-home-section-caption')!==false,
+  '098-06 Intake-closed process is described as introductory' =>
+    strpos($v['front'],"pvdak_core_intake_open() ? 'مسیر همراهی'")!==false &&
+    strpos($v['front'],'پس از آغاز رسمی خدمات')!==false,
+  '098-07 Empty notices are never rendered in populated news grid' =>
+    strpos($v['front'],'<?php if ( $notice_posts ): ?>')!==false &&
+    strpos($v['front'],'if ( $notice_posts || $news_feature )')!==false,
+  '098-08 Published notices include real dates and destination links' =>
+    strpos($v['front'],"get_the_date( 'Y-m-d', $notice_post->ID )")!==false &&
+    strpos($v['front'],"get_permalink( $notice_post->ID )")!==false,
+  '098-09 News without thumbnail uses bundled vector instead of blank box' =>
+    strpos($v['front'],'pvdak-news-fallback-art')!==false &&
+    strpos($v['front'],'has_post_thumbnail( $news_feature->ID )')!==false,
+  '098-10 News card includes real publication date' =>
+    strpos($v['front'],"get_the_date( 'Y-m-d', $news_feature->ID )")!==false,
+  '098-11 Global logged-in support shortcut retains role gate' =>
+    strpos($v['header'],"is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' )")!==false &&
+    strpos($v['header'],"pvdak_auth_account_url() . '#pvdak-support'")!==false,
+  '098-12 Header search requires a nonempty native WordPress term' =>
+    strpos($v['header'],'name="s"')!==false &&
+    strpos($v['header'],'maxlength="100" required')!==false,
+  '098-13 Mobile details use a described trigger and visible icon' =>
+    strpos($v['header'],'pvdak-mobile-menu-icon')!==false &&
+    strpos($v['header'],'باز و بسته کردن فهرست سایت')!==false,
+  '098-14 Footer has accessible return-to-content link' =>
+    strpos($v['footer'],'class="pvdak-back-top" href="#main-content"')!==false &&
+    strpos($v['css'],'.site-footer .pvdak-back-top')!==false,
+  '098-15 Core-unavailable fallback is honest and links to existing profile' =>
+    strpos($v['portal'],'pvdak-unified-empty-dashboard')!==false &&
+    strpos($v['portal'],'href="#pvdak-profile"')!==false,
+  '098-16 Private support section remains account gated' =>
+    strpos($v['portal'],'if ( ! is_user_logged_in() )')!==false &&
+    strpos($v['portal'],'if ( $has_support )')!==false &&
+    strpos($v['portal'],'پشتیبانی • فقط حساب شما')!==false,
+  '098-17 Login error visibly associates with real credentials fields' =>
+    strpos($v['login'],'aria-invalid="true" aria-describedby="pvdak-login-result"')!==false &&
+    strpos($v['login'],"wp_nonce_field('pvdak_login'")!==false,
+  '098-18 Shared 860/680/410 breakpoints prevent overflowing news cards' =>
+    strpos($v['css'],'@media(max-width:860px)')!==false &&
+    strpos($v['css'],'@media(max-width:680px)')!==false &&
+    strpos($v['css'],'@media(max-width:410px)')!==false,
+  '098-19 Ticket registration and Core private data stay untouched' =>
+    strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
+    strpos($v['portal'],"do_shortcode( '[pvdak_support_tickets]' )")!==false,
+  '098-20 Theme version, local-only UI and safe fallback all present' =>
+    strpos($v['css'],'Version: 0.8.38')!==false &&
+    strpos($v['css'],'WORK_BATCH_098')!==false &&
+    strpos($v['javascript'],'fetch(')===false,
+
   '097-01 Homepage has no empty topics or technical setup' =>
     strpos($v['front'],'pvdak-topics-help')!==false &&
     strpos($v['front'],'pvdak-legal-topics-setup')===false,
