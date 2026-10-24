@@ -845,3 +845,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Reused WP Core user values and post counts, sanitized outputs, nonce-protected `pvdak_profile_save`, JavaScript selectors and feedback/PRG flows. Login guard, private caching/noindex, existing maintenance, registration and intake states untouched.
 - Static readback checks verified 13 invariants (nonce, action, selectors, escaped user values, role gate, links, mobile CSS, no remote dependency); two additional source checks added to existing account-experience runner. PHP lint, full source runner and real WP/browser rendering **not yet executed**, so do not claim acceptance or live deploy before actual host logs.
 - Theme target 0.8.31. Core remains 0.8.3. Promotion uses existing main/15-minute Cron/host rollback, no infrastructure additions.
+
+## 2026-10-24 — PROFILE-REFERENCE-093 (theme 0.8.32)
+- User confirmed the earlier source-level redesign was visibly different from the approved mockup. Corrected major gaps in existing theme rather than creating alternate deployment workflows.
+- Added a local, custom SVG image depicting law books/justice scales at existing `assets/icons/` tree. Profile hero now references this image and uses the reference's deep navy/cyan visual hierarchy.
+- Header on the profile alone gains a real native WordPress GET search and conditional support-message link; footer also gains real search (not a fake newsletter). Profile summary/form now has portrait, readable stacked immutable username/email fields, consistent SVG menu icons, gradient actions, decorative shield, RTL/mobile layout.
+- Preserved `pvdak_profile_save` nonce/action, WordPress owner-gated template, PRG status feedback, noindex/caching guards and current account scripts; Core remains 0.8.3.
+- Files: existing `page-templates/pvdak-profile.php`, `header.php`, `footer.php`, `style.css`, existing test file, and one image asset within `assets/icons/`. No new Cron/secrets/backend/remote dependency.
+- Test invariants extended. Full PHP lint/WordPress account/browser tests pending live cPanel execution. Changes on feature branch until GitHub main promotion; live site publication must be separately observed in the existing deploy log.
