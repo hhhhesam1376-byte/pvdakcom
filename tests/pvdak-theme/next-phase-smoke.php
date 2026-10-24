@@ -1,4 +1,10 @@
 <?php
+
+/** Compare installed theme or Core metadata without pinning a moving patch version. */
+function pvdak_test_release_at_least( $source, $minimum ) {
+    return preg_match( '/^\\s*\\*?\\s*Version:[ \\t]*([0-9]+(?:[.][0-9]+)*)/mi', $source, $found ) === 1 &&
+        version_compare( $found[1], $minimum, '>=' );
+}
 /** Offline mock tests: no real WordPress users, email or external services. */
 define('ABSPATH', __DIR__);
 define('DAY_IN_SECONDS', 86400);
@@ -62,5 +68,5 @@ test_check(false!==strpos($ticket,"check_admin_referer('pvdak_support_followup_'
     'Follow-up requires nonce');
 test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')"),
     'Registration stays OFF by default');
-test_check(false!==strpos($theme,'Version: 0.8.29'),'Draft version incremented');
+test_check(pvdak_test_release_at_least($theme,'0.8.29'),'Draft version incremented');
 echo "PVD_NEXT_PHASE_TEST_OK: {$count} checks (mocked email/token + static privacy checks).\n";
