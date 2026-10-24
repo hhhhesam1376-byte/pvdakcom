@@ -57,7 +57,7 @@ function pvdak_home_post_summary( $post, $words = 22 ) {
 }
 
 /** Native hierarchical Pages are suitable for short informational FAQs. */
-function pvdak_home_faq_pages() {
+function pvdak_home_faq_pages( $include_empty = false ) {
     $page_id = (int) get_option( 'page_on_front' );
     if ( ! $page_id || ! function_exists( 'get_field' ) ) { return array(); }
     $value = get_field( 'faq_parent_page', $page_id );
@@ -74,6 +74,9 @@ function pvdak_home_faq_pages() {
         'order'          => 'ASC',
         'no_found_rows'  => true,
     ) );
+    // Admin readiness must also see the published-but-empty source Pages;
+    // the public homepage keeps using only the answered subset.
+    if ( $include_empty ) { return $published; }
     // D08/D10: a published empty FAQ Page should never become a blank
     // accordion in the employer demo. Keep the source Page untouched.
     $answered = array_values( array_filter( $published, static function( $page ) {
