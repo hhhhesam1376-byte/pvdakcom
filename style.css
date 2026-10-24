@@ -2026,3 +2026,52 @@ body.pvdak-profile-screen .site-footer a:hover{color:#74e0ee}
 @media(prefers-reduced-motion:reduce){
   .pvdak-profile-header-search *{transition:none!important}
 }
+
+
+/* Profile reference refinements: real links/search, SVG iconography, inline brand seal. */
+body.pvdak-profile-screen .pvdak-site-brand{padding-inline-start:37px;padding-inline-end:0}
+body.pvdak-profile-screen .site-branding .pvdak-profile-brand-scale{
+  inset-inline-start:-1px;inset-inline-end:auto;
+}
+body.pvdak-profile-screen .pvdak-profile-nav .pvdak-profile-nav-icon{
+  flex:0 0 30px;width:30px;height:30px;display:grid;place-items:center;
+  border-radius:9px;background:#eaf2ff;color:#2a70c5;
+}
+body.pvdak-profile-screen .pvdak-profile-nav .pvdak-profile-nav-icon svg{
+  width:17px;height:17px;display:block;
+}
+body.pvdak-profile-screen .pvdak-profile-nav a[aria-current] .pvdak-profile-nav-icon{
+  background:#d1e4ff;color:#175cc6;
+}
+body.pvdak-profile-screen .pvdak-profile-nav-arrow{
+  margin-inline-start:auto;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search{
+  margin-block:17px 0;display:grid;gap:7px;width:100%;min-width:0;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search label{
+  color:#d8f3fa;font-size:12px;font-weight:750;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search>div{
+  display:flex;align-items:stretch;gap:0;max-width:290px;
+  border:1px solid #4e759c;border-radius:11px;overflow:hidden;
+  background:#092540;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search input[type=search]{
+  flex:1;min-width:0;border:0;min-height:43px;border-radius:0;
+  padding:10px 13px;color:#fff;background:transparent;font-size:11px;outline:0;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search input[type=search]::placeholder{color:#a7bfd6}
+body.pvdak-profile-screen .pvdak-profile-footer-search button{
+  border:0;border-radius:0;background:linear-gradient(130deg,#16a6bb,#1373a4);
+  color:white;display:grid;place-items:center;min-width:46px;margin:0;
+  font-size:23px;padding:4px 12px;
+}
+body.pvdak-profile-screen .pvdak-profile-footer-search button:hover{background:#0a99ad}
+body.pvdak-profile-screen .pvdak-profile-footer-search :focus-visible{
+  outline:2px solid #ffd15c;outline-offset:-3px;
+}
+@media(max-width:540px){
+  body.pvdak-profile-screen .pvdak-site-brand{padding-inline-start:32px}
+  body.pvdak-profile-screen .site-branding .pvdak-profile-brand-scale{width:25px;height:25px}
+}
