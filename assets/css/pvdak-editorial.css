@@ -226,3 +226,56 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
   .pvdak-related-heading h2,.pvdak-comments-heading h2{font-size:19px}
   .pvdak-related-picture{min-height:135px}
 }
+
+
+/* Batch 096 — real editorial reading controls, native content, no JavaScript. */
+.pvdak-article-page .pvdak-article-jumpnav{
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+  margin:21px 0 0;padding-top:17px;border-top:1px solid #d4e4ed;
+}
+.pvdak-article-jumpnav a{
+  display:inline-flex;gap:10px;align-items:center;min-height:41px;
+  padding:8px 16px;background:#e4f2ff;border:1px solid #c1e0f3;
+  color:#156fa7;border-radius:10px;text-decoration:none;
+  font-size:12px;font-weight:850;
+}
+.pvdak-article-jumpnav a:first-child{
+  background:linear-gradient(115deg,#176eaa,#0b91a5);border-color:#218eaa;color:white;
+}
+.pvdak-article-jumpnav a:hover{filter:brightness(.96)}
+.pvdak-article-jumpnav a:focus-visible{outline:3px solid #eab34d;outline-offset:3px}
+.pvdak-article-reading{scroll-margin-top:28px}
+.pvdak-article-reading:focus{outline:none}
+.pvdak-article-service-note{
+  display:flex;gap:13px;align-items:flex-start;margin:21px 0 25px;
+  background:#eff7ff;border:1px solid #d2e5f6;border-radius:13px;
+  padding:15px 18px;color:#315975;
+}
+.pvdak-article-service-note>span{
+  flex:0 0 27px;width:27px;height:27px;
+  display:grid;place-items:center;border-radius:8px;background:#d8ecff;
+  color:#1674b2;font-weight:900;font-size:19px;
+}
+.pvdak-article-service-note p{font-size:12px;color:#41627c;margin:0;line-height:1.95}
+.pvdak-editorial-article .entry-content :where(h2,h3){
+  scroll-margin-top:27px;
+  border-inline-start:4px solid #168db6;
+  padding-inline-start:12px;
+}
+.pvdak-editorial-article .entry-content a:not(.wp-block-button__link){
+  color:#0f69a6;text-decoration-thickness:1px;
+}
+.pvdak-editorial-article .entry-content a:not(.wp-block-button__link):focus-visible{
+  outline:3px solid #e1b45a;outline-offset:2px;
+}
+.pvdak-related-articles .pvdak-related-card:hover{
+  border-color:#8bc1e3;
+}
+@media(max-width:620px){
+  .pvdak-article-page .pvdak-article-jumpnav{margin-top:14px;gap:7px}
+  .pvdak-article-jumpnav a{flex:1;justify-content:center;padding:7px 10px}
+  .pvdak-article-service-note{padding:12px 13px;gap:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pvdak-article-jumpnav a{transition:none}
+}
