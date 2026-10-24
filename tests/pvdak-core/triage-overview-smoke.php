@@ -177,7 +177,7 @@ check_triage( false === strpos( $src, 'update_post_meta(' ) && false === strpos(
 check_triage( false === strpos( $src, 'post_content' ) && false === strpos( $src, '_pvdak_internal_notes' ), 'no private bodies' );
 check_triage( false !== strpos( $src, "add_query_arg( 'post_status', 'private'" ), 'dashboard links private' );
 check_triage( false !== strpos( $src, "'pvdak_case_order' => 'oldest'" ), 'oldest-first queue links' );
-check_triage( false !== strpos( $src, "if ( ! $snapshot['query_ok'] )" ), 'error notice instead of zero' );
+check_triage( false !== strpos( $src, 'if ( ! $snapshot[\'query_ok\'] )' ), 'error notice instead of zero' );
 check_triage( false !== strpos( $src, 'function pvdak_core_triage_priority_cases()' ), 'priority list implemented' );
 check_triage( false !== strpos( $src, "'posts_per_page' => 8" ), 'priority list bounded' );
 check_triage( false !== strpos( $src, "'fields' => 'ids'" ), 'priority IDs only' );
