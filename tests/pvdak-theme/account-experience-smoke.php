@@ -20,7 +20,6 @@ $paths = array(
   'ticketcss'=>'assets/css/pvdak-support.css',
   'card'=>'template-parts/content-card.php',
   'article'=>'template-parts/content-single.php',
-  'homejs'=>'assets/js/pvdak-home.js',
 );
 $v = array();
 foreach ( $paths as $name => $file ) {
