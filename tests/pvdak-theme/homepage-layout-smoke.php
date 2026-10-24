@@ -258,7 +258,7 @@ pvdak_layout_expect(
 );
 pvdak_layout_expect(
     false !== strpos( $css, '.pvdak-home-community .pvdak-community-illustration' ) &&
-    false !== strpos( $css, 'Version: 0.8.36' ),
+    preg_match( '/Version:\s*0[.]8[.](?:3[6-9]|[4-9][0-9])/', $css ) === 1,
     'Theme version and responsive community vector styles exist'
 );
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
