@@ -96,6 +96,7 @@ $GLOBALS['pvdak_test_allowed'] = false;
 $q = new PvdakTriageFakeQuery( array( 'post_type' => 'pvdak_request' ) );
 pvdak_core_triage_filter_query( $q );
 check_triage( ! isset( $q->vars['meta_query'] ), 'unauthorized untouched' );
+check_triage( 0 === pvdak_core_triage_snapshot()['total'], 'unauthorized aggregate hidden' );
 $GLOBALS['pvdak_test_allowed'] = true;
 $_GET = array( 'pvdak_filter_queue' => 'pending' , 'post_status' => 'draft' );
 $q = new PvdakTriageFakeQuery( array( 'post_type' => 'pvdak_request', 'post_status' => 'draft' ) );
