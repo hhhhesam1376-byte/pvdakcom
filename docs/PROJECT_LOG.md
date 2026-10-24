@@ -869,3 +869,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Applied responsive account-only CSS in existing `style.css`, theme version 0.8.34. Kept Core plugin 0.8.3, maintenance, registration and legal intake gates untouched.
 - Expanded and corrected existing account experience/form/security source checks; 20/20 GitHub-readback static invariants passed, but PHP CLI lint, live WordPress and real browser tests remain to be done on host.
 - No new staging, cron, deployment script, credentials, workflow, plugin, or database changes. See `docs/WORK_BATCH_095.md`.
+
+## 2026-10-24 — WORK-BATCH-096: ten public-facing UI improvements
+- Followed employer-visible visual priorities, after unifying the private account in 0.8.34. Delivered 10 real template revisions: login, gated registration, secure password reset, contact, informational pages, search, archive, blog index, single article reading and empty results.
+- Added theme-only scoped CSS in existing style.css and assets/css/pvdak-editorial.css; brand colors, accessible focus styles, sensible mobile layouts and local-only assets. Theme version 0.8.35; Core 0.8.3 untouched.
+- Existing private login, account URL, nonce/handlers, user capability checks, published-only links, registration OFF, legal intake OFF, maintenance, data storage, plugins and deployment Cron unchanged.
+- Added 10 static source checks to existing tests/pvdak-theme/public-pages-auth-smoke.php and fixed obsolete assertion in account-experience smoke following batch 095. GitHub readback: 16/16 static invariants pass, CSS new braces balanced.
+- No full local PHP lint, WordPress browser, mobile screenshot or host smoke verification performed with GitHub connector. Production deployment must use existing host runner and confirm output before claiming live success. See docs/WORK_BATCH_096.md.
