@@ -1,4 +1,10 @@
 <?php
+
+/** Compare installed theme or Core metadata without pinning a moving patch version. */
+function pvdak_test_release_at_least( $source, $minimum ) {
+    return preg_match( '/^\\s*\\*?\\s*Version:[ \\t]*([0-9]+(?:[.][0-9]+)*)/mi', $source, $found ) === 1 &&
+        version_compare( $found[1], $minimum, '>=' );
+}
 /**
  * Static, read-only integrity checks for PVDak public pages and user login.
  * WordPress itself is never bootstrapped by this test.
@@ -53,5 +59,5 @@ pvdak_public_smoke_require( false !== strpos( $code['login'], '$admin_preview' )
  false !== strpos( $code['footer'], "'legal-faq'=>'پرسش‌های متداول'" ),
  'Site owner can safely preview login UI and footer includes FAQ' );
 pvdak_public_smoke_require( false !== strpos( $code['footer'], 'pvdak-footer-public' ) &&
- false !== strpos( $code['theme'], 'Version: 0.8.29' ), 'Footer links and theme cache version' );
+ pvdak_test_release_at_least( $code['theme'], '0.8.29' ), 'Footer links and theme cache version' );
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
