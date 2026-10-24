@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" role="img" aria-label="تصویر نمادین کتاب‌های حقوقی و ترازوی عدالت">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#05182e"/><stop offset=".52" stop-color="#123c60"/><stop offset="1" stop-color="#054e7e"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9e1a7"/><stop offset=".48" stop-color="#ba8742"/><stop offset=".78" stop-color="#fff0c9"/><stop offset="1" stop-color="#bb8b44"/></linearGradient>
+  <linearGradient id="book1" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#2e82a5"/><stop offset=".28" stop-color="#173d66"/><stop offset=".68" stop-color="#102b4e"/><stop offset="1" stop-color="#2e7095"/></linearGradient>
+  <linearGradient id="book2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#164b75"/><stop offset=".5" stop-color="#2778a2"/><stop offset="1" stop-color="#0b274b"/></linearGradient>
+  <radialGradient id="spot"><stop stop-color="#7ed3d8" stop-opacity=".37"/><stop offset="1" stop-color="#3686bb" stop-opacity="0"/></radialGradient>
+  <filter id="blur"><feGaussianBlur stdDeviation="9"/></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs>
+<rect width="900" height="360" fill="url(#bg)"/>
+<g opacity=".28" filter="url(#blur)">
+ <rect x="0" y="20" width="900" height="9" fill="#e2ebf0"/>
+ <rect x="0" y="171" width="900" height="13" fill="#8db7cf"/>
+ <rect x="45" y="39" width="49" height="129" rx="6" fill="#d2b58b"/><rect x="107" y="42" width="64" height="125" rx="3" fill="#3785ad"/>
+ <rect x="191" y="42" width="32" height="127" fill="#efb768"/><rect x="251" y="35" width="49" height="132" fill="#7eb0d5"/>
+ <rect x="316" y="45" width="51" height="128" fill="#c6ad8f"/><rect x="385" y="44" width="35" height="130" fill="#3e97a3"/>
+ <rect x="480" y="49" width="38" height="120" fill="#bdab88"/><rect x="543" y="45" width="70" height="122" fill="#5c9cbe"/>
+ <rect x="652" y="50" width="44" height="122" fill="#ecc494"/><rect x="745" y="41" width="52" height="128" fill="#4da2a4"/>
+</g>
+<ellipse cx="560" cy="200" rx="330" ry="190" fill="url(#spot)"/>
+<path d="M0 290h900v70H0z" fill="#04192c" opacity=".69"/><path d="M0 295h900" stroke="#86c2d7" stroke-opacity=".34" stroke-width="4"/>
+<g transform="translate(45 0)">
+  <path d="M52 254l202-18 21 55-201 19Z" fill="#061a31" opacity=".75"/>
+  <path d="M27 211L251 187q9-1 13 8l5 27L35 249Z" fill="url(#book1)" stroke="#c6ad7f" stroke-opacity=".48" stroke-width="2"/>
+  <path d="M39 244L271 221l-6 12-231 22Z" fill="#c4d4d8" stroke="#e3e3cb" stroke-width="3"/>
+  <path d="M44 264L248 249l10 36-218 17Z" fill="url(#book2)" stroke="#e7b364" stroke-opacity=".55" stroke-width="2"/>
+  <path d="M50 302L261 286l-4 10-203 17Z" fill="#d3d1bb" stroke="#a0ada6" stroke-width="2"/>
+  <path d="M59 261l1 31m12-33 1 31m145-39 6 38" stroke="#e0bf76" stroke-width="3" opacity=".7"/>
+  <path d="M54 215l202-23M54 223l204-23" stroke="#a9def1" stroke-width="2" opacity=".65"/>
+  <path d="M71 198l160-16q20-2 17-19l-6-20-177 17Z" fill="#204c71" stroke="#9fd2d8" stroke-width="3"/>
+  <path d="M68 165l174-16m-169 22 174-16" stroke="#dfd0a1" stroke-width="2" opacity=".75"/>
+  <path d="M90 153l156-13 8-37-151 11z" fill="#0c304f" stroke="#bfa678" stroke-width="2"/>
+  <path d="M111 117l128-11m-129 20 129-11" stroke="#5ca7cb" stroke-width="3"/>
+</g>
+<g transform="translate(340 6)">
+  <ellipse cx="266" cy="318" rx="143" ry="16" fill="#020a15" opacity=".4" filter="url(#soft)"/>
+  <path d="M260 60v233" stroke="#653f1a" stroke-width="13" stroke-linecap="round"/>
+  <path d="M260 59v234" stroke="url(#gold)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M255 44c-17-17 18-26 18-5 0 7-6 11-13 13" fill="none" stroke="url(#gold)" stroke-width="10"/>
+  <path d="M119 99q140-16 283 0" fill="none" stroke="url(#gold)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M258 90h9" stroke="#ffe6ae" stroke-width="16" stroke-linecap="round"/>
+  <path d="M143 100l-38 115m38-115 38 115M379 100l-38 115m38-115 38 115" stroke="url(#gold)" stroke-width="3.5"/>
+  <path d="M91 217h104q-10 51-52 51-42 0-52-51Z" fill="url(#gold)" opacity=".91"/>
+  <path d="M327 217h104q-10 51-52 51-42 0-52-51Z" fill="url(#gold)" opacity=".94"/>
+  <path d="M89 217h106m130 0h106" stroke="#fbe1a4" stroke-width="7" stroke-linecap="round"/>
+  <path d="M231 286h59l13 13h-85Z" fill="url(#gold)"/>
+  <path d="M195 298h129v16H195z" rx="8" fill="url(#gold)"/>
+  <rect x="175" y="312" width="172" height="14" rx="7" fill="url(#gold)"/>
+  <path d="M139 105v104m244-104v104" stroke="#faf0c6" stroke-opacity=".22"/>
+  <path d="M249 84v185" stroke="#fff2ce" stroke-width="2" stroke-opacity=".7"/>
+</g>
+<path d="M0 0h900v360H0z" fill="none" stroke="#addef0" stroke-opacity=".08" stroke-width="3"/>
+</svg>
