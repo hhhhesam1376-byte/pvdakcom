@@ -32,6 +32,7 @@ function pvdak_core_triage_snapshot() {
         'total' => 0, 'legacy_state' => 0, 'legacy_type' => 0,
         'pending' => 0, 'pending7' => 0, 'pending30' => 0, 'oldest_pending' => '',
     );
+    if ( ! pvdak_core_triage_can_manage() ) { return $result; }
     $now = current_datetime();
     $cutoff7 = $now->modify( '-7 days' )->format( 'Y-m-d' );
     $cutoff30 = $now->modify( '-30 days' )->format( 'Y-m-d' );
@@ -202,9 +203,14 @@ function pvdak_core_triage_list_filters( $post_type ) {
             'pending7' => 'در انتظار بیش از ۷ روز', 'pending30' => 'در انتظار بیش از ۳۰ روز',
         ),
     );
+    $labels = array(
+        'pvdak_filter_type' => 'فیلتر نوع درخواست',
+        'pvdak_filter_state' => 'فیلتر وضعیت درخواست',
+        'pvdak_filter_queue' => 'فیلتر اولویت بررسی',
+    );
     foreach ( $choices as $name => $options ) {
         echo '<label class="screen-reader-text" for="' . esc_attr( $name ) . '">' .
-            esc_html( 'فیلتر ' . $name ) . '</label>';
+            esc_html( $labels[ $name ] ) . '</label>';
         echo '<select id="' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '">';
         foreach ( $options as $key => $label ) {
             echo '<option value="' . esc_attr( $key ) . '"' .
