@@ -26,7 +26,11 @@
     var panels = Array.prototype.slice.call(workspace.querySelectorAll('[data-pvdak-panel]'));
     if (!panels.length) return;
     var hash = window.location.hash;
-    var id = hash ? decodeURIComponent(hash.slice(1)) : 'pvdak-dashboard';
+    var id = 'pvdak-dashboard';
+    if (hash) {
+      try { id = decodeURIComponent(hash.slice(1)); }
+      catch (err) { id = hash.slice(1); }
+    }
     var target = id ? document.getElementById(id) : null;
     var panel = target && workspace.contains(target) ?
       target.closest('[data-pvdak-panel]') : null;
@@ -57,7 +61,14 @@
       else link.removeAttribute('aria-current');
     });
   }
-  window.addEventListener('hashchange', refreshNavigation);
+  window.addEventListener('hashchange', function () {
+    refreshNavigation();
+    var id = window.location.hash.slice(1);
+    var target = id ? document.getElementById(id) : null;
+    if (target && target.closest('[data-pvdak-panel]')) {
+      target.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+  });
   refreshNavigation();
 
   function updateCount(counter) {
@@ -95,7 +106,7 @@
     params.has('status') && document.querySelector('[data-pvdak-profile-form]') ? 'pvdak-profile-result' : '';
   if (feedback) {
     var notice = document.getElementById(feedback);
-    if (notice) notice.focus({ preventScroll: true });
+    if (notice) notice.focus({ preventScroll: feedback !== 'pvdak-profile-result' });
   }
   var profileForm = document.querySelector('form[data-pvdak-profile-form]');
   var profileField = profileForm ? profileForm.querySelector('#account-display-name') : null;
