@@ -2626,8 +2626,11 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 .pvdak-login-page .pvdak-auth-scale svg{width:60px;height:60px}
 .pvdak-login-page .pvdak-auth-art-label{
-  display:block;background:#ffffff13;color:#d5ebfc;border-radius:99px;
-  border:1px solid #ffffff24;padding:3px 12px;font-size:10px;font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:auto;height:auto;max-width:100%;flex:0 0 auto;
+  background:#ffffff13;color:#d5ebfc;border-radius:99px;
+  border:1px solid #ffffff24;padding:5px 12px;font-size:10px;font-weight:800;
+  line-height:1.7;letter-spacing:0;text-align:right;
 }
 .pvdak-login-page .pvdak-auth-visual h2{font-size:clamp(21px,2.7vw,31px);font-weight:900;text-align:right}
 .pvdak-login-page .pvdak-auth-visual>p{text-align:right;color:#d4eafa!important}
