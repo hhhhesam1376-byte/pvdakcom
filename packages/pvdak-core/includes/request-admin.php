@@ -170,7 +170,10 @@ function pvdak_core_case_admin_column_content( $column, $post_id ) {
         echo $id && pvdak_core_valid_specialty( $id ) ? esc_html( get_the_title( $id ) ) : 'ثبت‌نشده / قدیمی';
     } elseif ( 'pvdak_case_age_column' === $column ) {
         $timestamp = get_post_time( 'U', true, $post_id );
-        echo $timestamp ? esc_html( human_time_diff( $timestamp, current_time( 'timestamp', true ) ) . ' پیش' ) : '—';
+        $now = current_time( 'timestamp', true );
+        if ( ! $timestamp ) { echo '—'; }
+        elseif ( $timestamp > $now ) { echo '<strong class="pvdak-case-alert">تاریخ ثبت آینده</strong>'; }
+        else { echo esc_html( human_time_diff( $timestamp, $now ) . ' پیش' ); }
     } elseif ( 'pvdak_case_activity' === $column ) {
         $labels = array();
         if ( metadata_exists( 'post', $post_id, '_pvdak_internal_notes' ) ) { $labels[] = 'یادداشت داخلی'; }
@@ -183,3 +186,185 @@ function pvdak_core_case_admin_column_content( $column, $post_id ) {
     }
 }
 add_action( 'manage_pvdak_request_posts_custom_column', 'pvdak_core_case_admin_column_content', 30, 2 );
+
+
+/**
+ * Operational list enhancements. These are read-only views, not state changes.
+ * Never show request bodies, private notes, or client contact details.
+ */
+function pvdak_core_case_ops_filters() {
+    $choices = array(
+        'pvdak_case_assignment' => array( 'assigned', 'unassigned' ),
+        'pvdak_case_consistency' => array( 'matched_missing', 'assigned_pending' ),
+        'pvdak_case_modified' => array( 'last1', 'last7', 'older7', 'older30', 'future' ),
+    );
+    $result = array();
+    foreach ( $choices as $key => $allowed ) {
+        $raw = isset( $_GET[ $key ] ) && is_string( $_GET[ $key ] )
+            ? sanitize_key( wp_unslash( $_GET[ $key ] ) ) : '';
+        $result[ $key ] = in_array( $raw, $allowed, true ) ? $raw : '';
+    }
+    return $result;
+}
+
+/** A numeric profile ID is required; legacy blank/zero values are unassigned. */
+function pvdak_core_case_ops_assigned_condition( $assigned ) {
+    $valid = array(
+        'key' => '_pvdak_assigned_profile_id',
+        'value' => '^[1-9][0-9]*$',
+        'compare' => 'REGEXP',
+    );
+    if ( $assigned ) { return $valid; }
+    return array( 'relation' => 'OR',
+        array( 'key' => '_pvdak_assigned_profile_id', 'compare' => 'NOT EXISTS' ),
+        array( 'key' => '_pvdak_assigned_profile_id', 'value' => '^[1-9][0-9]*$', 'compare' => 'NOT REGEXP' ),
+    );
+}
+
+function pvdak_core_case_ops_controls( $post_type ) {
+    if ( 'pvdak_request' !== $post_type || ! pvdak_core_case_admin_allowed() ) { return; }
+    $f = pvdak_core_case_ops_filters();
+    pvdak_core_case_admin_select( 'pvdak_case_assignment', 'ارجاع داخلی', array(
+        'assigned' => 'دارای ارجاع داخلی', 'unassigned' => 'بدون ارجاع داخلی',
+    ), $f['pvdak_case_assignment'] );
+    pvdak_core_case_admin_select( 'pvdak_case_consistency', 'بررسی ناسازگاری', array(
+        'matched_missing' => 'ارجاع‌شده بدون پرونده حرفه‌ای',
+        'assigned_pending' => 'در انتظار با ارجاع ثبت‌شده',
+    ), $f['pvdak_case_consistency'] );
+    pvdak_core_case_admin_select( 'pvdak_case_modified', 'آخرین فعالیت', array(
+        'last1' => 'ویرایش در ۲۴ ساعت اخیر',
+        'last7' => 'ویرایش در ۷ روز اخیر',
+        'older7' => 'بدون ویرایش در بیش از ۷ روز',
+        'older30' => 'بدون ویرایش در بیش از ۳۰ روز',
+        'future' => 'زمان ویرایش در آینده',
+    ), $f['pvdak_case_modified'] );
+    echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=pvdak_request&page=pvdak-request-triage' ) ) .
+        '">نمای صف بررسی</a>';
+    if ( array_filter( $f ) ) {
+        echo '<span class="pvdak-case-active-filters" role="status">فیلتر عملیاتی فعال است</span>';
+    }
+}
+add_action( 'restrict_manage_posts', 'pvdak_core_case_ops_controls', 35 );
+
+/** Extend the existing WP list query; never replace other plugins' conditions. */
+function pvdak_core_case_ops_query( $query ) {
+    global $pagenow;
+    if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
+        'pvdak_request' !== $query->get( 'post_type' ) || ! pvdak_core_case_admin_allowed() ) { return; }
+    $f = pvdak_core_case_ops_filters();
+    if ( ! array_filter( $f ) ) { return; }
+    // When a custom operational filter is selected, default to private cases;
+    // preserve explicit native WordPress status tabs (draft/trash/etc.).
+    if ( ! $query->get( 'post_status' ) &&
+        ( ! isset( $_GET['post_status'] ) || '' === $_GET['post_status'] ) ) {
+        $query->set( 'post_status', 'private' );
+    }
+    $conditions = array();
+    if ( $f['pvdak_case_assignment'] ) {
+        $conditions[] = pvdak_core_case_ops_assigned_condition( 'assigned' === $f['pvdak_case_assignment'] );
+    }
+    if ( 'matched_missing' === $f['pvdak_case_consistency'] ) {
+        $conditions[] = array( 'key' => '_pvdak_request_state', 'value' => 'matched', 'compare' => '=' );
+        $conditions[] = pvdak_core_case_ops_assigned_condition( false );
+    } elseif ( 'assigned_pending' === $f['pvdak_case_consistency'] ) {
+        $conditions[] = array( 'key' => '_pvdak_request_state',
+            'value' => array( 'submitted', 'review' ), 'compare' => 'IN' );
+        $conditions[] = pvdak_core_case_ops_assigned_condition( true );
+    }
+    if ( $conditions ) {
+        $existing = $query->get( 'meta_query' );
+        $combined = array( 'relation' => 'AND' );
+        if ( is_array( $existing ) && $existing ) { $combined[] = $existing; }
+        foreach ( $conditions as $condition ) { $combined[] = $condition; }
+        $query->set( 'meta_query', $combined );
+    }
+    $modified = $f['pvdak_case_modified'];
+    if ( $modified ) {
+        $now = current_datetime();
+        $date = array( 'column' => 'post_modified', 'inclusive' => false );
+        if ( 'future' === $modified ) {
+            $date['after'] = $now->format( 'Y-m-d H:i:s' );
+        } else {
+            $days = in_array( $modified, array( 'last1', 'last7', 'older7' ), true ) ?
+                ( 'last1' === $modified ? 1 : 7 ) : 30;
+            $cutoff = pvdak_core_triage_cutoff( $days, $now );
+            if ( 0 === strpos( $modified, 'last' ) ) {
+                $date['after'] = $cutoff;
+                $date['inclusive'] = true;
+            } else {
+                $date['before'] = $cutoff;
+            }
+        }
+        $existing = $query->get( 'date_query' );
+        $combined = array( 'relation' => 'AND' );
+        if ( is_array( $existing ) && $existing ) { $combined[] = $existing; }
+        $combined[] = $date;
+        $query->set( 'date_query', $combined );
+    }
+}
+add_action( 'pre_get_posts', 'pvdak_core_case_ops_query', 40 );
+
+/** Compact summaries only; per-record capability checks prevent disclosure. */
+function pvdak_core_case_ops_columns( $columns ) {
+    if ( ! pvdak_core_case_admin_allowed() ) { return $columns; }
+    $columns['pvdak_case_kind'] = 'نوع خدمت';
+    $columns['pvdak_case_state'] = 'وضعیت رسیدگی';
+    $columns['pvdak_case_assignee'] = 'ارجاع داخلی';
+    $columns['pvdak_case_author'] = 'شناسه ثبت‌کننده';
+    return $columns;
+}
+add_filter( 'manage_pvdak_request_posts_columns', 'pvdak_core_case_ops_columns', 40 );
+
+function pvdak_core_case_ops_column_content( $column, $post_id ) {
+    if ( ! pvdak_core_case_admin_allowed() || ! current_user_can( 'edit_post', $post_id ) ||
+        'pvdak_request' !== get_post_type( $post_id ) ) { return; }
+    if ( 'pvdak_case_kind' === $column ) {
+        $types = pvdak_core_request_types();
+        $type = get_post_meta( $post_id, '_pvdak_request_type', true );
+        echo esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص / قدیمی' );
+    } elseif ( 'pvdak_case_state' === $column ) {
+        $statuses = pvdak_core_request_statuses();
+        $state = get_post_meta( $post_id, '_pvdak_request_state', true );
+        echo esc_html( isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'نامعتبر / نیازمند بررسی' );
+    } elseif ( 'pvdak_case_assignee' === $column ) {
+        $profile_id = absint( get_post_meta( $post_id, '_pvdak_assigned_profile_id', true ) );
+        $state = get_post_meta( $post_id, '_pvdak_request_state', true );
+        if ( ! $profile_id ) {
+            echo 'matched' === $state ? '<strong class="pvdak-case-alert">ارجاع ناقص؛ بررسی شود</strong>' : '—';
+        } else {
+            echo '<code>#' . esc_html( $profile_id ) . '</code>';
+            if ( 'pvdak_professional' === get_post_type( $profile_id ) &&
+                current_user_can( 'edit_post', $profile_id ) ) {
+                $link = get_edit_post_link( $profile_id );
+                if ( $link ) { echo ' <a href="' . esc_url( $link ) . '">پرونده حرفه‌ای</a>'; }
+            }
+            if ( in_array( $state, array( 'submitted', 'review' ), true ) ) {
+                echo ' <strong class="pvdak-case-alert">وضعیت ناسازگار</strong>';
+            }
+        }
+    } elseif ( 'pvdak_case_author' === $column ) {
+        $owner = absint( get_post_field( 'post_author', $post_id ) );
+        echo $owner ? '<code>#' . esc_html( $owner ) . '</code>' : '—';
+    }
+}
+add_action( 'manage_pvdak_request_posts_custom_column', 'pvdak_core_case_ops_column_content', 40, 2 );
+
+/** Reuse the already-existing assignment review screen; no new write route. */
+function pvdak_core_case_ops_row_actions( $actions, $post ) {
+    if ( ! pvdak_core_case_admin_allowed() || ! isset( $post->ID, $post->post_type ) ||
+        'pvdak_request' !== $post->post_type || 'private' !== $post->post_status ||
+        ! current_user_can( 'edit_post', $post->ID ) ) { return $actions; }
+    $actions['pvdak_review_assignment'] = '<a href="' .
+        esc_url( admin_url( 'admin.php?page=pvdak-assign-request&request_id=' . absint( $post->ID ) ) ) .
+        '">بررسی ارجاع</a>';
+    return $actions;
+}
+add_filter( 'post_row_actions', 'pvdak_core_case_ops_row_actions', 30, 2 );
+
+function pvdak_core_case_ops_admin_css() {
+    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+    if ( ! $screen || 'edit-pvdak_request' !== $screen->id || ! pvdak_core_case_admin_allowed() ) { return; }
+    echo '<style>.pvdak-case-alert{color:#a43c15}.pvdak-case-active-filters{display:inline-block;padding:5px 8px;color:#1d3550;font-weight:600}';
+    echo '@media(max-width:782px){.pvdak-case-active-filters{display:block;margin:6px 0}}</style>';
+}
+add_action( 'admin_head-edit.php', 'pvdak_core_case_ops_admin_css' );

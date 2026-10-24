@@ -816,3 +816,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Updated the existing synthetic triage test with precise cutoffs, additional queues, query composition, canonical SQL checks and a simulated database failure; existing read-only runner remains the single test entry point.
 - GitHub read-back confirmed modified files and static delimiter balance; code guard assertions passed. **PHP lint, actual PHP synthetic execution, WordPress integration, two-account permissions, duplicate-meta database behavior, SQL performance and browser/mobile testing remain unverified.**
 - Source changes were committed only to `feature/pvdak-account-experience-080`. No production deployment, main update, intake/registration/maintenance change, data mutation, staging, secrets or cron changes.
+
+## 2026-10-24 — WORK-BATCH-089 (development branch only)
+- Added 20 read-only admin request queue enhancements: assignment presence, inconsistent state detection, modified-age filters, private scope, status preservation, metadata-only columns, future-date warnings and guarded assignment links.
+- New synthetic operational queue test added to existing readonly runner; source checks extended. GitHub source changes committed only; PHP lint and real WordPress tests remain pending.
+- No production deployment, main branch, intake, maintenance, roles, database or stored records changed. See `docs/WORK_BATCH_089.md`.

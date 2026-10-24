@@ -30,6 +30,20 @@ $checks = array(
     'accessible controls' => strpos( $src, 'screen-reader-text' ) !== false,
     'reset filters' => strpos( $src, 'پاک‌کردن فیلترهای صف' ) !== false,
     'bootstrapped' => strpos( $boot, '\'/includes/request-admin.php\'' ) !== false,
+    'operational filters' => strpos( $src, 'function pvdak_core_case_ops_filters()' ) !== false,
+    'assignment validity' => strpos( $src, "'^[1-9][0-9]* strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
+);
+foreach ( $checks as $label => $ok ) {
+    if ( ! $ok ) { fwrite( STDERR, "PVDAK_CASE_ADMIN_FAIL: $label\n" ); exit( 1 ); }
+}
+echo 'PVDAK_CASE_ADMIN_SOURCE_OK: ' . count( $checks ) . " static checks; WordPress runtime not tested\n";
+" ) !== false,
+    'consistency checks' => strpos( $src, "'matched_missing'" ) !== false && strpos( $src, "'assigned_pending'" ) !== false,
+    'modified date column' => strpos( $src, "'post_modified'" ) !== false,
+    'explicit status preservation' => strpos( $src, "if ( ! $query->get( 'post_status' )" ) !== false,
+    'per record capability' => strpos( $src, "current_user_can( 'edit_post', $post_id )" ) !== false,
+    'future age flag' => strpos( $src, 'تاریخ ثبت آینده</strong>' ) !== false,
+    'assignment review link' => strpos( $src, "'post_row_actions'" ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {
