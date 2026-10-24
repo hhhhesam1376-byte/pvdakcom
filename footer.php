@@ -49,6 +49,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         </div>
     </div>
     <div class="pvdak-footer-bottom container">
+        <a class="pvdak-back-top" href="#main-content">بازگشت به ابتدای محتوا <span aria-hidden="true">↑</span></a>
         <span class="pvdak-footer-bottom-mark">PVDAK • پویش وکلای دادگستری کشور</span>
         <small>&copy; <?php echo esc_html(wp_date('Y')); ?> تمام حقوق محفوظ است.</small>
     </div>
