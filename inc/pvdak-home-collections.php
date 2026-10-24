@@ -65,15 +65,22 @@ function pvdak_home_faq_pages() {
     if ( ! $id || 'page' !== get_post_type( $id ) || 'publish' !== get_post_status( $id ) ) {
         return array();
     }
-    return get_posts( array(
+    $published = get_posts( array(
         'post_type'      => 'page',
         'post_status'    => 'publish',
         'post_parent'    => $id,
-        'posts_per_page' => 12,
+        'posts_per_page' => 30,
         'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
         'order'          => 'ASC',
         'no_found_rows'  => true,
     ) );
+    // D08/D10: a published empty FAQ Page should never become a blank
+    // accordion in the employer demo. Keep the source Page untouched.
+    $answered = array_values( array_filter( $published, static function( $page ) {
+        return $page instanceof WP_Post &&
+            '' !== trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
+    } ) );
+    return array_slice( $answered, 0, 12 );
 }
 
 /**
