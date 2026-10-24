@@ -90,7 +90,7 @@ add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
 
 /** Tiny progressive enhancement on account credential screens only. */
 function pvdak_account_form_assets() {
-    if ( is_page( array( 'account-login', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
+    if ( is_page( array( 'account-login', 'account-recovery', 'account-register', 'my-pvdak-account', 'account-profile', 'contact-us' ) ) ) {
         wp_enqueue_script(
             'pvdak-account-interactions',
             get_template_directory_uri() . '/assets/js/pvdak-account.js',

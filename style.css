@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.29
+Version: 0.8.30
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1437,7 +1437,7 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
 .pvdak-account-menu{display:grid;gap:5px}
 .pvdak-account-menu a{display:flex;align-items:center;min-height:45px;padding:9px 13px;border-radius:11px;text-decoration:none;color:#38555f;font-size:13px;font-weight:750;line-height:1.7}
 .pvdak-account-menu a:hover,.pvdak-account-menu a:focus-visible{background:#ecf6f3;color:#086d63}
-.pvdak-account-menu a[aria-current="page"]{background:#e7f3ef;color:#0b6f66;border-inline-start:3px solid #0c8c7d}
+.pvdak-account-menu a[aria-current]{background:#e7f3ef;color:#0b6f66;border-inline-start:3px solid #0c8c7d}
 .pvdak-account-sidebar-note{font-size:12px;line-height:1.9;color:#667d83;background:#f3f8f7;border-radius:11px;margin:17px 0;padding:12px}
 .pvdak-account-signout{display:block;text-align:center;border:1px solid #eedcd7;background:#fffaf9;color:#9c4b46;text-decoration:none;border-radius:10px;padding:10px;font-size:12px;font-weight:850}
 .pvdak-account-signout:hover{background:#fff0ec}
@@ -1486,3 +1486,16 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
   .pvdak-account-main .pvdak-core-stats{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.pvdak-account-menu a,.pvdak-account-signout{transition:none}}
+
+/* Batch 091: scoped, accessible account forms and panel navigation. */
+.pvdak-field-help{font-size:12px;line-height:1.9;color:#56737b;margin:5px 0 8px}
+.pvdak-field-count{display:block;text-align:end;color:#59747a;font-size:12px;font-variant-numeric:tabular-nums;margin:3px 0 13px}
+.pvdak-field-count.pvdak-ticket-counter--near{color:#a05224;font-weight:800}
+.pvdak-form-change-status{min-height:1.6em;color:#0b746a;font-size:12px;margin:5px 0}
+.pvdak-form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.pvdak-forms .pvdak-secondary-button{background:#fff!important;border:1px solid #b7d5cd!important;color:#155f59!important;box-shadow:none!important}
+.pvdak-forms button[disabled]{opacity:.6;cursor:not-allowed}
+.pvdak-panel-return{margin:14px 0 0;font-size:13px}
+.pvdak-panel-return a{display:inline-block;padding:8px 12px;border-radius:9px;background:#eaf5f1;color:#0d695e;font-weight:750;text-decoration:none}
+.pvdak-panel-return a:focus-visible,.pvdak-forms .pvdak-secondary-button:focus-visible{outline:3px solid #168b80;outline-offset:3px}
+@media(max-width:500px){.pvdak-form-actions{display:grid;grid-template-columns:minmax(0,1fr)}.pvdak-form-actions button{width:100%}}

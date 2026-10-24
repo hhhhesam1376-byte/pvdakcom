@@ -47,17 +47,19 @@ get_header(); ?>
         <?php if ( $has_dashboard ): ?>
           <?php echo do_shortcode( '[pvdak_account_dashboard]' ); ?>
         <?php else: ?>
-          <div class="pvdak-static-body"><h2>نمای کلی حساب</h2><p>حساب شما فعال است، اما افزونه Core در حال حاضر خلاصه درخواست‌ها را نمایش نمی‌دهد.</p><p class="pvdak-static-note">ثبت درخواست حقوقی تا راه‌اندازی رسمی غیرفعال است.</p></div>
+          <div class="pvdak-static-body"><h2>نمای کلی حساب</h2><p>شما وارد حساب خود شده‌اید؛ خلاصه درخواست‌ها در حال حاضر در دسترس نیست.</p><p class="pvdak-static-note">وضعیت فعال‌بودن خدمات و درخواست‌ها باید جداگانه بررسی شود.</p></div>
         <?php endif; ?>
       </section>
       <?php if ( $has_professional ): ?>
         <section id="pvdak-professional" class="pvdak-account-panel" aria-label="وضعیت همکاری">
           <?php echo do_shortcode( '[pvdak_professional_dashboard]' ); ?>
+          <p class="pvdak-panel-return"><a href="#pvdak-dashboard">↑ بازگشت به نمای کلی حساب</a></p>
         </section>
       <?php endif; ?>
       <?php if ( $has_support ): ?>
         <div class="pvdak-account-panel pvdak-account-support">
           <?php echo do_shortcode( '[pvdak_support_tickets]' ); ?>
+          <p class="pvdak-panel-return"><a href="#pvdak-dashboard">↑ بازگشت به نمای کلی حساب</a></p>
         </div>
       <?php endif; ?>
     </div>
