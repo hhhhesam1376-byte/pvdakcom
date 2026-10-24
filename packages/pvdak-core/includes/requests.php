@@ -28,6 +28,32 @@ function pvdak_core_intake_open() {
     return '1' === (string) get_option( 'pvdak_core_intake_enabled', '0' );
 }
 
+/**
+ * Enforce the same Unicode character limits on the server as the form does
+ * in the browser. The byte caps also bound the stored request size.
+ */
+function pvdak_core_request_input_valid( $title, $description ) {
+    if ( ! is_string( $title ) || ! is_string( $description ) ||
+        '' === trim( $title ) || '' === trim( $description ) ||
+        strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
+        return false;
+    }
+    $title_length = preg_match_all( '/./us', $title );
+    $description_length = preg_match_all( '/./us', $description );
+    return false !== $title_length && false !== $description_length &&
+        $title_length <= 140 && $description_length <= 3000;
+}
+
+/** One-time receipt is scoped to the owner AND the submitted service type. */
+function pvdak_core_request_receipt_id( $receipt, $type ) {
+    if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
+        ! is_string( $receipt['type'] ) || ! is_scalar( $receipt['id'] ) ||
+        $receipt['type'] !== $type || (int) $receipt['id'] < 1 ) {
+        return 0;
+    }
+    return absint( $receipt['id'] );
+}
+
 function pvdak_core_request_form( $atts ) {
     $atts = shortcode_atts( array( 'type' => 'lawyer' ), $atts, 'pvdak_request_form' );
     $type = sanitize_key( $atts['type'] );
@@ -49,9 +75,16 @@ function pvdak_core_request_form( $atts ) {
     }
     $html = '<section class="pvdak-core-panel"><h2>' . esc_html( $types[ $type ] ) . '</h2>';
     $receipt_key = 'pvdak_receipt_' . get_current_user_id();
-    if ( get_transient( $receipt_key ) ) {
+    $receipt_id = pvdak_core_request_receipt_id( get_transient( $receipt_key ), $type );
+    if ( $receipt_id ) {
         delete_transient( $receipt_key );
-        $html .= '<p class="pvdak-core-success" role="status">درخواست شما ثبت شد و در صف بررسی قرار گرفت.</p>';
+        $html .= '<p class="pvdak-core-success" role="status">درخواست شما ثبت شد و در صف بررسی قرار گرفت. شماره پیگیری: <strong>#' .
+            esc_html( number_format_i18n( $receipt_id ) ) . '</strong></p>';
+        $account_page = get_page_by_path( 'my-pvdak-account', OBJECT, 'page' );
+        if ( $account_page && 'publish' === get_post_status( $account_page->ID ) ) {
+            $html .= '<p><a href="' . esc_url( get_permalink( $account_page->ID ) . '#pvdak-requests' ) .
+                '">پیگیری در حساب کاربری</a></p>';
+        }
     }
     if ( isset( $_GET['pvdak_error'] ) ) {
         $html .= '<p class="pvdak-core-error" role="alert">اطلاعات ارسالی قابل ثبت نبود. فیلدها را بررسی کنید یا کمی بعد دوباره تلاش کنید.</p>';
@@ -90,7 +123,7 @@ function pvdak_core_handle_request() {
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
     $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
     if ( ! $consent || ! isset( $types[ $type ] ) || ! pvdak_core_valid_specialty( $landing_id ) ||
-         '' === trim( $title ) || '' === trim( $description ) || strlen( $title ) > 600 || strlen( $description ) > 12000 ) {
+         ! pvdak_core_request_input_valid( $title, $description ) ) {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
         exit;
     }
@@ -118,7 +151,7 @@ function pvdak_core_handle_request() {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
         exit;
     }
-    set_transient( 'pvdak_receipt_' . $user_id, 1, 300 );
+    set_transient( 'pvdak_receipt_' . $user_id, array( 'type' => $type, 'id' => absint( $id ) ), 300 );
     wp_safe_redirect( $destination );
     exit;
 }
