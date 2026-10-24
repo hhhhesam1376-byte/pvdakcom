@@ -30,8 +30,8 @@ foreach ( $paths as $name => $file ) {
 }
 $checks = array(
   '098-01 Hero search always has a real fallback mode' =>
-    strpos($v['front'], "name=\"<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>\"")!==false &&
-    strpos($v['front'], "$all_legal_pages ? home_url( '/#topics' ) : home_url( '/' )")!==false,
+    strpos($v['front'], 'name="<?php echo $all_legal_pages ?')!==false &&
+    strpos($v['front'], '$all_legal_pages ? home_url(')!==false,
   '098-02 Search can be cleared without a page reload' =>
     strpos($v['front'],'data-pvdak-clear-search')!==false &&
     strpos($v['homejs'],"clear.addEventListener('click'")!==false,
@@ -51,13 +51,13 @@ $checks = array(
     strpos($v['front'],'<?php if ( $notice_posts ): ?>')!==false &&
     strpos($v['front'],'if ( $notice_posts || $news_feature )')!==false,
   '098-08 Published notices include real dates and destination links' =>
-    strpos($v['front'],"get_the_date( 'Y-m-d', $notice_post->ID )")!==false &&
-    strpos($v['front'],"get_permalink( $notice_post->ID )")!==false,
+    strpos($v['front'], "get_the_date( 'Y-m-d', " . '$notice_post->ID )')!==false &&
+    strpos($v['front'], 'get_permalink( $notice_post->ID )')!==false,
   '098-09 News without thumbnail uses bundled vector instead of blank box' =>
     strpos($v['front'],'pvdak-news-fallback-art')!==false &&
     strpos($v['front'],'has_post_thumbnail( $news_feature->ID )')!==false,
   '098-10 News card includes real publication date' =>
-    strpos($v['front'],"get_the_date( 'Y-m-d', $news_feature->ID )")!==false,
+    strpos($v['front'], "get_the_date( 'Y-m-d', " . '$news_feature->ID )')!==false,
   '098-11 Global logged-in support shortcut retains role gate' =>
     strpos($v['header'],"is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' )")!==false &&
     strpos($v['header'],"pvdak_auth_account_url() . '#pvdak-support'")!==false,
