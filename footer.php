@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
           <?php endforeach; ?>
         </nav>
         <div class="pvdak-footer-address">
-            <strong class="pvdak-footer-heading">ارتباط و راهنمایی</strong>
+            <strong class="pvdak-footer-heading">ارتباط و راهنمایی</strong><p class="pvdak-footer-contact-description">برای پرسش‌های عمومی و مشکلات دسترسی از صفحه تماس استفاده کنید.</p>
             <span>نشانی اینترنتی</span>
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html(wp_parse_url(home_url('/'), PHP_URL_HOST)); ?></a>
             <?php $contact_url = pvdak_public_page_url( 'contact-us' ); if ( $contact_url ): ?>
@@ -49,6 +49,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         </div>
     </div>
     <div class="pvdak-footer-bottom container">
+        <span class="pvdak-footer-bottom-mark">PVDAK • پویش وکلای دادگستری کشور</span>
         <small>&copy; <?php echo esc_html(wp_date('Y')); ?> تمام حقوق محفوظ است.</small>
     </div>
 </footer>
