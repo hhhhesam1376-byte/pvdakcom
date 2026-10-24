@@ -1,5 +1,8 @@
 # PVDak post-install acceptance — 2026-10-23
 
+> **آرشیوی/راهنمای تاریخی — این فایل فهرست فعال کارهای باز نیست.** برای نسخه‌های جاری، درصد، موانع و تسک‌های D01–D32 فقط [PROJECT_LOG.md](PROJECT_LOG.md) ملاک است. توضیحات قدیمی درباره وضعیت هاست، مسیر Swiper و نسخه Core را بدون شاهد جدید ملاک قرار ندهید.
+
+
 Reported by cPanel owner:
 - Theme 0.8.28 deployed, `DEPLOY_OK 63e836be6686717e5dc2942018fb7a2fb851dfac`.
 - Core 0.8.2 active, `CORE_UPGRADE_OK 0.8.2`.
