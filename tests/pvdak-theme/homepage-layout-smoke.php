@@ -285,6 +285,17 @@ pvdak_layout_expect(
     false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
     'D05: required public Pages must be published with their actual native templates' );
 
+pvdak_layout_expect(
+    false !== strpos( $readiness, 'pvdak_home_faq_pages( true )' ) &&
+    false !== strpos( $readiness, '$faq_written > 0' ) &&
+    false !== strpos( $readiness, '$faq_written === $faq_count' ),
+    'D08: admin readiness counts published blank FAQ Pages as incomplete'
+);
+pvdak_layout_expect(
+    false !== strpos( file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' ), 'if ( $include_empty ) { return $published; }' ),
+    'D08: FAQ public and admin source selection remain distinct'
+);
+
 // D05/D08/D10: execute the actual selectors against a synthetic *closed*
 // intake with misleading manual ACF URLs. Neither button may navigate.
 function pvdak_core_intake_open() { return false; }
