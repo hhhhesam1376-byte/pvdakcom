@@ -103,14 +103,14 @@ $checks = array(
     is_file($root . '/assets/icons/pvdak-profile-hero.svg') &&
     strpos($v['portal'], 'pvdak-account-hero')!==false &&
     strpos($v['css'], "url('assets/icons/pvdak-profile-hero.svg')")!==false,
-  'Profile-specific header has a working native WordPress search form' =>
+  'Unified account header has working WordPress search and support actions' =>
     strpos($v['header'], 'pvdak-profile-header-search')!==false &&
     strpos($v['header'], 'name="s"')!==false &&
-    strpos($v['header'], "is_page_template( 'page-templates/pvdak-profile.php' )")!==false,
-  'Profile-specific footer includes a real WordPress search form' =>
+    strpos($v['header'], "is_page_template( 'page-templates/pvdak-account.php' )")!==false,
+  'Unified account footer includes real WordPress search form' =>
     strpos($v['footer'], 'pvdak-profile-footer-search')!==false &&
     strpos($v['footer'], 'name="s"')!==false &&
-    strpos($v['footer'], "is_page_template( 'page-templates/pvdak-profile.php' )")!==false,
+    strpos($v['footer'], "is_page_template( 'page-templates/pvdak-account.php' )")!==false,
   'Reference proportions and trusted form interactions remain' =>
     strpos($v['css'], '.pvdak-profile-hero-photo{')!==false &&
     strpos($v['css'], '.pvdak-profile-bottom{')!==false &&
