@@ -60,7 +60,7 @@ $checks = array(
   '10 Account dashboard adds live gated quick links and styling' =>
     strpos($v['portal'],'pvdak-dashboard-quicklinks')!==false &&
     strpos($v['portal'],'if ( $has_support )')!==false &&
-    strpos($v['portal'],'if ( $profile_url )')!==false &&
+    strpos($v['portal'],'id="pvdak-profile"')!==false &&
     strpos($v['css'],'.pvdak-dashboard-quicklinks{')!==false,
   'Account sidebar and personal shortcuts' =>
     strpos($v['portal'],'pvdak-account-sidebar')!==false &&
