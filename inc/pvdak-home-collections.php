@@ -81,9 +81,11 @@ function pvdak_home_faq_pages() {
  * ACF override takes precedence. Never link to drafts or inactive forms.
  */
 function pvdak_home_service_url( $index ) {
+    // D05/D10: a manually configured link must never make a closed intake
+    // look usable in the employer-facing demo.
+    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
     $manual = pvdak_home_value( 'service_' . absint( $index ) . '_url', '' );
     if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
-    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
     $slugs = array( 1 => 'request-lawyer', 2 => 'request-consultation', 3 => 'request-question' );
     if ( ! isset( $slugs[ $index ] ) ) { return ''; }
     $page = get_page_by_path( $slugs[ $index ], OBJECT, 'page' );
@@ -92,9 +94,9 @@ function pvdak_home_service_url( $index ) {
 }
 
 function pvdak_home_join_url() {
+    if ( ! function_exists( 'pvdak_core_member_intake_open' ) || ! pvdak_core_member_intake_open() ) { return ''; }
     $manual = pvdak_home_value( 'community_url', '' );
     if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
-    if ( ! function_exists( 'pvdak_core_member_intake_open' ) || ! pvdak_core_member_intake_open() ) { return ''; }
     $page = get_page_by_path( 'join-legal-community', OBJECT, 'page' );
     if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_professional_application' ) ) { return ''; }
     return get_permalink( $page->ID );
