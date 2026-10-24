@@ -261,4 +261,16 @@ pvdak_layout_expect(
     preg_match( '/Version:\s*0[.]8[.](?:3[6-9]|[4-9][0-9])/', $css ) === 1,
     'Theme version and responsive community vector styles exist'
 );
+// D08: Confirm admin checks the same published quick links and substantive FAQ.
+$readiness = file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-readiness.php' );
+pvdak_layout_expect(
+    false !== strpos( $readiness, "function_exists( 'pvdak_home_quick_pages' )" ) &&
+    false !== strpos( $readiness, '4 === $quick_count' ) &&
+    false !== strpos( $readiness, "'چهار دسترسی سریع منتشرشده'" ),
+    'Admin readiness requires four real published quick Pages' );
+pvdak_layout_expect(
+    false !== strpos( $readiness, 'strip_shortcodes( $faq_page->post_content )' ) &&
+    false !== strpos( $readiness, '$faq_written === $faq_count' ),
+    'Admin readiness rejects empty FAQ answers, without writing content' );
+
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
