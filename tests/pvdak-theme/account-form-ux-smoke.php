@@ -30,10 +30,13 @@ $checks = array(
   'Profile Unicode length bounded server-side' => strpos( $s['tools'], 'pvdak_public_text_length( $value ) > 120' ) !== false,
   'Profile no-op avoids writes' => strpos( $s['tools'], "'status', 'unchanged'" ) !== false,
   'Recovery minimum Unicode length' => strpos( $s['tools'], 'pvdak_public_text_length( $password ) < 12' ) !== false,
-  'Profile status variants' => strpos( $s['profile'], "if('unchanged'===" ) !== false,
-  'Profile counter and hint' => strpos( $s['profile'], 'data-pvdak-count-for="account-display-name"' ) !== false,
-  'Profile reset control' => strpos( $s['profile'], 'type="reset"' ) !== false,
-  'Profile unsaved change status' => strpos( $s['profile'], 'data-pvdak-profile-status' ) !== false,
+  'Legacy profile URL preserves current form state via redirect' =>
+    strpos( $s['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )" ) !== false &&
+    strpos( $s['portal'], 'id="pvdak-profile"' ) !== false,
+  'Profile status variants' => strpos( $s['portal'], "if('unchanged'===" ) !== false,
+  'Profile counter and hint' => strpos( $s['portal'], 'data-pvdak-count-for="account-display-name"' ) !== false,
+  'Profile reset control' => strpos( $s['portal'], 'type="reset"' ) !== false,
+  'Profile unsaved change status' => strpos( $s['portal'], 'data-pvdak-profile-status' ) !== false,
   'Contact result accessible focus' => strpos( $s['contact'], 'id="pvdak-contact-result" tabindex="-1"' ) !== false,
   'Contact textarea counter' => strpos( $s['contact'], 'data-pvdak-count-for="pvdak-message"' ) !== false,
   'Contact email browser cap' => strpos( $s['contact'], 'maxlength="254"' ) !== false,
