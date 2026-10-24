@@ -13,9 +13,19 @@ $messages=array('1'=>'پیام شما برای تیم پویش ارسال شد.'
 <?php while(have_posts()):the_post(); ?>
 <header class="pvdak-static-head"><span>در ارتباط باشید</span><h1><?php the_title(); ?></h1></header>
 <div class="pvdak-contact-grid">
-<article <?php post_class('pvdak-static-body'); ?>><h2>ارتباط با پویش</h2><?php the_content(); ?>
-<p class="pvdak-static-note">این فرم برای ارسال مدارک و اطلاعات محرمانه پرونده‌ها نیست.</p></article>
-<section class="pvdak-static-body" aria-label="فرم ارتباط عمومی"><h2>ارسال پیام</h2>
+<article <?php post_class('pvdak-static-body pvdak-contact-intro'); ?>>
+  <span class="pvdak-contact-intro-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 16a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9Z"/><path d="M8 9h8M8 13h5"/></svg></span>
+  <span class="pvdak-static-label">کانال ارتباط عمومی</span>
+  <h2>ارتباط با پویش</h2><?php the_content(); ?>
+  <div class="pvdak-contact-guidance">
+    <h3>پیش از ارسال پیام</h3>
+    <ul><li>پرسش‌های عمومی، پیشنهاد و گزارش مشکل سایت را مطرح کنید.</li>
+    <li>مدارک، اطلاعات محرمانه و جزئیات پرونده را در این فرم ارسال نکنید.</li>
+    <li>برای مسائل حساب وارد پنل شوید و از پشتیبانی استفاده کنید.</li></ul>
+    <?php if ( is_user_logged_in() ): ?><a href="<?php echo esc_url( pvdak_auth_account_url() . '#pvdak-support' ); ?>">رفتن به پشتیبانی حساب ←</a><?php endif; ?>
+  </div>
+</article>
+<section class="pvdak-static-body pvdak-contact-form-card" aria-label="فرم ارتباط عمومی"><span class="pvdak-static-label">پیام شما</span><h2>ارسال پیام</h2><p class="pvdak-contact-form-lead">برای پاسخ‌گویی دقیق‌تر، موضوع و توضیح را روشن و بدون اطلاعات حساس بنویسید.</p>
 <?php if(isset($messages[$sent])): ?><p id="pvdak-contact-result" tabindex="-1" class="<?php echo '1' === $sent ? 'pvdak-static-note' : 'pvdak-static-error'; ?>" role="<?php echo '1' === $sent ? 'status' : 'alert'; ?>"><?php echo esc_html($messages[$sent]); ?></p><?php endif; ?>
 <?php if(pvdak_contact_allowed()): ?>
 <?php if(function_exists('pvdak_maintenance_enabled')&&pvdak_maintenance_enabled()): ?><p class="pvdak-static-note">این فرم فعلاً تنها برای آزمایش مدیر سایت فعال است.</p><?php endif; ?>
