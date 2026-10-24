@@ -5,6 +5,10 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 function pvdak_account_tool_url( $slug ) {
+    // The legacy account-profile Page remains compatible, but never offers a second UI.
+    if ( 'account-profile' === $slug ) {
+        return pvdak_auth_account_url() . '#pvdak-profile';
+    }
     return pvdak_public_page_url( $slug ) ?: home_url( '/' . $slug . '/' );
 }
 function pvdak_account_noindex( $robots ) {
@@ -28,16 +32,16 @@ function pvdak_profile_save() {
     check_admin_referer( 'pvdak_profile_save', '_pvdak_profile_nonce' );
     $raw = wp_unslash( $_POST['display_name'] ?? '' );
     $value = is_string( $raw ) ? sanitize_text_field( $raw ) : '';
-    $url = pvdak_account_tool_url( 'account-profile' );
+    $url = pvdak_auth_account_url();
     $value = trim( $value );
     if ( '' === $value || pvdak_public_text_length( $value ) > 120 ) {
-        wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
+        wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) . '#pvdak-profile' ); exit;
     }
     if ( $value === (string) wp_get_current_user()->display_name ) {
-        wp_safe_redirect( add_query_arg( 'status', 'unchanged', $url ) ); exit;
+        wp_safe_redirect( add_query_arg( 'status', 'unchanged', $url ) . '#pvdak-profile' ); exit;
     }
     $result = wp_update_user( array( 'ID' => get_current_user_id(), 'display_name' => $value ) );
-    wp_safe_redirect( add_query_arg( 'status', is_wp_error( $result ) ? 'failed' : 'saved', $url ) ); exit;
+    wp_safe_redirect( add_query_arg( 'status', is_wp_error( $result ) ? 'failed' : 'saved', $url ) . '#pvdak-profile' ); exit;
 }
 add_action( 'admin_post_pvdak_profile_save', 'pvdak_profile_save' );
 
