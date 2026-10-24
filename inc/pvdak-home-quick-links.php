@@ -8,6 +8,18 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * Skip blank titles and links before counting a Page as a usable shortcut.
+ * The readiness panel uses this exact resolver, so it cannot falsely pass.
+ */
+function pvdak_home_quick_link( $id ) {
+    $title = get_the_title( $id );
+    $url = get_permalink( $id );
+    if ( ! is_string( $title ) || '' === trim( wp_strip_all_tags( $title ) ) ||
+         ! is_string( $url ) || '' === trim( $url ) ) { return null; }
+    return array( 'title' => $title, 'url' => $url, 'id' => $id );
+}
+
 function pvdak_home_quick_pages() {
     $slots = array();
     $any_explicit = false;
@@ -19,12 +31,10 @@ function pvdak_home_quick_pages() {
         if ( $id ) { $any_explicit = true; }
         if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
             'publish' !== get_post_status( $id ) ) { continue; }
+        $link = pvdak_home_quick_link( $id );
+        if ( ! $link ) { continue; }
         $seen[ $id ] = true;
-        $slots[] = array(
-            'title' => get_the_title( $id ),
-            'url' => get_permalink( $id ),
-            'id' => $id,
-        );
+        $slots[] = $link;
     }
     if ( $any_explicit ) {
         return $slots; // Never mix explicit editor selections with old menu items.
@@ -42,12 +52,10 @@ function pvdak_home_quick_pages() {
         $id = absint( $item->object_id );
         if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
              'publish' !== get_post_status( $id ) ) { continue; }
+        $link = pvdak_home_quick_link( $id );
+        if ( ! $link ) { continue; }
         $seen[ $id ] = true;
-        $slots[] = array(
-            'title' => get_the_title( $id ),
-            'url' => get_permalink( $id ),
-            'id' => $id,
-        );
+        $slots[] = $link;
         if ( count( $slots ) === 4 ) { break; }
     }
     return $slots;
