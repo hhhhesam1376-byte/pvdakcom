@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.36
+Version: 0.8.37
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -3083,4 +3083,304 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
   .pvdak-home-community .pvdak-community-illustration{
     width:100%;max-width:none;flex:0 1 100%;height:190px;
   }
+}
+
+
+/* WORK-BATCH 097 • 20 deliberate UI refinements; existing WP data and endpoints only. */
+/* 01/19 — Shared palette, radii and accessible interactive focus states. */
+:root{
+  --pvdak-97-navy:#0d3054;--pvdak-97-accent:#1179bc;
+  --pvdak-97-teal:#07969c;--pvdak-97-amber:#dfac4c;
+  --pvdak-97-border:#d8e7f5;--pvdak-97-muted:#617c93;
+  --pvdak-97-shadow:0 12px 32px rgba(14,60,104,.09)
+}
+:where(.pvdak-home,.pvdak-unified-account,.pvdak-login-page,.pvdak-contact-page,
+.pvdak-discovery-page,.pvdak-info-layout) :where(button,input,select,textarea,a,summary):focus-visible{
+  outline:3px solid var(--pvdak-97-amber);outline-offset:3px
+}
+/* 01 — Remove hollow homepage sections and maintain sensible gaps. */
+.pvdak-home>.pvdak-home-section{margin-block:40px}
+.pvdak-home-section-head{gap:16px;align-items:end}
+.pvdak-home-section-head h2{color:var(--pvdak-97-navy);font-weight:900;line-height:1.6}
+.pvdak-home-section-head p{line-height:1.9}
+.pvdak-home-section-head .pvdak-section-aside{
+  display:inline-flex;align-items:center;justify-content:center;min-height:37px;
+  padding:7px 13px;border-radius:10px;background:#eaf5ff;color:#126fa8;font-weight:850;
+  text-decoration:none
+}
+/* 04 — Landing hero: high contrast, actionable secondary navigation. */
+.pvdak-home-hero{position:relative;isolation:isolate;overflow:hidden;border:1px solid #326c96}
+.pvdak-home-hero__content{position:relative;z-index:2}
+.pvdak-home-eyebrow{letter-spacing:0}
+.pvdak-home-lead{max-width:54ch;margin-inline:auto;line-height:2}
+.pvdak-home-process-hint{display:inline-flex;align-items:center;gap:9px;font-weight:750}
+.pvdak-home-process-hint span{color:#92f7cb;font-size:18px}
+.pvdak-home-hero-steps{
+  margin:15px auto 0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px
+}
+.pvdak-home-hero-steps a{
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  min-height:39px;padding:7px 17px;border:1px solid #c5e7fa85;border-radius:11px;
+  background:#ffffff1e;text-decoration:none;font-size:12px;font-weight:850;color:#fff
+}
+.pvdak-home-hero-steps a:hover{background:#ffffff35;color:#fff}
+/* 05 — Real four editor-selected links; consistent icon tile and hover. */
+.pvdak-home-quick-actions>a{
+  position:relative;min-width:0;display:flex;align-items:center;gap:10px
+}
+.pvdak-home-quick-actions .pvdak-home-quick-icon{
+  width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;
+  background:#e3f0ff;color:#196fae;border-radius:12px
+}
+.pvdak-home-quick-actions .pvdak-home-quick-icon svg{
+  width:23px;height:23px;stroke:currentColor
+}
+.pvdak-home-quick-actions>a:nth-child(4n+2) .pvdak-home-quick-icon{background:#ddf6ed;color:#108573}
+.pvdak-home-quick-actions>a:nth-child(4n+3) .pvdak-home-quick-icon{background:#fff0dd;color:#a47125}
+.pvdak-home-quick-actions>a:nth-child(4n+4) .pvdak-home-quick-icon{background:#eae7ff;color:#6861b1}
+.pvdak-home-quick-actions .pvdak-home-quick-text{min-width:0;flex:1;line-height:1.75;font-size:12px;font-weight:900}
+.pvdak-home-quick-actions .pvdak-home-quick-arrow{
+  margin-inline-start:auto;color:#1469a0;font-size:16px;transition:transform .2s
+}
+.pvdak-home-quick-actions>a:hover .pvdak-home-quick-arrow{transform:translateX(-4px)}
+/* 06 — Swiper controls + truthful missing-topics state. */
+.pvdak-topics-controls{gap:7px;align-items:center}
+.pvdak-topics-control{min-width:41px;min-height:41px;transition:background .18s,transform .18s}
+.pvdak-topics-control:disabled{opacity:.35;cursor:default;transform:none}
+.pvdak-topics-control:hover:not(:disabled){transform:translateY(-2px);background:#d8efff}
+.pvdak-topics-section .pvdak-home-topic{
+  position:relative;overflow:hidden;border:1px solid var(--pvdak-97-border);border-radius:18px;
+  box-shadow:0 8px 26px rgba(14,64,104,.08);height:auto
+}
+.pvdak-topics-section .pvdak-home-topic::before{
+  content:"";position:absolute;inset-inline:15%;top:0;height:3px;
+  border-radius:99px;background:linear-gradient(90deg,var(--pvdak-97-accent),var(--pvdak-97-teal))
+}
+.pvdak-topics-section .pvdak-topic-card__title{min-height:2.8em;display:grid;place-items:center}
+.pvdak-topics-section .pvdak-topic-card__footer{font-weight:850;color:#126da7}
+.pvdak-topics-help{
+  display:flex;align-items:center;gap:16px;padding:21px;border:1px dashed #b6d9eb;
+  border-radius:18px;background:linear-gradient(110deg,#f4faff,#fff)
+}
+.pvdak-topics-help-icon{
+  display:grid;place-items:center;flex:0 0 50px;height:50px;border-radius:14px;
+  background:#e0f3ff;font-size:27px;color:#187bb0
+}
+.pvdak-topics-help strong{color:#16436a;font-weight:900}
+.pvdak-topics-help p{color:#69869b;font-size:12px;margin:4px 0}
+.pvdak-topics-help a{display:inline-flex;margin-top:6px;color:#096fa3;font-weight:850;font-size:12px;text-decoration:none}
+/* 08/14 — Real editorial cards and safe local cover fallback. */
+.pvdak-magazine-feature{position:relative;isolation:isolate}
+.pvdak-magazine-feature-illustration{
+  position:absolute;inset:0;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 20%,#257db144,transparent 47%),linear-gradient(125deg,#0a2847,#135b75);
+  color:#cfb67b;pointer-events:none;z-index:0
+}
+.pvdak-magazine-feature-illustration svg{width:min(35%,170px);height:auto;opacity:.47}
+.pvdak-magazine-feature-badge,.pvdak-magazine-feature-content{position:relative;z-index:1}
+.pvdak-magazine-aside-card{border-color:var(--pvdak-97-border);transition:transform .2s,box-shadow .2s}
+.pvdak-magazine-aside-card:hover{transform:translateY(-3px);box-shadow:var(--pvdak-97-shadow)}
+.pvdak-editorial-tile{position:relative;overflow:hidden;border:1px solid var(--pvdak-97-border)!important}
+.pvdak-editorial-tile .pvdak-card-inner{
+  display:flex;flex-direction:column;flex:1;min-width:0;padding:15px 17px 18px;gap:9px
+}
+.pvdak-editorial-tile .pvdak-card-inner .entry-title{margin:0!important;font-size:17px;line-height:1.75}
+.pvdak-editorial-tile .pvdak-card-inner .entry-meta,
+.pvdak-editorial-tile .pvdak-card-inner .entry-summary{margin:0!important}
+.pvdak-editorial-tile .pvdak-card-inner .read-more{margin:7px 0 0!important}
+.pvdak-editorial-tile .pvdak-card-topic{
+  display:inline-flex;align-self:flex-start;border-radius:99px;background:#ebf4ff;
+  color:#1667a2;padding:4px 11px;font-size:10px;font-weight:850
+}
+.pvdak-editorial-tile .pvdak-card-art{
+  min-height:160px;display:grid;place-items:center;align-content:center;gap:5px;
+  background:linear-gradient(128deg,#0b3256,#166784);color:#edcb78;text-decoration:none
+}
+.pvdak-editorial-tile .pvdak-card-art svg{width:63px;height:63px}
+.pvdak-editorial-tile .pvdak-card-art span{color:#e2f1fa;font-size:11px;font-weight:850}
+/* 07/08 — Real private request data and professional status stay visible and readable. */
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats{gap:12px}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li{transition:border-color .16s,background .16s}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li:hover{
+  border-color:#9fcbe8;background:#f1f8ff
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li span{
+  display:inline-flex;align-items:center;gap:7px;color:#527492
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li span::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:#1a9caa;flex:0 0 7px
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3:last-of-type + .pvdak-core-notice{
+  background:linear-gradient(110deg,#e7f8f0,#f9fefb);
+  border:1px solid #bce5d1;color:#296f58;position:relative;
+  border-inline-start:4px solid #28aa78
+}
+/* 09 — Private support cards / filters in existing shortcode. */
+.pvdak-unified-account .pvdak-account-support>.pvdak-unified-section-header{margin-bottom:14px}
+.pvdak-unified-account .pvdak-support{
+  border:1px solid #dbe9f5;background:#fff;border-radius:18px;
+  padding:clamp(15px,2.6vw,28px);box-shadow:0 10px 32px #103c7110
+}
+.pvdak-unified-account .pvdak-ticket-new{
+  border:1px solid #dbe9f4;border-radius:15px;background:#f8fbff;
+  padding:18px;display:grid;gap:8px
+}
+.pvdak-unified-account .pvdak-ticket-new :where(input,textarea){
+  width:100%;border:1px solid #c7dbe9;border-radius:11px;background:#fff;min-height:43px;
+  padding:10px 12px;color:#153e60
+}
+.pvdak-unified-account .pvdak-ticket-new textarea{min-height:115px}
+.pvdak-unified-account .pvdak-ticket-filters{background:#f0f7ff;border:1px solid #d5e8fa;border-radius:14px}
+.pvdak-unified-account .pvdak-ticket-item{
+  border:1px solid #d9e7f5;border-radius:14px;background:#fff;
+  box-shadow:0 6px 18px #1446740b
+}
+.pvdak-unified-account .pvdak-ticket-summary{min-height:57px}
+.pvdak-unified-account .pvdak-ticket-status{font-weight:900}
+/* 10 — One sidebar, one active tab, and direct visual feedback. */
+.pvdak-unified-account .pvdak-account-menu a{
+  border:1px solid transparent;border-radius:11px;transition:background .17s,border-color .17s;
+}
+.pvdak-unified-account .pvdak-account-menu a:hover{
+  background:#edf6ff;border-color:#dbe9f7
+}
+.pvdak-unified-account .pvdak-account-menu a[aria-current=location]{
+  box-shadow:inset -3px 0 0 #0b78be;background:#e1f0ff;border-color:#c3e0f5
+}
+.pvdak-dashboard-overline{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  margin:0 0 13px;color:#69839a;font-size:11px
+}
+.pvdak-dashboard-online{
+  display:inline-flex;align-items:center;gap:6px;background:#e6f8f0;
+  border:1px solid #cce9db;color:#147858;padding:5px 12px;border-radius:99px;font-weight:850
+}
+.pvdak-dashboard-online span{color:#15b77e;font-size:10px}
+.pvdak-dashboard-quicklinks{gap:12px}
+.pvdak-unified-account .pvdak-dashboard-quicklinks a{position:relative;padding-inline-end:32px}
+.pvdak-dashboard-card-arrow{
+  position:absolute;inset-inline-end:14px;bottom:12px;
+  color:#0b7baf;font-size:16px;font-weight:900
+}
+.pvdak-dashboard-panel-heading{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;
+  margin-bottom:12px;color:#1b6699;font-size:11px;font-weight:850
+}
+.pvdak-panel-kicker{display:inline-flex;background:#e8f4ff;border-radius:99px;padding:6px 12px}
+.pvdak-panel-readonly{color:#6f8ca0}
+.pvdak-panel-readonly span{color:#0aa389}
+.pvdak-unified-private-note{
+  display:inline-flex;margin-top:11px;background:#e8f8f1;color:#137c62;
+  font-size:11px;font-weight:850;padding:5px 12px;border-radius:99px
+}
+/* 11 — Authentication: field grouping and trust markers. */
+.pvdak-login-page .pvdak-auth-form label>span{color:#0e84ad;margin-inline-end:5px}
+.pvdak-login-page .pvdak-login-trust-note{
+  display:flex;align-items:center;gap:9px;border-radius:11px;
+  background:#edf8f7;color:#146c64;border:1px solid #c8e8df;padding:10px 14px
+}
+.pvdak-login-page .pvdak-login-trust-note span{
+  color:#10a47a;font-weight:900;font-size:17px
+}
+.pvdak-login-page .pvdak-auth-form button[type=submit]{
+  display:flex;align-items:center;justify-content:center;gap:9px;min-height:49px
+}
+.pvdak-login-page .pvdak-login-help{font-size:12px;line-height:2}
+/* 12 — Existing profile and security editor only: editable vs read-only clarity. */
+.pvdak-unified-account #pvdak-profile .pvdak-profile-editor{
+  box-shadow:var(--pvdak-97-shadow);border-radius:20px
+}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-editable-tag{white-space:nowrap}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-readonly{
+  border-radius:13px;border:1px solid #e3edf7;background:#f8fbff;padding:14px 15px
+}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-readonly>span{
+  display:block;overflow-wrap:anywhere;color:#163b63;font-weight:850
+}
+.pvdak-unified-account #pvdak-profile .pvdak-form-change-status:not(:empty){font-size:12px;font-weight:850}
+/* 13 — Legal parent/child Pages and related public content cards. */
+.page-entry,.pvdak-static-body,.pvdak-info-article{
+  overflow-wrap:anywhere
+}
+.page-entry :where(h2,h3){color:#133c63;line-height:1.7}
+.page-entry :where(ul,ol){padding-inline-start:24px;line-height:2}
+.page-entry :where(table){max-width:100%;display:block;overflow-x:auto}
+.page-entry :where(blockquote){background:#f2f8ff;border-inline-start:4px solid #258dc5;padding:13px 19px;border-radius:11px}
+/* 16 — FAQ: true real WordPress published pages, keyboard-safe native details. */
+.pvdak-home-faq .pvdak-home-section-head{margin-bottom:17px}
+.pvdak-faq-eyebrow{font-size:11px;color:#0c86a0;font-weight:850}
+.pvdak-faq-count{background:#eaf6ff;border:1px solid #cde4f7;border-radius:99px;color:#236a9c;padding:7px 13px;font-size:11px;font-weight:850}
+.pvdak-home-faq .pvdak-faq-item{
+  border:1px solid #d8e7f5;border-radius:14px;background:#fff;margin:10px 0;
+  box-shadow:0 6px 19px #15466e09;overflow:hidden
+}
+.pvdak-home-faq .pvdak-faq-item[open]{border-color:#86c6e0;box-shadow:0 10px 25px #174f7a13}
+.pvdak-home-faq .pvdak-faq-item summary{
+  display:flex;align-items:center;gap:11px;cursor:pointer;font-weight:850;
+  min-height:58px;padding:11px 17px;color:#1a4468
+}
+.pvdak-home-faq .pvdak-faq-q{
+  display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;
+  background:#dff0ff;color:#1778aa;border-radius:10px;font-size:19px;font-weight:900
+}
+.pvdak-home-faq .pvdak-faq-item>div{
+  border-top:1px solid #e8eef5;padding:17px 21px;background:#fbfdff;
+  color:#3f5c73;font-size:13px;line-height:2
+}
+/* 17 — Contact card and legible native form status feedback. */
+.pvdak-contact-page .pvdak-contact-form-card button[type=submit]{
+  display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:47px
+}
+.pvdak-contact-page .pvdak-forms :where(input:not([type=checkbox]),textarea){box-shadow:inset 0 1px 3px #16466a0a}
+.pvdak-contact-page :where(.pvdak-static-note,.pvdak-static-error)[role]{
+  padding:13px 16px;border-radius:12px;font-size:12px;font-weight:750
+}
+/* 18 — Brand footer spacing and mobile action targets. */
+.site-footer .pvdak-footer-contact-description{color:#a8c7dc;font-size:11px;line-height:1.9;margin:0 0 14px}
+.site-footer .pvdak-footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap
+}
+.site-footer .pvdak-footer-bottom-mark{font-size:11px;color:#98c7d7}
+.site-footer .pvdak-footer-contact-link{min-height:43px;align-items:center}
+.site-footer :where(.pvdak-footer-nav,.pvdak-footer-public) a{min-height:29px;display:inline-flex;align-items:center}
+/* 03/19 — Real responsive breakpoints, rather than desktop-only polish. */
+@media(max-width:1060px){
+  .pvdak-home-quick-actions{width:min(100%,900px)}
+  .pvdak-unified-account .pvdak-dashboard-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .pvdak-home>.pvdak-home-section{margin-block:27px}
+  .pvdak-home-hero-steps{gap:7px}
+  .pvdak-home-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:calc(100% - 22px)}
+  .pvdak-home-quick-actions>a{min-height:70px;padding:9px}
+  .pvdak-home-quick-actions .pvdak-home-quick-icon{width:35px;height:35px;flex-basis:35px}
+  .pvdak-home-quick-actions .pvdak-home-quick-icon svg{width:20px;height:20px}
+  .pvdak-home-quick-actions .pvdak-home-quick-text{font-size:11px}
+  .pvdak-home-quick-actions .pvdak-home-quick-arrow{font-size:14px}
+  .pvdak-home-faq .pvdak-home-section-head{align-items:start}
+  .pvdak-unified-account .pvdak-core-requests li{grid-template-columns:minmax(0,1fr)}
+  .pvdak-editorial-tile .pvdak-card-inner{padding:14px}
+  .site-footer .pvdak-footer-bottom{justify-content:center;text-align:center}
+}
+@media(max-width:480px){
+  .pvdak-home-hero-steps a{flex:1 1 auto;font-size:11px;padding:7px 9px}
+  .pvdak-home-process-hint{line-height:1.8;text-align:center}
+  .pvdak-home-quick-actions{gap:7px}
+  .pvdak-home-quick-actions>a{gap:6px;padding:8px;min-height:67px}
+  .pvdak-home-quick-actions .pvdak-home-quick-icon{width:29px;height:29px;flex-basis:29px;border-radius:9px}
+  .pvdak-home-quick-actions .pvdak-home-quick-icon svg{width:17px;height:17px}
+  .pvdak-home-quick-actions .pvdak-home-quick-arrow{display:none}
+  .pvdak-topics-help{align-items:flex-start;padding:14px;gap:10px}
+  .pvdak-topics-help-icon{width:37px;height:37px;flex-basis:37px}
+  .pvdak-unified-account .pvdak-dashboard-overline{align-items:flex-start}
+  .pvdak-unified-account .pvdak-dashboard-quicklinks a{min-height:94px;padding-inline-end:26px}
+  .pvdak-home-faq .pvdak-faq-item summary{padding:12px 11px;font-size:12px;line-height:1.8}
+  .pvdak-home-faq .pvdak-faq-item>div{padding:13px}
+  .pvdak-faq-count{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pvdak-home-quick-actions .pvdak-home-quick-arrow,
+  .pvdak-magazine-aside-card,.pvdak-unified-account .pvdak-account-menu a,
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li,
+  .pvdak-topics-control{transition:none!important;transform:none!important}
 }
