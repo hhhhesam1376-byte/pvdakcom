@@ -24,7 +24,20 @@ function pvdak_home_readiness_items() {
     $magazine_count = count( pvdak_home_category_posts( 'magazine_category', 1 ) );
     $notice_term = pvdak_home_selected_category( 'notice_category' );
     $notice_count = count( pvdak_home_category_posts( 'notice_category', 1 ) );
-    $faq_count = count( pvdak_home_faq_pages() );
+    // D08: The front page must have exactly four *published* quick Pages.
+    // Reuse the same resolver used by front-page.php; never count draft links
+    // or invent/fill slots on behalf of the editor.
+    $quick_pages = function_exists( 'pvdak_home_quick_pages' ) ? pvdak_home_quick_pages() : array();
+    $quick_count = count( $quick_pages );
+    $faq_pages = pvdak_home_faq_pages();
+    $faq_count = count( $faq_pages );
+    $faq_written = 0;
+    foreach ( $faq_pages as $faq_page ) {
+        if ( $faq_page instanceof WP_Post &&
+             '' !== trim( wp_strip_all_tags( strip_shortcodes( $faq_page->post_content ) ) ) ) {
+            $faq_written++;
+        }
+    }
     // Distinguish source delivery, actual plugin installation and safe activation.
     $core_source = get_template_directory() . '/packages/pvdak-core/pvdak-core.php';
     $core_plugin = WP_PLUGIN_DIR . '/pvdak-core/pvdak-core.php';
@@ -63,6 +76,10 @@ function pvdak_home_readiness_items() {
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های پویش', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'پرسش‌های متداول', $faq_count > 0, $faq_count . ' برگه پرسش/پاسخ منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'چهار دسترسی سریع منتشرشده', 4 === $quick_count,
+            $quick_count . ' از ۴ برگه معتبر انتخاب شده؛ برگه تکراری یا پیش‌نویس پذیرفته نمی‌شود', admin_url( 'admin.php?page=pvdak-home-content' ) ),
+        array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,
+            $faq_written . ' از ' . $faq_count . ' پاسخ منتشرشده دارای متن است؛ تأیید تخصصی محتوا جداگانه لازم است', admin_url( 'edit.php?post_type=page' ) ),
         array( 'فهرست اصلی', has_nav_menu( 'primary' ), has_nav_menu( 'primary' ) ? 'فهرست اختصاص داده شده' : 'فهرست سایت را اختصاص دهید', admin_url( 'nav-menus.php' ) ),
         array( 'نصب مستقل PVDak Core', $core_installed,
             $core_installed ? 'نسخه افزونه روی وردپرس شناسایی شد' : 'Cron فقط قالب را منتشر می‌کند؛ نصب افزونه مستقل هنوز انجام نشده', admin_url( 'plugins.php' ) ),
