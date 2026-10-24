@@ -138,6 +138,23 @@ pvdak_expect( 0 === pvdak_core_request_receipt_id( array( 'type' => 'lawyer', 'i
 pvdak_expect( 0 === pvdak_core_request_receipt_id( array( 'type' => 'lawyer', 'id' => 0 ), 'lawyer' ),
     'An invalid receipt cannot be shown as a successful submission' );
 
+$pvdak_note_token = 'a5b1c1d2-e3f4-4a5b-8c6d-123456789abc';
+pvdak_expect( pvdak_core_request_note_valid( str_repeat( 'آ', 1000 ) ),
+    'Staff note accepts 1000 Persian characters' );
+pvdak_expect( ! pvdak_core_request_note_valid( str_repeat( 'آ', 1001 ) ),
+    'Staff note rejects 1001 Persian characters' );
+pvdak_expect( ! pvdak_core_request_note_valid( "   " ),
+    'Blank staff note is not stored' );
+pvdak_expect( ! pvdak_core_request_note_valid( "\xC3\x28" ),
+    'Malformed UTF-8 staff note is rejected' );
+pvdak_expect( ! pvdak_core_request_note_token_seen( array(), $pvdak_note_token ),
+    'New staff note submission token is accepted' );
+pvdak_expect( pvdak_core_request_note_token_seen(
+    array( array( 'text' => 'private', 'token' => $pvdak_note_token ) ), $pvdak_note_token ),
+    'Replayed staff note token is detected' );
+pvdak_expect( pvdak_core_request_note_token_seen( array(), 'invalid' ),
+    'Missing or malformed note token fails closed' );
+
 pvdak_expect( count( pvdak_core_member_types() ) === 3, 'Three professional application categories' );
 pvdak_expect( ! pvdak_core_intake_open(), 'Legal request intake starts OFF' );
 pvdak_expect( ! pvdak_core_member_intake_open(), 'Professional onboarding starts OFF' );
