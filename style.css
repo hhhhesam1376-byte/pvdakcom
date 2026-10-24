@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.33
+Version: 0.8.34
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -2426,4 +2426,134 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 @media(prefers-reduced-motion:reduce){
   .pvdak-home-quick-actions>a,.pvdak-topics-section .pvdak-home-topic,
   .pvdak-dashboard-quicklinks>a{transition:none!important;transform:none!important}
+}
+
+
+/* Batch 095: one coherent, progressive-enhancement member workspace. */
+.pvdak-unified-account{width:min(1240px,calc(100% - 40px));padding-block:21px 48px}
+.pvdak-unified-crumbs{margin-bottom:15px;color:#66829b}
+.pvdak-unified-account .pvdak-account-hero{
+  background-image:linear-gradient(95deg,#082c50e8 0%,#0b528de9 57%,#072f51e5 100%),url('assets/icons/pvdak-profile-hero.svg');
+  background-size:cover,auto 160%;
+  background-position:center, left center;
+  background-repeat:no-repeat;
+  border-color:#2a76b3;min-height:187px;
+}
+.pvdak-unified-account .pvdak-account-hero h1{font-size:clamp(29px,3.5vw,42px);font-weight:900}
+.pvdak-unified-account .pvdak-account-hero p{max-width:63ch}
+.pvdak-unified-account .pvdak-dashboard-quicklinks{
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  margin-bottom:20px;gap:11px;
+}
+.pvdak-unified-account .pvdak-dashboard-quicklinks a{min-height:80px;padding:13px 16px}
+.pvdak-unified-account .pvdak-dashboard-quicklinks a[aria-current=location]{
+  border-color:#389bd0;background:linear-gradient(135deg,#e2f2ff,#f6fbff);
+  box-shadow:0 9px 24px #0d7ab421;
+}
+.pvdak-unified-account .pvdak-dashboard-quicklinks a:focus-visible,
+.pvdak-unified-account .pvdak-account-menu a:focus-visible{
+  outline:3px solid #eba942;outline-offset:3px;
+}
+.pvdak-unified-account .pvdak-account-identity{margin-bottom:11px;padding-bottom:15px}
+.pvdak-account-identity-meta{
+  display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;
+  margin-bottom:18px;padding:5px 12px;border-radius:99px;
+  background:#e1f8ee;color:#14735e;font-size:10px;font-weight:800;
+}
+.pvdak-account-identity-meta span:last-child{color:#1aba7a;font-size:10px}
+.pvdak-unified-account .pvdak-account-menu a{
+  gap:10px;min-height:47px;padding:9px 12px;font-size:12px;
+}
+.pvdak-unified-account .pvdak-account-menu a .pvdak-account-menu-arrow{
+  margin-inline-start:auto;flex:0 0 auto;width:auto;height:auto;
+  font-size:14px;color:#5592bd;background:transparent;
+}
+.pvdak-unified-account .pvdak-account-menu a[aria-current=location]{
+  background:#e7f1ff;color:#0b66ab;border-inline-start:3px solid #197cc8;
+}
+.pvdak-unified-account .pvdak-account-sidebar{top:17px}
+.pvdak-unified-account [data-pvdak-panel][hidden]{display:none!important}
+.pvdak-unified-account .pvdak-account-main{
+  display:block;min-width:0;
+}
+.pvdak-unified-account [data-pvdak-panel]{scroll-margin-top:18px;min-width:0}
+.pvdak-unified-account [data-pvdak-panel]:focus{outline:none}
+.pvdak-unified-account .pvdak-unified-section{
+  min-width:0;width:100%;max-width:none;margin:0;
+}
+.pvdak-unified-account .pvdak-unified-section-header{
+  margin:0 0 18px;padding:22px 26px 18px;border:1px solid #dce9f7;
+  border-radius:19px;background:linear-gradient(115deg,#edf7ff,#fff);
+}
+.pvdak-unified-account .pvdak-unified-section-header>span{font-size:11px;font-weight:850;color:#0e7bba}
+.pvdak-unified-account .pvdak-unified-section-header h2{
+  color:#123c63;font-size:clamp(20px,2.2vw,25px);font-weight:900;margin:3px 0 6px;
+}
+.pvdak-unified-account .pvdak-unified-section-header p{color:#697f96;font-size:12px;line-height:1.9;margin:0}
+.pvdak-unified-account #pvdak-requests,
+.pvdak-unified-account #pvdak-security{padding:0}
+.pvdak-unified-account #pvdak-profile.pvdak-profile-redesign{padding:0;width:100%;margin:0}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-editor{width:100%}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-card-heading{
+  padding:23px 26px;border-bottom:1px solid #e3edf7;
+}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-editor-body{padding:25px 27px}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-details{display:grid;grid-template-columns:1fr;gap:10px}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-bottom{margin-top:13px}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-shield-art{
+  margin-inline-start:auto;margin-top:11px;
+}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-actions{
+  display:flex;flex-wrap:wrap;justify-content:flex-start;gap:10px;
+}
+.pvdak-unified-account #pvdak-profile .pvdak-profile-actions button{
+  min-height:47px;border-radius:11px;
+}
+.pvdak-unified-account .pvdak-account-support{background:white}
+.pvdak-unified-security-card{
+  display:flex;align-items:center;gap:18px;padding:24px 26px;
+  border:1px solid #d9e6f5;background:linear-gradient(115deg,#fff,#f1f8ff);
+  border-radius:20px;box-shadow:0 10px 31px #103c6b12;
+}
+.pvdak-unified-security-icon{
+  display:grid;place-items:center;flex:0 0 65px;width:65px;height:65px;
+  border-radius:20px;background:#ddeeff;color:#196caf;
+}
+.pvdak-unified-security-icon svg{width:33px;height:33px}
+.pvdak-unified-security-card h3{color:#143c63;font-size:18px;margin:0 0 6px}
+.pvdak-unified-security-card p{color:#6a8196;font-size:12px;line-height:1.9;margin:0 0 11px}
+.pvdak-unified-security-card a{
+  display:inline-flex;background:#167aad;color:#fff;padding:9px 17px;
+  border-radius:10px;font-weight:800;font-size:12px;text-decoration:none;
+}
+.pvdak-unified-security-card a:hover{background:#075f97;color:#fff}
+.pvdak-unified-account #pvdak-security .pvdak-profile-privacy-hint{margin-top:15px!important}
+@media(max-width:960px){
+  .pvdak-unified-account .pvdak-account-layout{
+    grid-template-columns:minmax(0,1fr) minmax(220px,245px);
+  }
+  .pvdak-unified-account .pvdak-dashboard-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+  .pvdak-unified-account{width:calc(100% - 26px);padding-block:16px 29px}
+  .pvdak-unified-account .pvdak-account-layout{grid-template-columns:minmax(0,1fr)}
+  .pvdak-unified-account .pvdak-account-sidebar{position:static;grid-column:1;grid-row:1}
+  .pvdak-unified-account .pvdak-account-main{grid-column:1;grid-row:2}
+  .pvdak-unified-account .pvdak-account-hero{min-height:164px;padding:22px}
+  .pvdak-unified-account .pvdak-unified-section-header{padding:19px 17px;border-radius:15px}
+  .pvdak-unified-account #pvdak-profile .pvdak-profile-card-heading{padding:18px}
+  .pvdak-unified-account #pvdak-profile .pvdak-profile-editor-body{padding:18px}
+}
+@media(max-width:500px){
+  .pvdak-unified-account .pvdak-dashboard-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pvdak-unified-account .pvdak-dashboard-quicklinks a{padding:12px;min-height:91px}
+  .pvdak-unified-account .pvdak-dashboard-quicklinks a>small{padding-inline-start:0}
+  .pvdak-unified-account .pvdak-account-menu{grid-template-columns:1fr}
+  .pvdak-unified-account #pvdak-profile .pvdak-profile-actions{display:grid}
+  .pvdak-unified-account #pvdak-profile .pvdak-profile-actions button{width:100%}
+  .pvdak-unified-security-card{align-items:flex-start;padding:18px;gap:12px}
+  .pvdak-unified-security-icon{flex-basis:48px;width:48px;height:48px;border-radius:14px}
+}
+@media(max-width:365px){
+  .pvdak-unified-account .pvdak-dashboard-quicklinks{grid-template-columns:minmax(0,1fr)}
 }
