@@ -37,7 +37,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             <?php $contact_url = pvdak_public_page_url( 'contact-us' ); if ( $contact_url ): ?>
               <a class="pvdak-footer-contact-link" href="<?php echo esc_url( $contact_url ); ?>">تماس با پویش <span aria-hidden="true">←</span></a>
             <?php endif; ?>
-            <?php if ( is_page_template( 'page-templates/pvdak-profile.php' ) ): ?>
+            <?php if ( is_page_template( 'page-templates/pvdak-account.php' ) ): ?>
               <form role="search" class="pvdak-profile-footer-search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
                 <label for="pvdak-profile-footer-s">جست‌وجو در راهنمای حقوقی</label>
                 <div>
