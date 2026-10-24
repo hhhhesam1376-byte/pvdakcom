@@ -296,6 +296,13 @@ pvdak_layout_expect(
     'D08: FAQ public and admin source selection remain distinct'
 );
 
+pvdak_layout_expect(
+    false !== strpos( $front, "shortcode_exists( 'pvdak_forum' )" ) &&
+    false !== strpos( $front, "has_shortcode( $forum_page->post_content, 'pvdak_forum' )" ) &&
+    false !== strpos( $front, "get_permalink( $forum_page->ID )" ),
+    'D10: an editor URL alone cannot advertise an unimplemented forum'
+);
+
 // D05/D08/D10: execute the actual selectors against a synthetic *closed*
 // intake with misleading manual ACF URLs. Neither button may navigate.
 function pvdak_core_intake_open() { return false; }
