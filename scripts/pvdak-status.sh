@@ -138,6 +138,17 @@ if [[ "$MODE" == "--test" ]]; then
     value "D01 release gate" "FAIL: deployed SHA not verified against fetched main"
     failure=1
   fi
+  # D02: a successful theme release does not update the independently
+  # installed Core plugin; require exact file-tree parity and active status.
+  if [[ "$WP_AVAILABLE" == YES ]] &&
+     [[ -s "$CORE_SOURCE/pvdak-core.php" && -s "$CORE_INSTALLED/pvdak-core.php" ]] &&
+     wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1 &&
+     diff -qr "$CORE_SOURCE" "$CORE_INSTALLED" >/dev/null 2>&1; then
+    value "D02 Core parity gate" "PASS: installed and bundled Core match"
+  else
+    value "D02 Core parity gate" "FAIL: inactive, absent or different Core"
+    failure=1
+  fi
   echo "--- CHECKS (READ ONLY) ---"
   if [[ -s "$SWIPER_LOCAL/swiper-bundle.min.js" && -s "$SWIPER_LOCAL/swiper-bundle.min.css" &&
         -s "$SWIPER_LOCAL/LICENSE" ]] &&
