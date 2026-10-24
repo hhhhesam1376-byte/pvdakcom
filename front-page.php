@@ -58,7 +58,11 @@ $svg_icons = array(
         <input id="pvdak-topic-input" type="search" name="pvdak_topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
         <button type="submit">جست‌وجو</button>
       </form>
-      <p class="pvdak-home-process-hint"><?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
+      <p class="pvdak-home-process-hint"><span aria-hidden="true">✓</span> <?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
+      <div class="pvdak-home-hero-steps" aria-label="دسترسی‌های اصلی">
+        <a href="#topics">موضوعات حقوقی <span aria-hidden="true">←</span></a>
+        <?php if ( $magazine_feature ): ?><a href="#magazine">مطالعه مطالب <span aria-hidden="true">←</span></a><?php endif; ?>
+      </div>
     </div>
   </section>
 
@@ -70,9 +74,9 @@ $svg_icons = array(
     foreach ( $quick_pages as $index => $quick_page ):
         $symbol = $svg_icons[ $quick_symbols[ $index % 4 ] ];
     ?>
-      <a href="<?php echo esc_url( $quick_page['url'] ); ?>">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><?php echo $symbol; ?></svg>
-        <span><?php echo esc_html( $quick_page['title'] ); ?></span>
+      <a href="<?php echo esc_url( $quick_page['url'] ); ?>" aria-label="<?php echo esc_attr( $quick_page['title'] ); ?>">
+        <span class="pvdak-home-quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><?php echo $symbol; ?></svg></span>
+        <span class="pvdak-home-quick-text"><?php echo esc_html( $quick_page['title'] ); ?></span><span class="pvdak-home-quick-arrow" aria-hidden="true">←</span>
       </a>
     <?php endforeach; ?>
   </nav>
@@ -93,7 +97,7 @@ $svg_icons = array(
           'title' => pvdak_home_start_copy( 'audience_2_title', 'مقاله و راهنما بخوانم' ),
           'desc' => pvdak_home_start_copy( 'audience_2_description', 'در مجله حقوقی، یادداشت‌ها و مطالب آموزشی را دنبال کنید.' ),
           'cta' => 'ورود به مجله',
-          'url' => home_url( '/#magazine' ),
+          'url' => $magazine_feature ? home_url( '/#magazine' ) : ( $magazine_archive ?: add_query_arg( 's', 'حقوق', home_url( '/' ) ) ),
           'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11h15c3 0 5 2 5 5v25c0-4-3-6-7-6H7V11ZM41 11H27v30c0-4 3-6 7-6h7V11ZM14 19h7m-7 6h7m13-6h-4m4 6h-4"/></svg>',
       ),
       array(
@@ -133,10 +137,10 @@ $svg_icons = array(
       <div class="pvdak-topics-head-actions">
         <div class="pvdak-topics-controls" aria-label="کنترل اسلایدر موضوعات" hidden>
           <span class="pvdak-topics-swipe-hint" aria-hidden="true">موضوعات را ورق بزنید</span>
-          <button type="button" class="pvdak-topics-control pvdak-topics-control--prev" data-pvdak-topic-prev aria-label="موضوع قبلی">
+          <button type="button" class="pvdak-topics-control pvdak-topics-control--prev" data-pvdak-topic-prev aria-controls="pvdak-topics-track" aria-label="موضوع قبلی">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
           </button>
-          <button type="button" class="pvdak-topics-control pvdak-topics-control--next" data-pvdak-topic-next aria-label="موضوع بعدی">
+          <button type="button" class="pvdak-topics-control pvdak-topics-control--next" data-pvdak-topic-next aria-controls="pvdak-topics-track" aria-label="موضوع بعدی">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7" /></svg>
           </button>
         </div>
@@ -148,7 +152,7 @@ $svg_icons = array(
 
     <?php if ( $legal_pages ): ?>
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
-      <div class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
+      <div id="pvdak-topics-track" class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>
           <a class="pvdak-home-topic swiper-slide pvdak-topic-tone-<?php echo esc_attr( ( $topic_index % 6 ) + 1 ); ?>" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
             <span class="pvdak-topic-card__icon" aria-hidden="true"><?php echo pvdak_topic_card_svg( $legal_page ); ?></span>
@@ -165,6 +169,8 @@ $svg_icons = array(
         موضوعی مطابق «<?php echo esc_html( $legal_search_term ); ?>» پیدا نشد.
         <a href="<?php echo esc_url( home_url( '/#topics' ) ); ?>">نمایش همه موضوعات</a>
       </p>
+    <?php else: ?>
+      <div class="pvdak-topics-help" role="note"><span class="pvdak-topics-help-icon" aria-hidden="true">⚖</span><div><strong>در حال تکمیل موضوعات حقوقی هستیم</strong><p>تا انتشار صفحات موضوعی، از جست‌وجوی مطالب حقوقی استفاده کنید.</p><a href="<?php echo esc_url( add_query_arg( 's', 'حقوق', home_url( '/' ) ) ); ?>">جست‌وجو در مطالب ←</a></div></div>
     <?php endif; ?>
   </section>
 
@@ -214,6 +220,7 @@ $svg_icons = array(
             <?php echo get_the_post_thumbnail( $magazine_feature->ID, 'large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
           <?php endif; ?>
           <span class="pvdak-magazine-feature-badge">مقاله منتخب</span>
+          <?php if ( ! has_post_thumbnail( $magazine_feature->ID ) ): ?><span class="pvdak-magazine-feature-illustration" aria-hidden="true"><svg viewBox="0 0 140 140" fill="none" stroke="currentColor" stroke-width="3"><path d="M70 20v100M28 38h84M38 40l-19 46h38L38 40Zm64 0L83 86h38l-19-46ZM45 122h50"/><circle cx="70" cy="20" r="5" fill="currentColor"/></svg></span><?php endif; ?>
           <span class="pvdak-magazine-feature-content">
             <span class="pvdak-magazine-feature-meta"><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C, $magazine_feature->ID ) ); ?>"><?php echo esc_html( get_the_date( '', $magazine_feature->ID ) ); ?></time><span class="pvdak-magazine-meta-dot" aria-hidden="true"></span>مجله حقوقی</span>
             <strong class="pvdak-magazine-feature-title"><?php echo esc_html( get_the_title( $magazine_feature->ID ) ); ?></strong>
@@ -287,9 +294,7 @@ $svg_icons = array(
         <h3><?php echo esc_html( pvdak_home_value( 'forum_feature_title' ) ); ?><br><?php echo esc_html( pvdak_home_value( 'forum_feature_subtitle' ) ); ?></h3>
         <p><?php echo esc_html( pvdak_home_value( 'forum_feature_description' ) ); ?></p>
         <?php $forum_url = pvdak_home_value( 'forum_url', '' ); ?>
-        <?php if ( $forum_url ): ?><a class="pvdak-forum-button" href="<?php echo esc_url( $forum_url ); ?>"><?php else: ?><span class="pvdak-forum-button"><?php endif; ?>
-          <?php echo esc_html( pvdak_home_value( 'forum_feature_button' ) ); ?>
-        <?php if ( $forum_url ): ?></a><?php else: ?></span><?php endif; ?>
+        <?php if ( $forum_url ): ?><a class="pvdak-forum-button" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( pvdak_home_value( 'forum_feature_button' ) ); ?> ←</a><?php else: ?><span class="pvdak-forum-soon" role="note">انجمن تخصصی در حال آماده‌سازی است</span><?php endif; ?>
       </article>
     </div>
   </section>
@@ -300,7 +305,7 @@ $svg_icons = array(
       <h2 id="community-title"><?php echo esc_html(pvdak_home_value('community_title')); ?></h2>
       <p><?php echo esc_html(pvdak_home_value('community_description')); ?></p>
       <p><?php echo esc_html(pvdak_home_value('community_note')); ?></p>
-      <?php $u=pvdak_home_join_url(); if($u): ?><a class="pvdak-home-button" href="<?php echo esc_url($u); ?>"><?php else: ?><span class="pvdak-home-button"><?php endif; ?><?php echo esc_html(pvdak_home_value('community_button')); ?> ←<?php if($u): ?></a><?php else: ?></span><?php endif; ?>
+      <?php $u=pvdak_home_join_url(); if($u): ?><a class="pvdak-home-button" href="<?php echo esc_url($u); ?>"><?php echo esc_html(pvdak_home_value('community_button')); ?> ←</a><?php else: ?><span class="pvdak-community-pending" role="note">پیوستن به جامعه حقوقی پس از آغاز ثبت‌نام امکان‌پذیر است.</span><?php endif; ?>
     </div>
     <?php if($community_img): ?><img src="<?php echo esc_url($community_img); ?>" alt="" loading="lazy" decoding="async"><?php else: ?>
     <div class="pvdak-community-illustration" aria-hidden="true">
@@ -325,11 +330,11 @@ $svg_icons = array(
 
   <?php if ( $faq_pages ): ?>
   <section class="pvdak-home-section pvdak-home-faq" aria-labelledby="faq-title">
-    <div class="pvdak-home-section-head"><h2 id="faq-title"><?php echo esc_html( pvdak_home_value( 'faq_title' ) ); ?></h2></div>
+    <div class="pvdak-home-section-head"><div><span class="pvdak-faq-eyebrow">پاسخ‌های کوتاه و کاربردی</span><h2 id="faq-title"><?php echo esc_html( pvdak_home_value( 'faq_title' ) ); ?></h2></div><span class="pvdak-faq-count"><?php echo esc_html( number_format_i18n( count( $faq_pages ) ) ); ?> پرسش منتشرشده</span></div>
     <?php if ( $faq_pages ): ?>
       <?php foreach ( $faq_pages as $faq_page ): ?>
-        <details>
-          <summary><?php echo esc_html( get_the_title( $faq_page->ID ) ); ?></summary>
+        <details class="pvdak-faq-item">
+          <summary><span class="pvdak-faq-q" aria-hidden="true">؟</span><?php echo esc_html( get_the_title( $faq_page->ID ) ); ?></summary>
           <div><?php echo wp_kses_post( apply_filters( 'the_content', $faq_page->post_content ) ); ?></div>
         </details>
       <?php endforeach; ?>
