@@ -861,3 +861,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Relaxed four stale release-pin tests to minimum-version checks, preserving all underlying feature and privacy assertions.
 - Static GitHub readback invariants: 12/12; CSS added block brace parity 205/205. Full `php -l`, PHP smoke suite, WordPress browser, responsiveness on actual devices and live cPanel acceptance **not run here**. Existing cPanel runner handles safe theme backup/lint/HTTP health and remains unchanged.
 - No new deployment/staging paths, Actions, Cron, secrets, plugin, live registration/intake enablement, user data or DB modifications. See `docs/WORK_BATCH_094.md` for priorities and acceptance.
+
+## 2026-10-24 — WORK-BATCH-095: unified account
+- Replaced two visibly inconsistent independent account/profile UIs with one premium RTL private dashboard. Navigation now switches between overview, private request history, editable profile, eligible professional info, support tickets, and password recovery from a consistent sidebar.
+- Kept the original WordPress nonce/action, validation, PRG status feedback and plain editable display-name form, but moved its HTML into `page-templates/pvdak-account.php`; `page-templates/pvdak-profile.php` now only performs an authenticated, safe 302 to the #pvdak-profile tab. Old URLs/bookmarks continue working.
+- Account profile links and save-result redirects target the single dashboard and preserve feedback; support shortcode's own id is not duplicated by the wrapper. Panel tabs are progressively enhanced with local existing account JS; without JS, normal HTML sections are all readable and linked.
+- Applied responsive account-only CSS in existing `style.css`, theme version 0.8.34. Kept Core plugin 0.8.3, maintenance, registration and legal intake gates untouched.
+- Expanded and corrected existing account experience/form/security source checks; 20/20 GitHub-readback static invariants passed, but PHP CLI lint, live WordPress and real browser tests remain to be done on host.
+- No new staging, cron, deployment script, credentials, workflow, plugin, or database changes. See `docs/WORK_BATCH_095.md`.
