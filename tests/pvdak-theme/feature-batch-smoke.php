@@ -51,7 +51,7 @@ $checks = array(
     'Profile edit uses logged-in ID and nonce' =>
         false !== strpos($data['tools'],'wp_update_user(') &&
         false !== strpos($data['tools'],"get_current_user_id()") &&
-        false !== strpos($data['profile'],"pvdak_profile_save"),
+        false !== strpos($data['portal'],"pvdak_profile_save"),
     'Regular requester dashboard delegates to private Core portal' =>
         false !== strpos($data['portal'],"pvdak_account_dashboard"),
     'Professional dashboard only shown for own application' =>
