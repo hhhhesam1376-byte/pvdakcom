@@ -32,6 +32,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         <div class="pvdak-footer-address">
             <span>نشانی اینترنتی</span>
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html(wp_parse_url(home_url('/'), PHP_URL_HOST)); ?></a>
+            <?php if ( is_page_template( 'page-templates/pvdak-profile.php' ) ): ?>
+              <form role="search" class="pvdak-profile-footer-search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+                <label for="pvdak-profile-footer-s">جست‌وجو در راهنمای حقوقی</label>
+                <div>
+                  <input id="pvdak-profile-footer-s" type="search" name="s" placeholder="موضوع مورد نظر شما..." required>
+                  <button type="submit" aria-label="جست‌وجوی موضوع">⌕</button>
+                </div>
+              </form>
+            <?php endif; ?>
         </div>
     </div>
     <div class="pvdak-footer-bottom container">
