@@ -30,8 +30,8 @@ foreach ( $paths as $name => $file ) {
 }
 $checks = array(
   'D10 Homepage never offers a dead topics anchor or empty section' =>
-    strpos($v['front'], "if ( $all_legal_pages ): ?><a href=\"#topics\"")!==false &&
-    strpos($v['front'], "if ( $all_legal_pages ): ?>\n  <section id=\"topics\"")!==false &&
+    strpos($v['front'], 'if ( $all_legal_pages ): ?><a href="#topics"')!==false &&
+    strpos($v['front'], 'if ( $all_legal_pages ): ?>' . "\n" . '  <section id="topics"')!==false &&
     strpos($v['front'], "add_query_arg( 's', 'حقوق', home_url( '/' ) )")!==false,
   'D07 Core form CSS is loaded on the template-based dashboard' =>
     strpos($v['assets'], "shortcode_exists( 'pvdak_account_dashboard' )")!==false &&
