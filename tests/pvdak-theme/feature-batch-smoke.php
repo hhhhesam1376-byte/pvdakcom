@@ -1,4 +1,10 @@
 <?php
+
+/** Compare installed theme or Core metadata without pinning a moving patch version. */
+function pvdak_test_release_at_least( $source, $minimum ) {
+    return preg_match( '/^\\s*\\*?\\s*Version:[ \\t]*([0-9]+(?:[.][0-9]+)*)/mi', $source, $found ) === 1 &&
+        version_compare( $found[1], $minimum, '>=' );
+}
 /**
  * Read-only static acceptance assertions for feature batch 0.8.28.
  * Does not connect to WordPress or create/delete real users, cases or tickets.
@@ -73,8 +79,8 @@ $checks = array(
         false !== strpos($data['core_subscription'],"'active' !== get_post_meta") &&
         false !== strpos($data['core_subscription'],"pvdak_core_subscription_month_assignments"),
     'Theme and Core versioned in one proposed review batch' =>
-        false !== strpos($data['css'],'Version: 0.8.30') &&
-        false !== strpos($data['core'],'Version: 0.8.2') &&
+        pvdak_test_release_at_least($data['css'], '0.8.30') &&
+        pvdak_test_release_at_least($data['core'], '0.8.2') &&
         false !== strpos($data['core'],"includes/subscriptions.php"),
     'Private account screens never cached/indexed' =>
         false !== strpos($data['tools'],'nocache_headers()') &&
