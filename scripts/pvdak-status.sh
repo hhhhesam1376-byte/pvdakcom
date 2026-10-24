@@ -138,6 +138,28 @@ if [[ "$MODE" == "--test" ]]; then
     value "D01 release gate" "FAIL: deployed SHA not verified against fetched main"
     failure=1
   fi
+  # Verify real installed files, not just a mutable success marker.
+  # A cron fetch can succeed while a partial theme deployment or manual
+  # override leaves the rendered code different from that commit.
+  if [[ "$D01_READY" == YES && -d "$THEME" ]] && command -v cmp >/dev/null 2>&1; then
+    D01_FILES=0
+    for relative in style.css front-page.php functions.php header.php footer.php \
+      assets/js/pvdak-home.js page-templates/pvdak-account.php; do
+      if [[ -f "$THEME/$relative" ]] &&
+         git -C "$HOME/repositories/pvdakcom" show "$REMOTE_RELEASE:$relative" 2>/dev/null |
+           cmp -s - "$THEME/$relative"; then
+        D01_FILES=$((D01_FILES+1))
+      else
+        value "D01 mismatched installed file" "$relative"
+        failure=1
+      fi
+    done
+    value "D01 installed code parity" "$D01_FILES/7 files matched fetched main"
+    if [[ $D01_FILES -ne 7 ]]; then failure=1; fi
+  else
+    value "D01 installed code parity" "FAIL: deployed marker, theme path or cmp missing"
+    failure=1
+  fi
   # D02: a successful theme release does not update the independently
   # installed Core plugin; require exact file-tree parity and active status.
   if [[ "$WP_AVAILABLE" == YES ]] &&
