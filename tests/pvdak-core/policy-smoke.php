@@ -57,6 +57,8 @@ $GLOBALS['pvdak_mock_license_reviewer'] = 10;
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 $GLOBALS['pvdak_mock_accepting'] = '1';
 $GLOBALS['pvdak_mock_active_count'] = 1;
+$GLOBALS['pvdak_mock_assignment_audits'] = array();
+$GLOBALS['pvdak_mock_audit_request_ids'] = array();
 function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_specialty_page_ids' === $key ) { return array( 11 ); }
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
@@ -69,6 +71,7 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_capacity_limit' === $key ) { return $GLOBALS['pvdak_mock_capacity_limit']; }
     if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
     if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
+    if ( '_pvdak_assignment_audit' === $key ) { return $GLOBALS['pvdak_mock_assignment_audits'][ (int) $id ] ?? array(); }
     return '';
 }
 function current_time( $format ) { return '2026-10-22'; }
@@ -77,6 +80,7 @@ function wp_checkdate( $month, $day, $year, $source_date ) {
 }
 function get_posts( $query ) {
     if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
+        if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
         return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
     }
     return array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
@@ -89,6 +93,7 @@ function get_posts( $query ) {
 class PVDak_Test_Lock_DB {
     public $locks = array();
     public $deny = false;
+    public $last_error = '';
     public function prepare( $sql, ...$args ) {
         $escaped = array_map( function( $arg ) {
             return is_string( $arg ) ? "'" . addslashes( $arg ) . "'" : (string) $arg;
@@ -236,6 +241,33 @@ $GLOBALS['pvdak_mock_capacity_limit'] = '0';
 pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Unconfigured capacity defaults to closed instead of unlimited' );
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 pvdak_expect( pvdak_core_capacity_available( 501 ), 'Capacity restores only when both limit and accepting switch are valid' );
+$pvdak_this_month = gmdate( 'Y-m-15 12:00:00' );
+$pvdak_last_month = gmdate( 'Y-m-15 12:00:00', strtotime( '-1 month' ) );
+$GLOBALS['pvdak_mock_audit_request_ids'] = array( 701, 702 );
+$GLOBALS['pvdak_mock_assignment_audits'] = array(
+    701 => array(
+        array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'internal_only' ),
+        array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'internal_only', 'action' => 'assigned' ),
+        array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'internal_only', 'action' => 'eligibility_revoked' ),
+        array( 'profile_id' => 501, 'at' => $pvdak_last_month, 'scope' => 'internal_only' ),
+        array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'external' ),
+        array( 'profile_id' => 502, 'at' => $pvdak_this_month, 'scope' => 'internal_only' ),
+        array( 'profile_id' => 501, 'at' => 'invalid-date', 'scope' => 'internal_only' ),
+    ),
+    702 => array(
+        array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'internal_only', 'action' => 'assigned' ),
+    ),
+);
+pvdak_expect( 3 === pvdak_core_subscription_month_assignments( 501 ),
+    'Quota counts successful events but not revocations, old events, foreign scope or malformed dates' );
+pvdak_expect( 1 === pvdak_core_subscription_month_assignments( 502 ),
+    'Monthly quota counts only the selected professional' );
+$GLOBALS['wpdb']->last_error = 'synthetic query failure';
+pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
+    'Failed audit query cannot silently reset quota usage' );
+$GLOBALS['wpdb']->last_error = '';
+$GLOBALS['pvdak_mock_assignment_audits'] = array();
+$GLOBALS['pvdak_mock_audit_request_ids'] = array();
 pvdak_expect(
     pvdak_core_assignment_lock_names( 701, 501 ) === array( 'pvdak:pro:501', 'pvdak:req:701' ),
     'Request and lawyer locks have deterministic sorted names'

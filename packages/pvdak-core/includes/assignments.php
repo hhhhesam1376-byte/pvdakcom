@@ -150,19 +150,32 @@ function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
     if ( ! add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true ) ) {
         return 'duplicate';
     }
-    if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'matched' ) ) {
+    // Compare-and-set: another admin can change state outside these locks.
+    if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' ) ) {
         delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
         return 'write_failed';
     }
-    add_post_meta( $request_id, '_pvdak_state_audit', array(
-        'from' => 'review', 'to' => 'matched', 'by' => get_current_user_id(),
-        'at' => current_time( 'mysql', true ),
-    ), false );
-    add_post_meta( $request_id, '_pvdak_assignment_audit', array(
+    $assignment_audit = array(
         'profile_id' => $profile_id, 'landing_id' => $landing_id,
         'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
-        'scope' => 'internal_only',
-    ), false );
+        'action' => 'assigned', 'scope' => 'internal_only',
+    );
+    // The quota relies on this event. Fail closed if its write fails.
+    // Rollback is best-effort: postmeta writes are not a DB transaction.
+    if ( ! add_post_meta( $request_id, '_pvdak_assignment_audit', $assignment_audit, false ) ) {
+        update_post_meta( $request_id, '_pvdak_request_state', 'review', 'matched' );
+        delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
+        return 'write_failed';
+    }
+    if ( ! add_post_meta( $request_id, '_pvdak_state_audit', array(
+        'from' => 'review', 'to' => 'matched', 'by' => get_current_user_id(),
+        'at' => current_time( 'mysql', true ),
+    ), false ) ) {
+        delete_post_meta( $request_id, '_pvdak_assignment_audit', $assignment_audit );
+        update_post_meta( $request_id, '_pvdak_request_state', 'review', 'matched' );
+        delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
+        return 'write_failed';
+    }
     return 'ok';
 }
 

@@ -24,39 +24,62 @@ function pvdak_core_subscription_expiry( $profile_id ) {
     $parts = explode( '-', $date );
     return checkdate( (int)$parts[1], (int)$parts[2], (int)$parts[0] ) ? $date : '';
 }
-/** Audited monthly assignment count; never a count of money or service use. */
+/** Count successful internal referral events in the current UTC calendar month.
+ * Revocations, malformed records and unrelated audit actions are never usage.
+ * This runs under the professional's advisory lock for final decisions.
+ */
 function pvdak_core_subscription_month_assignments( $profile_id ) {
+    global $wpdb;
     $profile_id = absint( $profile_id );
     if ( ! $profile_id ) { return 0; }
-    // Audits are immutable history: count even if a case was later unassigned.
+    $first = gmdate( 'Y-m-01 00:00:00' );
+    $next = gmdate( 'Y-m-01 00:00:00', strtotime( '+1 month', strtotime( $first . ' UTC' ) ) );
     $page = 1;
     $batch_size = 100;
     $used = 0;
-    // Bound peak memory, even when a large archive contains historical audits.
     do {
-    $ids = get_posts( array( 'post_type'=>'pvdak_request', 'post_status'=>'private',
-        'posts_per_page'=>$batch_size, 'paged'=>$page,'fields'=>'ids','no_found_rows'=>true,
-        'meta_query'=>array(
-            array('key'=>'_pvdak_assignment_audit','compare'=>'EXISTS')
-        ),
-        'suppress_filters'=>false ) );
-    $first = gmdate( 'Y-m-01 00:00:00' );
-    $next = gmdate( 'Y-m-01 00:00:00', strtotime('+1 month', strtotime($first.' UTC')) );
-    foreach ( $ids as $id ) {
-        $entries = get_post_meta( absint( $id ), '_pvdak_assignment_audit', false );
-        foreach ( $entries as $a ) {
-            if ( is_array( $a ) && (int)($a['profile_id']??0)===$profile_id &&
-                 isset($a['at']) && is_string($a['at']) &&
-                 $a['at'] >= $first && $a['at'] < $next ) {
+        $ids = get_posts( array(
+            'post_type' => 'pvdak_request',
+            'post_status' => 'private',
+            'posts_per_page' => $batch_size,
+            'paged' => $page,
+            'orderby' => 'ID',
+            'order' => 'ASC',
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'cache_results' => false,
+            'update_post_meta_cache' => false,
+            'suppress_filters' => true,
+            'meta_query' => array(
+                array( 'key' => '_pvdak_assignment_audit', 'compare' => 'EXISTS' ),
+            ),
+        ) );
+        // Never grant a fresh quota when its audit query fails.
+        if ( ! is_array( $ids ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+            return PHP_INT_MAX;
+        }
+        foreach ( $ids as $id ) {
+            $entries = get_post_meta( absint( $id ), '_pvdak_assignment_audit', false );
+            if ( ! is_array( $entries ) ) { continue; }
+            foreach ( $entries as $entry ) {
+                if ( ! is_array( $entry ) ||
+                     (int) ( $entry['profile_id'] ?? 0 ) !== $profile_id ||
+                     ( $entry['scope'] ?? '' ) !== 'internal_only' ||
+                     ( isset( $entry['action'] ) && 'assigned' !== $entry['action'] ) ||
+                     ! isset( $entry['at'] ) || ! is_string( $entry['at'] ) ||
+                     ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $entry['at'] ) ||
+                     $entry['at'] < $first || $entry['at'] >= $next ) {
+                    continue;
+                }
+                // Reassignment after revocation consumes another quota event.
                 $used++;
-                break;
             }
         }
-    }
-    $page++;
-    } while(count($ids)===$batch_size);
+        $page++;
+    } while ( count( $ids ) === $batch_size );
     return $used;
 }
+
 function pvdak_core_subscription_allows_new_assignment( $profile_id ) {
     if ( ! pvdak_core_subscription_gate_on() ) { return true; }
     if ( 'active' !== get_post_meta( absint( $profile_id ), '_pvdak_subscription_state', true ) ) { return false; }
