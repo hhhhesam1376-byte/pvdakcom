@@ -73,7 +73,9 @@ $auth=file_get_contents($root.'/inc/pvdak-auth.php');
 $verification=file_get_contents($root.'/inc/pvdak-email-verification.php');
 test_check(false!==strpos($registration, "pvdak_registration_rate_exceeded('signup', 12, 15 * MINUTE_IN_SECONDS)") &&
     strpos($registration, "pvdak_registration_rate_exceeded('signup'") < strpos($registration, "if (!empty(\$_POST['register_site']))") &&
-    false!==strpos($registration, "hash_hmac('sha256', $scope . '|' . $remote"),
+    false!==strpos($registration, "hash_hmac('sha256'") &&
+    false!==strpos($registration, "wp_salt('nonce')") &&
+    false!==strpos($registration, "'REMOTE_ADDR'"),
     'D14 signup IP limiter runs before honeypot and field validation with salted key');
 test_check(false!==strpos($auth, 'pvdak_auth_ip_attempt_key()') &&
     false!==strpos($auth, 'set_transient($ip_key,$ip_attempts,15*MINUTE_IN_SECONDS)') &&
