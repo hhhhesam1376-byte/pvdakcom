@@ -795,3 +795,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added scoped admin filters (membership, state, review method, expiry windows, city), protected existing query clauses, reset/accessibility, four review columns, expiry sorting and private bounded audit metabox.
 - Added 26 source-only assertions to the existing batch preflight runner. Local PHP lint of the new source and smoke test passed; full checkout runner, actual WP permissions, browser and two-account tests remain pending.
 - No production deployment, main update, live settings, intake, maintenance, subscription, private records, server or cron changes.
+
+
+## 2026-10-24 — REQUEST-ADMIN-086 (feature branch only)
+- Implemented 20 read-only request queue discovery and metadata-summary improvements. See `docs/WORK_BATCH_086.md`.
+- Added scoped filters for exact tracking/owner/topic/age/notes/audit, newest/oldest sorting, reset and accessible labels; list shows safe reference, topic, age, activity-presence and last-modified columns.
+- Preserved existing WordPress and triage filters; no case description, internal note or audit body shown; no data mutations or activation of intake.
+- Added 26 static source assertions to existing batch runner. PHP lint and actual WordPress/admin permissions/combined filters/browser tests remain pending.
+- No change to main, live site, maintenance, intake, user data, server, cron, staging or secrets.
