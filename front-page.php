@@ -76,8 +76,6 @@ $svg_icons = array(
       </a>
     <?php endforeach; ?>
   </nav>
-  <?php elseif ( current_user_can( 'edit_pages' ) ): ?>
-  <p class="pvdak-quick-admin-note">برای نمایش چهار دسترسی سریع، در «محتوای صفحه اصلی ← چهار دسترسی سریع زیر بنر» چهار برگه منتشرشده انتخاب کنید.</p>
   <?php endif; ?>
 
   <?php
@@ -167,12 +165,6 @@ $svg_icons = array(
         موضوعی مطابق «<?php echo esc_html( $legal_search_term ); ?>» پیدا نشد.
         <a href="<?php echo esc_url( home_url( '/#topics' ) ); ?>">نمایش همه موضوعات</a>
       </p>
-    <?php elseif ( current_user_can( 'edit_pages' ) ): ?>
-      <div class="pvdak-legal-topics-setup">
-        هنوز لندینگ منتشرشده‌ای زیر برگه مادر موضوعات حقوقی وجود ندارد.
-        در پیشخوان یک برگه مادر و برگه‌های فرزند آن را بسازید، سپس برگه مادر را در «محتوای صفحه اصلی» انتخاب کنید.
-        <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=page' ) ); ?>">مدیریت برگه‌ها</a>
-      </div>
     <?php endif; ?>
   </section>
 
@@ -314,10 +306,28 @@ $svg_icons = array(
       <p><?php echo esc_html(pvdak_home_value('community_note')); ?></p>
       <?php $u=pvdak_home_join_url(); if($u): ?><a class="pvdak-home-button" href="<?php echo esc_url($u); ?>"><?php else: ?><span class="pvdak-home-button"><?php endif; ?><?php echo esc_html(pvdak_home_value('community_button')); ?> ←<?php if($u): ?></a><?php else: ?></span><?php endif; ?>
     </div>
-    <?php if($community_img): ?><img src="<?php echo esc_url($community_img); ?>" alt="" loading="lazy" decoding="async"><?php else: ?><div class="pvdak-community-placeholder" aria-hidden="true"></div><?php endif; ?>
+    <?php if($community_img): ?><img src="<?php echo esc_url($community_img); ?>" alt="" loading="lazy" decoding="async"><?php else: ?>
+    <div class="pvdak-community-illustration" aria-hidden="true">
+      <svg viewBox="0 0 320 194" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <defs><linearGradient id="pvdak-c-plate" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#145a86"/><stop offset="1" stop-color="#093753"/></linearGradient><linearGradient id="pvdak-c-gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe4a6"/><stop offset="1" stop-color="#d49a43"/></linearGradient></defs>
+        <rect width="320" height="194" rx="17" fill="url(#pvdak-c-plate)"/>
+        <circle cx="272" cy="42" r="91" fill="#1a91a2" opacity=".28"/><circle cx="44" cy="163" r="78" fill="#1a8a99" opacity=".17"/>
+        <path d="M47 165h232" stroke="#9ad8df" stroke-opacity=".35" stroke-width="2"/>
+        <g stroke="#e8bd6c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M165 30v135M93 59h144M165 23v11M144 165h42M130 171h70"/>
+          <path d="m108 64-22 59h44l-22-59ZM222 64l-22 59h44l-22-59Z"/>
+        </g>
+        <path d="M85 123c2 15 12 20 23 20s21-5 23-20M199 123c2 15 12 20 23 20s21-5 23-20" stroke="url(#pvdak-c-gold)" stroke-width="4"/>
+        <circle cx="165" cy="57" r="7" fill="#f6d79d"/>
+        <g transform="translate(24 110) rotate(-11)"><rect width="57" height="57" rx="5" fill="#092d51" stroke="#84c7d3"/><path d="M15 8v41M21 8v41" stroke="#d2b279"/><path d="M27 20h21M27 28h17M27 36h13" stroke="#87c7d5" stroke-width="2"/></g>
+        <g transform="translate(242 119) rotate(9)"><rect width="57" height="51" rx="5" fill="#0b4166" stroke="#88bbc7"/><path d="M12 13h34M12 21h28M12 29h32M12 37h20" stroke="#c2d9dc" stroke-width="2"/></g>
+        <path d="M35 37h64M35 45h42" stroke="#6bb4c7" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+  <?php endif; ?>
   </section>
 
-  <?php if ( $faq_pages || current_user_can( 'edit_pages' ) ): ?>
+  <?php if ( $faq_pages ): ?>
   <section class="pvdak-home-section pvdak-home-faq" aria-labelledby="faq-title">
     <div class="pvdak-home-section-head"><h2 id="faq-title"><?php echo esc_html( pvdak_home_value( 'faq_title' ) ); ?></h2></div>
     <?php if ( $faq_pages ): ?>
@@ -327,8 +337,6 @@ $svg_icons = array(
           <div><?php echo wp_kses_post( apply_filters( 'the_content', $faq_page->post_content ) ); ?></div>
         </details>
       <?php endforeach; ?>
-    <?php else: ?>
-      <p class="pvdak-legal-topics-setup">یک برگه مادر «پرسش‌های متداول» و برگه‌های فرزند آن را بسازید؛ سپس در «محتوای صفحه اصلی» برگه مادر را انتخاب کنید.</p>
     <?php endif; ?>
   </section>
   <?php endif; ?>
