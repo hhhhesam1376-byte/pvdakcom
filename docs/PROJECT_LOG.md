@@ -837,3 +837,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Theme draft bumped to 0.8.30; added 26 source-only assertions to existing readonly runner. Post-commit 30 GitHub source checks passed, JavaScript compiled in V8, and isolated PHP Unicode regex fixture passed 3/3.
 - **Pending:** full PHP lint/source suite, actual WordPress/ACF, email, browser/mobile, two-account privacy and no-JS behavior. Source checks are not production acceptance.
 - No change to main, production, maintenance, registration/intake, real records, role settings, DB, Cron, workflow, staging or secrets.
+
+
+## 2026-10-24 — PROFILE-PREMIUM-092 (theme 0.8.31)
+- Rebuilt the existing published profile page template around the approved colorful legal-tech profile mockup: navy/cyan legal scale hero SVG, editable-account card, actual WP member summary, private/conditional sidebar navigation and prominent save/reset/security actions.
+- Changed only existing theme files: `page-templates/pvdak-profile.php`, `style.css`, plus existing source smoke test and changelog. No standalone CSS/JS/assets/remote fonts, new route, new secrets, new cron, new deployment mechanism or plugin modifications.
+- Reused WP Core user values and post counts, sanitized outputs, nonce-protected `pvdak_profile_save`, JavaScript selectors and feedback/PRG flows. Login guard, private caching/noindex, existing maintenance, registration and intake states untouched.
+- Static readback checks verified 13 invariants (nonce, action, selectors, escaped user values, role gate, links, mobile CSS, no remote dependency); two additional source checks added to existing account-experience runner. PHP lint, full source runner and real WP/browser rendering **not yet executed**, so do not claim acceptance or live deploy before actual host logs.
+- Theme target 0.8.31. Core remains 0.8.3. Promotion uses existing main/15-minute Cron/host rollback, no infrastructure additions.
