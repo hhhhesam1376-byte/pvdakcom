@@ -354,4 +354,27 @@ $GLOBALS['pvdak_mock_license_reviewer'] = 0;
 pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Review without accountable manager is invalid' );
 $GLOBALS['pvdak_mock_license_reviewer'] = 10;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Eligible lawyer can be matched only after independent current review' );
+
+pvdak_expect( pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 portal readiness requires current lawyer review and available internal capacity' );
+$GLOBALS['pvdak_mock_cleared'] = '0';
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 portal blocks missing staff clearance' );
+$GLOBALS['pvdak_mock_cleared'] = '1';
+$GLOBALS['pvdak_mock_license_expiry'] = '2020-01-01';
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 portal blocks expired independent review' );
+$GLOBALS['pvdak_mock_license_expiry'] = '2099-12-31';
+$GLOBALS['pvdak_mock_accepting'] = '0';
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 portal reflects staff-paused internal assignments' );
+$GLOBALS['pvdak_mock_accepting'] = '1';
+$GLOBALS['pvdak_mock_active_count'] = 2;
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 portal reflects exhausted capacity' );
+$GLOBALS['pvdak_mock_active_count'] = 1;
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'student', 'approved' )['ready'],
+    'D21 portal does not grant lawyer access to students' );
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'pending' )['ready'],
+    'D21 portal does not grant lawyer access before approval' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";

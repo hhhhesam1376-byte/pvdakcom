@@ -8,6 +8,48 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * Read-only account guidance. This does not grant permissions, reveal cases,
+ * or replace the locked assignment-time checks in the matching engine.
+ */
+function pvdak_core_professional_portal_access( $profile_id, $member_type, $member_state ) {
+    $id = absint( $profile_id );
+    $blocked = function( $reason ) {
+        return array( 'ready' => false, 'reason' => $reason );
+    };
+    if ( ! $id || 'pvdak_professional' !== get_post_type( $id ) ||
+         'private' !== get_post_status( $id ) || ! pvdak_core_profile_has_owner( $id ) ) {
+        return $blocked( 'پروفایل خصوصی معتبر و حساب مالک برای ارجاع داخلی لازم است.' );
+    }
+    if ( 'lawyer' !== $member_type || 'approved' !== $member_state ) {
+        return $blocked( 'تأیید اداری درخواست از نوع وکیل هنوز تکمیل نشده است.' );
+    }
+    if ( '1' !== (string) get_post_meta( $id, '_pvdak_referral_cleared', true ) ) {
+        return $blocked( 'مجوز ارجاع داخلی توسط مدیر ثبت نشده است.' );
+    }
+    if ( ! pvdak_core_license_review_current( $id ) ) {
+        return $blocked( 'بررسی مستقل صلاحیت معتبر نیست یا تاریخ اعتبار آن گذشته است.' );
+    }
+    if ( ! pvdak_core_specialty_ids( $id ) ) {
+        return $blocked( 'هنوز حوزه تخصصی معتبر و منتشرشده‌ای برای ارجاع تعیین نشده است.' );
+    }
+    if ( ! pvdak_core_capacity_accepting( $id ) ) {
+        return $blocked( 'پذیرش انتساب داخلی توسط مدیر متوقف شده است.' );
+    }
+    $limit = pvdak_core_capacity_limit( $id );
+    if ( $limit < 1 || pvdak_core_active_assignment_count( $id ) >= $limit ) {
+        return $blocked( 'ظرفیت انتساب داخلی تنظیم نشده یا تکمیل است.' );
+    }
+    if ( function_exists( 'pvdak_core_subscription_allows_new_assignment' ) &&
+         ! pvdak_core_subscription_allows_new_assignment( $id ) ) {
+        return $blocked( 'اشتراک یا تاریخ انقضا یا سهمیه ماهانه، انتساب تازه را مجاز نمی‌کند.' );
+    }
+    return array(
+        'ready' => true,
+        'reason' => 'شرایط اولیه ارجاع داخلی فراهم است؛ تصمیم نهایی فقط با بررسی مجدد مدیر و کنترل‌های مستقل هر پرونده انجام می‌شود.',
+    );
+}
+
 function pvdak_core_professional_dashboard() {
     if ( ! is_user_logged_in() ) {
         return '<section class="pvdak-core-panel"><h2>پنل همکاری حقوقی</h2><p>برای مشاهده وضعیت درخواست همکاری، <a href="' .
@@ -92,10 +134,19 @@ function pvdak_core_professional_dashboard() {
         'rejected' => 'این درخواست در وضعیت ردشده است و هیچ دسترسی حرفه‌ای ایجاد نمی‌کند.',
     );
     $html .= '<p class="pvdak-core-prof-guidance">' . esc_html( $guidance[ $status ] ) . '</p>';
+    $access = pvdak_core_professional_portal_access( $profile_id, $member_type, $status );
+    $html .= '<div class="pvdak-core-notice" role="status"><strong>وضعیت امکان ارجاع داخلی: ' .
+        ( $access['ready'] ? 'دارای شرایط اولیه' : 'غیرفعال' ) . '</strong><p>' .
+        esc_html( $access['reason'] ) . '</p></div>';
     $html .= '<p class="pvdak-core-notice">این پنل فقط اطلاعات خودتان را نمایش می‌دهد. جزئیات پرونده مراجعان، مشخصات اشخاص ثالث و مدارک حساس در این بخش نمایش داده نمی‌شوند.</p>';
 
     // Neither a role alone nor a rejected/pending application unlocks capacity.
-    if ( 'lawyer' === $member_type && 'approved' === $status ) {
+    // Read-only operational figures are not a substitute for clearance.
+    // Keep them hidden for draft, revoked or expired professional reviews.
+    $review_current = 'private' === get_post_status( $profile_id ) &&
+        '1' === (string) get_post_meta( $profile_id, '_pvdak_referral_cleared', true ) &&
+        pvdak_core_license_review_current( $profile_id );
+    if ( 'lawyer' === $member_type && 'approved' === $status && $review_current ) {
         $html .= '<section class="pvdak-core-prof-section" aria-labelledby="pvdak-prof-specialties"><h3 id="pvdak-prof-specialties">تخصص‌های ثبت‌شده توسط مدیر</h3>';
         $ids = pvdak_core_specialty_ids( $profile_id );
         $valid_ids = array();
@@ -178,6 +229,8 @@ function pvdak_core_professional_dashboard() {
             }
             $html .= '<p><small>طرح‌ها صرفاً توسط مدیر ثبت می‌شوند؛ خرید و پرداخت آنلاین در این نسخه وجود ندارد.</small></p></section>';
         }
+    } elseif ( 'approved' === $status && 'lawyer' === $member_type ) {
+        $html .= '<p class="pvdak-core-empty">تا ثبت مجوز داخلی و بررسی مستقل معتبر، جزئیات ظرفیت و طرح حرفه‌ای در پنل فعال نمی‌شود.</p>';
     } elseif ( 'approved' === $status ) {
         $html .= '<p class="pvdak-core-empty">ظرفیت انتساب وکالت فقط برای درخواست تأیید اداری‌شده از نوع وکیل قابل نمایش است. برای کارآموز و دانشجو فعال نیست.</p>';
     } else {
