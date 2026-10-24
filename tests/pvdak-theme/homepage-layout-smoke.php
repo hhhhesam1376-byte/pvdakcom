@@ -237,4 +237,26 @@ pvdak_layout_expect( false !== strpos( $front, 'pvdak-start-here-grid' ) &&
 pvdak_layout_expect( false !== strpos( $acf, 'for ( $quick_slot = 1; $quick_slot <= 4; $quick_slot++ )' ) &&
     false !== strpos( $acf, "'type' => 'post_object'" ),
     'Four ACF Page selectors are generated in the homepage editor' );
+pvdak_layout_expect(
+    false !== strpos( $front, 'class="pvdak-community-illustration"' ) &&
+    false !== strpos( $front, 'viewBox="0 0 320 194"' ) &&
+    false === strpos( $front, 'pvdak-community-placeholder' ),
+    'Community section uses bundled scalable vector fallback rather than an empty gradient box'
+);
+pvdak_layout_expect(
+    false !== strpos( $front, 'if ( $faq_pages )' ) &&
+    false === strpos( $front, "if ( $faq_pages || current_user_can( 'edit_pages' ) )" ) &&
+    false === strpos( $front, 'یک برگه مادر «پرسش‌های متداول»' ),
+    'FAQ section stays hidden without published FAQ pages and never shows internal setup text'
+);
+pvdak_layout_expect(
+    false === strpos( $front, 'pvdak-quick-admin-note' ) &&
+    false === strpos( $front, 'pvdak-legal-topics-setup' ),
+    'Internal admin setup copy is absent from visible homepage markup'
+);
+pvdak_layout_expect(
+    false !== strpos( $css, '.pvdak-home-community .pvdak-community-illustration' ) &&
+    false !== strpos( $css, 'Version: 0.8.36' ),
+    'Theme version and responsive community vector styles exist'
+);
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
