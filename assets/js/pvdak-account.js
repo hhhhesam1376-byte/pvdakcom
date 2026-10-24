@@ -17,21 +17,45 @@
     control.setAttribute('aria-label', visible ? 'پنهان‌کردن رمز عبور' : 'نمایش رمز عبور');
   });
 
+  /* Progressive one-dashboard navigation. Without JavaScript all sections remain
+   * accessible as ordinary document anchors; no account data is stored here. */
   function refreshNavigation() {
     var nav = document.querySelector('.pvdak-account-menu');
-    if (!nav) return;
-    var hash = window.location.hash || '#pvdak-dashboard';
-    var found = false;
+    var workspace = document.querySelector('[data-pvdak-workspace]');
+    if (!nav || !workspace) return;
+    var panels = Array.prototype.slice.call(workspace.querySelectorAll('[data-pvdak-panel]'));
+    if (!panels.length) return;
+    var hash = window.location.hash;
+    var id = hash ? decodeURIComponent(hash.slice(1)) : 'pvdak-dashboard';
+    var target = id ? document.getElementById(id) : null;
+    var panel = target && workspace.contains(target) ?
+      target.closest('[data-pvdak-panel]') : null;
+    if (!panel) {
+      var params = new URLSearchParams(window.location.search);
+      var fallback = params.has('status') ? 'pvdak-profile' :
+        (params.has('support') || params.has('ticket_page') || params.has('ticket_status') ||
+        params.has('ticket_search') || params.has('ticket_order')) ? 'pvdak-support' :
+        'pvdak-dashboard';
+      var match = document.getElementById(fallback);
+      panel = match && workspace.contains(match) ? match.closest('[data-pvdak-panel]') : null;
+    }
+    if (!panel) panel = panels[0];
+    panels.forEach(function (section) {
+      section.hidden = section !== panel;
+    });
     nav.querySelectorAll('a[href^="#"]').forEach(function (link) {
-      var active = link.getAttribute('href') === hash;
-      if (active) found = true;
+      var linkId = link.getAttribute('href').slice(1);
+      var linkTarget = document.getElementById(linkId);
+      var isActive = linkTarget && linkTarget.closest('[data-pvdak-panel]') === panel;
+      if (isActive) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.pvdak-dashboard-quicklinks a[href^="#"]').forEach(function (link) {
+      var linkTarget = document.getElementById(link.getAttribute('href').slice(1));
+      var active = linkTarget && linkTarget.closest('[data-pvdak-panel]') === panel;
       if (active) link.setAttribute('aria-current', 'location');
       else link.removeAttribute('aria-current');
     });
-    if (!found) {
-      var first = nav.querySelector('a[href="#pvdak-dashboard"]');
-      if (first) first.setAttribute('aria-current', 'location');
-    }
   }
   window.addEventListener('hashchange', refreshNavigation);
   refreshNavigation();
@@ -68,7 +92,7 @@
   var feedback = params.has('support') ? 'pvdak-support-notice' :
     params.has('sent') ? 'pvdak-contact-result' :
     params.has('error') ? 'pvdak-login-result' :
-    params.has('status') && document.querySelector('.pvdak-profile-page') ? 'pvdak-profile-result' : '';
+    params.has('status') && document.querySelector('[data-pvdak-profile-form]') ? 'pvdak-profile-result' : '';
   if (feedback) {
     var notice = document.getElementById(feedback);
     if (notice) notice.focus({ preventScroll: true });
