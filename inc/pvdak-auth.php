@@ -19,9 +19,17 @@ function pvdak_auth_attempt_key($identity) {
   $remote=(string)($_SERVER['REMOTE_ADDR']??'');
   return 'pvdak_login_'.substr(hash_hmac('sha256',strtolower(trim($identity)).'|'.$remote,wp_salt('nonce')),0,40);
 }
+/** A separate IP-wide ceiling prevents rotating usernames from evading login throttling. */
+function pvdak_auth_ip_attempt_key() {
+  $remote=isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+  return 'pvdak_login_ip_'.substr(hash_hmac('sha256',$remote,wp_salt('nonce')),0,40);
+}
 function pvdak_auth_record_failure($key) {
   $attempts=min(20,(int)get_transient($key)+1);
   set_transient($key,$attempts,15*MINUTE_IN_SECONDS);
+  $ip_key=pvdak_auth_ip_attempt_key();
+  $ip_attempts=min(30,(int)get_transient($ip_key)+1);
+  set_transient($ip_key,$ip_attempts,15*MINUTE_IN_SECONDS);
 }
 function pvdak_login_handle(){
   if('POST'!==($_SERVER['REQUEST_METHOD']??''))wp_die('Invalid method','',array('response'=>405));
@@ -32,7 +40,7 @@ function pvdak_login_handle(){
   $identity=is_string($raw_identity)?trim($raw_identity):'';
   $pass=is_string($raw_pass)?$raw_pass:'';
   $key=pvdak_auth_attempt_key($identity);
-  if((int)get_transient($key)>=6){
+  if((int)get_transient($key)>=6 || (int)get_transient(pvdak_auth_ip_attempt_key())>=30){
     wp_safe_redirect(add_query_arg('error','slow',pvdak_auth_login_url()));exit;
   }
   if(!$identity||!$pass||strlen($identity)>250){
