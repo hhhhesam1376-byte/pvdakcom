@@ -6,7 +6,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_default_navigation_links() {
-    $links = array();
+    $links = array( array( 'label' => 'صفحه اصلی', 'url' => home_url( '/' ), 'home' => true ) );
     $page_links = array(
         'legal-topics' => 'موضوعات حقوقی',
         'legal-faq'    => 'پرسش‌های متداول',
@@ -16,7 +16,7 @@ function pvdak_default_navigation_links() {
     foreach ( $page_links as $slug => $label ) {
         $url = pvdak_public_page_url( $slug );
         if ( $url ) {
-            $links[] = array( 'label' => $label, 'url' => $url );
+            $links[] = array( 'label' => $label, 'url' => $url, 'slug' => $slug );
         }
     }
     // Editorial magazine link is shown only when an actual native category
