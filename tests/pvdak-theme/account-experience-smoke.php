@@ -59,6 +59,24 @@ $checks = array(
     strpos($v['css'], '.pvdak-profile-workspace{') !== false &&
     strpos($v['css'], '.pvdak-profile-rail{') !== false &&
     strpos($v['css'], '@media(max-width:540px)') !== false,
+  'Profile hero artwork is local and references the legal image' =>
+    is_file($root . '/assets/icons/pvdak-profile-hero.svg') &&
+    strpos($v['profile'], 'pvdak-profile-hero-photo')!==false &&
+    strpos($v['profile'], '/assets/icons/pvdak-profile-hero.svg')!==false,
+  'Profile-specific header has a working native WordPress search form' =>
+    strpos($v['header'], 'pvdak-profile-header-search')!==false &&
+    strpos($v['header'], 'name="s"')!==false &&
+    strpos($v['header'], "is_page_template( 'page-templates/pvdak-profile.php' )")!==false,
+  'Profile-specific footer includes a real WordPress search form' =>
+    strpos($v['footer'], 'pvdak-profile-footer-search')!==false &&
+    strpos($v['footer'], 'name="s"')!==false &&
+    strpos($v['footer'], "is_page_template( 'page-templates/pvdak-profile.php' )")!==false,
+  'Reference proportions and trusted form interactions remain' =>
+    strpos($v['css'], '.pvdak-profile-hero-photo{')!==false &&
+    strpos($v['css'], '.pvdak-profile-bottom{')!==false &&
+    strpos($v['profile'], 'pvdak-profile-shield-art')!==false &&
+    strpos($v['profile'], 'data-pvdak-profile-save')!==false &&
+    strpos($v['profile'], 'wp_nonce_field(')!==false,
   'Profile keeps nonce and provides account return path' =>
     strpos($v['profile'],'pvdak_profile_save')!==false &&
     strpos($v['profile'],'pvdak_auth_account_url()')!==false &&
