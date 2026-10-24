@@ -853,3 +853,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Preserved `pvdak_profile_save` nonce/action, WordPress owner-gated template, PRG status feedback, noindex/caching guards and current account scripts; Core remains 0.8.3.
 - Files: existing `page-templates/pvdak-profile.php`, `header.php`, `footer.php`, `style.css`, existing test file, and one image asset within `assets/icons/`. No new Cron/secrets/backend/remote dependency.
 - Test invariants extended. Full PHP lint/WordPress account/browser tests pending live cPanel execution. Changes on feature branch until GitHub main promotion; live site publication must be separately observed in the existing deploy log.
+
+## 2026-10-24 — WORK-BATCH-094: ten employer-visible UI priorities
+- User prioritized broad user-facing appearance over infrastructure and backend after reviewing the premium profile reference.
+- Implemented UI 01–10 covering branded header, native sitewide GET search, accessible native mobile menu, 4-column footer, homepage hero/search, editor-chosen 4-link strip, Swiper legal-topic cards, editorial/news sections, public pages/contact and logged-in account dashboard quicklinks.
+- Source changes are limited to existing theme files (header/footer/style/account/fallback links), existing smoke tests, existing logs and changelog, and a batch doc under the prior naming convention. Theme version updated 0.8.32 → 0.8.33. Core stays 0.8.3.
+- Relaxed four stale release-pin tests to minimum-version checks, preserving all underlying feature and privacy assertions.
+- Static GitHub readback invariants: 12/12; CSS added block brace parity 205/205. Full `php -l`, PHP smoke suite, WordPress browser, responsiveness on actual devices and live cPanel acceptance **not run here**. Existing cPanel runner handles safe theme backup/lint/HTTP health and remains unchanged.
+- No new deployment/staging paths, Actions, Cron, secrets, plugin, live registration/intake enablement, user data or DB modifications. See `docs/WORK_BATCH_094.md` for priorities and acceptance.
