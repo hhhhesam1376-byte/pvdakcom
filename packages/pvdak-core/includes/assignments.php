@@ -12,7 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
     $requester = absint( get_post_field( 'post_author', absint( $request_id ) ) );
     $professional = absint( get_post_field( 'post_author', absint( $profile_id ) ) );
-    return $requester > 0 && $professional > 0 && $requester !== $professional;
+    if ( ! $requester || ! $professional || $requester === $professional ) { return false; }
+    $requester_user = get_userdata( $requester );
+    $professional_user = get_userdata( $professional );
+    return $requester_user && isset( $requester_user->ID ) &&
+        (int) $requester_user->ID === $requester &&
+        $professional_user && isset( $professional_user->ID ) &&
+        (int) $professional_user->ID === $professional;
 }
 
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
