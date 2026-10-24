@@ -29,8 +29,12 @@ function pvdak_profile_save() {
     $raw = wp_unslash( $_POST['display_name'] ?? '' );
     $value = is_string( $raw ) ? sanitize_text_field( $raw ) : '';
     $url = pvdak_account_tool_url( 'account-profile' );
-    if ( '' === trim( $value ) || strlen( $value ) > 120 ) {
+    $value = trim( $value );
+    if ( '' === $value || pvdak_public_text_length( $value ) > 120 ) {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
+    }
+    if ( $value === (string) wp_get_current_user()->display_name ) {
+        wp_safe_redirect( add_query_arg( 'status', 'unchanged', $url ) ); exit;
     }
     $result = wp_update_user( array( 'ID' => get_current_user_id(), 'display_name' => $value ) );
     wp_safe_redirect( add_query_arg( 'status', is_wp_error( $result ) ? 'failed' : 'saved', $url ) ); exit;
@@ -80,7 +84,7 @@ function pvdak_recovery_change() {
     $confirm = is_string( $confirm_raw ) ? $confirm_raw : '';
     $url = pvdak_account_tool_url( 'account-recovery' );
     $user = check_password_reset_key( $key, $login );
-    if ( is_wp_error( $user ) || strlen( $password ) < 12 || $password !== $confirm ) {
+    if ( is_wp_error( $user ) || pvdak_public_text_length( $password ) < 12 || $password !== $confirm ) {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
     }
     reset_password( $user, $password );

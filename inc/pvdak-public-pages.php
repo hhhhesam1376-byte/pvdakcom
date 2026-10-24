@@ -1,6 +1,12 @@
 <?php
 /** WordPress-native public Pages; create only missing Pages on next admin visit. */
 if ( ! defined('ABSPATH') ) { exit; }
+/** Unicode code-point length, including newlines, matching form counters. */
+function pvdak_public_text_length( $value ) {
+  if ( function_exists( 'mb_strlen' ) ) { return mb_strlen( $value, 'UTF-8' ); }
+  $count = preg_match_all( '/[\s\S]/u', $value );
+  return false === $count ? strlen( $value ) : $count;
+}
 function pvdak_public_page_url($slug) {
   $p = get_page_by_path(sanitize_title($slug), OBJECT, 'page');
   return $p && 'publish' === $p->post_status ? get_permalink($p->ID) : '';
@@ -70,8 +76,9 @@ function pvdak_contact_handle() {
   $name=is_string($raw_name)?sanitize_text_field($raw_name):'';
   $email=is_string($raw_email)?sanitize_email($raw_email):'';
   $msg=is_string($raw_message)?sanitize_textarea_field($raw_message):'';
-  if(!$name || strlen($name)>100 || !is_email($email) || strlen($msg)<10 || strlen($msg)>3500
-     || !isset($_POST['contact_consent'])) {
+  if(!$name || pvdak_public_text_length($name)>100 || !is_email($email) || strlen($email)>254 ||
+     pvdak_public_text_length($msg)<10 || pvdak_public_text_length($msg)>3500 ||
+     !isset($_POST['contact_consent'])) {
     wp_safe_redirect(add_query_arg('sent','invalid',$url));exit;
   }
   $key='pvdak_contact_'.substr(hash_hmac('sha256',($_SERVER['REMOTE_ADDR']??'').$email,wp_salt('nonce')),0,30);
