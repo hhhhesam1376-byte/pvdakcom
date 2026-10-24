@@ -39,7 +39,9 @@ function pvdak_home_readiness_items() {
     // or invent/fill slots on behalf of the editor.
     $quick_pages = function_exists( 'pvdak_home_quick_pages' ) ? pvdak_home_quick_pages() : array();
     $quick_count = count( $quick_pages );
-    $faq_pages = pvdak_home_faq_pages();
+    // Audit the unfiltered published Pages; the public renderer deliberately
+    // omits empty answers, which otherwise made this check always PASS.
+    $faq_pages = pvdak_home_faq_pages( true );
     $faq_count = count( $faq_pages );
     $faq_written = 0;
     foreach ( $faq_pages as $faq_page ) {
@@ -105,7 +107,7 @@ function pvdak_home_readiness_items() {
             $sample_ready . ' از ' . $sample_total . ' لندینگ نمونه منتشرشده (برای تکمیل در همین صفحه دکمه نمونه‌ها را بزنید)', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های پویش', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
-        array( 'پرسش‌های متداول', $faq_count > 0, $faq_count . ' برگه پرسش/پاسخ منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'پرسش‌های متداول', $faq_written > 0, $faq_written . ' پاسخ معتبر از ' . $faq_count . ' برگه منتشرشده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'چهار دسترسی سریع منتشرشده', 4 === $quick_count,
             $quick_count . ' از ۴ برگه معتبر انتخاب شده؛ برگه تکراری یا پیش‌نویس پذیرفته نمی‌شود', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,
