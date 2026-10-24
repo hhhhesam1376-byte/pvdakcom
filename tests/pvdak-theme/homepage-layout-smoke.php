@@ -1,6 +1,7 @@
 <?php
 /** No WP/DB: privacy-safe tests for hero, four editor-picked Pages & topics carousel. */
 define( 'ABSPATH', __DIR__ );
+define( 'OBJECT', 'OBJECT' ); // WordPress constant for the no-WP CTA fixture.
 class WP_Post { public $ID; public $post_content = ''; function __construct( $id ) { $this->ID = $id; } }
 $GLOBALS['quick_test_selection'] = array();
 $GLOBALS['quick_test_menu'] = array();
