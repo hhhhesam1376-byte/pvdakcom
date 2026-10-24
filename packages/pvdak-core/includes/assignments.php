@@ -5,6 +5,16 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * An internal referral may never point back to its requester.
+ * Zero/legacy authors are not sufficient evidence of distinct parties.
+ */
+function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
+    $requester = absint( get_post_field( 'post_author', absint( $request_id ) ) );
+    $professional = absint( get_post_field( 'post_author', absint( $profile_id ) ) );
+    return $requester > 0 && $professional > 0 && $requester !== $professional;
+}
+
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
     if ( ! pvdak_core_valid_specialty( $landing_id ) ) { return array(); }
     $profiles = get_posts( array(
@@ -63,7 +73,8 @@ function pvdak_core_assignment_admin_page() {
         echo '<p>ابتدا از فهرست درخواست‌ها، پرونده موردنظر را باز کنید و از پیوند ارجاع داخلی در صفحه ویرایش استفاده کنید.</p></div>';
         return;
     }
-    if ( 'pvdak_request' !== get_post_type( $request_id ) || ! current_user_can( 'edit_post', $request_id ) ) {
+    if ( 'pvdak_request' !== get_post_type( $request_id ) ||
+         'private' !== get_post_status( $request_id ) || ! current_user_can( 'edit_post', $request_id ) ) {
         wp_die( 'درخواست معتبر نیست.', '', array( 'response' => 403 ) );
     }
     $state = get_post_meta( $request_id, '_pvdak_request_state', true );
@@ -80,9 +91,8 @@ function pvdak_core_assignment_admin_page() {
         return;
     }
     $candidates = pvdak_core_assignable_profiles( $landing_id, $request_type );
-    $requester = (int) get_post_field( 'post_author', $request_id );
-    $candidates = array_values( array_filter( $candidates, function ( $p ) use ( $requester ) {
-        return (int) $p->post_author !== $requester;
+    $candidates = array_values( array_filter( $candidates, function ( $p ) use ( $request_id ) {
+        return pvdak_core_assignment_parties_distinct( $request_id, $p->ID );
     } ) );
     if ( ! $candidates ) {
         echo '<div class="notice notice-info inline"><p>متخصصی با تخصص مرتبط، تأیید داخلی و ظرفیت پذیرش آزاد پیدا نشد. وضعیت عضویت، تخصص و ظرفیت پرونده‌های فعال را در مدیریت پروفایل‌ها بررسی کنید.</p></div></div>';
@@ -125,7 +135,7 @@ function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
          'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ||
          get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ||
          ! pvdak_core_profile_referral_eligible( $profile_id, $landing_id, $type ) ||
-         (int) get_post_field( 'post_author', $request_id ) === (int) get_post_field( 'post_author', $profile_id ) ||
+         ! pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) ||
          ! pvdak_core_capacity_available( $profile_id ) ) {
         return 'invalid';
     }
@@ -225,7 +235,8 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
             }
             $topic = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
             $type = get_post_meta( $request_id, '_pvdak_request_type', true );
-            if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) ) {
+            if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) &&
+                 pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) ) {
                 return 'eligible';
             }
             $previous = get_post_meta( $request_id, '_pvdak_request_state', true );
