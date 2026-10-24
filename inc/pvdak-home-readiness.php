@@ -6,7 +6,17 @@ function pvdak_home_readiness_items() {
     $front = (int) get_option( 'page_on_front' );
     $has_front = 'page' === get_option( 'show_on_front' ) && 'page' === get_post_type( $front );
     $topics_root = function_exists( 'pvdak_legal_topics_root_id' ) ? pvdak_legal_topics_root_id() : 0;
-    $topics_count = $topics_root ? count( pvdak_legal_topic_pages( $topics_root ) ) : 0;
+    $topic_pages = $topics_root ? pvdak_legal_topic_pages( $topics_root ) : array();
+    $topics_count = count( $topic_pages );
+    // D09: published empty samples are intentionally noindex and cannot
+    // count as usable legal content. This tests existence, NOT legal approval.
+    $topics_with_text = 0;
+    foreach ( $topic_pages as $topic_page ) {
+        if ( $topic_page instanceof WP_Post &&
+             '' !== trim( wp_strip_all_tags( strip_shortcodes( $topic_page->post_content ) ) ) ) {
+            $topics_with_text++;
+        }
+    }
     $sample_total = function_exists( 'pvdak_editor_example_legal_topics' ) ?
         count( pvdak_editor_example_legal_topics() ) : 0;
     $sample_ready = 0;
@@ -71,6 +81,8 @@ function pvdak_home_readiness_items() {
         array( 'برگه مادر موضوعات حقوقی', $topics_root > 0,
             $topics_root ? 'برگه مادر آماده است' : 'در همین صفحه دکمه «آماده‌سازی ساختار محتوایی» را بزنید', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'لندینگ‌های موضوعات حقوقی', $topics_count > 0, $topics_count . ' برگه فرزند منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'حداقل سه لندینگ دارای متن', $topics_with_text >= 3,
+            $topics_with_text . ' برگه منتشرشده دارای متن؛ محتوای نمونه/خالی قابل تحویل نیست و تأیید تخصصی مدیر محتوا جداست', admin_url( 'edit.php?post_type=page' ) ),
         array( '۱۷ لندینگ نمونه موضوعی', $sample_total > 0 && $sample_ready === $sample_total,
             $sample_ready . ' از ' . $sample_total . ' لندینگ نمونه منتشرشده (برای تکمیل در همین صفحه دکمه نمونه‌ها را بزنید)', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_count > 0, $magazine_count ? 'دارای مقاله منتشرشده' : 'دسته مجله و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
