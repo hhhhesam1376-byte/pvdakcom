@@ -121,7 +121,8 @@ pvdak_public_smoke_require(
  strpos( $ui['single'], 'pvdak-article-jumpnav' ) !== false &&
  strpos( $ui['single'], 'id="pvdak-article-text"' ) !== false &&
  strpos( $ui['editorial'], '.pvdak-article-service-note' ) !== false &&
- strpos( $ui['single'], 'the_content();' ) !== false,
+ strpos( $ui['single'], "apply_filters( 'the_content', get_the_content() )" ) !== false &&
+ strpos( $ui['single'], 'pvdak-article-toc' ) !== false,
  '096-09 Article navigation and disclaimer preserve authored content' );
 pvdak_public_smoke_require(
  strpos( $ui['none'], 'pvdak-empty-state' ) !== false &&
