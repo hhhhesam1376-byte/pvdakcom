@@ -112,8 +112,32 @@ else
   value "Repository checkout SHA" "NOT_AVAILABLE"
 fi
 
+# D01: Compare the host's actual successful deployment marker to the
+# fetched release ref. An unchanged repository checkout HEAD is not evidence.
+DEPLOY_MARKER="$HOME/.pvdak-deploy/deployed"
+REMOTE_RELEASE=""
+DEPLOYED_RELEASE=""
+if command -v git >/dev/null 2>&1 &&
+   [[ -d "$HOME/repositories/pvdakcom/.git" ]]; then
+  REMOTE_RELEASE="$(git -C "$HOME/repositories/pvdakcom" rev-parse --verify refs/remotes/pvdak-deploy/main 2>/dev/null || true)"
+fi
+if [[ -f "$DEPLOY_MARKER" && ! -L "$DEPLOY_MARKER" ]]; then
+  DEPLOYED_RELEASE="$(head -n 1 "$DEPLOY_MARKER")"
+fi
+if [[ "$REMOTE_RELEASE" =~ ^[a-f0-9]{40}$ && "$DEPLOYED_RELEASE" == "$REMOTE_RELEASE" ]]; then
+  value "D01 deployed vs fetched SHA" "MATCH ${DEPLOYED_RELEASE:0:12}"
+  D01_READY=YES
+else
+  value "D01 deployed vs fetched SHA" "NOT_VERIFIED (run existing deploy.sh, check DEPLOY_OK)"
+  D01_READY=NO
+fi
+
 failure=0
 if [[ "$MODE" == "--test" ]]; then
+  if [[ "$D01_READY" != YES ]]; then
+    value "D01 release gate" "FAIL: deployed SHA not verified against fetched main"
+    failure=1
+  fi
   echo "--- CHECKS (READ ONLY) ---"
   if [[ -s "$SWIPER_LOCAL/swiper-bundle.min.js" && -s "$SWIPER_LOCAL/swiper-bundle.min.css" &&
         -s "$SWIPER_LOCAL/LICENSE" ]] &&
