@@ -10,11 +10,31 @@ function pvdak_registration_open() {
         '1' === (string) get_option('pvdak_registration_enabled', '0') &&
         (bool) get_option('users_can_register', false);
 }
+/**
+ * D14: count every submission from the originating server-side IP, including
+ * invalid fields and honeypot hits. The transient key stores only a salted
+ * HMAC, never the IP or an email address.
+ */
+function pvdak_registration_rate_key($scope) {
+    $remote = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+    return 'pvdak_reg_' . substr(hash_hmac('sha256', $scope . '|' . $remote, wp_salt('nonce')), 0, 40);
+}
+function pvdak_registration_rate_exceeded($scope, $limit, $seconds) {
+    $key = pvdak_registration_rate_key($scope);
+    $count = max(0, (int) get_transient($key));
+    if ($count >= $limit) { return true; }
+    set_transient($key, min($limit, $count + 1), $seconds);
+    return false;
+}
 function pvdak_register_submit() {
     if (!pvdak_registration_open()) { wp_die('ثبت‌نام فعلاً غیرفعال است.','',array('response'=>403)); }
     if ('POST' !== ($_SERVER['REQUEST_METHOD']??'')) { wp_die('Method not allowed','',array('response'=>405)); }
     check_admin_referer('pvdak_register','_pvdak_register_nonce');
     $url=pvdak_public_page_url('account-register')?:home_url('/account-register/');
+    // Count before validation: rotating emails or malformed requests cannot evade the IP ceiling.
+    if (pvdak_registration_rate_exceeded('signup', 12, 15 * MINUTE_IN_SECONDS)) {
+        wp_safe_redirect(add_query_arg('state','slow',$url));exit;
+    }
     if (!empty($_POST['register_site'])) { wp_safe_redirect(add_query_arg('state','received',$url));exit; }
     $values=array();
     foreach(array('register_username','register_email','register_password','register_role') as $field){
