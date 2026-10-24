@@ -69,7 +69,7 @@ check_triage( 'private' === $q->get( 'post_status' ), 'dashboard private scope' 
 $mq = $q->get( 'meta_query' );
 check_triage( 'AND' === $mq['relation'], 'meta conjunction' );
 check_triage( 'existing' === $mq[0][0]['key'], 'preserve existing meta' );
-check_triage( count( $mq ) === 3, 'legacy conditions combined' );
+check_triage( count( $mq ) === 4, 'legacy conditions combined' );
 $_GET = array( 'pvdak_filter_queue' => 'pending7' );
 $q = new PvdakTriageFakeQuery( array( 'post_type' => 'pvdak_request', 'date_query' => array( array( 'after' => '2026-01-01' ) ) ) );
 pvdak_core_triage_filter_query( $q );
