@@ -96,6 +96,11 @@ pvdak_layout_expect( false !== strpos( $js, 'new window.Swiper(container' ) &&
     false !== strpos( $js, 'breakpoints:' ) &&
     false === strpos( $js, 'track.appendChild(first)' ),
     'Native Swiper runtime owns autoplay, responsive layout and infinite loop' );
+pvdak_layout_expect(
+    false !== strpos( $js, 'Math.max(3, visibleSlots() + 1)' ) &&
+    false !== strpos( $js, 'updateAutoplay();' ),
+    'D06: mobile Swiper avoids two-slide loop clones and restores paused state'
+);
 pvdak_layout_expect( false !== strpos( $js, 'prefers-reduced-motion' ) &&
     false !== strpos( $js, 'document.hidden' ),
     'Reduced motion and background pause are supported' );
