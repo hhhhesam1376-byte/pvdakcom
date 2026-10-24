@@ -60,6 +60,12 @@ function pvdak_support_ticket_form(){
     if('ASC'===$order)$filters['ticket_order']='asc';
     if($search!=='')$filters['ticket_search']=$search;
     $filtered_base=add_query_arg($filters,pvdak_auth_account_url());
+    // In Plain permalink mode the account URL uses ?page_id=... or
+    // ?pagename=.... Native GET forms replace action query parameters.
+    // Preserve only the canonical WordPress Page selector as a hidden input.
+    $account_route=array();
+    $route_query=wp_parse_url(pvdak_auth_account_url(),PHP_URL_QUERY);
+    if(is_string($route_query))parse_str($route_query,$account_route);
     $open_raw=isset($_GET['ticket_open']) && is_scalar($_GET['ticket_open']) ? wp_unslash($_GET['ticket_open']) : 0;
     $open_id=absint($open_raw);
     $has_next=count($items)>10;
@@ -95,6 +101,11 @@ function pvdak_support_ticket_form(){
 
       <h3 id="pvdak-ticket-list-title">پیام‌های پشتیبانی</h3>
       <form method="get" action="<?php echo esc_url(pvdak_auth_account_url()); ?>" class="pvdak-ticket-filters" role="search" aria-label="جستجو و فیلتر پیام‌های خودم">
+        <?php if(isset($account_route['page_id']) && is_scalar($account_route['page_id']) && absint($account_route['page_id'])): ?>
+          <input type="hidden" name="page_id" value="<?php echo esc_attr(absint($account_route['page_id'])); ?>">
+        <?php elseif(isset($account_route['pagename']) && is_string($account_route['pagename']) && $account_route['pagename']!==''): ?>
+          <input type="hidden" name="pagename" value="<?php echo esc_attr(sanitize_text_field($account_route['pagename'])); ?>">
+        <?php endif; ?>
         <label for="pvdak-ticket-search">جستجو در پیام‌ها
           <input id="pvdak-ticket-search" type="search" name="ticket_search" value="<?php echo esc_attr($search); ?>" maxlength="80" placeholder="عنوان یا متن پیام">
         </label>
