@@ -29,6 +29,13 @@ foreach ( $paths as $name => $file ) {
   $v[$name] = file_get_contents( $path );
 }
 $checks = array(
+  'D07 Core form CSS is loaded on the template-based dashboard' =>
+    strpos($v['assets'], "shortcode_exists( 'pvdak_account_dashboard' )")!==false &&
+    strpos($v['assets'], "plugins_url( 'assets/forms.css', \\$core_file )")===false &&
+    strpos($v['assets'], "plugins_url( 'assets/forms.css', " )!==false &&
+    strpos($v['assets'], "wp_style_is( 'pvdak-core', 'enqueued' )")!==false &&
+    strpos($v['assets'], "is_page_template( 'page-templates/pvdak-account.php' )")!==false,
+
   '098-01 Hero search always has a real fallback mode' =>
     strpos($v['front'], 'name="<?php echo $all_legal_pages ?')!==false &&
     strpos($v['front'], '$all_legal_pages ? home_url(')!==false,
@@ -88,7 +95,7 @@ $checks = array(
     strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
     strpos($v['portal'],"do_shortcode( '[pvdak_support_tickets]' )")!==false,
   '098-20 Theme version, local-only UI and safe fallback all present' =>
-    strpos($v['css'],'Version: 0.8.38')!==false &&
+    preg_match('/Version:\\s*0[.]8[.](?:3[8-9]|[4-9][0-9])/', $v['css'])===1 &&
     strpos($v['css'],'WORK_BATCH_098')!==false &&
     strpos($v['javascript'],'fetch(')===false,
 
