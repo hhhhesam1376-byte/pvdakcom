@@ -279,4 +279,10 @@ pvdak_layout_expect(
     false !== strpos( $readiness, "'حداقل سه لندینگ دارای متن'" ),
     'D09: admin demo readiness cannot mistake empty published legal samples for authored pages' );
 
+pvdak_layout_expect(
+    false !== strpos( $readiness, "get_page_template_slug( $page->ID )" ) &&
+    false !== strpos( $readiness, 'count( $public_templates ) === $public_ready' ) &&
+    false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
+    'D05: required public Pages must be published with their actual native templates' );
+
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
