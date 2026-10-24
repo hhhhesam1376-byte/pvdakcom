@@ -57,6 +57,11 @@ $checks=array(
  'owned focused ticket'=>strpos($s['support'],"(int)\$focused->post_author===\$user")!==false,
  'followup audit'=>strpos($s['support'],"'to'=>'open'")!==false,
  'save idempotency'=>strpos($s['support'],'static $processed=array()')!==false,
+ 'plain permalink ticket filters preserve the dashboard Page selector'=>
+  strpos($s['support'],'wp_parse_url(pvdak_auth_account_url(),PHP_URL_QUERY)')!==false &&
+  strpos($s['support'],'parse_str($route_query,$account_route)')!==false &&
+  strpos($s['support'],'name="page_id"')!==false &&
+  strpos($s['support'],'name="pagename"')!==false,
  'admin filter and scoped assets'=>strpos($s['support'],"add_action('restrict_manage_posts'")!==false &&
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
