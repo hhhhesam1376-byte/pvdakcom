@@ -64,7 +64,7 @@ $checks = array(
     strpos($v['css'],'.pvdak-dashboard-quicklinks{')!==false,
   'Account sidebar and personal shortcuts' =>
     strpos($v['portal'],'pvdak-account-sidebar')!==false &&
-    strpos($v['portal'],'pvdak_public_page_url( \'account-profile\' )')!==false &&
+    strpos($v['portal'],'id="pvdak-profile"')!==false &&
     strpos($v['portal'],'pvdak-account-signout')!==false,
   'Dashboard and private support anchor are connected' =>
     strpos($v['portal'],'id="pvdak-dashboard"')!==false &&
@@ -87,13 +87,13 @@ $checks = array(
     strpos($v['register'],'data-pvdak-password-toggle')!==false &&
     strpos($v['javascript'],"field.type = visible ? 'text' : 'password'")!==false,
   'Premium profile has RTL hero, live editable form and proper navigation' =>
-    strpos($v['profile'], 'pvdak-profile-redesign') !== false &&
-    strpos($v['profile'], 'pvdak-profile-hero') !== false &&
-    strpos($v['profile'], 'pvdak-profile-editor') !== false &&
-    strpos($v['profile'], 'pvdak-profile-nav') !== false &&
-    strpos($v['profile'], 'wp_logout_url(') !== false &&
-    strpos($v['profile'], 'data-pvdak-profile-form') !== false &&
-    strpos($v['profile'], 'data-pvdak-profile-save') !== false,
+    strpos($v['portal'], 'pvdak-profile-redesign') !== false &&
+    strpos($v['portal'], 'pvdak-account-hero') !== false &&
+    strpos($v['portal'], 'pvdak-profile-editor') !== false &&
+    strpos($v['portal'], 'pvdak-account-menu') !== false &&
+    strpos($v['portal'], 'wp_logout_url(') !== false &&
+    strpos($v['portal'], 'data-pvdak-profile-form') !== false &&
+    strpos($v['portal'], 'data-pvdak-profile-save') !== false,
   'Profile styling is scoped and responsive with no remote font dependency' =>
     strpos($v['css'], 'body.pvdak-profile-screen') !== false &&
     strpos($v['css'], '.pvdak-profile-workspace{') !== false &&
@@ -101,8 +101,8 @@ $checks = array(
     strpos($v['css'], '@media(max-width:540px)') !== false,
   'Profile hero artwork is local and references the legal image' =>
     is_file($root . '/assets/icons/pvdak-profile-hero.svg') &&
-    strpos($v['profile'], 'pvdak-profile-hero-photo')!==false &&
-    strpos($v['profile'], '/assets/icons/pvdak-profile-hero.svg')!==false,
+    strpos($v['portal'], 'pvdak-account-hero')!==false &&
+    strpos($v['css'], "url('assets/icons/pvdak-profile-hero.svg')")!==false,
   'Profile-specific header has a working native WordPress search form' =>
     strpos($v['header'], 'pvdak-profile-header-search')!==false &&
     strpos($v['header'], 'name="s"')!==false &&
@@ -114,13 +114,25 @@ $checks = array(
   'Reference proportions and trusted form interactions remain' =>
     strpos($v['css'], '.pvdak-profile-hero-photo{')!==false &&
     strpos($v['css'], '.pvdak-profile-bottom{')!==false &&
-    strpos($v['profile'], 'pvdak-profile-shield-art')!==false &&
-    strpos($v['profile'], 'data-pvdak-profile-save')!==false &&
-    strpos($v['profile'], 'wp_nonce_field(')!==false,
+    strpos($v['portal'], 'pvdak-profile-shield-art')!==false &&
+    strpos($v['portal'], 'data-pvdak-profile-save')!==false &&
+    strpos($v['portal'], 'wp_nonce_field(')!==false,
   'Profile keeps nonce and provides account return path' =>
-    strpos($v['profile'],'pvdak_profile_save')!==false &&
-    strpos($v['profile'],'pvdak_auth_account_url()')!==false &&
-    strpos($v['profile'],'pvdak-profile-details')!==false,
+    strpos($v['portal'],'pvdak_profile_save')!==false &&
+    strpos($v['portal'],'pvdak_auth_account_url()')!==false &&
+    strpos($v['portal'],'pvdak-profile-details')!==false,
+  'Legacy profile transparently redirects to the unified panel' =>
+    strpos($v['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )")!==false &&
+    strpos($v['profile'], 'pvdak_auth_account_url()')!==false &&
+    strpos($v['profile'], 'get_header()')===false,
+  'One dashboard includes accessible tabs for all current features' =>
+    strpos($v['portal'], 'data-pvdak-workspace')!==false &&
+    strpos($v['portal'], 'data-pvdak-panel')!==false &&
+    strpos($v['portal'], 'id="pvdak-dashboard"')!==false &&
+    strpos($v['portal'], 'id="pvdak-profile"')!==false &&
+    strpos($v['portal'], 'id="pvdak-security"')!==false &&
+    strpos($v['portal'], "do_shortcode( '[pvdak_my_requests]' )")!==false &&
+    strpos($v['portal'], "do_shortcode( '[pvdak_support_tickets]' )")!==false,
   'Consent links only go to published policies' =>
     strpos($v['register'],"pvdak_public_page_url( 'terms-of-use' )")!==false &&
     strpos($v['register'],"pvdak_public_page_url( 'privacy-policy' )")!==false &&
