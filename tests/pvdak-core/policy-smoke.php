@@ -36,7 +36,11 @@ function get_post_type( $id ) {
 function get_post_status( $id ) { return in_array( (int) $id, array( 501, 502 ), true ) ? 'private' : 'publish'; }
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
 $GLOBALS['pvdak_mock_profile_author'] = 21;
+$GLOBALS['pvdak_mock_profile_name'] = 'وکیل نمونه';
+$GLOBALS['pvdak_mock_profile_city'] = 'تهران';
+$GLOBALS['pvdak_mock_reviewer_exists'] = true;
 function get_post_field( $field, $id ) {
+    if ( 'post_title' === $field && 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_name']; }
     if ( 'post_author' !== $field ) { return ''; }
     if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
     if ( 502 === (int) $id ) { return 22; }
@@ -46,6 +50,7 @@ function get_post_field( $field, $id ) {
     return 0;
 }
 function get_userdata( $id ) {
+    if ( 10 === (int) $id && $GLOBALS['pvdak_mock_reviewer_exists'] ) { return (object) array( 'ID' => 10 ); }
     return in_array( (int) $id, array( 21, 22, 23 ), true ) ? (object) array( 'ID' => (int) $id ) : false;
 }
 $GLOBALS['pvdak_mock_cleared'] = '1';
@@ -64,6 +69,8 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
     if ( '_pvdak_member_type' === $key ) { return (int) $id === 501 ? 'lawyer' : 'student'; }
+    if ( '_pvdak_member_city' === $key ) { return $GLOBALS['pvdak_mock_profile_city']; }
+    if ( '_pvdak_license_review_identity' === $key ) { return $GLOBALS['pvdak_mock_license_signature'] ?? ''; }
     if ( '_pvdak_license_review_status' === $key ) { return $GLOBALS['pvdak_mock_license_status']; }
     if ( '_pvdak_license_review_method' === $key ) { return $GLOBALS['pvdak_mock_license_method']; }
     if ( '_pvdak_license_review_expires' === $key ) { return $GLOBALS['pvdak_mock_license_expiry']; }
@@ -75,6 +82,7 @@ function get_post_meta( $id, $key, $single = true ) {
     return '';
 }
 function current_time( $format ) { return '2026-10-22'; }
+function wp_json_encode( $value ) { return json_encode( $value, JSON_UNESCAPED_UNICODE ); }
 function wp_checkdate( $month, $day, $year, $source_date ) {
     return checkdate( $month, $day, $year );
 }
@@ -127,6 +135,7 @@ if ( ! is_readable( $core_entry ) ) {
     exit( 2 );
 }
 require $core_entry;
+$GLOBALS['pvdak_mock_license_signature'] = pvdak_core_license_review_identity_signature( 501 );
 
 $checks = 0;
 function pvdak_expect( $condition, $description ) {
@@ -317,6 +326,21 @@ $GLOBALS['wpdb']->deny = false;
 pvdak_expect( count( $GLOBALS['wpdb']->locks ) === 0, 'Denied acquisition does not leak advisory locks' );
 pvdak_expect( 'lock_unavailable' === pvdak_core_with_assignment_locks( 0, 501, function() {} ), 'Zero request IDs cannot acquire locks' );
 pvdak_expect( pvdak_core_license_review_current( 501 ), 'Time-limited staff review is valid with source, reviewer and expiry' );
+$GLOBALS['pvdak_mock_profile_name'] = 'نام تغییرکرده';
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Changed professional identity invalidates an earlier review' );
+$GLOBALS['pvdak_mock_profile_name'] = 'وکیل نمونه';
+$GLOBALS['pvdak_mock_profile_city'] = 'شیراز';
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Changed city invalidates an earlier review' );
+$GLOBALS['pvdak_mock_profile_city'] = 'تهران';
+$GLOBALS['pvdak_mock_license_signature'] = '';
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Legacy review without identity signature fails closed' );
+$GLOBALS['pvdak_mock_license_signature'] = pvdak_core_license_review_identity_signature( 501 );
+$GLOBALS['pvdak_mock_reviewer_exists'] = false;
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Deleted reviewer invalidates an unaccountable review' );
+$GLOBALS['pvdak_mock_reviewer_exists'] = true;
+$GLOBALS['pvdak_mock_state'] = 'pending';
+pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Administrative approval withdrawal invalidates review' );
+$GLOBALS['pvdak_mock_state'] = 'approved';
 $GLOBALS['pvdak_mock_license_status'] = 'pending';
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Pending license review blocks internal matching' );
 $GLOBALS['pvdak_mock_license_status'] = 'checked';
