@@ -15,6 +15,11 @@ $paths = array(
   'assets'=>'functions.php',
   'javascript'=>'assets/js/pvdak-account.js',
   'css'=>'style.css',
+  'editorialcss'=>'assets/css/pvdak-editorial.css',
+  'ticketcss'=>'assets/css/pvdak-support.css',
+  'card'=>'template-parts/content-card.php',
+  'article'=>'template-parts/content-single.php',
+  'homejs'=>'assets/js/pvdak-home.js',
 );
 $v = array();
 foreach ( $paths as $name => $file ) {
@@ -23,6 +28,75 @@ foreach ( $paths as $name => $file ) {
   $v[$name] = file_get_contents( $path );
 }
 $checks = array(
+  '097-01 Homepage has no empty topics or technical setup' =>
+    strpos($v['front'],'pvdak-topics-help')!==false &&
+    strpos($v['front'],'pvdak-legal-topics-setup')===false,
+  '097-02 Live dashboard uses real Core shortcode and stats layout' =>
+    strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
+    strpos($v['css'],'.pvdak-core-stats>div')!==false,
+  '097-03 RTL mobile layout at 480px' =>
+    strpos($v['css'],'@media(max-width:480px)')!==false &&
+    strpos($v['css'],'.pvdak-home-quick-actions')!==false,
+  '097-04 Hero uses genuine in-page navigation' =>
+    strpos($v['front'],'pvdak-home-hero-steps')!==false &&
+    strpos($v['front'],'href="#topics"')!==false,
+  '097-05 Four configured quick pages retain published links' =>
+    strpos($v['front'],'pvdak_home_quick_pages()')!==false &&
+    strpos($v['front'],'pvdak-home-quick-icon')!==false &&
+    strpos($v['front'],"esc_url( $quick_page['url'] )")!==false,
+  '097-06 Swiper controls actually label their track' =>
+    strpos($v['front'],'aria-controls="pvdak-topics-track"')!==false &&
+    strpos($v['front'],'id="pvdak-topics-track"')!==false &&
+    strpos($v['homejs'],'delay: 4700')!==false,
+  '097-07 Owner-only requests panel remains gated' =>
+    strpos($v['portal'],"if ( $has_requests )")!==false &&
+    strpos($v['portal'],"do_shortcode( '[pvdak_my_requests]' )")!==false,
+  '097-08 Membership panel remains conditional with status cards' =>
+    strpos($v['portal'],'if ( $has_professional )')!==false &&
+    strpos($v['css'],'.pvdak-core-dashboard>h3:last-of-type + .pvdak-core-notice')!==false,
+  '097-09 Private support keeps shortcode and dedicated CSS' =>
+    strpos($v['portal'],"do_shortcode( '[pvdak_support_tickets]' )")!==false &&
+    strpos($v['ticketcss'],'.pvdak-ticket-conversation')!==false &&
+    strpos($v['ticketcss'],'WORK_BATCH_097')!==false,
+  '097-10 One sidebar supports keyboard accessible tabs' =>
+    strpos($v['portal'],'data-pvdak-workspace')!==false &&
+    strpos($v['javascript'],"event.key !== 'Escape'")!==false &&
+    strpos($v['javascript'],"destination.focus({ preventScroll: true })")!==false,
+  '097-11 Login retains secure submit with readable trust note' =>
+    strpos($v['login'],"wp_nonce_field('pvdak_login'")!==false &&
+    strpos($v['login'],'pvdak-login-trust-note')!==false,
+  '097-12 Profile retains nonce and readonly account identity' =>
+    strpos($v['portal'],"wp_nonce_field( 'pvdak_profile_save'")!==false &&
+    strpos($v['portal'],'pvdak-profile-readonly')!==false,
+  '097-13 Public pages retain a branded legal content structure' =>
+    strpos($v['css'],'.page-entry :where(h2,h3)')!==false &&
+    strpos($v['css'],'.page-entry :where(table)')!==false,
+  '097-14 Real editorial categories and local missing-cover art' =>
+    strpos($v['card'],'get_the_category()')!==false &&
+    strpos($v['card'],'pvdak-card-art')!==false &&
+    strpos($v['editorialcss'],'.pvdak-editorial-tile')!==false,
+  '097-15 Article TOC built from rendered authored headings' =>
+    strpos($v['article'],"apply_filters( 'the_content', get_the_content() )")!==false &&
+    strpos($v['article'],'pvdak-article-toc')!==false &&
+    strpos($v['editorialcss'],'.pvdak-article-toc ol')!==false,
+  '097-16 FAQ appears only with published page data' =>
+    strpos($v['front'],'if ( $faq_pages )')!==false &&
+    strpos($v['front'],'pvdak-faq-item')!==false &&
+    strpos($v['front'],'get_the_title( $faq_page->ID )')!==false,
+  '097-17 Contact form maintains nonce/consent and status display' =>
+    strpos($v['contact'],"wp_nonce_field('pvdak_contact_form'")!==false &&
+    strpos($v['contact'],'contact_consent')!==false &&
+    strpos($v['contact'],'pvdak-contact-result')!==false,
+  '097-18 Footer links remain existing real WordPress pages' =>
+    strpos($v['footer'],'pvdak-footer-bottom-mark')!==false &&
+    strpos($v['footer'],"pvdak_public_page_url( 'contact-us' )")!==false,
+  '097-19 Design tokens and reduced-motion support' =>
+    strpos($v['css'],'--pvdak-97-navy')!==false &&
+    strpos($v['css'],'@media(prefers-reduced-motion:reduce)')!==false,
+  '097-20 No fake data or new frontend request for UI' =>
+    strpos($v['javascript'],'fetch(')===false &&
+    strpos($v['css'],'Version: 0.8.37')!==false,
+
   '01 Global branding with scales icon' =>
     strpos($v['header'],'pvdak-profile-brand-scale')!==false &&
     strpos($v['css'],'.site-header .site-branding .pvdak-profile-brand-scale')!==false,
