@@ -70,6 +70,24 @@ function pvdak_home_readiness_items() {
         }
     }
     $maintenance_on = function_exists( 'pvdak_maintenance_enabled' ) && pvdak_maintenance_enabled();
+    // D05: verify that mandatory public routes exist, are published and
+    // actually use the expected native template. Do not auto-republish,
+    // redirect or silently "fix" Pages edited by the client.
+    $public_templates = array(
+        'account-login' => 'page-templates/pvdak-login.php',
+        'my-pvdak-account' => 'page-templates/pvdak-account.php',
+        'contact-us' => 'page-templates/pvdak-contact.php',
+        'privacy-policy' => 'page-templates/pvdak-information.php',
+        'terms-of-use' => 'page-templates/pvdak-information.php',
+    );
+    $public_ready = 0;
+    foreach ( $public_templates as $slug => $expected_template ) {
+        $page = get_page_by_path( $slug, OBJECT, 'page' );
+        if ( $page instanceof WP_Post && 'publish' === $page->post_status &&
+             $expected_template === get_page_template_slug( $page->ID ) ) {
+            $public_ready++;
+        }
+    }
 
     return array(
         array( 'صفحه اصلی وردپرس', $has_front, $has_front ? 'برگه اصلی انتخاب شده' : 'برگه اصلی ثابت را تنظیم کنید', admin_url( 'options-reading.php' ) ),
@@ -92,6 +110,8 @@ function pvdak_home_readiness_items() {
             $quick_count . ' از ۴ برگه معتبر انتخاب شده؛ برگه تکراری یا پیش‌نویس پذیرفته نمی‌شود', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,
             $faq_written . ' از ' . $faq_count . ' پاسخ منتشرشده دارای متن است؛ تأیید تخصصی محتوا جداگانه لازم است', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'مسیرهای اصلی و قالب برگه‌ها', count( $public_templates ) === $public_ready,
+            $public_ready . ' از ' . count( $public_templates ) . ' برگه ورود، پنل، تماس، حریم خصوصی و قوانین با قالب صحیح منتشر شده‌اند', admin_url( 'edit.php?post_type=page' ) ),
         array( 'فهرست اصلی', has_nav_menu( 'primary' ), has_nav_menu( 'primary' ) ? 'فهرست اختصاص داده شده' : 'فهرست سایت را اختصاص دهید', admin_url( 'nav-menus.php' ) ),
         array( 'نصب مستقل PVDak Core', $core_installed,
             $core_installed ? 'نسخه افزونه روی وردپرس شناسایی شد' : 'Cron فقط قالب را منتشر می‌کند؛ نصب افزونه مستقل هنوز انجام نشده', admin_url( 'plugins.php' ) ),
