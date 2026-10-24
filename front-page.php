@@ -19,6 +19,9 @@ if ( ! $news_feature && $news_other ) {
     $news_feature = $news_other[0];
 }
 $legal_search_term = pvdak_legal_topic_search_term();
+$legal_parent_id = pvdak_legal_topics_root_id();
+$all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
+$legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
 $magazine_category_id = pvdak_home_selected_category( 'magazine_category' );
@@ -52,11 +55,11 @@ $svg_icons = array(
       <p class="pvdak-home-eyebrow"><?php echo esc_html(pvdak_home_value('hero_label')); ?></p>
       <h1 id="hero-title"><?php echo esc_html(pvdak_home_value('hero_title')); ?></h1>
       <p class="pvdak-home-lead"><?php echo esc_html(pvdak_home_value('hero_description')); ?></p>
-      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( home_url( '/' ) . '#topics' ); ?>" role="search" aria-label="جست‌وجوی موضوعات حقوقی">
+      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( $all_legal_pages ? home_url( '/#topics' ) : home_url( '/' ) ); ?>" role="search" aria-label="<?php echo esc_attr( $all_legal_pages ? 'جست‌وجوی موضوعات حقوقی' : 'جست‌وجوی مطالب حقوقی سایت' ); ?>">
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
-        <label class="screen-reader-text" for="pvdak-topic-input">موضوع حقوقی</label>
-        <input id="pvdak-topic-input" type="search" name="pvdak_topic" value="<?php echo esc_attr( $legal_search_term ); ?>" maxlength="100" placeholder="<?php echo esc_attr( pvdak_home_value( 'hero_search_label' ) ); ?>">
-        <button type="submit">جست‌وجو</button>
+        <label class="screen-reader-text" for="pvdak-topic-input"><?php echo $all_legal_pages ? 'موضوع حقوقی' : 'جست‌وجوی مطالب سایت'; ?></label>
+        <input id="pvdak-topic-input" type="search" name="<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>" value="<?php echo esc_attr( $all_legal_pages ? $legal_search_term : get_search_query() ); ?>" maxlength="100" placeholder="<?php echo esc_attr( $all_legal_pages ? pvdak_home_value( 'hero_search_label' ) : 'جست‌وجو در مطالب حقوقی سایت…' ); ?>" required>
+        <button type="submit"><?php echo $all_legal_pages ? 'جست‌وجوی موضوع' : 'جست‌وجوی مطالب'; ?></button>
       </form>
       <p class="pvdak-home-process-hint"><span aria-hidden="true">✓</span> <?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
       <div class="pvdak-home-hero-steps" aria-label="دسترسی‌های اصلی">
@@ -127,9 +130,7 @@ $svg_icons = array(
   </section>
 
   <?php
-  $legal_parent_id = pvdak_legal_topics_root_id();
-  $all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
-  $legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
+  // Topic pages and search mode are resolved before rendering the hero.
   ?>
   <section id="topics" class="pvdak-home-section pvdak-topics-section" aria-labelledby="topics-title">
     <div class="pvdak-home-section-head">
@@ -144,13 +145,14 @@ $svg_icons = array(
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7" /></svg>
           </button>
         </div>
-        <?php if ( $legal_parent_id ): ?>
+        <?php if ( $legal_parent_id && $all_legal_pages ): ?>
           <a class="pvdak-section-aside" href="<?php echo esc_url( get_permalink( $legal_parent_id ) ); ?>">همه موضوعات ←</a>
         <?php endif; ?>
       </div>
     </div>
 
     <?php if ( $legal_pages ): ?>
+    <p class="pvdak-home-section-caption"><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
       <div id="pvdak-topics-track" class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>
@@ -187,10 +189,10 @@ $svg_icons = array(
   <section class="pvdak-home-process pvdak-process-timeline" aria-labelledby="process-title">
     <div class="pvdak-process-heading">
       <div>
-        <span class="pvdak-process-eyebrow">مسیر همراهی</span>
+        <span class="pvdak-process-eyebrow"><?php echo function_exists( 'pvdak_core_intake_open' ) && pvdak_core_intake_open() ? 'مسیر همراهی' : 'آشنایی با روند خدمات'; ?></span>
         <h2 id="process-title"><?php echo esc_html( pvdak_home_value( 'process_title' ) ); ?></h2>
       </div>
-      <span class="pvdak-process-heading-note">چهار گام روشن، از شروع تا پیگیری</span>
+      <span class="pvdak-process-heading-note"><?php echo function_exists( 'pvdak_core_intake_open' ) && pvdak_core_intake_open() ? 'چهار گام روشن، از شروع تا پیگیری' : 'این مراحل پس از آغاز رسمی خدمات قابل استفاده خواهند بود'; ?></span>
     </div>
     <ol class="pvdak-home-grid pvdak-home-grid--4 pvdak-process-grid" aria-label="چهار مرحله پیگیری درخواست">
       <?php for ( $i = 1; $i <= 4; $i++ ): ?>
@@ -259,6 +261,7 @@ $svg_icons = array(
       <?php if ( $notices_archive ): ?><a class="pvdak-section-aside" href="<?php echo esc_url( $notices_archive ); ?>"><?php echo esc_html( pvdak_home_value( 'news_archive_label' ) ); ?> ←</a><?php endif; ?>
     </div>
     <div class="pvdak-news-grid">
+      <?php if ( $notice_posts ): ?>
       <article class="pvdak-notices-panel">
         <div class="pvdak-notices-header">
           <h3><?php echo esc_html( pvdak_home_value( 'notice_heading' ) ); ?></h3>
@@ -269,20 +272,23 @@ $svg_icons = array(
             <div class="pvdak-notice">
               <span aria-hidden="true"><svg viewBox="0 0 24 24"><?php echo $svg_icons['document']; ?></svg></span>
               <div><a href="<?php echo esc_url( get_permalink( $notice_post->ID ) ); ?>"><?php echo esc_html( get_the_title( $notice_post->ID ) ); ?></a>
+              <time datetime="<?php echo esc_attr( get_the_date( 'Y-m-d', $notice_post->ID ) ); ?>"><?php echo esc_html( get_the_date( '', $notice_post->ID ) ); ?></time>
               <p><?php echo esc_html( pvdak_home_post_summary( $notice_post, 13 ) ); ?></p></div>
             </div>
           <?php endforeach; ?>
 
         </div>
       </article>
+      <?php endif; ?>
       <?php if ( $news_feature ): ?>
         <article class="pvdak-news-article">
           <div class="pvdak-news-article-picture">
             <?php if ( has_post_thumbnail( $news_feature->ID ) ): ?>
                 <?php echo get_the_post_thumbnail( $news_feature->ID, 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
-            <?php endif; ?>
+            <?php else: ?><span class="pvdak-news-fallback-art" aria-hidden="true"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3"><path d="M40 9v62M12 25h56M25 25 12 49h27L25 25Zm30 0L41 49h27L55 25ZM26 72h28"/></svg></span><?php endif; ?>
           </div>
           <div class="pvdak-news-article-content">
+            <time class="pvdak-news-article-time" datetime="<?php echo esc_attr( get_the_date( 'Y-m-d', $news_feature->ID ) ); ?>"><?php echo esc_html( get_the_date( '', $news_feature->ID ) ); ?></time>
             <h3><?php echo esc_html( get_the_title( $news_feature->ID ) ); ?></h3>
             <p><?php echo esc_html( pvdak_home_post_summary( $news_feature, 20 ) ); ?></p>
             <a href="<?php echo esc_url( get_permalink( $news_feature->ID ) ); ?>">مطالعه در مجله ←</a>
