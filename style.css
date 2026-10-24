@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.31
+Version: 0.8.32
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1818,4 +1818,211 @@ body.pvdak-profile-screen .site-footer{
 @media(prefers-reduced-motion:reduce){
   .pvdak-profile-redesign :where(button,a,input){transition:none!important}
   .pvdak-profile-redesign .pvdak-profile-actions button:hover{transform:none}
+}
+
+
+/* 0.8.32 – visual fidelity pass against approved PVDak desktop profile reference.
+ * Scopes all shared-header/footer adjustments to the profile; no fake UI endpoints. */
+body.pvdak-profile-screen .pvdak-topbar{display:none}
+body.pvdak-profile-screen .site-header{
+  background:linear-gradient(120deg,#071c35 0%,#0b335c 57%,#081d35 100%);
+  border-bottom:1px solid #25547c;
+}
+body.pvdak-profile-screen .header-inner{
+  width:min(1320px,calc(100% - 36px));max-width:none;
+  min-height:71px;padding-block:10px;gap:17px;
+}
+body.pvdak-profile-screen .site-branding{
+  flex-direction:row;align-items:center;gap:9px;
+}
+body.pvdak-profile-screen .pvdak-site-brand{position:relative;padding-inline-end:0}
+body.pvdak-profile-screen .site-branding .site-title{
+  color:#fff;font-size:23px;font-weight:900;line-height:1.1;
+}
+body.pvdak-profile-screen .site-branding .site-description{font-size:9px;color:#d0dfec;white-space:nowrap}
+body.pvdak-profile-screen .pvdak-profile-brand-scale{
+  width:31px;height:31px;color:#ffcb59;position:absolute;
+  inset-inline-end:-38px;top:50%;transform:translateY(-50%);
+}
+body.pvdak-profile-screen .site-branding:has(.pvdak-profile-brand-scale){padding-inline-end:38px}
+body.pvdak-profile-screen .site-header .menu>li>a{color:#e8f4ff;font-size:12px;font-weight:750}
+body.pvdak-profile-screen .site-header .menu{gap:clamp(10px,1.25vw,20px)}
+body.pvdak-profile-screen .site-header .menu>li>a:hover{color:#5fe1f1}
+.pvdak-profile-header-search{
+  display:flex;align-items:center;position:relative;
+  min-width:190px;max-width:310px;flex:1 1 245px;
+  min-height:43px;margin:0;
+  background:#fff;border-radius:999px;box-shadow:0 4px 18px #00000019;
+  border:1px solid #c8dbee;
+}
+body.pvdak-profile-screen .pvdak-profile-header-search input[type=search]{
+  flex:1;min-width:0;width:100%;min-height:41px;
+  border:0;background:transparent;padding:8px 17px;
+  box-shadow:none;outline:0;color:#193a61;font-size:11px;border-radius:999px;
+}
+body.pvdak-profile-screen .pvdak-profile-header-search input[type=search]:focus-visible{
+  outline:2px solid #ffcb59;outline-offset:-3px;
+}
+body.pvdak-profile-screen .pvdak-profile-header-search button{
+  display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;
+  color:#146dce;background:transparent;padding:0;border-radius:50%;margin:0;
+}
+.pvdak-profile-header-search button svg{display:block;width:20px;height:20px}
+body.pvdak-profile-screen .pvdak-header-actions{gap:9px}
+body.pvdak-profile-screen .pvdak-login-button{
+  min-height:43px;font-size:12px;padding:7px 15px;
+  color:#fff;background:#163d6c;border:1px solid #508abf;
+  border-radius:99px;box-shadow:none;
+}
+body.pvdak-profile-screen .pvdak-login-button:hover{background:#225486;color:#fff}
+.pvdak-profile-header-messages{
+  display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;
+  color:#e2f4ff!important;background:#163a63;border:1px solid #326a94;
+  border-radius:13px;text-decoration:none;
+}
+.pvdak-profile-header-messages:hover{background:#255888}
+.pvdak-profile-header-messages svg{width:21px;height:21px}
+body.pvdak-profile-screen .pvdak-profile-redesign{
+  width:min(1240px,calc(100% - 44px));margin-inline:auto;
+  padding-block:20px 35px;
+}
+body.pvdak-profile-screen .pvdak-profile-crumbs{
+  justify-content:flex-start;margin-bottom:18px;color:#6c86a0;
+}
+.pvdak-profile-hero{
+  min-height:200px;padding:24px clamp(24px,3.7vw,48px);
+  background:linear-gradient(105deg,#093d76 0%,#095b9c 48%,#062a52 100%);
+  border:1px solid #186dab;border-radius:23px;
+  box-shadow:0 18px 41px #0b4d8a25;
+}
+.pvdak-profile-hero-photo{
+  position:absolute;inset-inline-end:0;top:0;
+  width:61%;height:100%;object-fit:cover;object-position:center;
+  opacity:.96;pointer-events:none;z-index:0;
+  -webkit-mask-image:linear-gradient(to right,#000 0%,#000 52%,transparent 100%);
+  mask-image:linear-gradient(to right,#000 0%,#000 52%,transparent 100%);
+}
+.pvdak-profile-hero::after{
+  width:55%;height:130%;inset-inline-start:-14%;inset-inline-end:auto;
+  bottom:-77%;border-radius:50%;background:#11d2d645;
+  filter:blur(38px);
+}
+.pvdak-profile-hero-glow{opacity:.18}
+.pvdak-profile-hero-text{max-width:650px;padding-inline-start:110px}
+.pvdak-profile-hero h1{font-size:clamp(32px,3.2vw,43px);margin:5px 0 8px}
+.pvdak-profile-hero p{max-width:610px;font-size:13px;color:#e6f4ff}
+.pvdak-profile-hero-badge{
+  inset-inline-start:30px;inset-inline-end:auto;
+  width:78px;height:78px;border-radius:19px;
+  color:#fff;background:linear-gradient(125deg,#1686d5,#15539b);
+  border-color:#71b6ed;
+}
+.pvdak-profile-hero-badge::after{
+  content:"";position:absolute;width:14px;height:14px;
+  background:#20d37b;border:3px solid #fff;border-radius:50%;
+  bottom:4px;inset-inline-start:5px;
+}
+.pvdak-profile-workspace{
+  grid-template-columns:minmax(0,1fr) minmax(282px,340px);
+  gap:17px;
+}
+.pvdak-profile-editor,.pvdak-profile-person-card,.pvdak-profile-nav-card{
+  border:1px solid #d9e7fa;border-radius:20px;
+  box-shadow:0 12px 35px #154c8310;
+}
+.pvdak-profile-card-heading{
+  padding:22px 27px;background:#fff;
+  gap:15px;
+}
+.pvdak-profile-card-heading h2{font-size:20px}
+.pvdak-profile-editor-body{padding:21px 27px 28px}
+.pvdak-profile-redesign .pvdak-profile-details{
+  display:flex;flex-direction:column;gap:14px;margin:8px 0 22px;
+}
+.pvdak-profile-redesign .pvdak-profile-readonly{
+  background:transparent;border:0;border-radius:0;padding:5px 0;gap:6px;
+}
+.pvdak-profile-redesign .pvdak-profile-readonly strong{
+  font-size:13px;color:#123965;
+}
+.pvdak-profile-redesign .pvdak-profile-readonly>span{
+  width:100%;display:block;background:#f4f7fb;
+  border:1px solid #d5e0ed;border-radius:10px;
+  min-height:48px;padding:11px 15px;text-align:right;
+}
+.pvdak-profile-redesign .pvdak-profile-readonly small{font-size:11px}
+.pvdak-profile-redesign .pvdak-profile-actions{
+  justify-content:flex-start;margin:5px 0 0;
+  padding-bottom:18px;border-bottom:1px solid #e4edf8;
+}
+.pvdak-profile-redesign .pvdak-profile-actions button{
+  min-height:46px;font-weight:850;border-radius:11px;
+}
+.pvdak-profile-bottom{
+  display:grid;grid-template-columns:minmax(0,1fr) 120px;
+  gap:17px;align-items:center;margin-top:13px;
+}
+.pvdak-profile-bottom .pvdak-profile-security{
+  margin:0;border-radius:13px;padding:13px 14px;min-width:0;
+  background:#f0f7ff;
+}
+.pvdak-profile-shield-art{
+  display:grid;place-items:center;width:118px;align-self:center;
+}
+.pvdak-profile-shield-art svg{width:116px;max-width:100%;height:auto}
+.pvdak-profile-back{margin-top:12px}
+.pvdak-profile-person-card{padding:25px 15px 16px}
+.pvdak-profile-account-tag{margin-block:10px 16px}
+.pvdak-profile-nav-card{padding:18px 14px 12px}
+.pvdak-profile-nav>a[aria-current=page]{background:#e7f1ff}
+body.pvdak-profile-screen .site-footer{
+  margin-top:0;border:0;
+  background:linear-gradient(125deg,#091d36,#12345a 70%,#0a213b);
+}
+body.pvdak-profile-screen .pvdak-footer-layout{padding-block:30px;gap:20px}
+body.pvdak-profile-screen .site-footer a:hover{color:#74e0ee}
+@media(max-width:1180px){
+  body.pvdak-profile-screen .header-inner{gap:11px}
+  .pvdak-profile-header-search{max-width:255px;flex-basis:190px}
+  body.pvdak-profile-screen .site-header .menu{gap:11px}
+  body.pvdak-profile-screen .site-header .menu>li>a{font-size:11px}
+}
+@media(max-width:1030px){
+  .pvdak-profile-header-search{max-width:410px;flex:1 1 260px}
+  body.pvdak-profile-screen .pvdak-profile-workspace{grid-template-columns:minmax(0,1fr) minmax(245px,280px)}
+  .pvdak-profile-bottom{grid-template-columns:minmax(0,1fr) 100px}
+  .pvdak-profile-shield-art{width:97px}
+}
+@media(max-width:760px){
+  body.pvdak-profile-screen .header-inner{
+    flex-wrap:wrap;min-height:69px;gap:10px;
+  }
+  body.pvdak-profile-screen .pvdak-profile-header-search{
+    flex:1 0 100%;max-width:none;order:3;margin:1px 0 7px;
+  }
+  body.pvdak-profile-screen .pvdak-profile-workspace{grid-template-columns:minmax(0,1fr)}
+  .pvdak-profile-hero-photo{width:75%;opacity:.45}
+  .pvdak-profile-hero-text{padding-inline-start:77px}
+  .pvdak-profile-hero-badge{width:52px;height:52px;inset-inline-start:15px}
+  .pvdak-profile-hero-badge svg{width:29px;height:29px}
+  .pvdak-profile-bottom{grid-template-columns:minmax(0,1fr) 90px}
+  .pvdak-profile-shield-art{width:90px}
+}
+@media(max-width:540px){
+  body.pvdak-profile-screen .pvdak-profile-redesign{width:calc(100% - 24px)}
+  body.pvdak-profile-screen .pvdak-site-brand .site-description{font-size:8px}
+  body.pvdak-profile-screen .site-branding .site-title{font-size:20px}
+  body.pvdak-profile-screen .pvdak-header-actions{margin-inline-start:auto}
+  .pvdak-profile-header-search{min-width:0}
+  .pvdak-profile-hero{min-height:174px}
+  .pvdak-profile-hero-text{padding-inline-start:0}
+  .pvdak-profile-hero-photo{width:98%;opacity:.22}
+  .pvdak-profile-card-heading{padding:18px 16px}
+  .pvdak-profile-editor-body{padding:17px 15px 19px}
+  .pvdak-profile-bottom{grid-template-columns:minmax(0,1fr)}
+  .pvdak-profile-shield-art{display:none}
+  body.pvdak-profile-screen .pvdak-footer-layout{gap:22px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pvdak-profile-header-search *{transition:none!important}
 }
