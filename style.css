@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.34
+Version: 0.8.35
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -2556,4 +2556,371 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 @media(max-width:365px){
   .pvdak-unified-account .pvdak-dashboard-quicklinks{grid-template-columns:minmax(0,1fr)}
+}
+
+
+/* Batch 096 — employer-visible polish across public/auth/account discovery.
+   Pure, scoped CSS; no new font, library or external image request. */
+:root{
+  --pvdak-ui-navy:#102f53;
+  --pvdak-ui-blue:#1678b7;
+  --pvdak-ui-aqua:#0f9ca4;
+  --pvdak-ui-gold:#edb955;
+  --pvdak-ui-border:#dce8f5;
+  --pvdak-ui-subtle:#f2f8ff;
+}
+.pvdak-auth-eyebrow,
+.pvdak-discovery-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  border-radius:99px;background:#e4f3ff;color:#146caa;
+  padding:5px 15px;font-size:11px;font-weight:900;
+}
+.pvdak-login-page,.pvdak-register-page{padding-block:24px 55px}
+.pvdak-login-page .pvdak-login-grid{
+  max-width:1060px;min-height:535px;
+  border:1px solid #d9e7f6;border-radius:25px;
+  box-shadow:0 22px 55px #0d407c1b;background:white;
+}
+.pvdak-login-page .pvdak-login-grid>.pvdak-static-body{
+  display:flex;flex-direction:column;justify-content:center;gap:4px;
+  padding:clamp(24px,4vw,54px);background:#fff;
+}
+.pvdak-login-page .pvdak-login-grid h1{font-size:clamp(26px,2.9vw,37px);font-weight:900;margin:10px 0 2px}
+.pvdak-auth-subheading{margin:0 0 12px!important;color:#586f87!important;line-height:1.9}
+.pvdak-login-page .pvdak-login-trust-note{margin:8px 0 18px}
+.pvdak-login-page .pvdak-auth-form{gap:10px}
+.pvdak-login-page .pvdak-auth-form>label{font-weight:850;font-size:13px;color:#173e65}
+.pvdak-login-page .pvdak-auth-form :where(input:not([type=checkbox]),.pvdak-password-field){
+  min-width:0;
+}
+.pvdak-login-page .pvdak-auth-form input:not([type=checkbox]){
+  min-height:49px;border:1px solid #cad9ea;border-radius:12px;
+  background:#f9fbff;color:#163d62;
+}
+.pvdak-login-page .pvdak-auth-form input:not([type=checkbox]):focus{
+  outline:3px solid #248cd42b;border-color:#2784c5;
+}
+.pvdak-login-page .pvdak-auth-form button[type=submit]{
+  min-height:47px;border-radius:12px;background:linear-gradient(110deg,#087fb8,#0b9da4);
+  color:#fff;font-weight:900;box-shadow:0 9px 21px #1475ba22;
+}
+.pvdak-login-page .pvdak-auth-form button[type=submit]:hover{background:#116f9e}
+.pvdak-login-page .pvdak-auth-help{
+  border-top:1px solid #e5ecf6;padding-top:16px;line-height:2;
+}
+.pvdak-login-page .pvdak-auth-help a{font-weight:850;color:#13699e}
+.pvdak-login-page .pvdak-auth-visual{
+  align-items:flex-start;text-align:right;padding:clamp(26px,4vw,50px);
+  gap:15px;position:relative;isolation:isolate;
+  background:linear-gradient(140deg,#082847,#0c4a78 62%,#087e87);
+  overflow:hidden;
+}
+.pvdak-login-page .pvdak-auth-visual:after{
+  content:"";position:absolute;inset-inline-end:-120px;bottom:-130px;
+  width:370px;height:370px;border:50px solid #7de4e51c;border-radius:50%;z-index:-1;
+}
+.pvdak-login-page .pvdak-auth-visual .pvdak-auth-scale{
+  width:96px;height:96px;display:grid;place-items:center;
+  border-radius:22px;background:#ffffff13;border:1px solid #7ecbe87a;
+  color:#edcb7c;box-shadow:0 10px 33px #0019354d;
+}
+.pvdak-login-page .pvdak-auth-scale svg{width:60px;height:60px}
+.pvdak-login-page .pvdak-auth-art-label{
+  display:block;background:#ffffff13;color:#d5ebfc;border-radius:99px;
+  border:1px solid #ffffff24;padding:3px 12px;font-size:10px;font-weight:800;
+}
+.pvdak-login-page .pvdak-auth-visual h2{font-size:clamp(21px,2.7vw,31px);font-weight:900;text-align:right}
+.pvdak-login-page .pvdak-auth-visual>p{text-align:right;color:#d4eafa!important}
+.pvdak-login-page .pvdak-login-benefits{max-width:none;width:100%;gap:15px}
+.pvdak-login-page .pvdak-login-benefits li{
+  background:#ffffff0c;border:1px solid #ffffff20;border-radius:10px;
+  min-height:39px;display:flex;align-items:center;padding:8px 34px 8px 12px;
+}
+.pvdak-login-page .pvdak-login-benefits li::before{inset-inline-start:13px}
+/* Registration closed-state guidance: never create fake or enabled forms. */
+.pvdak-register-surface{max-width:870px!important;margin:0 auto 44px}
+.pvdak-register-closed{
+  display:flex;align-items:center;gap:17px;padding:21px;
+  background:linear-gradient(115deg,#eef6ff,#f6fcff);
+  border:1px solid #bad8f0;border-radius:17px;
+}
+.pvdak-register-closed-icon{
+  flex:0 0 59px;display:grid;place-items:center;width:59px;height:59px;
+  border-radius:17px;background:#dceeff;color:#166da8;
+}
+.pvdak-register-closed-icon svg{width:32px;height:32px}
+.pvdak-register-closed strong{font-size:17px;color:#113e67}
+.pvdak-register-closed p{color:#617d95;margin:4px 0 0!important;font-size:12px!important}
+.pvdak-register-guide-heading{font-size:20px!important;margin:30px 0 17px;color:#143e63}
+.pvdak-register-steps,.pvdak-recovery-steps{padding:0;list-style:none}
+.pvdak-register-steps{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  counter-reset:pvdak-stage;margin:0 0 25px;
+}
+.pvdak-register-steps li{
+  counter-increment:pvdak-stage;position:relative;
+  padding:17px 16px;border:1px solid #dbe8f5;background:#fbfdff;border-radius:14px;
+  display:flex;flex-direction:column;gap:7px;min-width:0;
+}
+.pvdak-register-steps li:before{
+  content:counter(pvdak-stage);width:31px;height:31px;
+  border-radius:10px;background:#e0f0ff;color:#1268ad;
+  display:grid;place-items:center;font-weight:900;font-size:14px;
+}
+.pvdak-register-steps li strong{font-size:13px;color:#183f64}
+.pvdak-register-steps li small{font-size:11px;color:#688096;line-height:1.9}
+.pvdak-register-actions{display:flex;gap:9px;flex-wrap:wrap}
+.pvdak-register-actions a{
+  padding:9px 18px;border-radius:11px;text-decoration:none;
+  border:1px solid #bdd9ee;background:#fff;color:#1769a5;font-weight:850;font-size:12px;
+}
+.pvdak-register-actions a:first-child{background:#157eab;color:#fff;border-color:#147faf}
+.pvdak-register-actions a:hover{filter:brightness(.94)}
+.pvdak-register-page .pvdak-static-head{margin-bottom:20px}
+/* Recovery form: real process, visible progress and trustworthy messages. */
+.pvdak-recovery-panel.pvdak-recovery-surface{
+  max-width:680px;border:1px solid #d8e7f7;border-radius:22px;
+  box-shadow:0 16px 41px #10446d13;padding:clamp(21px,3vw,38px);
+}
+.pvdak-recovery-heading{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.pvdak-recovery-heading h1{margin:5px 0;font-size:clamp(22px,2.6vw,30px)}
+.pvdak-recovery-icon{
+  flex:0 0 59px;display:grid;place-items:center;width:59px;height:59px;
+  color:#136cba;background:#e0eeff;border-radius:17px;
+}
+.pvdak-recovery-icon svg{width:31px;height:31px}
+.pvdak-recovery-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:15px 0 24px}
+.pvdak-recovery-steps li{
+  padding:9px 8px;text-align:center;font-size:11px;font-weight:850;
+  background:#f4f8fc;border:1px solid #e3edf6;border-radius:10px;color:#7b91a3;
+}
+.pvdak-recovery-steps .is-active{background:#e3f4fc;border-color:#80cce0;color:#0e718c}
+.pvdak-recovery-steps .is-complete{background:#e6f8ef;border-color:#b5e6c9;color:#18795b}
+.pvdak-recovery-surface .pvdak-recovery-instruction{color:#5b7488;margin-bottom:20px}
+.pvdak-recovery-surface .pvdak-forms :where(input:not([type=checkbox]),select){
+  border:1px solid #cddfea;border-radius:12px;background:#fafdff;min-height:49px;
+}
+.pvdak-recovery-surface .pvdak-forms button[type=submit]{
+  border-radius:11px;min-height:46px;background:linear-gradient(115deg,#1676b6,#0b939d);
+}
+.pvdak-recovery-return{border-top:1px solid #e4eef6;margin-top:23px;padding-top:15px}
+.pvdak-recovery-return a{color:#136aa7;font-weight:850;text-decoration:none}
+/* General contact: purposeful two cards and prominent privacy guidance. */
+.pvdak-contact-page .pvdak-contact-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:20px}
+.pvdak-contact-page .pvdak-contact-intro,.pvdak-contact-page .pvdak-contact-form-card{
+  border:1px solid #d9e8f7;border-radius:20px;background:#fff;
+  box-shadow:0 12px 29px #0d467619;
+}
+.pvdak-contact-intro-symbol{
+  width:60px;height:60px;display:grid;place-items:center;
+  color:#0878b8;background:#e3f3ff;border-radius:16px;margin-bottom:13px;
+}
+.pvdak-contact-intro-symbol svg{width:33px;height:33px}
+.pvdak-contact-page .pvdak-contact-intro h2,.pvdak-contact-page .pvdak-contact-form-card h2{
+  font-size:clamp(19px,2vw,24px);font-weight:900;color:#143b63;margin:5px 0 14px;
+}
+.pvdak-contact-form-lead{color:#718599!important;font-size:12px!important;margin:0 0 21px!important}
+.pvdak-contact-guidance{
+  padding:17px;background:#f0f7ff;border-radius:13px;border:1px solid #d9e8f8;margin-top:19px;
+}
+.pvdak-contact-guidance h3{font-size:15px;color:#1b5385;margin:0 0 9px}
+.pvdak-contact-guidance ul{margin:0;padding-inline-start:21px;list-style:disc}
+.pvdak-contact-guidance li{font-size:12px;color:#4f6b83;line-height:2}
+.pvdak-contact-guidance a{display:inline-flex;font-size:12px;color:#136da2;font-weight:900;margin-top:14px}
+.pvdak-contact-page .pvdak-contact-form-card .pvdak-forms button[type=submit]{min-height:46px;font-weight:900}
+.pvdak-contact-page .pvdak-static-note{font-size:12px!important}
+/* Published information Pages: reliable prose and contextual sidebar. */
+.pvdak-info-layout{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,286px);
+  align-items:start;gap:21px;margin-bottom:42px;
+}
+.pvdak-info-layout .pvdak-info-article{
+  width:100%;min-width:0;max-width:none;margin:0;
+}
+.pvdak-info-article :where(h2,h3){color:#143e64;line-height:1.6}
+.pvdak-info-article :where(p,li){color:#3f596e;line-height:2.1}
+.pvdak-info-sidebar{
+  position:sticky;top:20px;background:#fff;border:1px solid #dce9f6;
+  border-radius:19px;padding:22px 17px;box-shadow:0 10px 25px #11477311;
+}
+.pvdak-info-sidebar h2{font-size:18px;color:#133d66;margin:7px 0 15px}
+.pvdak-info-sidebar nav{display:grid;gap:6px}
+.pvdak-info-sidebar nav a{
+  display:flex;align-items:center;justify-content:space-between;gap:9px;
+  color:#275172;padding:10px 12px;border-radius:10px;font-size:12px;
+  font-weight:850;text-decoration:none;min-height:44px;
+}
+.pvdak-info-sidebar nav a:hover,.pvdak-info-sidebar nav a[aria-current=page]{
+  color:#0d67a5;background:#e8f3ff;
+}
+.pvdak-info-sidebar nav a span{color:#5d9fc8}
+.pvdak-info-sidebar p{
+  color:#688096;font-size:11px;line-height:2;margin:17px 0 0;
+  border-top:1px solid #e8eef5;padding-top:14px;
+}
+/* Journal, searches and archives: same reusable discovery page language. */
+.pvdak-discovery-page{width:min(1180px,calc(100% - 36px));padding-block:20px 57px}
+.pvdak-discovery-page .pvdak-account-breadcrumbs{margin:0 0 17px}
+.pvdak-discovery-hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  padding:clamp(26px,4vw,46px);margin-bottom:24px;
+  border-radius:22px;border:1px solid #31769e;
+  background:linear-gradient(115deg,#092943,#0e4e7d 64%,#086e83);
+  box-shadow:0 16px 39px #0f456e24;color:#fff;
+}
+.pvdak-discovery-hero:after{
+  content:"";position:absolute;z-index:-1;
+  inset-inline-end:-130px;top:-250px;width:470px;height:470px;
+  border:55px solid #9deef021;border-radius:50%;pointer-events:none;
+}
+.pvdak-discovery-hero .pvdak-discovery-eyebrow{
+  color:#e4f6ff;background:#ffffff18;border:1px solid #ffffff43;
+}
+.pvdak-discovery-hero h1{
+  color:#fff;font-size:clamp(27px,3.4vw,41px);font-weight:900;line-height:1.5;margin:12px 0 9px;
+}
+.pvdak-discovery-hero p,.pvdak-discovery-hero .pvdak-archive-description{
+  margin:0;color:#d7ebfa;font-size:13px;line-height:2;
+}
+.pvdak-discovery-hero strong{color:#fff}
+.pvdak-discovery-search{margin-top:20px;max-width:610px}
+.pvdak-discovery-search form,.pvdak-empty-search form{
+  display:flex;gap:8px;align-items:center;
+}
+.pvdak-discovery-search form :where(input[type=search],input[name=s]),
+.pvdak-empty-search form :where(input[type=search],input[name=s]){
+  flex:1 1 auto;min-width:0;width:auto;min-height:45px;
+  border:1px solid #b9d6e9;border-radius:11px;
+  background:#fff;color:#143a61;padding:9px 14px;
+}
+.pvdak-discovery-search form :where(button,input[type=submit]),
+.pvdak-empty-search form :where(button,input[type=submit]){
+  flex:0 0 auto;border:1px solid #0c9ba7;border-radius:11px;
+  background:#089ba6;color:#fff;padding:10px 22px;min-height:45px;font-weight:900;
+}
+.pvdak-discovery-search form :where(button,input[type=submit]):hover,
+.pvdak-empty-search form :where(button,input[type=submit]):hover{background:#087988}
+.pvdak-discovery-categories{
+  display:flex;flex-wrap:wrap;align-items:center;gap:9px;
+  padding:18px;background:#fff;border:1px solid #dbe8f7;border-radius:16px;
+  box-shadow:0 8px 23px #0a3a6410;margin:13px 0 26px;
+}
+.pvdak-discovery-categories>span{color:#345d7b;font-size:12px;font-weight:900;margin-inline-end:7px}
+.pvdak-discovery-categories a,.pvdak-empty-categories a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:38px;border:1px solid #c9ddeb;border-radius:99px;
+  padding:7px 14px;color:#206da6;background:#f3f9ff;
+  text-decoration:none;font-weight:850;font-size:12px;
+}
+.pvdak-discovery-categories a:hover,.pvdak-empty-categories a:hover,
+.pvdak-discovery-categories a[aria-current=page]{
+  background:#e1f1ff;border-color:#6ab5e0;color:#0b5e93;
+}
+.pvdak-discovery-section-heading{
+  display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  margin:29px 0 7px;padding-bottom:12px;border-bottom:1px solid #dae8f3;
+}
+.pvdak-discovery-section-heading h2{font-size:23px;color:#143b62;margin:0}
+.pvdak-discovery-section-heading span{font-size:12px;color:#73889b}
+.pvdak-discovery-page .post-grid{gap:19px;margin-top:19px}
+.pvdak-discovery-page .post-card{
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:0;background:#fff;border:1px solid #dce8f4;border-radius:17px;
+  box-shadow:0 8px 28px #103d6b10;transition:transform .17s,box-shadow .17s;
+}
+.pvdak-discovery-page .post-card:hover{transform:translateY(-3px);box-shadow:0 15px 32px #123a6a20}
+.pvdak-discovery-page .post-card .card-image{display:block;overflow:hidden}
+.pvdak-discovery-page .post-card .card-image img{display:block;aspect-ratio:16/9;object-fit:cover;width:100%}
+.pvdak-discovery-page .post-card .entry-title{font-size:17px;line-height:1.75;margin:19px 19px 9px}
+.pvdak-discovery-page .post-card .entry-title a{color:#143b61;text-decoration:none}
+.pvdak-discovery-page .post-card .entry-title a:hover{color:#0c76b5}
+.pvdak-discovery-page .post-card .entry-meta{margin:0 19px;color:#7a8b9a;font-size:11px}
+.pvdak-discovery-page .post-card .entry-summary{margin:11px 19px 17px;color:#5b7287;font-size:13px;line-height:2}
+.pvdak-discovery-page .post-card .read-more{
+  align-self:flex-start;margin:auto 19px 19px;color:#146caa;
+  font-size:12px;font-weight:900;text-decoration:none;border-radius:8px;
+  background:#e9f5ff;padding:6px 12px;
+}
+.pvdak-discovery-page .post-card .read-more:hover{background:#d8edff}
+.pvdak-discovery-page .navigation.pagination{margin:32px auto}
+.pvdak-discovery-page .page-numbers{
+  display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;
+  border:1px solid #d6e7f5;color:#165e95;border-radius:9px;text-decoration:none;
+}
+.pvdak-discovery-page .page-numbers.current{background:#157fb2;color:#fff;border-color:#157fb2}
+/* A useful empty result rather than a blank archive or unhelpful blank search. */
+.pvdak-discovery-page .pvdak-empty-state,
+.site-main .pvdak-empty-state{
+  margin:27px auto;padding:clamp(24px,4vw,39px);max-width:750px;
+  text-align:center;border:1px solid #d9e8f6;border-radius:22px;
+  background:#fff;box-shadow:0 11px 30px #12436d14;
+}
+.pvdak-empty-icon{
+  display:grid;place-items:center;width:80px;height:80px;
+  border-radius:23px;background:#e2f2ff;color:#1875b2;margin:0 auto 17px;
+}
+.pvdak-empty-icon svg{width:45px;height:45px}
+.pvdak-empty-state h2{font-size:clamp(20px,2.8vw,27px);color:#143a61;margin:11px 0 6px}
+.pvdak-empty-state p{font-size:13px;color:#6e8497;line-height:2}
+.pvdak-empty-search{margin:21px auto;max-width:540px;text-align:right}
+.pvdak-empty-categories{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:17px 0}
+.pvdak-empty-home{
+  display:inline-flex;align-items:center;min-height:40px;padding:8px 18px;
+  background:#eff6ff;color:#1267a4;font-weight:850;border-radius:10px;text-decoration:none;margin-top:8px;
+}
+.pvdak-empty-home:hover{background:#dceeff}
+/* Visible focus throughout public UI; keyboard/low-motion friendly. */
+.pvdak-login-page :where(a,button,input):focus-visible,
+.pvdak-register-page :where(a,button,input,select):focus-visible,
+.pvdak-recovery-surface :where(a,button,input):focus-visible,
+.pvdak-contact-page :where(a,button,input,textarea):focus-visible,
+.pvdak-info-layout :where(a,button):focus-visible,
+.pvdak-discovery-page :where(a,button,input):focus-visible{
+  outline:3px solid #efa844;outline-offset:3px;
+}
+@media(max-width:850px){
+  .pvdak-info-layout{grid-template-columns:minmax(0,1fr)}
+  .pvdak-info-sidebar{position:static}
+  .pvdak-info-sidebar nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:780px){
+  .pvdak-contact-page .pvdak-contact-grid{grid-template-columns:minmax(0,1fr)}
+  .pvdak-login-page .pvdak-login-grid{grid-template-columns:minmax(0,1fr)}
+  .pvdak-login-page .pvdak-auth-visual{padding:29px;gap:8px}
+  .pvdak-login-page .pvdak-auth-visual .pvdak-auth-scale{width:64px;height:64px;border-radius:14px}
+  .pvdak-login-page .pvdak-auth-scale svg{width:41px;height:41px}
+  .pvdak-login-page .pvdak-login-benefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+  .pvdak-login-page .pvdak-login-benefits li{min-height:65px;font-size:11px}
+}
+@media(max-width:620px){
+  .pvdak-login-page,.pvdak-register-page{padding-block:15px 30px}
+  .pvdak-login-page .pvdak-login-grid{border-radius:16px;min-height:0;margin:0}
+  .pvdak-login-page .pvdak-login-grid>.pvdak-static-body{padding:24px 17px}
+  .pvdak-login-page .pvdak-auth-visual{padding:24px 17px}
+  .pvdak-login-page .pvdak-login-benefits{grid-template-columns:minmax(0,1fr)}
+  .pvdak-register-closed{align-items:flex-start;padding:16px;gap:12px}
+  .pvdak-register-closed-icon{width:45px;height:45px;flex-basis:45px;border-radius:12px}
+  .pvdak-register-closed-icon svg{width:25px;height:25px}
+  .pvdak-register-steps{grid-template-columns:minmax(0,1fr);gap:9px}
+  .pvdak-register-steps li{min-height:0;display:grid;grid-template-columns:35px minmax(0,1fr);align-items:center}
+  .pvdak-register-steps li small{grid-column:2}
+  .pvdak-recovery-steps{gap:4px}
+  .pvdak-recovery-steps li{font-size:10px;line-height:1.7;padding:9px 5px}
+  .pvdak-recovery-heading{gap:10px}
+  .pvdak-recovery-icon{flex-basis:45px;width:45px;height:45px}
+  .pvdak-contact-intro,.pvdak-contact-form-card{padding:20px 16px!important}
+  .pvdak-info-sidebar nav{grid-template-columns:minmax(0,1fr)}
+  .pvdak-discovery-page{width:calc(100% - 24px);padding-block:12px 32px}
+  .pvdak-discovery-hero{padding:22px 17px;border-radius:16px}
+  .pvdak-discovery-hero h1{font-size:clamp(24px,7vw,32px)}
+  .pvdak-discovery-section-heading h2{font-size:19px}
+  .pvdak-discovery-categories{padding:13px;gap:6px}
+  .pvdak-discovery-search form,.pvdak-empty-search form{flex-wrap:wrap}
+  .pvdak-discovery-search form :where(input[type=search],input[name=s]),
+  .pvdak-empty-search form :where(input[type=search],input[name=s]){flex-basis:100%}
+  .pvdak-discovery-search form :where(button,input[type=submit]),
+  .pvdak-empty-search form :where(button,input[type=submit]){flex:1}
+}
+@media(prefers-reduced-motion:reduce){
+  .pvdak-discovery-page .post-card{transition:none!important;transform:none!important}
 }
