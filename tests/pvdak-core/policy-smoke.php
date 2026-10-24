@@ -35,6 +35,18 @@ function get_post_type( $id ) {
 }
 function get_post_status( $id ) { return in_array( (int) $id, array( 501, 502 ), true ) ? 'private' : 'publish'; }
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
+$GLOBALS['pvdak_mock_profile_author'] = 21;
+function get_post_field( $field, $id ) {
+    if ( 'post_author' !== $field ) { return ''; }
+    if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
+    if ( 502 === (int) $id ) { return 22; }
+    if ( 701 === (int) $id ) { return 99; }
+    if ( 702 === (int) $id ) { return 21; }
+    return 0;
+}
+function get_userdata( $id ) {
+    return in_array( (int) $id, array( 21, 22 ), true ) ? (object) array( 'ID' => (int) $id ) : false;
+}
 $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'approved';
 $GLOBALS['pvdak_mock_license_status'] = 'checked';
@@ -190,6 +202,15 @@ pvdak_expect( pvdak_core_landing_parent_id() === 10, 'Real published landing Pag
 pvdak_expect( pvdak_core_valid_specialty( 11 ), 'Published child landing Page is a valid specialty' );
 pvdak_expect( ! pvdak_core_valid_specialty( 999 ), 'Unrelated nonexistent Page cannot be selected' );
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Internally cleared lawyer matches related landing' );
+pvdak_expect( pvdak_core_assignment_parties_distinct( 701, 501 ), 'Distinct real requester and lawyer owners permit internal referral' );
+pvdak_expect( ! pvdak_core_assignment_parties_distinct( 702, 501 ), 'Self-referral is blocked in preview, decision and recheck' );
+pvdak_expect( ! pvdak_core_assignment_parties_distinct( 703, 501 ), 'Legacy request without an owner cannot be assigned' );
+$GLOBALS['pvdak_mock_profile_author'] = 0;
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Orphan professional without owner cannot be matched' );
+$GLOBALS['pvdak_mock_profile_author'] = 88;
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Deleted professional account cannot be matched' );
+$GLOBALS['pvdak_mock_profile_author'] = 21;
+pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Valid account restores normal eligibility' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 12, 'lawyer' ), 'Different legal landing is not considered a match' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 502, 11, 'lawyer' ), 'Student role cannot be matched as lawyer' );
 pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 1, 'Only eligible reviewed lawyer enters candidate set' );
