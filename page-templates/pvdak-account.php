@@ -22,22 +22,27 @@ get_header(); ?>
       <h1>پنل اختصاصی من</h1>
       <p>خوش آمدید، <strong><?php echo esc_html( $user->display_name ); ?></strong>. از اینجا وضعیت حساب و پیام‌های پشتیبانی را پیگیری کنید.</p>
     </div>
-    <span class="pvdak-account-hero-mark" aria-hidden="true">PV</span>
+    <span class="pvdak-account-hero-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 8v48M11 18h42M18 19 8 42h20L18 19Zm28 0L36 42h20L46 19ZM21 55h22"/></svg></span>
   </header>
+  <nav class="pvdak-dashboard-quicklinks" aria-label="دسترسی سریع حساب">
+    <a href="#pvdak-dashboard"><span aria-hidden="true">◈</span><strong>نمای کلی</strong><small>وضعیت حساب و درخواست‌ها</small></a>
+    <?php if ( $profile_url ): ?><a href="<?php echo esc_url( $profile_url ); ?>"><span aria-hidden="true">◉</span><strong>پروفایل</strong><small>ویرایش اطلاعات نمایشی</small></a><?php endif; ?>
+    <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span><strong>پشتیبانی</strong><small>پیام‌ها و پیگیری تیکت‌ها</small></a><?php endif; ?>
+  </nav>
   <div class="pvdak-account-layout">
     <aside class="pvdak-account-sidebar" aria-label="منوی حساب">
       <div class="pvdak-account-identity">
-        <span class="pvdak-account-avatar" aria-hidden="true">PV</span>
+        <span class="pvdak-account-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/></svg></span>
         <div><strong><?php echo esc_html( $user->display_name ); ?></strong>
           <small><?php echo esc_html( $user->user_email ); ?></small>
         </div>
       </div>
       <nav class="pvdak-account-menu" aria-label="بخش‌های پنل">
-        <a href="#pvdak-dashboard" aria-current="page">نمای کلی حساب</a>
-        <?php if ( $has_professional ): ?><a href="#pvdak-professional">وضعیت همکاری</a><?php endif; ?>
-        <?php if ( $has_support ): ?><a href="#pvdak-support">پشتیبانی و تیکت‌ها</a><?php endif; ?>
-        <?php if ( $profile_url ): ?><a href="<?php echo esc_url( $profile_url ); ?>">ویرایش پروفایل</a><?php endif; ?>
-        <?php if ( $recovery_url ): ?><a href="<?php echo esc_url( $recovery_url ); ?>">امنیت و بازیابی رمز</a><?php endif; ?>
+        <a href="#pvdak-dashboard" aria-current="page"><span aria-hidden="true">▦</span> نمای کلی حساب</a>
+        <?php if ( $has_professional ): ?><a href="#pvdak-professional"><span aria-hidden="true">⚖</span> وضعیت همکاری</a><?php endif; ?>
+        <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span> پشتیبانی و تیکت‌ها</a><?php endif; ?>
+        <?php if ( $profile_url ): ?><a href="<?php echo esc_url( $profile_url ); ?>"><span aria-hidden="true">◉</span> ویرایش پروفایل</a><?php endif; ?>
+        <?php if ( $recovery_url ): ?><a href="<?php echo esc_url( $recovery_url ); ?>"><span aria-hidden="true">◇</span> امنیت و بازیابی رمز</a><?php endif; ?>
       </nav>
       <p class="pvdak-account-sidebar-note"><?php echo $intake_off ? 'ثبت درخواست حقوقی جدید فعلاً غیرفعال است؛ سوابق حساب در دسترس شما می‌ماند.' : 'برای ثبت درخواست جدید از خدمات فعال داخل پنل استفاده کنید.'; ?></p>
       <a class="pvdak-account-signout" href="<?php echo esc_url( wp_logout_url( pvdak_auth_login_url() ) ); ?>">خروج امن از حساب ←</a>
