@@ -1,5 +1,5 @@
 <?php
-/** Read-only PVDak Core 0.8.6 post-install acceptance. wp eval-file only. */
+/** Read-only PVDak Core 0.8.7 post-install acceptance. wp eval-file only. */
 if (!defined('ABSPATH') || !defined('WP_CLI') || !WP_CLI) {
     exit("Run using wp eval-file in the installed WordPress site.\n");
 }
@@ -13,8 +13,8 @@ $theme=wp_get_theme();
 pvdak_audit_check('Active PVDak theme at least 0.8.38',
     'pvdakcom-main'===$theme->get_stylesheet() &&
     version_compare($theme->get('Version'),'0.8.38','>='));
-pvdak_audit_check('Active Core version 0.8.6',
-    defined('PVDAK_CORE_VERSION') && PVDAK_CORE_VERSION==='0.8.6' &&
+pvdak_audit_check('Active Core version 0.8.7',
+    defined('PVDAK_CORE_VERSION') && PVDAK_CORE_VERSION==='0.8.7' &&
     in_array('pvdak-core/pvdak-core.php',(array)get_option('active_plugins',array()),true));
 pvdak_audit_check('Maintenance ON',function_exists('pvdak_maintenance_enabled') &&
     pvdak_maintenance_enabled());
