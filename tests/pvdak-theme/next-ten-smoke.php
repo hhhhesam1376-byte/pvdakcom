@@ -1,4 +1,10 @@
 <?php
+
+/** Compare installed theme or Core metadata without pinning a moving patch version. */
+function pvdak_test_release_at_least( $source, $minimum ) {
+    return preg_match( '/^\\s*\\*?\\s*Version:[ \\t]*([0-9]+(?:[.][0-9]+)*)/mi', $source, $found ) === 1 &&
+        version_compare( $found[1], $minimum, '>=' );
+}
 /** Ten read-only source assertions: no WordPress/database/runtime side effects. */
 $root = dirname(__DIR__, 2);
 $paths = array(
@@ -60,8 +66,8 @@ $checks = array(
   'Read-only readiness and safe versions' =>
     strpos($s['admin'],"current_user_can('manage_options')")!==false &&
     strpos($s['admin'],'get_page_by_path(')!==false &&
-    strpos($s['theme'],'Version: 0.8.29')!==false &&
-    strpos($s['core'],'Version: 0.8.2')!==false &&
+    pvdak_test_release_at_least($s['theme'],'0.8.29') &&
+    pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false,
 );
 $count = 0;
