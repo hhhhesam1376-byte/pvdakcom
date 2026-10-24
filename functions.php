@@ -90,7 +90,8 @@ add_action( 'wp_enqueue_scripts', 'pvdak_home_assets' );
 
 /** Tiny progressive enhancement on account credential screens only. */
 function pvdak_account_form_assets() {
-    if ( is_page( array( 'account-login', 'account-recovery', 'account-register', 'my-pvdak-account', 'account-profile', 'contact-us' ) ) ) {
+    if ( is_page( array( 'account-login', 'account-recovery', 'account-register', 'my-pvdak-account', 'account-profile', 'contact-us' ) ) ||
+         is_page_template( 'page-templates/pvdak-account.php' ) ) {
         wp_enqueue_script(
             'pvdak-account-interactions',
             get_template_directory_uri() . '/assets/js/pvdak-account.js',
@@ -104,7 +105,23 @@ add_action( 'wp_enqueue_scripts', 'pvdak_account_form_assets' );
 
 /** Load private ticket UI styling only on the personal account screen. */
 function pvdak_support_ticket_assets() {
-    if ( is_page( 'my-pvdak-account' ) ) {
+    if ( is_page( 'my-pvdak-account' ) ||
+         is_page_template( 'page-templates/pvdak-account.php' ) ) {
+        // D07: Core checks post_content for shortcodes, but this account
+        // renders the Core dashboard from its template. Enqueue the same
+        // installed plugin CSS once; do NOT duplicate it in the theme.
+        $core_file = WP_PLUGIN_DIR . '/pvdak-core/pvdak-core.php';
+        $core_css  = WP_PLUGIN_DIR . '/pvdak-core/assets/forms.css';
+        if ( shortcode_exists( 'pvdak_account_dashboard' ) &&
+             is_readable( $core_file ) && is_readable( $core_css ) &&
+             ! wp_style_is( 'pvdak-core', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'pvdak-core',
+                plugins_url( 'assets/forms.css', $core_file ),
+                array( 'pvdak-rtl' ),
+                defined( 'PVDAK_CORE_VERSION' ) ? PVDAK_CORE_VERSION : wp_get_theme()->get( 'Version' )
+            );
+        }
         wp_enqueue_style(
             'pvdak-support-tickets',
             get_template_directory_uri() . '/assets/css/pvdak-support.css',
