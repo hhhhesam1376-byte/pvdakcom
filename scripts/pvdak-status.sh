@@ -160,6 +160,25 @@ if [[ "$MODE" == "--test" ]]; then
     value "Bundled Swiper library" "FAIL (Swiper bundle missing from active theme)"
     failure=1
   fi
+  # D06: local files can exist yet fail from the browser with HTTP 403
+  # (this happened with previous deployment file permissions). Check only
+  # static, first-party assets; 200 does NOT prove visual mobile QA.
+  ASSET_URL_ROOT="https://pvdak.com/wp-content/themes/pvdakcom-main"
+  ASSET_OK=0
+  for asset in rtl.css assets/js/pvdak-home.js assets/js/pvdak-account.js \
+      assets/vendor/swiper-14.3.0/swiper-bundle.min.js \
+      assets/vendor/swiper-14.3.0/swiper-bundle.min.css; do
+    http_code="$(curl --silent --show-error --location --output /dev/null \
+      --write-out '%{http_code}' --connect-timeout 8 --max-time 25 \
+      "$ASSET_URL_ROOT/$asset" 2>/dev/null || true)"
+    if [[ "$http_code" == 200 ]]; then
+      ASSET_OK=$((ASSET_OK+1))
+    else
+      value "D06 static asset" "FAIL HTTP ${http_code:-000}: $asset"
+      failure=1
+    fi
+  done
+  value "D06 browser asset delivery" "$ASSET_OK/5 HTTP 200 (visual QA still required)"
   run_test() {
     local title="$1" script="$2" log rc
     shift 2
