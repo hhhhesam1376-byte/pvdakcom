@@ -145,7 +145,8 @@ if [[ "$MODE" == "--test" ]]; then
     D01_FILES=0
     for relative in style.css front-page.php functions.php header.php footer.php \
       assets/js/pvdak-home.js page-templates/pvdak-account.php; do
-      if [[ -f "$THEME/$relative" ]] &&
+      if [[ -s "$THEME/$relative" ]] &&
+         git -C "$HOME/repositories/pvdakcom" cat-file -e "$REMOTE_RELEASE:$relative" 2>/dev/null &&
          git -C "$HOME/repositories/pvdakcom" show "$REMOTE_RELEASE:$relative" 2>/dev/null |
            cmp -s - "$THEME/$relative"; then
         D01_FILES=$((D01_FILES+1))
