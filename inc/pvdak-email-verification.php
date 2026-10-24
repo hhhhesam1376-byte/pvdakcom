@@ -68,6 +68,12 @@ function pvdak_email_verification_resend() {
     $raw = wp_unslash($_POST['verify_email'] ?? '');
     $email = is_string($raw) ? sanitize_email($raw) : '';
     $url = pvdak_public_page_url('account-register') ?: home_url('/account-register/');
+    // D14: a rotating list of emails must not bypass the existing per-email cooldown.
+    // Always return the same generic response, including on an IP-wide throttle.
+    if (pvdak_registration_rate_exceeded('verify-resend', 12, HOUR_IN_SECONDS)) {
+        wp_safe_redirect(add_query_arg('state', 'resent', $url));
+        exit;
+    }
     if (is_email($email)) {
         $rate = 'pvdak_verify_resend_' . substr(hash_hmac('sha256', strtolower($email), wp_salt('nonce')), 0, 32);
         if (!get_transient($rate)) {
