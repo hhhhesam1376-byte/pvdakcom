@@ -3,7 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 $auth_label = is_user_logged_in() ? 'پنل کاربری' : 'ورود به حساب';
 $auth_url = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_url();
-$profile_layout = is_page_template( 'page-templates/pvdak-profile.php' );
+$account_layout = is_page_template( 'page-templates/pvdak-account.php' );
 ?>
 <!doctype html>
 <html lang="fa-IR" dir="rtl">
@@ -47,12 +47,12 @@ $profile_layout = is_page_template( 'page-templates/pvdak-profile.php' );
             </button>
           </form>
         <div class="pvdak-header-actions">
-            <?php if ( $profile_layout && is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' ) ): ?>
+            <?php if ( $account_layout && is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' ) ): ?>
               <a class="pvdak-profile-header-messages" href="<?php echo esc_url( pvdak_auth_account_url() . '#pvdak-support' ); ?>" aria-label="پیام‌ها و پشتیبانی" title="پیام‌ها و پشتیبانی">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>
               </a>
             <?php endif; ?>
-            <a class="pvdak-login-button" href="<?php echo esc_url( $auth_url ); ?>"><?php echo esc_html( $profile_layout && is_user_logged_in() ? 'حساب من' : $auth_label ); ?></a>
+            <a class="pvdak-login-button" href="<?php echo esc_url( $auth_url ); ?>"><?php echo esc_html( $account_layout && is_user_logged_in() ? 'حساب من' : $auth_label ); ?></a>
             <details class="pvdak-mobile-menu">
                 <summary aria-label="بازکردن فهرست سایت">فهرست <span aria-hidden="true">☰</span></summary>
                 <nav aria-label="منوی موبایل">
