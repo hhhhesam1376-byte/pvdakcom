@@ -64,7 +64,7 @@ $svg_icons = array(
       </form>
       <p class="pvdak-home-process-hint"><span aria-hidden="true">✓</span> <?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
       <div class="pvdak-home-hero-steps" aria-label="دسترسی‌های اصلی">
-        <a href="#topics">موضوعات حقوقی <span aria-hidden="true">←</span></a>
+        <?php if ( $all_legal_pages ): ?><a href="#topics">موضوعات حقوقی <span aria-hidden="true">←</span></a><?php else: ?><a href="<?php echo esc_url( add_query_arg( 's', 'حقوق', home_url( '/' ) ) ); ?>">جست‌وجوی مطالب حقوقی <span aria-hidden="true">←</span></a><?php endif; ?>
         <?php if ( $magazine_feature ): ?><a href="#magazine">مطالعه مطالب <span aria-hidden="true">←</span></a><?php endif; ?>
       </div>
     </div>
@@ -93,8 +93,8 @@ $svg_icons = array(
           'title' => pvdak_home_start_copy( 'audience_1_title', 'موضوع حقوقی‌ام را پیدا کنم' ),
           'desc' => pvdak_home_start_copy( 'audience_1_description', 'از میان موضوعات حقوقی، حوزه موردنظر را پیدا کنید.' ),
           'cta' => 'مشاهده موضوعات',
-          'url' => ( function_exists( 'pvdak_legal_topics_root_id' ) && pvdak_legal_topics_root_id() ) ?
-              get_permalink( pvdak_legal_topics_root_id() ) : home_url( '/#topics' ),
+          'url' => $all_legal_pages && $legal_parent_id ?
+              get_permalink( $legal_parent_id ) : add_query_arg( 's', 'حقوق', home_url( '/' ) ),
           'icon' => '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="21" cy="21" r="12"/><path d="m30 30 11 11M16 21h10M21 16v10"/></svg>',
       ),
       array(
@@ -133,6 +133,7 @@ $svg_icons = array(
   <?php
   // Topic pages and search mode are resolved before rendering the hero.
   ?>
+  <?php if ( $all_legal_pages ): ?>
   <section id="topics" class="pvdak-home-section pvdak-topics-section" aria-labelledby="topics-title">
     <div class="pvdak-home-section-head">
       <h2 id="topics-title"><?php echo esc_html( pvdak_home_value( 'topics_title' ) ); ?></h2>
@@ -172,10 +173,9 @@ $svg_icons = array(
         موضوعی مطابق «<?php echo esc_html( $legal_search_term ); ?>» پیدا نشد.
         <a href="<?php echo esc_url( home_url( '/#topics' ) ); ?>">نمایش همه موضوعات</a>
       </p>
-    <?php else: ?>
-      <div class="pvdak-topics-help" role="note"><span class="pvdak-topics-help-icon" aria-hidden="true">⚖</span><div><strong>در حال تکمیل موضوعات حقوقی هستیم</strong><p>تا انتشار صفحات موضوعی، از جست‌وجوی مطالب حقوقی استفاده کنید.</p><a href="<?php echo esc_url( add_query_arg( 's', 'حقوق', home_url( '/' ) ) ); ?>">جست‌وجو در مطالب ←</a></div></div>
     <?php endif; ?>
   </section>
+  <?php endif; ?>
 
   <?php
   // Hand-authored inline SVGs; icons are theme assets while titles/descriptions
