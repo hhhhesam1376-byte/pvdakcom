@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # PVDak Core source installer — default dry-run; never activates a plugin.
-# Use --install only after verifying the PHP release and taking a host backup.
+# Use --install for inactive Core, or --upgrade for guarded replacement of active Core.
 set -euo pipefail
 # Existing installer also handles guarded upgrades; no separate deploy workflow.
 if [[ "${1:-}" == "--upgrade" ]]; then
 set -Eeuo pipefail
 umask 077
-MODE="$(printf '%s' "$*" | xargs)"
+MODE="${1:-}"
 if [[ "$MODE" != "--upgrade" ]]; then
-  echo "USAGE: bash pvdak-core-upgrade-guarded.sh --check|--upgrade" >&2; exit 2
+  echo "USAGE: bash $0 --upgrade" >&2; exit 2
 fi
 [[ "$(id -un)" == "amirhoseainsabet" ]] || { echo "STOP: wrong cPanel user" >&2; exit 1; }
 for tool in wp php flock cp mv diff find mktemp; do
@@ -60,7 +60,7 @@ php -l "$ACCEPT" >/dev/null
 PVDAK_CORE_SOURCE="$SOURCE/pvdak-core.php" php "$PRIVATE/../tests/pvdak-core/policy-smoke.php"
 echo "CORE_UPGRADE_PREFLIGHT_OK installed=$OLD new=$NEW"
 [[ "$MODE" == "--upgrade" ]] || exit 0
-DB="$STATE/backups/pre-core-$(date -u +%Y%m%dT%H%M%SZ)-$.sql"
+DB="$STATE/backups/pre-core-$(date -u +%Y%m%dT%H%M%SZ)-${BASHPID}.sql"
 wp db export "$DB" --path="$WP" --quiet
 [[ -s "$DB" ]] || { echo "STOP: DB backup failed" >&2; exit 1; }
 chmod 600 "$DB"
@@ -77,7 +77,7 @@ finish() {
   trap - EXIT
   if (( code != 0 && MOVED == 1 )); then
     echo "CORE_RELEASE_FAILED: restoring previous plugin" >&2
-    if [[ -d "$DEST" ]]; then mv "$DEST" "$STATE/backups/failed-core-$(date -u +%Y%m%dT%H%M%SZ)-$" || true; fi
+    if [[ -d "$DEST" ]]; then mv "$DEST" "$STATE/backups/failed-core-$(date -u +%Y%m%dT%H%M%SZ)-${BASHPID}" || true; fi
     mv "$BACKUP" "$DEST" && echo "CORE_ROLLBACK_OK" || echo "CORE_ROLLBACK_FAILED" >&2
   fi
   if [[ -n "$STAGE" && -d "$STAGE" ]]; then rm -rf "$STAGE"; fi
