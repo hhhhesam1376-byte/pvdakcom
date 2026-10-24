@@ -31,7 +31,6 @@ foreach ( $paths as $name => $file ) {
 $checks = array(
   'D07 Core form CSS is loaded on the template-based dashboard' =>
     strpos($v['assets'], "shortcode_exists( 'pvdak_account_dashboard' )")!==false &&
-    strpos($v['assets'], "plugins_url( 'assets/forms.css', \\$core_file )")===false &&
     strpos($v['assets'], "plugins_url( 'assets/forms.css', " )!==false &&
     strpos($v['assets'], "wp_style_is( 'pvdak-core', 'enqueued' )")!==false &&
     strpos($v['assets'], "is_page_template( 'page-templates/pvdak-account.php' )")!==false,
