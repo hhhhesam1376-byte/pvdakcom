@@ -830,3 +830,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - PHP lint, full synthetic suite and real WordPress/browser/performance tests remain pending; no runtime claim. No production/main, maintenance, intake, registration, data, server or cron changes.
 
 - Batch 090 post-commit verification: 10 GitHub source read-back guards passed; PHP lint passed on locally reconstructed repaired smoke file and new priority helper snippet, and an isolated mocked priority fixture passed. This is NOT a full checkout PHP lint, WP runtime test or browser test. Follow-up test-string interpolation fixes committed.
+
+## 2026-10-24 — WORK-BATCH-091 (development branch only)
+- Implemented 20 non-repeating account/profile/contact/recovery UX and server validation improvements; details in `docs/WORK_BATCH_091.md`.
+- Corrected Unicode code-point length handling for Persian profile names, contact text and password reset; added no-op profile saving, clear status, counters, reset/dirty UI, safe submit guard, accessible feedback and accurate account navigation/fallback.
+- Theme draft bumped to 0.8.30; added 26 source-only assertions to existing readonly runner. Post-commit 30 GitHub source checks passed, JavaScript compiled in V8, and isolated PHP Unicode regex fixture passed 3/3.
+- **Pending:** full PHP lint/source suite, actual WordPress/ACF, email, browser/mobile, two-account privacy and no-JS behavior. Source checks are not production acceptance.
+- No change to main, production, maintenance, registration/intake, real records, role settings, DB, Cron, workflow, staging or secrets.

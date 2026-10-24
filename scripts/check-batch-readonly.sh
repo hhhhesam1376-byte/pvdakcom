@@ -10,6 +10,7 @@ while IFS= read -r -d '' f; do
 done < <(find "$ROOT" -type f -name '*.php' -print0)
 php "$ROOT/tests/pvdak-theme/feature-batch-smoke.php"
 php "$ROOT/tests/pvdak-theme/account-experience-smoke.php"
+php "$ROOT/tests/pvdak-theme/account-form-ux-smoke.php"
 php "$ROOT/tests/pvdak-theme/ticket-experience-smoke.php"
 php "$ROOT/tests/pvdak-theme/next-phase-smoke.php"
 php "$ROOT/tests/pvdak-theme/next-ten-smoke.php"
