@@ -12,12 +12,20 @@ $status=isset($_GET['status'])&&is_string($_GET['status'])?sanitize_key(wp_unsla
 get_header(); ?>
 <main id="main-content" class="container pvdak-static pvdak-login-page" tabindex="-1">
 <nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( pvdak_auth_login_url() ); ?>">ورود</a><span aria-hidden="true"> / </span><span aria-current="page">بازیابی رمز</span></nav>
-<div class="pvdak-static-body pvdak-recovery-panel">
-  <h1>بازیابی رمز عبور</h1>
+<div class="pvdak-static-body pvdak-recovery-panel pvdak-recovery-surface">
+  <div class="pvdak-recovery-heading">
+    <span class="pvdak-recovery-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <div><span class="pvdak-auth-eyebrow">حفاظت از حساب کاربری</span><h1>بازیابی رمز عبور</h1></div>
+  </div>
+  <ol class="pvdak-recovery-steps" aria-label="مراحل بازیابی">
+    <li class="<?php echo $valid ? 'is-complete' : 'is-active'; ?>">درخواست پیوند</li>
+    <li class="<?php echo $valid ? 'is-active' : ''; ?>">انتخاب رمز جدید</li>
+    <li>ورود دوباره</li>
+  </ol>
   <?php if($status==='sent'):?><p role="status" class="pvdak-static-note">اگر این حساب موجود باشد، راهنمای بازیابی رمز به ایمیل ثبت‌شده ارسال خواهد شد.</p><?php endif; ?>
   <?php if($status==='invalid'):?><p role="alert" class="pvdak-static-error">پیوند بازیابی نامعتبر یا منقضی شده است؛ درخواست تازه‌ای ثبت کنید.</p><?php endif; ?>
   <?php if($valid): ?>
-    <p>برای حساب خود یک رمز عبور جدید انتخاب کنید.</p>
+    <p class="pvdak-recovery-instruction">برای حساب خود رمز جدیدی انتخاب کنید. از رمز تکراری یا قابل حدس استفاده نکنید.</p>
     <form method="post" class="pvdak-forms" data-pvdak-single-submit data-pvdak-recovery-change action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_recovery_change">
       <?php wp_nonce_field('pvdak_recovery_change','_pvdak_reset_nonce'); ?>
@@ -31,7 +39,7 @@ get_header(); ?>
     </form>
   <?php else: ?>
     <?php if($reset):?><p class="pvdak-static-error">پیوند بازیابی معتبر نیست یا اعتبارش تمام شده است.</p><?php endif; ?>
-    <p>نام کاربری یا ایمیل خود را وارد کنید. در صورت وجود حساب، پیوند بازیابی به شما ایمیل می‌شود.</p>
+    <p class="pvdak-recovery-instruction">نام کاربری یا ایمیل خود را وارد کنید. اگر حسابی وجود داشته باشد، راهنمای بازیابی ارسال می‌شود.</p>
     <form method="post" class="pvdak-forms" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_recovery_request">
       <?php wp_nonce_field('pvdak_recovery_request','_pvdak_recovery_nonce'); ?>
@@ -40,6 +48,6 @@ get_header(); ?>
       <button type="submit">ارسال پیوند بازیابی</button>
     </form>
   <?php endif; ?>
-  <p><a href="<?php echo esc_url(pvdak_auth_login_url()); ?>">بازگشت به صفحه ورود</a></p>
+  <p class="pvdak-recovery-return"><a href="<?php echo esc_url(pvdak_auth_login_url()); ?>">← بازگشت به صفحه ورود</a></p>
 </div>
 </main><?php get_footer(); ?>
