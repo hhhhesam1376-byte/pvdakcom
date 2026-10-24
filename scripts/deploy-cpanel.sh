@@ -91,6 +91,23 @@ health() {
   code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 40 "https://pvdak.com/?pvdak_deploy_check=$SHA-$(date +%s)")" || return 1
   [[ "$code" == 200 ]]
 }
+# The public home page may display maintenance (HTTP 200) while CSS/JS are
+# unreadable. After publishing, confirm first-party assets work; the existing
+# rollback handles a failed check.
+asset_health() {
+  local asset code
+  for asset in rtl.css assets/js/pvdak-home.js assets/js/pvdak-account.js \
+      assets/vendor/swiper-14.3.0/swiper-bundle.min.js \
+      assets/vendor/swiper-14.3.0/swiper-bundle.min.css; do
+    code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+      --connect-timeout 8 --max-time 25 \
+      "https://pvdak.com/wp-content/themes/pvdakcom-main/$asset")" || return 1
+    if [[ "$code" != 200 ]]; then
+      log "ASSET_HEALTH_FAILED $asset HTTP $code"
+      return 1
+    fi
+  done
+}
 health || die "Site health check failed before deployment; no theme files changed"
 BACKUP="$STATE/backups/$(date -u +%Y%m%dT%H%M%SZ)-${SHA:0:12}"
 mkdir "$BACKUP"
@@ -101,6 +118,7 @@ rm -f "$STAGE/.gitignore" "$STAGE/.cpanel.yml" "$STAGE/README.md" "$STAGE/CHANGE
 PUBLISHING=1
 rsync -rltp --delete-delay --delay-updates --chmod=D755,F644 "$STAGE/" "$TARGET/"
 health || die "Site health check failed after deployment"
+asset_health || die "Browser assets unavailable after deployment; rolling back"
 printf '%s\n' "$SHA" > "$STATE/deployed.tmp"
 mv -f "$STATE/deployed.tmp" "$STATE/deployed"
 PUBLISHING=0
