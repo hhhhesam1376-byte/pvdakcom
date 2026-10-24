@@ -128,13 +128,13 @@ get_header(); ?>
       <section class="pvdak-profile-nav-card" aria-label="منوی حساب">
         <h2>منوی حساب کاربری</h2>
         <nav class="pvdak-profile-nav" aria-label="بخش‌های حساب">
-          <a href="<?php echo esc_url( $account_url ); ?>"><span aria-hidden="true">▦</span> پنل من <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
-          <a href="<?php echo esc_url( pvdak_account_tool_url( 'account-profile' ) ); ?>" aria-current="page"><span aria-hidden="true">♙</span> پروفایل من <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
+          <a href="<?php echo esc_url( $account_url ); ?>"><span class="pvdak-profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></span> پنل من <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
+          <a href="<?php echo esc_url( pvdak_account_tool_url( 'account-profile' ) ); ?>" aria-current="page"><span class="pvdak-profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/></svg></span> پروفایل من <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
           <?php if ( shortcode_exists( 'pvdak_support_tickets' ) ): ?>
-            <a href="<?php echo esc_url( $account_url . '#pvdak-support' ); ?>"><span aria-hidden="true">✉</span> پیام‌ها و پشتیبانی <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
+            <a href="<?php echo esc_url( $account_url . '#pvdak-support' ); ?>"><span class="pvdak-profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg></span> پیام‌ها و پشتیبانی <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
           <?php endif; ?>
           <?php if ( $recovery_url ): ?>
-            <a href="<?php echo esc_url( $recovery_url ); ?>"><span aria-hidden="true">♢</span> امنیت و بازیابی رمز <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
+            <a href="<?php echo esc_url( $recovery_url ); ?>"><span class="pvdak-profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span> امنیت و بازیابی رمز <span class="pvdak-profile-nav-arrow" aria-hidden="true">←</span></a>
           <?php endif; ?>
         </nav>
         <a class="pvdak-profile-signout" href="<?php echo esc_url( wp_logout_url( pvdak_auth_login_url() ) ); ?>">خروج امن از حساب <span aria-hidden="true">↗</span></a>
