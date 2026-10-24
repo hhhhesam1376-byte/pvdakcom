@@ -34,11 +34,12 @@ get_header(); ?>
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 8v48M11 18h42M18 19 8 42h20L18 19Zm28 0L36 42h20L46 19ZM21 55h22"/></svg>
     </span>
   </header>
+  <div class="pvdak-dashboard-overline"><span class="pvdak-dashboard-online"><span aria-hidden="true">●</span> حساب کاربری فعال</span><span>دسترسی شخصی شما به امکانات پویش</span></div>
   <nav class="pvdak-dashboard-quicklinks" aria-label="دسترسی سریع حساب">
-    <a href="#pvdak-dashboard"><span aria-hidden="true">◈</span><strong>نمای کلی</strong><small>خلاصه وضعیت حساب</small></a>
-    <a href="#pvdak-profile"><span aria-hidden="true">◉</span><strong>اطلاعات حساب</strong><small>ویرایش نام نمایشی</small></a>
-    <?php if ( $has_requests ): ?><a href="#pvdak-requests"><span aria-hidden="true">⚖</span><strong>درخواست‌های من</strong><small>پیگیری درخواست‌ها</small></a><?php endif; ?>
-    <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span><strong>پشتیبانی</strong><small>پیام‌ها و تیکت‌ها</small></a><?php endif; ?>
+    <a href="#pvdak-dashboard" aria-current="location"><span aria-hidden="true">◈</span><strong>نمای کلی</strong><small>خلاصه وضعیت حساب</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
+    <a href="#pvdak-profile"><span aria-hidden="true">◉</span><strong>اطلاعات حساب</strong><small>ویرایش نام نمایشی</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
+    <?php if ( $has_requests ): ?><a href="#pvdak-requests"><span aria-hidden="true">⚖</span><strong>درخواست‌های من</strong><small>پیگیری درخواست‌ها</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a><?php endif; ?>
+    <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span><strong>پشتیبانی</strong><small>پیام‌ها و تیکت‌ها</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a><?php endif; ?>
   </nav>
   <div class="pvdak-account-layout">
     <aside class="pvdak-account-sidebar" aria-label="منوی حساب">
@@ -65,6 +66,7 @@ get_header(); ?>
 
     <div class="pvdak-account-main" data-pvdak-workspace>
       <section id="pvdak-dashboard" class="pvdak-account-panel" data-pvdak-panel aria-label="نمای کلی حساب" tabindex="-1">
+        <div class="pvdak-dashboard-panel-heading"><span class="pvdak-panel-kicker">داشبورد من</span><span class="pvdak-panel-readonly"><span aria-hidden="true">◉</span> اطلاعات واقعی حساب</span></div>
         <?php if ( $has_dashboard ): ?>
           <?php echo do_shortcode( '[pvdak_account_dashboard]' ); ?>
         <?php else: ?>
@@ -74,7 +76,7 @@ get_header(); ?>
 
       <?php if ( $has_requests ): ?>
         <section id="pvdak-requests" class="pvdak-account-panel pvdak-unified-section" data-pvdak-panel aria-labelledby="pvdak-requests-title" tabindex="-1">
-          <header class="pvdak-unified-section-header"><span>درخواست‌های حقوقی</span><h2 id="pvdak-requests-title">درخواست‌های من</h2><p>سوابق درخواست‌های متعلق به حساب خودتان را مشاهده و پیگیری کنید.</p></header>
+          <header class="pvdak-unified-section-header"><span>پیگیری درخواست‌های ثبت‌شده</span><h2 id="pvdak-requests-title">درخواست‌های من</h2><p>سوابق درخواست‌های متعلق به حساب خودتان را مشاهده و پیگیری کنید.</p><span class="pvdak-unified-private-note">فقط برای شما قابل مشاهده</span></header>
           <?php echo do_shortcode( '[pvdak_my_requests]' ); ?>
         </section>
       <?php endif; ?>
@@ -86,7 +88,7 @@ get_header(); ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M19 13a7 7 0 0 0 0-2l2-1-2-4-2 1a7 7 0 0 0-2-1l-1-3h-4L9 6a7 7 0 0 0-2 1L5 6l-2 4 2 1a7 7 0 0 0 0 2l-2 1 2 4 2-1a7 7 0 0 0 2 1l1 3h4l1-3a7 7 0 0 0 2-1l2 1 2-4-2-1Z"/></svg>
         </span>
         <div>
-          <span class="pvdak-profile-section-kicker">تنظیمات شخصی</span>
+          <span class="pvdak-profile-section-kicker">تنظیمات شخصی • ویرایش امن</span>
           <h2 id="pvdak-profile-editor-title">اطلاعات حساب کاربری</h2>
           <p>نام نمایشی را ویرایش کنید؛ سایر مشخصات هویتی اینجا فقط برای مشاهده هستند.</p>
         </div>
@@ -167,6 +169,7 @@ get_header(); ?>
 
       <?php if ( $has_support ): ?>
         <div class="pvdak-account-panel pvdak-account-support pvdak-unified-section" data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها" tabindex="-1">
+          <header class="pvdak-unified-section-header"><span>ارتباط با پشتیبانی</span><h2>پیام‌های پشتیبانی من</h2><p>پیام‌ها و پاسخ‌های اختصاصی حساب خود را پیگیری کنید؛ اطلاعات محرمانه پرونده ارسال نکنید.</p></header>
           <?php echo do_shortcode( '[pvdak_support_tickets]' ); ?>
           <p class="pvdak-panel-return"><a href="#pvdak-dashboard">↑ بازگشت به نمای کلی حساب</a></p>
         </div>
