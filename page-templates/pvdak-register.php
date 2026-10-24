@@ -10,9 +10,22 @@ $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash(
 <main id="main-content" class="container pvdak-static pvdak-register-page" tabindex="-1">
 <nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( pvdak_auth_login_url() ); ?>">ورود به حساب</a><span aria-hidden="true"> / </span><span aria-current="page">ثبت‌نام</span></nav>
 <header class="pvdak-static-head"><span>حساب تازه</span><h1>ثبت‌نام در پویش</h1><p>ایجاد حساب پس از فعال‌سازی رسمی ثبت‌نام امکان‌پذیر می‌شود.</p></header>
-<div class="pvdak-static-body pvdak-recovery-panel">
+<div class="pvdak-static-body pvdak-recovery-panel pvdak-register-surface">
 <?php if(!pvdak_registration_open()): ?>
-  <div class="pvdak-static-note" role="status">ثبت‌نام در حال حاضر غیرفعال است. تا اعلام راه‌اندازی رسمی، هیچ حساب جدیدی از این فرم ساخته نمی‌شود.</div>
+  <div class="pvdak-register-closed" role="status">
+    <span class="pvdak-register-closed-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <div><strong>ثبت‌نام هنوز آغاز نشده است</strong><p>این امکان پس از راه‌اندازی رسمی فعال می‌شود؛ در حال حاضر هیچ حسابی از این صفحه ایجاد نخواهد شد.</p></div>
+  </div>
+  <h2 class="pvdak-register-guide-heading">مسیر عضویت در پویش</h2>
+  <ol class="pvdak-register-steps" aria-label="مراحل عضویت پس از فعال‌سازی">
+    <li><strong>ایجاد حساب</strong><small>انتخاب اطلاعات ورود و نوع عضویت پس از فعال‌سازی</small></li>
+    <li><strong>تأیید ایمیل</strong><small>تأیید مالکیت ایمیل قبل از دسترسی به پنل</small></li>
+    <li><strong>بررسی همکاری</strong><small>بررسی جداگانه مدارک و صلاحیت اعضای حرفه‌ای توسط مدیر</small></li>
+  </ol>
+  <div class="pvdak-register-actions">
+    <a href="<?php echo esc_url( home_url( '/' ) ); ?>">بازگشت به صفحه اصلی</a>
+    <?php $about_url = pvdak_public_page_url( 'about-us' ); if ( $about_url ): ?><a href="<?php echo esc_url( $about_url ); ?>">آشنایی با پویش ←</a><?php endif; ?>
+  </div>
 <?php else: ?>
 <?php if('received'===$state):?><p class="pvdak-static-note" role="status">حساب ایجاد شد. برای ورود باید ایمیل حساب را از طریق پیوند ارسال‌شده تأیید کنید؛ نوع همکاری اعلامی هنوز تأیید نشده است.</p>
 <?php elseif('verified'===$state):?><p class="pvdak-static-note" role="status">ایمیل تأیید شد. اکنون می‌توانید وارد حساب شوید.</p>
