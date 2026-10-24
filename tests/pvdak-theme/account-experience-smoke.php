@@ -62,6 +62,14 @@ $checks = array(
     strpos($v['portal'],'if ( $has_support )')!==false &&
     strpos($v['portal'],'id="pvdak-profile"')!==false &&
     strpos($v['css'],'.pvdak-dashboard-quicklinks{')!==false,
+  'Card-based personal dashboard with live Core values' =>
+    strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
+    strpos($v['css'],'.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div')!==false &&
+    strpos($v['css'],'.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li')!==false &&
+    strpos($v['css'],'.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>.pvdak-core-empty')!==false,
+  'Unconfigured service shortcuts are hidden without fake actions' =>
+    strpos($v['css'],'h3:has(+ .pvdak-core-dashboard-actions:empty)')!==false &&
+    strpos($v['css'],'.pvdak-core-dashboard-actions:empty{display:none}')!==false,
   'Account sidebar and personal shortcuts' =>
     strpos($v['portal'],'pvdak-account-sidebar')!==false &&
     strpos($v['portal'],'id="pvdak-profile"')!==false &&
