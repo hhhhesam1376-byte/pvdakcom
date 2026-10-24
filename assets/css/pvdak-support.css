@@ -41,3 +41,52 @@
 .pvdak-ticket-details[open]>.pvdak-ticket-summary{background:#eef8f4}
 .pvdak-ticket-filters :focus-visible,.pvdak-ticket-reset:focus-visible{outline:3px solid #176c79;outline-offset:3px}
 @media(max-width:560px){.pvdak-ticket-filters{display:grid;grid-template-columns:1fr 1fr}.pvdak-ticket-filters label:first-child{grid-column:1/-1}.pvdak-ticket-filters button,.pvdak-ticket-reset{grid-column:1/-1;text-align:center}}
+
+
+/* WORK_BATCH_097: Private support card rhythm and visible focused conversation. */
+.pvdak-unified-account .pvdak-ticket-filters{
+  padding:17px;gap:11px;border-radius:15px;background:#f0f7ff;
+  border-color:#d7e7f6
+}
+.pvdak-unified-account .pvdak-ticket-filters label{font-size:12px;color:#204d72;font-weight:850}
+.pvdak-unified-account .pvdak-ticket-filters :where(input,select){
+  border-color:#c6dced;border-radius:10px;min-height:45px
+}
+.pvdak-unified-account .pvdak-ticket-filters button{
+  min-height:45px;border-radius:10px;font-weight:900;background:#127db0;color:#fff
+}
+.pvdak-unified-account .pvdak-ticket-result-summary{
+  display:inline-block;background:#eaf5ff;border-radius:99px;padding:6px 14px;
+  color:#215c87;font-weight:850
+}
+.pvdak-unified-account .pvdak-ticket-summary{
+  padding:15px 17px;border-radius:13px;position:relative
+}
+.pvdak-unified-account .pvdak-ticket-details[open]>.pvdak-ticket-summary{
+  background:#e9f6ff;color:#155887
+}
+.pvdak-unified-account .pvdak-ticket-details[open]{
+  border-color:#85c8e1;box-shadow:0 9px 26px #07599018
+}
+.pvdak-unified-account .pvdak-ticket-conversation li{
+  border-radius:13px;padding:15px 17px;border-color:#d9e7f2
+}
+.pvdak-unified-account .pvdak-ticket-conversation li.pvdak-ticket-staff{
+  background:#e8f7ef;border-color:#bce8d2
+}
+.pvdak-unified-account .pvdak-ticket-followup textarea{
+  min-height:98px;border-radius:12px;border:1px solid #cbddeb;background:#fff
+}
+.pvdak-unified-account .pvdak-ticket-pagination a{
+  display:inline-flex;align-items:center;min-height:40px;border-radius:11px;
+  color:#176c9d;border-color:#b9d8eb;background:#f4faff
+}
+.pvdak-unified-account .pvdak-ticket-empty{
+  padding:19px;border:1px dashed #bad9ec;border-radius:14px;
+  background:#f7fbff;text-align:center;color:#426781;line-height:1.9
+}
+@media(max-width:540px){
+  .pvdak-unified-account .pvdak-ticket-filters{padding:12px;gap:8px}
+  .pvdak-unified-account .pvdak-ticket-filters :where(input,select,button){min-height:42px}
+  .pvdak-unified-account .pvdak-ticket-summary{padding:13px 12px}
+}
