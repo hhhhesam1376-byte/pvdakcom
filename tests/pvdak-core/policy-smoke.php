@@ -174,6 +174,33 @@ pvdak_expect( pvdak_core_request_note_token_seen( array(), 'invalid' ),
     'Missing or malformed note token fails closed' );
 
 pvdak_expect( count( pvdak_core_member_types() ) === 3, 'Three professional application categories' );
+pvdak_expect( pvdak_core_member_application_input_valid( 'lawyer', str_repeat( 'آ', 110 ), 'تهران', 'حقوق خانواده', true ),
+    'Professional intake accepts 110 Persian name characters' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'lawyer', str_repeat( 'آ', 111 ), 'تهران', 'حقوق خانواده', true ),
+    'Professional intake rejects 111 Persian name characters' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'trainee', 'نام', str_repeat( 'ب', 91 ), 'حقوق', true ),
+    'Professional intake rejects overlong Persian city' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'student', 'نام', 'تهران', str_repeat( 'آ', 1601 ), true ),
+    'Professional intake rejects overlong Persian interests' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'lawyer', 'نام', 'تهران', "\xC3\x28", true ),
+    'Professional intake rejects malformed UTF-8' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'lawyer', 'نام', 'تهران', '   ', true ),
+    'Professional intake rejects blank details' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'lawyer', 'نام', 'تهران', 'حقوق', false ),
+    'Professional intake requires explicit consent' );
+pvdak_expect( ! pvdak_core_member_application_input_valid( 'unverified', 'نام', 'تهران', 'حقوق', true ),
+    'Professional intake rejects unknown category' );
+pvdak_expect( pvdak_core_member_allowed_transitions( 'pending' ) === array( 'review', 'rejected' ),
+    'Professional application cannot be approved directly from pending' );
+pvdak_expect( in_array( 'approved', pvdak_core_member_allowed_transitions( 'review' ), true ),
+    'Reviewed application can receive administrative approval' );
+pvdak_expect( pvdak_core_member_allowed_transitions( 'approved' ) === array( 'review' ),
+    'Administrative approval can only reopen to review' );
+pvdak_expect( pvdak_core_member_allowed_transitions( 'rejected' ) === array( 'review' ),
+    'Rejected application requires review to reopen' );
+pvdak_expect( pvdak_core_member_allowed_transitions( 'unexpected' ) === array(),
+    'Unknown membership state fails closed' );
+
 pvdak_expect( ! pvdak_core_intake_open(), 'Legal request intake starts OFF' );
 pvdak_expect( ! pvdak_core_member_intake_open(), 'Professional onboarding starts OFF' );
 pvdak_expect(
