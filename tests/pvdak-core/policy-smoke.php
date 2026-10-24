@@ -40,12 +40,13 @@ function get_post_field( $field, $id ) {
     if ( 'post_author' !== $field ) { return ''; }
     if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
     if ( 502 === (int) $id ) { return 22; }
-    if ( 701 === (int) $id ) { return 99; }
+    if ( 701 === (int) $id ) { return 23; }
+    if ( 704 === (int) $id ) { return 88; }
     if ( 702 === (int) $id ) { return 21; }
     return 0;
 }
 function get_userdata( $id ) {
-    return in_array( (int) $id, array( 21, 22 ), true ) ? (object) array( 'ID' => (int) $id ) : false;
+    return in_array( (int) $id, array( 21, 22, 23 ), true ) ? (object) array( 'ID' => (int) $id ) : false;
 }
 $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'approved';
@@ -205,6 +206,7 @@ pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Intern
 pvdak_expect( pvdak_core_assignment_parties_distinct( 701, 501 ), 'Distinct real requester and lawyer owners permit internal referral' );
 pvdak_expect( ! pvdak_core_assignment_parties_distinct( 702, 501 ), 'Self-referral is blocked in preview, decision and recheck' );
 pvdak_expect( ! pvdak_core_assignment_parties_distinct( 703, 501 ), 'Legacy request without an owner cannot be assigned' );
+pvdak_expect( ! pvdak_core_assignment_parties_distinct( 704, 501 ), 'Deleted requester account cannot receive a referral' );
 $GLOBALS['pvdak_mock_profile_author'] = 0;
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Orphan professional without owner cannot be matched' );
 $GLOBALS['pvdak_mock_profile_author'] = 88;
