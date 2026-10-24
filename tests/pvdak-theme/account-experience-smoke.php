@@ -121,6 +121,21 @@ $checks = array(
     strpos($v['portal'],'pvdak_profile_save')!==false &&
     strpos($v['portal'],'pvdak_auth_account_url()')!==false &&
     strpos($v['portal'],'pvdak-profile-details')!==false,
+  'Unified panel contains exactly one editable profile instead of two UIs' =>
+    substr_count( $v['portal'], 'data-pvdak-profile-form' ) === 1 &&
+    strpos( $v['profile'], 'data-pvdak-profile-form' ) === false &&
+    strpos( $v['portal'], "wp_nonce_field( 'pvdak_profile_save'") !== false,
+  'Profile legacy route and save feedback end in same profile tab' =>
+    strpos( $v['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )" ) !== false &&
+    strpos( file_get_contents( $root . '/inc/pvdak-account-tools.php' ), "add_query_arg( 'status', 'unchanged', $url ) . '#pvdak-profile'" ) !== false,
+  'All panels are hash navigated without backend changes' =>
+    strpos( $v['javascript'], "target.closest('[data-pvdak-panel]')" ) !== false &&
+    strpos( $v['javascript'], 'panels.forEach(' ) !== false &&
+    strpos( $v['css'], '[data-pvdak-panel][hidden]{display:none!important}' ) !== false,
+  'Support shortcode ID remains unique while wrapper is a panel' =>
+    strpos( $v['portal'], 'data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها"' ) !== false &&
+    substr_count( $v['portal'], 'id="pvdak-support"' ) === 0 &&
+    strpos( $v['portal'], "do_shortcode( '[pvdak_support_tickets]' )" ) !== false,
   'Legacy profile transparently redirects to the unified panel' =>
     strpos($v['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )")!==false &&
     strpos($v['profile'], 'pvdak_auth_account_url()')!==false &&
