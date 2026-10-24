@@ -273,4 +273,10 @@ pvdak_layout_expect(
     false !== strpos( $readiness, '$faq_written === $faq_count' ),
     'Admin readiness rejects empty FAQ answers, without writing content' );
 
+pvdak_layout_expect(
+    false !== strpos( $readiness, '$topics_with_text >= 3' ) &&
+    false !== strpos( $readiness, 'strip_shortcodes( $topic_page->post_content )' ) &&
+    false !== strpos( $readiness, "'حداقل سه لندینگ دارای متن'" ),
+    'D09: admin demo readiness cannot mistake empty published legal samples for authored pages' );
+
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
