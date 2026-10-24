@@ -46,6 +46,19 @@ $checks = array(
     strpos($v['recovery'],'data-pvdak-password-toggle')!==false &&
     strpos($v['register'],'data-pvdak-password-toggle')!==false &&
     strpos($v['javascript'],"field.type = visible ? 'text' : 'password'")!==false,
+  'Premium profile has RTL hero, live editable form and proper navigation' =>
+    strpos($v['profile'], 'pvdak-profile-redesign') !== false &&
+    strpos($v['profile'], 'pvdak-profile-hero') !== false &&
+    strpos($v['profile'], 'pvdak-profile-editor') !== false &&
+    strpos($v['profile'], 'pvdak-profile-nav') !== false &&
+    strpos($v['profile'], 'wp_logout_url(') !== false &&
+    strpos($v['profile'], 'data-pvdak-profile-form') !== false &&
+    strpos($v['profile'], 'data-pvdak-profile-save') !== false,
+  'Profile styling is scoped and responsive with no remote font dependency' =>
+    strpos($v['css'], 'body.pvdak-profile-screen') !== false &&
+    strpos($v['css'], '.pvdak-profile-workspace{') !== false &&
+    strpos($v['css'], '.pvdak-profile-rail{') !== false &&
+    strpos($v['css'], '@media(max-width:540px)') !== false,
   'Profile keeps nonce and provides account return path' =>
     strpos($v['profile'],'pvdak_profile_save')!==false &&
     strpos($v['profile'],'pvdak_auth_account_url()')!==false &&
