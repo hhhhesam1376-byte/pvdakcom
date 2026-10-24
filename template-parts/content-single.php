@@ -35,16 +35,23 @@ $article_minutes = max( 1, (int) ceil( ( is_array( $article_words ) ? count( $ar
                 <a class="pvdak-article-comments-link" href="#respond">ثبت دیدگاه</a>
             <?php endif; ?>
         </div>
+        <nav class="pvdak-article-jumpnav" aria-label="دسترسی سریع به بخش‌های مقاله">
+          <a href="#pvdak-article-text">شروع مطالعه <span aria-hidden="true">↓</span></a>
+          <?php if ( comments_open() ): ?><a href="#respond">دیدگاه‌ها <span aria-hidden="true">↓</span></a><?php endif; ?>
+        </nav>
     </header>
     <?php if ( has_post_thumbnail() && ! post_password_required() ): ?>
         <figure class="pvdak-article-cover">
             <?php the_post_thumbnail( 'large', array( 'class' => 'featured-image', 'loading' => 'eager', 'fetchpriority' => 'high', 'alt' => '' ) ); ?>
         </figure>
     <?php endif; ?>
-    <div class="pvdak-article-reading">
+    <div id="pvdak-article-text" class="pvdak-article-reading" tabindex="-1">
         <div class="entry-content">
             <?php the_content(); ?>
             <?php wp_link_pages( array( 'before' => '<nav class="page-links" aria-label="' . esc_attr__( 'صفحه‌های محتوا', 'pvdak' ) . '">', 'after' => '</nav>' ) ); ?>
+        </div>
+        <div class="pvdak-article-service-note" role="note">
+          <span aria-hidden="true">ⓘ</span><p>این مطلب برای آگاهی عمومی تهیه شده است و جایگزین بررسی اختصاصی یک پرونده حقوقی نیست.</p>
         </div>
         <footer class="entry-taxonomies">
             <strong>دسته‌بندی مطلب</strong>
