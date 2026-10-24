@@ -889,3 +889,11 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Theme 0.8.37; Core 0.8.3 unchanged. New checks appended to existing source smoke test, old version-pin and article-content expectations repaired.
 - 20/20 separate GitHub-readback static contracts passed; CSS added braces 146 open/146 close. These checks do not prove PHP CLI lint, real WordPress execution, browser fidelity or multiuser privacy. No live deployment claimed until existing cPanel runner is observed.
 - No additional staging, Cron, deploy script, Actions, remote dependencies, secrets, plugin, user records, live registration or intake changes. See docs/WORK_BATCH_097.md.
+
+## 2026-10-24 — WORK_BATCH_098: twenty focused functional UX fixes
+- Resolved homepage legal-topic search fallback to native WordPress published-content search when no published topic Pages exist; added a client-only clear filter button and one-peek Swiper behavior under 401px plus tab-visibility/focus autoplay synchronization.
+- Prevented empty notice cards, added actual published timestamps and locally rendered SVG artwork for published news without featured image. Editorial process section now explicitly explains services are not open when intake is disabled.
+- Added logged-in-only global support shortcut, required header search, accessible mobile menu icon, keyboard focusable footer back-to-content, accurate Core-unavailable account fallback and visible login invalid-field feedback (not on rate limiting).
+- Added responsive 860/680/410px fixes and 20 tests to the existing account-experience smoke file; 13 additional static GitHub-readback invariants passed and the scoped CSS block has 59/59 balanced braces.
+- Theme 0.8.38 only. Existing Core 0.8.3 remains unchanged. Registration, case intake, maintenance, permissions, data stores, staging, Cron, workflow, secrets and deployment commands unchanged.
+- GitHub code/source verification is not real PHP/WordPress integration, mobile browser QA, nor cPanel DEPLOY_OK. See docs/WORK_BATCH_098.md.
