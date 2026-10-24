@@ -810,3 +810,9 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added synthetic non-mutating regression `tests/pvdak-core/triage-overview-smoke.php` and wired it into `scripts/check-batch-readonly.sh`.
 - A source delimiter-balance heuristic passed for both new/modified PHP files. **PHP lint, synthetic regression execution, real WordPress/multiuser, combined filters, SQL performance and browser/mobile acceptance remain unverified.** Do not claim runtime success.
 - Main/live, maintenance, registration, request/professional intake, assignments, user records, DB, server, Cron, staging and secrets unchanged. Core source requires separate controlled deployment when explicitly requested.
+
+## 2026-10-24 — REQUEST-TRIAGE-088 (feature branch only)
+- Completed 20 read-only triage improvements: canonical first postmeta values to avoid duplicate-row overcounts, explicit private links, exact site-local age boundaries, 1/3/14/60-day queues, future-date anomaly, oldest-first navigation, safe SQL failure notice, backlog ratio and responsive metadata-only UI. See `docs/WORK_BATCH_088.md`.
+- Updated the existing synthetic triage test with precise cutoffs, additional queues, query composition, canonical SQL checks and a simulated database failure; existing read-only runner remains the single test entry point.
+- GitHub read-back confirmed modified files and static delimiter balance; code guard assertions passed. **PHP lint, actual PHP synthetic execution, WordPress integration, two-account permissions, duplicate-meta database behavior, SQL performance and browser/mobile testing remain unverified.**
+- Source changes were committed only to `feature/pvdak-account-experience-080`. No production deployment, main update, intake/registration/maintenance change, data mutation, staging, secrets or cron changes.
