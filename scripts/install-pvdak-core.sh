@@ -45,7 +45,7 @@ wp eval '
 ' --path="$WP"
 NEW="$(sed -n 's/^ \* Version: //p' "$SOURCE/pvdak-core.php" | head -1)"
 OLD="$(sed -n 's/^ \* Version: //p' "$DEST/pvdak-core.php" | head -1)"
-[[ "$NEW" == "0.8.3" && -n "$OLD" ]] || { echo "STOP: unexpected Core versions" >&2; exit 1; }
+[[ "$NEW" == "0.8.4" && -n "$OLD" ]] || { echo "STOP: unexpected Core versions" >&2; exit 1; }
 if diff -qr "$SOURCE" "$DEST" >/dev/null; then
   echo "CORE_ALREADY_MATCHES_BUNDLE version=$NEW"; exit 0
 fi
@@ -92,7 +92,7 @@ diff -qr "$SOURCE" "$DEST" >/dev/null || { echo "STOP: installed copy mismatch" 
 wp plugin is-active pvdak-core --path="$WP" --skip-plugins --skip-themes
 wp eval-file "$ACCEPT" --path="$WP"
 wp eval '
-  if (!defined("PVDAK_CORE_VERSION") || PVDAK_CORE_VERSION !== "0.8.3") WP_CLI::error("Version mismatch");
+  if (!defined("PVDAK_CORE_VERSION") || PVDAK_CORE_VERSION !== "0.8.4") WP_CLI::error("Version mismatch");
   if (!pvdak_maintenance_enabled() || pvdak_core_intake_open() || pvdak_core_member_intake_open() || pvdak_core_subscription_gate_on()) WP_CLI::error("Safety gate changed");
   WP_CLI::line("PVDAK_POST_RELEASE_GATES_CLOSED");
 ' --path="$WP"
