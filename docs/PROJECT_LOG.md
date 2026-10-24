@@ -828,3 +828,5 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Implemented 20 operational fixes and UX improvements (see `docs/WORK_BATCH_090.md`): exact local age windows, future-date diagnostics, private scope, native status preservation, safe author intersection, deduplicated columns, guarded links and metadata anomaly warnings.
 - Added read-only bounded eight-item oldest-pending triage table: ID-only WP_Query, per-record capability/type/privacy/state/time checks, no request text, owner, notes or audit content.
 - PHP lint, full synthetic suite and real WordPress/browser/performance tests remain pending; no runtime claim. No production/main, maintenance, intake, registration, data, server or cron changes.
+
+- Batch 090 post-commit verification: 10 GitHub source read-back guards passed; PHP lint passed on locally reconstructed repaired smoke file and new priority helper snippet, and an isolated mocked priority fixture passed. This is NOT a full checkout PHP lint, WP runtime test or browser test. Follow-up test-string interpolation fixes committed.
