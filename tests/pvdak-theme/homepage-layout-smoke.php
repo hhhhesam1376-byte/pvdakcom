@@ -310,8 +310,8 @@ pvdak_layout_expect(
 
 // D05/D08/D10: execute the actual selectors against a synthetic *closed*
 // intake with misleading manual ACF URLs. Neither button may navigate.
-function pvdak_core_intake_open() { return false; }
-function pvdak_core_member_intake_open() { return false; }
+function pvdak_core_intake_open() { return ! empty( $GLOBALS['pvdak_test_intake_open'] ); }
+function pvdak_core_member_intake_open() { return ! empty( $GLOBALS['pvdak_test_member_open'] ); }
 require dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
 // Exercise the actual FAQ selector with one empty published Page.
 function get_option( $name ) { return 'page_on_front' === $name ? 1 : null; }
@@ -338,6 +338,83 @@ pvdak_layout_expect(
     '' === pvdak_home_join_url(),
     'Closed legal/member intake must win over explicit editor URL overrides'
 );
+
+// D05: enabled CTAs also require an actual published internal shortcode Page,
+// and each legal service must match its own request type (not a foreign form).
+$GLOBALS['pvdak_test_intake_open'] = true;
+$GLOBALS['pvdak_test_member_open'] = true;
+$GLOBALS['pvdak_test_shortcodes'] = true;
+$GLOBALS['pvdak_cta_pages'] = array(
+    40 => array( 'slug' => 'request-lawyer', 'content' => '[pvdak_request_form]', 'state' => 'publish' ),
+    41 => array( 'slug' => 'request-consultation', 'content' => '[pvdak_request_form type="consultation"]', 'state' => 'publish' ),
+    42 => array( 'slug' => 'request-question', 'content' => '[pvdak_request_form type="question"]', 'state' => 'publish' ),
+    43 => array( 'slug' => 'join-legal-community', 'content' => '[pvdak_professional_application]', 'state' => 'publish' ),
+    44 => array( 'slug' => 'wrong-type', 'content' => '[pvdak_request_form type="question"]', 'state' => 'publish' ),
+    45 => array( 'slug' => 'draft-join', 'content' => '[pvdak_professional_application]', 'state' => 'draft' ),
+);
+function get_post( $id ) {
+    $d = $GLOBALS['pvdak_cta_pages'][ $id ] ?? null;
+    if ( ! $d ) { return null; }
+    $post = new WP_Post( $id );
+    $post->post_type = 'page';
+    $post->post_status = $d['state'];
+    $post->post_content = $d['content'];
+    return $post;
+}
+function get_page_by_path( $slug, $output = OBJECT, $type = 'page' ) {
+    foreach ( $GLOBALS['pvdak_cta_pages'] as $id => $data ) {
+        if ( $slug === $data['slug'] ) { return get_post( $id ); }
+    }
+    return null;
+}
+function url_to_postid( $url ) {
+    if ( ! is_string( $url ) || ! preg_match( '~^https://example[.]invalid/page-([0-9]+)$~', $url, $m ) ) { return 0; }
+    return (int) $m[1];
+}
+function shortcode_exists( $tag ) {
+    return ! empty( $GLOBALS['pvdak_test_shortcodes'] ) &&
+        in_array( $tag, array( 'pvdak_request_form', 'pvdak_professional_application' ), true );
+}
+function has_shortcode( $content, $tag ) { return false !== strpos( $content, '[' . $tag ); }
+function get_shortcode_regex( $tags ) { return '(\\[?)(pvdak_request_form)([^\\]]*)(\\]?)'; }
+function shortcode_parse_atts( $raw ) {
+    return preg_match( '~type\\s*=\\s*["\\x27]?([a-z]+)~', $raw, $m ) ? array( 'type' => $m[1] ) : array();
+}
+function sanitize_key( $key ) { return strtolower( preg_replace( '/[^a-z0-9_-]/', '', $key ) ); }
+pvdak_layout_expect(
+    pvdak_home_service_url( 1 ) === 'https://example.invalid/page-40' &&
+    pvdak_home_service_url( 2 ) === 'https://example.invalid/page-41' &&
+    pvdak_home_service_url( 3 ) === 'https://example.invalid/page-42',
+    'D05: invalid manually entered URLs fall back to the matching published request forms'
+);
+$GLOBALS['quick_test_selection']['service_1_url'] = 'https://example.invalid/page-44';
+pvdak_layout_expect(
+    pvdak_home_service_url( 1 ) === 'https://example.invalid/page-40',
+    'D05: a published question form cannot masquerade as a lawyer-request form'
+);
+$GLOBALS['quick_test_selection']['service_1_url'] = 'https://example.invalid/page-40';
+pvdak_layout_expect(
+    pvdak_home_service_url( 1 ) === 'https://example.invalid/page-40',
+    'D05: published internal forms can be used as manual destinations'
+);
+$GLOBALS['quick_test_selection']['community_url'] = 'https://example.invalid/page-45';
+pvdak_layout_expect(
+    pvdak_home_join_url() === 'https://example.invalid/page-43',
+    'D05: draft registration Page is ignored in favor of published application'
+);
+$GLOBALS['pvdak_cta_pages'][43]['state'] = 'draft';
+pvdak_layout_expect(
+    pvdak_home_join_url() === '',
+    'D05: no active registration CTA without an accessible published form'
+);
+$GLOBALS['pvdak_test_shortcodes'] = false;
+pvdak_layout_expect(
+    pvdak_home_service_url( 1 ) === '' && pvdak_home_join_url() === '',
+    'D05: missing Core shortcodes never generate working-looking links'
+);
+$GLOBALS['pvdak_test_intake_open'] = false;
+$GLOBALS['pvdak_test_member_open'] = false;
+
 $collection_source = file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' );
 pvdak_layout_expect(
     false !== strpos( $collection_source, "array_filter( $published" ) &&
