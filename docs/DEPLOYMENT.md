@@ -1,6 +1,8 @@
 # PVDak cPanel deployment
 
-Deployment is being installed; successful host execution and cron scheduling must be confirmed from host output.
+**Live progress, remaining gates and version confidence:** [PROJECT_LOG.md](PROJECT_LOG.md). This deployment guide is not an alternative project tracker.
+
+Deployment uses the established private host runner and existing 15-minute cron. Each new theme release still needs a fresh host DEPLOY_OK and WP-CLI/browser verification; this document is about mechanics, not a current release-status claim.
 
 - Site: https://pvdak.com
 - Account home: /home/amirhoseainsabet
