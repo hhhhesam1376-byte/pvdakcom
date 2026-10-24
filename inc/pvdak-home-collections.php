@@ -87,27 +87,70 @@ function pvdak_home_faq_pages( $include_empty = false ) {
 }
 
 /**
- * Keep service CTAs synchronized with real published workflow pages.
- * ACF override takes precedence. Never link to drafts or inactive forms.
+ * Resolve only published internal Pages with the installed shortcode.
+ * A manual ACF URL is a suggestion, not proof that its workflow is usable.
  */
-function pvdak_home_service_url( $index ) {
-    // D05/D10: a manually configured link must never make a closed intake
-    // look usable in the employer-facing demo.
-    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
-    $manual = pvdak_home_value( 'service_' . absint( $index ) . '_url', '' );
-    if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
-    $slugs = array( 1 => 'request-lawyer', 2 => 'request-consultation', 3 => 'request-question' );
-    if ( ! isset( $slugs[ $index ] ) ) { return ''; }
-    $page = get_page_by_path( $slugs[ $index ], OBJECT, 'page' );
-    if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_request_form' ) ) { return ''; }
+function pvdak_home_shortcode_page_url( $candidate, $tag ) {
+    if ( ! is_string( $candidate ) || '' === trim( $candidate ) ||
+         ! shortcode_exists( $tag ) ) { return ''; }
+    $id = url_to_postid( trim( $candidate ) );
+    $page = $id ? get_post( $id ) : null;
+    if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+         'publish' !== $page->post_status ||
+         ! has_shortcode( $page->post_content, $tag ) ) { return ''; }
     return get_permalink( $page->ID );
 }
 
+/** Ensure each request CTA matches the exact legal-request type it advertises. */
+function pvdak_home_request_page_url( $candidate, $type ) {
+    $url = pvdak_home_shortcode_page_url( $candidate, 'pvdak_request_form' );
+    if ( ! $url ) { return ''; }
+    $page = get_post( url_to_postid( $url ) );
+    if ( ! $page instanceof WP_Post ) { return ''; }
+    $pattern = '/' . get_shortcode_regex( array( 'pvdak_request_form' ) ) . '/s';
+    if ( ! preg_match_all( $pattern, $page->post_content, $matches, PREG_SET_ORDER ) ) {
+        return '';
+    }
+    foreach ( $matches as $match ) {
+        if ( 'pvdak_request_form' !== $match[2] ) { continue; }
+        $atts = shortcode_parse_atts( $match[3] );
+        $actual = is_array( $atts ) && isset( $atts['type'] ) ?
+            sanitize_key( $atts['type'] ) : 'lawyer';
+        if ( $actual === $type ) { return $url; }
+    }
+    return '';
+}
+
+/**
+ * Service CTA overrides and default Pages are gated by a real form and type.
+ * A wrong/external/draft editor URL silently falls back to the canonical Page.
+ */
+function pvdak_home_service_url( $index ) {
+    if ( ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open() ) { return ''; }
+    $routes = array(
+        1 => array( 'request-lawyer', 'lawyer' ),
+        2 => array( 'request-consultation', 'consultation' ),
+        3 => array( 'request-question', 'question' ),
+    );
+    $index = absint( $index );
+    if ( ! isset( $routes[ $index ] ) ) { return ''; }
+    list( $slug, $type ) = $routes[ $index ];
+    $manual = pvdak_home_value( 'service_' . $index . '_url', '' );
+    $url = pvdak_home_request_page_url( $manual, $type );
+    if ( $url ) { return $url; }
+    $page = get_page_by_path( $slug, OBJECT, 'page' );
+    return $page instanceof WP_Post ?
+        pvdak_home_request_page_url( get_permalink( $page->ID ), $type ) : '';
+}
+
+/** Membership CTA must lead to a published internal application form. */
 function pvdak_home_join_url() {
-    if ( ! function_exists( 'pvdak_core_member_intake_open' ) || ! pvdak_core_member_intake_open() ) { return ''; }
+    if ( ! function_exists( 'pvdak_core_member_intake_open' ) ||
+         ! pvdak_core_member_intake_open() ) { return ''; }
     $manual = pvdak_home_value( 'community_url', '' );
-    if ( is_string( $manual ) && '' !== trim( $manual ) ) { return $manual; }
+    $url = pvdak_home_shortcode_page_url( $manual, 'pvdak_professional_application' );
+    if ( $url ) { return $url; }
     $page = get_page_by_path( 'join-legal-community', OBJECT, 'page' );
-    if ( ! $page || 'publish' !== $page->post_status || ! has_shortcode( $page->post_content, 'pvdak_professional_application' ) ) { return ''; }
-    return get_permalink( $page->ID );
+    return $page instanceof WP_Post ?
+        pvdak_home_shortcode_page_url( get_permalink( $page->ID ), 'pvdak_professional_application' ) : '';
 }
