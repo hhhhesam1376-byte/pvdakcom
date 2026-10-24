@@ -79,7 +79,7 @@
                     prevEl: prev
                 },
                 autoplay: reduceMotion ? false : {
-                    delay: 3000,
+                    delay: 4700,
                     disableOnInteraction: false,
                     pauseOnMouseEnter: true
                 },
