@@ -59,6 +59,7 @@ $svg_icons = array(
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
         <label class="screen-reader-text" for="pvdak-topic-input"><?php echo $all_legal_pages ? 'موضوع حقوقی' : 'جست‌وجوی مطالب سایت'; ?></label>
         <input id="pvdak-topic-input" type="search" name="<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>" value="<?php echo esc_attr( $all_legal_pages ? $legal_search_term : get_search_query() ); ?>" maxlength="100" placeholder="<?php echo esc_attr( $all_legal_pages ? pvdak_home_value( 'hero_search_label' ) : 'جست‌وجو در مطالب حقوقی سایت…' ); ?>" required>
+        <?php if ( $all_legal_pages ): ?><button type="button" class="pvdak-home-clear-search" data-pvdak-clear-search hidden aria-label="پاک کردن جست‌وجوی موضوع">پاک کردن ×</button><?php endif; ?>
         <button type="submit"><?php echo $all_legal_pages ? 'جست‌وجوی موضوع' : 'جست‌وجوی مطالب'; ?></button>
       </form>
       <p class="pvdak-home-process-hint"><span aria-hidden="true">✓</span> <?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
