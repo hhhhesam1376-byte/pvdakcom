@@ -109,4 +109,39 @@ pvdak_core_case_ops_query( $q );
 check_ops( '' === $q->get( 'meta_query' ), 'unauthorized ignored' );
 check_ops( array( 'original' => 'keep' ) === pvdak_core_case_ops_row_actions( array( 'original' => 'keep' ), (object) array(
     'ID' => 12, 'post_type' => 'pvdak_request', 'post_status' => 'private' ) ), 'unauthorized row action hidden' );
+
+$GLOBALS['case_allowed'] = true;
+foreach ( array(
+    'today' => array( 'after' => '2026-10-24 00:00:00', 'before' => '2026-10-24 12:00:00' ),
+    'last7' => array( 'after' => '2026-10-17 12:00:00', 'before' => '2026-10-24 12:00:00' ),
+    'older7' => array( 'before' => '2026-10-17 12:00:00' ),
+    'older30' => array( 'before' => '2026-09-24 12:00:00' ),
+    'future' => array( 'after' => '2026-10-24 12:00:00' ),
+) as $age => $expected ) {
+    $_GET = array( 'pvdak_case_age' => $age );
+    $q = new PvdakOpsQuery( array( 'post_type' => 'pvdak_request' ) );
+    pvdak_core_case_admin_query( $q );
+    $date = $q->get( 'date_query' )[0];
+    foreach ( $expected as $field => $value ) {
+        check_ops( $value === $date[ $field ], $age . ' exact ' . $field );
+    }
+    check_ops( 'post_date' === $date['column'], $age . ' post_date' );
+    check_ops( 'private' === $q->get( 'post_status' ), $age . ' private default' );
+}
+$_GET = array( 'pvdak_case_owner' => '42' );
+$q = new PvdakOpsQuery( array( 'post_type' => 'pvdak_request', 'author' => 41 ) );
+pvdak_core_case_admin_query( $q );
+check_ops( array( 0 ) === $q->get( 'post__in' ), 'author intersection prevents widening' );
+$_GET = array( 'pvdak_case_age' => 'last7', 'post_status' => 'draft' );
+$q = new PvdakOpsQuery( array( 'post_type' => 'pvdak_request', 'post_status' => 'draft',
+    'date_query' => array( array( 'before' => '2026-11-01' ) ) ) );
+pvdak_core_case_admin_query( $q );
+check_ops( 'draft' === $q->get( 'post_status' ), 'native status preserved by case filters' );
+check_ops( '2026-11-01' === $q->get( 'date_query' )[0][0]['before'], 'existing date query preserved' );
+$columns = pvdak_core_case_ops_columns( array( 'pvdak_kind' => 'duplicate type',
+    'pvdak_state' => 'duplicate state', 'pvdak_owner' => 'duplicate owner', 'title' => 'Title' ) );
+check_ops( ! isset( $columns['pvdak_kind'], $columns['pvdak_state'], $columns['pvdak_owner'] ),
+    'duplicate list columns removed' );
+check_ops( isset( $columns['pvdak_case_kind'], $columns['pvdak_case_state'], $columns['pvdak_case_author'] ),
+    'replacement columns present' );
 echo "PVDAK_OPS_SYNTHETIC_OK: $count checks; no WordPress or database involved\n";

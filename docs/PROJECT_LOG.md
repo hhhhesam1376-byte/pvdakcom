@@ -821,3 +821,10 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - Added 20 read-only admin request queue enhancements: assignment presence, inconsistent state detection, modified-age filters, private scope, status preservation, metadata-only columns, future-date warnings and guarded assignment links.
 - New synthetic operational queue test added to existing readonly runner; source checks extended. GitHub source changes committed only; PHP lint and real WordPress tests remain pending.
 - No production deployment, main branch, intake, maintenance, roles, database or stored records changed. See `docs/WORK_BATCH_089.md`.
+
+
+## 2026-10-24 — WORK-BATCH-090 (development branch only)
+- Repaired malformed PHP source regression `tests/pvdak-core/request-admin-smoke.php` from batch 089; added focused date/filter/permission regression assertions.
+- Implemented 20 operational fixes and UX improvements (see `docs/WORK_BATCH_090.md`): exact local age windows, future-date diagnostics, private scope, native status preservation, safe author intersection, deduplicated columns, guarded links and metadata anomaly warnings.
+- Added read-only bounded eight-item oldest-pending triage table: ID-only WP_Query, per-record capability/type/privacy/state/time checks, no request text, owner, notes or audit content.
+- PHP lint, full synthetic suite and real WordPress/browser/performance tests remain pending; no runtime claim. No production/main, maintenance, intake, registration, data, server or cron changes.

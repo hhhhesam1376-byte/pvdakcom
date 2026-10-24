@@ -157,6 +157,73 @@ function pvdak_core_triage_link_card( $title, $count, $url, $hint = '' ) {
     echo '</a>';
 }
 
+/**
+ * Read-only shortlist of the eight oldest private requests awaiting review.
+ * Fetch IDs only, then re-check post type, visibility, state and per-post access.
+ */
+function pvdak_core_triage_priority_cases() {
+    if ( ! pvdak_core_triage_can_manage() ) { return array(); }
+    $query = new WP_Query( array(
+        'post_type' => 'pvdak_request',
+        'post_status' => 'private',
+        'posts_per_page' => 8,
+        'no_found_rows' => true,
+        'fields' => 'ids',
+        'orderby' => array( 'date' => 'ASC', 'ID' => 'ASC' ),
+        'date_query' => array( array( 'column' => 'post_date',
+            'before' => current_datetime()->format( 'Y-m-d H:i:s' ), 'inclusive' => true ) ),
+        'meta_query' => array( array( 'key' => '_pvdak_request_state',
+            'value' => array( 'submitted', 'review' ), 'compare' => 'IN' ) ),
+        'suppress_filters' => false,
+    ) );
+    $cases = array();
+    foreach ( $query->posts as $raw_id ) {
+        $id = absint( $raw_id );
+        if ( ! $id || ! current_user_can( 'edit_post', $id ) ||
+            'pvdak_request' !== get_post_type( $id ) ||
+            'private' !== get_post_status( $id ) ) { continue; }
+        $state = get_post_meta( $id, '_pvdak_request_state', true );
+        if ( ! in_array( $state, array( 'submitted', 'review' ), true ) ) { continue; }
+        $timestamp = (int) get_post_time( 'U', true, $id );
+        if ( ! $timestamp || $timestamp > current_time( 'timestamp', true ) ) { continue; }
+        $cases[] = array( 'id' => $id, 'state' => $state, 'timestamp' => $timestamp,
+            'kind' => get_post_meta( $id, '_pvdak_request_type', true ) );
+    }
+    return $cases;
+}
+
+/** Never render case descriptions, owner identities, notes or audit bodies. */
+function pvdak_core_triage_priority_table( $cases, $base ) {
+    echo '<h2 id="pvdak-priority-heading">قدیمی‌ترین درخواست‌های منتظر بررسی</h2>';
+    echo '<p class="description">حداکثر هشت مورد، فقط اطلاعات عملیاتی؛ متن پرونده و اطلاعات مراجعه‌کننده نمایش داده نمی‌شود.</p>';
+    if ( ! $cases ) {
+        echo '<p class="pvdak-triage-note">درخواست قابل نمایش در فهرست اولویت وجود ندارد.</p>';
+        return;
+    }
+    $types = pvdak_core_request_types();
+    $states = pvdak_core_request_statuses();
+    echo '<div class="pvdak-triage-table-wrap" role="region" tabindex="0" aria-label="جدول اولویت رسیدگی">';
+    echo '<table class="widefat striped pvdak-triage-table"><caption class="screen-reader-text">قدیمی‌ترین درخواست‌های خصوصی در انتظار رسیدگی</caption>';
+    echo '<thead><tr><th scope="col">پیگیری</th><th scope="col">نوع خدمت</th><th scope="col">وضعیت</th><th scope="col">زمان انتظار</th><th scope="col">اقدام</th></tr></thead><tbody>';
+    foreach ( $cases as $case ) {
+        $id = $case['id'];
+        $edit = get_edit_post_link( $id );
+        if ( ! $edit ) { continue; }
+        $age = human_time_diff( $case['timestamp'], current_time( 'timestamp', true ) );
+        $kind = isset( $types[ $case['kind'] ] ) ? $types[ $case['kind'] ] : 'نوع نامشخص';
+        $state = isset( $states[ $case['state'] ] ) ? $states[ $case['state'] ] : 'نیازمند بررسی';
+        echo '<tr><th scope="row"><a href="' . esc_url( $edit ) . '">#' . esc_html( $id ) . '</a></th>';
+        echo '<td>' . esc_html( $kind ) . '</td><td>' . esc_html( $state ) . '</td>';
+        echo '<td><time datetime="' . esc_attr( gmdate( 'c', $case['timestamp'] ) ) . '">' .
+            esc_html( $age . ' پیش' ) . '</time></td>';
+        echo '<td><a class="button button-small" href="' . esc_url( $edit ) . '">بررسی درخواست #' .
+            esc_html( $id ) . '</a></td></tr>';
+    }
+    echo '</tbody></table></div>';
+    echo '<p><a href="' . esc_url( add_query_arg( array( 'pvdak_filter_queue' => 'pending',
+        'pvdak_case_order' => 'oldest' ), $base ) ) . '">مشاهده تمام موارد در انتظار به‌ترتیب قدمت ←</a></p>';
+}
+
 function pvdak_core_triage_page() {
     if ( ! pvdak_core_triage_can_manage() ) {
         wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
@@ -188,6 +255,10 @@ function pvdak_core_triage_page() {
     .pvdak-triage-meta{color:#50575e;font-size:12px}
     .pvdak-triage-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
     .pvdak-triage .button{white-space:normal;text-align:center}
+    .pvdak-triage-table-wrap{max-width:100%;overflow-x:auto;margin:12px 0 18px;border-radius:8px}
+    .pvdak-triage-table{min-width:580px}
+    .pvdak-triage-table th,.pvdak-triage-table td{vertical-align:middle;padding:11px}
+    .pvdak-triage-table-wrap:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
     @media(max-width:600px){.pvdak-triage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pvdak-triage-card{padding:12px;min-width:0}}
     @media(max-width:420px){.pvdak-triage-grid{grid-template-columns:minmax(0,1fr)}}
     </style>';
@@ -233,6 +304,7 @@ function pvdak_core_triage_page() {
     } elseif ( 0 === $snapshot['pending'] ) {
         echo '<p class="pvdak-triage-note">درخواست ثبت‌شده یا در حال بررسی در صف فعلی وجود ندارد.</p>';
     }
+    pvdak_core_triage_priority_table( pvdak_core_triage_priority_cases(), $base );
     echo '<h2>نوع خدمت درخواستی</h2><div class="pvdak-triage-grid">';
     foreach ( $types as $key => $label ) {
         pvdak_core_triage_link_card( $label, $snapshot['types'][ $key ],

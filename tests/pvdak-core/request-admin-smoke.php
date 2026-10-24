@@ -31,19 +31,18 @@ $checks = array(
     'reset filters' => strpos( $src, 'پاک‌کردن فیلترهای صف' ) !== false,
     'bootstrapped' => strpos( $boot, '\'/includes/request-admin.php\'' ) !== false,
     'operational filters' => strpos( $src, 'function pvdak_core_case_ops_filters()' ) !== false,
-    'assignment validity' => strpos( $src, "'^[1-9][0-9]* strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
-);
-foreach ( $checks as $label => $ok ) {
-    if ( ! $ok ) { fwrite( STDERR, "PVDAK_CASE_ADMIN_FAIL: $label\n" ); exit( 1 ); }
-}
-echo 'PVDAK_CASE_ADMIN_SOURCE_OK: ' . count( $checks ) . " static checks; WordPress runtime not tested\n";
-" ) !== false,
+    'assignment validity' => strpos( $src, '^[1-9][0-9]*$' ) !== false,
     'consistency checks' => strpos( $src, "'matched_missing'" ) !== false && strpos( $src, "'assigned_pending'" ) !== false,
     'modified date column' => strpos( $src, "'post_modified'" ) !== false,
     'explicit status preservation' => strpos( $src, "if ( ! $query->get( 'post_status' )" ) !== false,
     'per record capability' => strpos( $src, "current_user_can( 'edit_post', $post_id )" ) !== false,
     'future age flag' => strpos( $src, 'تاریخ ثبت آینده</strong>' ) !== false,
     'assignment review link' => strpos( $src, "'post_row_actions'" ) !== false,
+    'private default for custom filters' => strpos( $src, "'post_status', 'private'" ) !== false,
+    'precise age cutoffs' => strpos( $src, 'pvdak_core_triage_cutoff( 7, $now )' ) !== false,
+    'future registration filter' => strpos( $src, "'future' === $age" ) !== false,
+    'deduplicated admin columns' => strpos( $src, "unset( $columns['pvdak_kind']" ) !== false,
+    'invalid professional warning' => strpos( $src, 'پرونده حرفه‌ای نامعتبر' ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {

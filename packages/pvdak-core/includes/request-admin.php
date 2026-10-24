@@ -13,7 +13,7 @@ function pvdak_core_case_admin_allowed() {
 /** Validate all URL inputs before they can affect WP_Query. */
 function pvdak_core_case_admin_filters() {
     $choices = array(
-        'pvdak_case_age' => array( 'today', 'last7', 'older7', 'older30' ),
+        'pvdak_case_age' => array( 'today', 'last7', 'older7', 'older30', 'future' ),
         'pvdak_case_notes' => array( 'yes', 'no' ),
         'pvdak_case_audit' => array( 'yes', 'no' ),
         'pvdak_case_order' => array( 'newest', 'oldest' ),
@@ -61,6 +61,7 @@ function pvdak_core_case_admin_controls( $post_type ) {
         'last7' => 'هفت روز اخیر',
         'older7' => 'قدیمی‌تر از هفت روز',
         'older30' => 'قدیمی‌تر از سی روز',
+        'future' => 'تاریخ ثبت آینده / غیرعادی',
     ), $f['pvdak_case_age'] );
     pvdak_core_case_admin_select( 'pvdak_case_notes', 'یادداشت داخلی', array(
         'yes' => 'دارای یادداشت', 'no' => 'بدون یادداشت',
@@ -90,6 +91,10 @@ function pvdak_core_case_admin_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
         'pvdak_request' !== $query->get( 'post_type' ) || ! pvdak_core_case_admin_allowed() ) { return; }
     $f = pvdak_core_case_admin_filters();
+    if ( array_filter( $f ) && ! $query->get( 'post_status' ) &&
+        ( ! isset( $_GET['post_status'] ) || '' === $_GET['post_status'] ) ) {
+        $query->set( 'post_status', 'private' );
+    }
     $conditions = array();
     if ( is_int( $f['pvdak_case_topic'] ) && $f['pvdak_case_topic'] ) {
         $conditions[] = array( 'key' => '_pvdak_legal_landing_id', 'value' => $f['pvdak_case_topic'], 'compare' => '=' );
@@ -123,17 +128,27 @@ function pvdak_core_case_admin_query( $query ) {
         $query->set( 'post__in', $ids ? array_values( $ids ) : array( 0 ) );
     }
     if ( $f['pvdak_case_owner'] ) {
-        $query->set( 'author', $f['pvdak_case_owner'] );
+        $existing_author = absint( $query->get( 'author' ) );
+        if ( $existing_author && $existing_author !== $f['pvdak_case_owner'] ) {
+            $query->set( 'post__in', array( 0 ) ); // Never broaden an existing author restriction.
+        } else {
+            $query->set( 'author', $f['pvdak_case_owner'] );
+        }
     }
     $now = current_datetime();
     $age = $f['pvdak_case_age'];
     $date = array();
     if ( 'today' === $age ) {
-        $date = array( 'after' => $now->format( 'Y-m-d' ), 'inclusive' => true );
+        $date = array( 'after' => $now->format( 'Y-m-d 00:00:00' ),
+            'before' => $now->format( 'Y-m-d H:i:s' ), 'inclusive' => true );
     } elseif ( 'last7' === $age ) {
-        $date = array( 'after' => $now->modify( '-7 days' )->format( 'Y-m-d' ), 'inclusive' => true );
+        $date = array( 'after' => pvdak_core_triage_cutoff( 7, $now ),
+            'before' => $now->format( 'Y-m-d H:i:s' ), 'inclusive' => true );
     } elseif ( 'older7' === $age || 'older30' === $age ) {
-        $date = array( 'before' => $now->modify( 'older7' === $age ? '-7 days' : '-30 days' )->format( 'Y-m-d' ), 'inclusive' => false );
+        $date = array( 'before' => pvdak_core_triage_cutoff( 'older7' === $age ? 7 : 30, $now ),
+            'inclusive' => false );
+    } elseif ( 'future' === $age ) {
+        $date = array( 'after' => $now->format( 'Y-m-d H:i:s' ), 'inclusive' => false );
     }
     if ( $date ) {
         $previous = $query->get( 'date_query' );
@@ -164,7 +179,10 @@ add_filter( 'manage_pvdak_request_posts_columns', 'pvdak_core_case_admin_columns
 function pvdak_core_case_admin_column_content( $column, $post_id ) {
     if ( ! pvdak_core_case_admin_allowed() || ! current_user_can( 'edit_post', $post_id ) ) { return; }
     if ( 'pvdak_case_ref' === $column ) {
-        echo '<code>#' . esc_html( absint( $post_id ) ) . '</code>';
+        $label = '#' . absint( $post_id );
+        $edit_url = get_edit_post_link( $post_id );
+        echo $edit_url ? '<a href="' . esc_url( $edit_url ) . '"><code>' . esc_html( $label ) . '</code></a>'
+            : '<code>' . esc_html( $label ) . '</code>';
     } elseif ( 'pvdak_case_topic_column' === $column ) {
         $id = absint( get_post_meta( $post_id, '_pvdak_legal_landing_id', true ) );
         echo $id && pvdak_core_valid_specialty( $id ) ? esc_html( get_the_title( $id ) ) : 'ثبت‌نشده / قدیمی';
@@ -183,6 +201,10 @@ function pvdak_core_case_admin_column_content( $column, $post_id ) {
         $modified = get_post_modified_time( 'Y-m-d H:i', false, $post_id );
         echo $modified ? '<time datetime="' . esc_attr( get_post_modified_time( 'c', false, $post_id ) ) .
             '">' . esc_html( $modified ) . '</time>' : '—';
+        $modified_utc = get_post_modified_time( 'U', true, $post_id );
+        if ( $modified_utc && $modified_utc > current_time( 'timestamp', true ) ) {
+            echo ' <strong class="pvdak-case-alert">زمان آینده</strong>';
+        }
     }
 }
 add_action( 'manage_pvdak_request_posts_custom_column', 'pvdak_core_case_admin_column_content', 30, 2 );
@@ -307,6 +329,8 @@ add_action( 'pre_get_posts', 'pvdak_core_case_ops_query', 40 );
 /** Compact summaries only; per-record capability checks prevent disclosure. */
 function pvdak_core_case_ops_columns( $columns ) {
     if ( ! pvdak_core_case_admin_allowed() ) { return $columns; }
+    // The original Core list already supplies these fields; avoid three duplicate columns.
+    unset( $columns['pvdak_kind'], $columns['pvdak_state'], $columns['pvdak_owner'] );
     $columns['pvdak_case_kind'] = 'نوع خدمت';
     $columns['pvdak_case_state'] = 'وضعیت رسیدگی';
     $columns['pvdak_case_assignee'] = 'ارجاع داخلی';
@@ -333,8 +357,9 @@ function pvdak_core_case_ops_column_content( $column, $post_id ) {
             echo 'matched' === $state ? '<strong class="pvdak-case-alert">ارجاع ناقص؛ بررسی شود</strong>' : '—';
         } else {
             echo '<code>#' . esc_html( $profile_id ) . '</code>';
-            if ( 'pvdak_professional' === get_post_type( $profile_id ) &&
-                current_user_can( 'edit_post', $profile_id ) ) {
+            if ( 'pvdak_professional' !== get_post_type( $profile_id ) ) {
+                echo ' <strong class="pvdak-case-alert">پرونده حرفه‌ای نامعتبر</strong>';
+            } elseif ( current_user_can( 'edit_post', $profile_id ) ) {
                 $link = get_edit_post_link( $profile_id );
                 if ( $link ) { echo ' <a href="' . esc_url( $link ) . '">پرونده حرفه‌ای</a>'; }
             }
@@ -344,7 +369,8 @@ function pvdak_core_case_ops_column_content( $column, $post_id ) {
         }
     } elseif ( 'pvdak_case_author' === $column ) {
         $owner = absint( get_post_field( 'post_author', $post_id ) );
-        echo $owner ? '<code>#' . esc_html( $owner ) . '</code>' : '—';
+        echo $owner ? '<code>#' . esc_html( $owner ) . '</code>'
+            : '<strong class="pvdak-case-alert">ثبت‌کننده نامشخص</strong>';
     }
 }
 add_action( 'manage_pvdak_request_posts_custom_column', 'pvdak_core_case_ops_column_content', 40, 2 );
