@@ -82,8 +82,8 @@ if PREFLIGHT_OUTPUT="$(bash "$PREFLIGHT" "$STAGE" 2>&1)" &&
    [[ "$PREFLIGHT_OUTPUT" == *"PVDAK_BATCH_PREFLIGHT_OK:"* ]]; then
   log "SOURCE_PREFLIGHT_OK $SHA"
 else
-  printf '%s\\n' "$SHA" > "$STATE/failed"
-  printf '%s\\n' "$PREFLIGHT_OUTPUT" | tail -n 16 >&2
+  printf '%s\n' "$SHA" > "$STATE/failed"
+  printf '%s\n' "$PREFLIGHT_OUTPUT" | tail -n 16 >&2
   die "SOURCE_PREFLIGHT_FAILED $SHA; no live files changed"
 fi
 # Check the existing site before changing files. Check it again after deployment.
