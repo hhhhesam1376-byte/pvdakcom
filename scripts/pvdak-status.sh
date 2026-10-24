@@ -215,7 +215,10 @@ if [[ "$MODE" == "--test" ]]; then
   SELFTEST="$SCRIPTS/pvdak-anonymous-counter-selftest.php"
   if [[ -f "$SELFTEST" ]] && command -v php >/dev/null 2>&1; then
     SELFTEST_LOG="$(mktemp)"
-    if php "$SELFTEST" pass >"$SELFTEST_LOG" 2>&1 && php "$SELFTEST" fail >>"$SELFTEST_LOG" 2>&1; then
+    if php "$SELFTEST" pass >"$SELFTEST_LOG" 2>&1 &&
+       php "$SELFTEST" fail >>"$SELFTEST_LOG" 2>&1 &&
+       grep -Fq 'COUNTER_SELFTEST_OK: mode=pass checks=19 failures=0' "$SELFTEST_LOG" &&
+       grep -Fq 'COUNTER_SELFTEST_OK: mode=fail checks=19 failures=1' "$SELFTEST_LOG"; then
       value "Diagnostic fail-closed self-test" "PASS"
       grep -E 'COUNTER_SELFTEST_OK:' "$SELFTEST_LOG" | tail -n 2 || true
     else
@@ -232,7 +235,9 @@ if [[ "$MODE" == "--test" ]]; then
   if [[ "$WP_AVAILABLE" == "YES" ]] && wp plugin is-active pvdak-core --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
     ROLE_AUDIT="$SCRIPTS/pvdak-role-capabilities-smoke.php"
     ROLE_LOG="$(mktemp)"
-    if [[ -f "$ROLE_AUDIT" ]] && wp eval-file "$ROLE_AUDIT" --path="$WP_ROOT" >"$ROLE_LOG" 2>&1; then
+    if [[ -f "$ROLE_AUDIT" ]] &&
+       wp eval-file "$ROLE_AUDIT" --path="$WP_ROOT" >"$ROLE_LOG" 2>&1 &&
+       grep -Eq 'PVDAK_ROLE_CAPABILITIES: checks=68 failures=0 expected=68' "$ROLE_LOG"; then
       value "Account role permissions" "PASS"
       grep -E 'PVDAK_ROLE_CAPABILITIES:' "$ROLE_LOG" | tail -n 1 || true
     else
@@ -242,7 +247,8 @@ if [[ "$MODE" == "--test" ]]; then
     fi
     rm -f "$ROLE_LOG"
   else
-    value "Account role permissions" "SKIPPED: Core not active"
+    value "Account role permissions" "FAIL: D04 requires live active Core and 68 successful assertions"
+    failure=1
   fi
   # Separate, anonymous in-memory WordPress test. Never creates real users
   # and never reads or prints private cases.
@@ -253,7 +259,8 @@ if [[ "$MODE" == "--test" ]]; then
       failure=1
     else
       AUDIT_LOG="$(mktemp)"
-      if wp eval-file "$LIVE_AUDIT" --path="$WP_ROOT" >"$AUDIT_LOG" 2>&1; then
+      if wp eval-file "$LIVE_AUDIT" --path="$WP_ROOT" >"$AUDIT_LOG" 2>&1 &&
+         grep -Eq 'PVDAK_ANON_LIVE_SMOKE: checks=19 failures=0 expected=19' "$AUDIT_LOG"; then
         value "Anonymous live WP checks" "PASS"
         grep -E 'PVDAK_ANON_LIVE_SMOKE:' "$AUDIT_LOG" | tail -n 1 || true
       else
@@ -264,7 +271,8 @@ if [[ "$MODE" == "--test" ]]; then
       rm -f "$AUDIT_LOG"
     fi
   else
-    value "Anonymous live WP checks" "SKIPPED: Core not active"
+    value "Anonymous live WP checks" "FAIL: D04 requires live active Core and 19 successful assertions"
+    failure=1
   fi
 fi
 echo "PVDAK_DIAGNOSTIC_END status=$([[ $failure -eq 0 ]] && echo OK || echo NEEDS_REVIEW)"
