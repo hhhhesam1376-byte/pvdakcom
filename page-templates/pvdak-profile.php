@@ -28,20 +28,7 @@ get_header(); ?>
       <h1>پروفایل من</h1>
       <p>اطلاعات حساب خود را به‌روز نگه دارید و از همین بخش به تنظیمات و خدمات حساب دسترسی داشته باشید.</p>
     </div>
-    <div class="pvdak-profile-hero-art" aria-hidden="true">
-      <svg viewBox="0 0 460 210" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-        <circle cx="212" cy="112" r="115" stroke="white" stroke-opacity=".13" stroke-width="1.5"/>
-        <circle cx="212" cy="112" r="82" stroke="white" stroke-opacity=".13"/>
-        <path d="M93 176h242M114 162h199M140 146h157" stroke="#a7deef" stroke-width="5" stroke-linecap="round"/>
-        <path d="M212 36v108m-48 0h96m-52-108h8m-76 42h145" stroke="#efc779" stroke-width="5" stroke-linecap="round"/>
-        <path d="M144 78l-30 52m30-52l30 52M280 78l-30 52m30-52l30 52" stroke="#d1effd" stroke-width="2.8"/>
-        <path d="M105 130q39 41 78 0M241 130q39 41 78 0" stroke="#efc779" stroke-width="5" stroke-linecap="round"/>
-        <path d="M212 31l-8 15h16z" fill="#efc779"/>
-        <rect x="24" y="122" width="76" height="46" rx="6" fill="#4e93cc" opacity=".75" transform="rotate(-11 24 122)"/>
-        <rect x="41" y="119" width="76" height="46" rx="6" fill="#83c4ec" opacity=".55" transform="rotate(-11 41 119)"/>
-        <rect x="347" y="127" width="65" height="48" rx="6" fill="#50b7b0" opacity=".75" transform="rotate(8 347 127)"/>
-      </svg>
-    </div>
+    <img class="pvdak-profile-hero-photo" src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/pvdak-profile-hero.svg' ); ?>" alt="" width="900" height="360" decoding="async">
     <span class="pvdak-profile-hero-badge" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/></svg>
     </span>
@@ -101,6 +88,7 @@ get_header(); ?>
           </div>
         </form>
 
+        <div class="pvdak-profile-bottom">
         <div class="pvdak-profile-security">
           <span class="pvdak-profile-security-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -114,7 +102,11 @@ get_header(); ?>
             <?php endif; ?>
           </div>
         </div>
-        <a class="pvdak-profile-back" href="<?php echo esc_url( $account_url ); ?>">← بازگشت به پنل من</a>
+          <a class="pvdak-profile-back" href="<?php echo esc_url( $account_url ); ?>">← بازگشت به پنل من</a>
+        </div>
+        <span class="pvdak-profile-shield-art" aria-hidden="true">
+          <svg viewBox="0 0 140 150" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="69" cy="83" r="63" fill="#e2f6ff"/><circle cx="100" cy="112" r="32" fill="#c9f4e9"/><circle cx="28" cy="109" r="22" fill="#def2fc"/><path d="M70 10 117 27v44c0 34-23 58-47 70C46 129 23 105 23 71V27L70 10Z" fill="#1a6bbb" stroke="white" stroke-width="6"/><path d="M70 20 106 33v36c0 28-17 48-36 59-19-11-36-31-36-59V33l36-13Z" fill="#2084cf"/><path d="m46 70 15 16 32-37" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
       </div>
     </section>
 
