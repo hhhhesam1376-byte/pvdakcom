@@ -1,7 +1,7 @@
 <?php
 /** No WP/DB: privacy-safe tests for hero, four editor-picked Pages & topics carousel. */
 define( 'ABSPATH', __DIR__ );
-class WP_Post { public $ID; function __construct( $id ) { $this->ID = $id; } }
+class WP_Post { public $ID; public $post_content = ''; function __construct( $id ) { $this->ID = $id; } }
 $GLOBALS['quick_test_selection'] = array();
 $GLOBALS['quick_test_menu'] = array();
 $GLOBALS['quick_test_pages'] = array();
@@ -301,6 +301,24 @@ pvdak_layout_expect(
 function pvdak_core_intake_open() { return false; }
 function pvdak_core_member_intake_open() { return false; }
 require dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
+// Exercise the actual FAQ selector with one empty published Page.
+function get_option( $name ) { return 'page_on_front' === $name ? 1 : null; }
+function get_field( $name, $page_id ) {
+    return 'faq_parent_page' === $name && 1 === (int) $page_id ? 20 : null;
+}
+function get_posts( $args ) { return $GLOBALS['pvdak_faq_fixture']; }
+function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
+function strip_shortcodes( $value ) { return preg_replace( '/\\[[^\\]]+\\]/', '', $value ); }
+$GLOBALS['quick_test_pages'][20] = 'publish';
+$faq_a = new WP_Post( 21 ); $faq_a->post_content = '<p>پاسخ واقعی اول</p>';
+$faq_b = new WP_Post( 22 ); $faq_b->post_content = '   ';
+$faq_c = new WP_Post( 23 ); $faq_c->post_content = '<p>پاسخ دوم</p>';
+$GLOBALS['pvdak_faq_fixture'] = array( $faq_a, $faq_b, $faq_c );
+pvdak_layout_expect(
+    count( pvdak_home_faq_pages() ) === 2 &&
+    count( pvdak_home_faq_pages( true ) ) === 3,
+    'D08: public selector removes the empty FAQ while admin sees all published Pages'
+);
 $GLOBALS['quick_test_selection']['service_1_url'] = 'https://example.invalid/manual-request';
 $GLOBALS['quick_test_selection']['community_url'] = 'https://example.invalid/manual-registration';
 pvdak_layout_expect(
