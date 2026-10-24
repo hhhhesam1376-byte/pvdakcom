@@ -350,3 +350,42 @@ a.pvdak-related-card:hover,a.pvdak-related-card:focus-visible {transform:transla
   .pvdak-editorial-article .pvdak-article-hero h1{font-size:clamp(23px,5.7vw,29px)}
 }
 @media(prefers-reduced-motion:reduce){.pvdak-related-articles .pvdak-related-card{transition:none}}
+
+
+/* Batch 097: Heading-based, rendered-content Table of Contents. */
+.pvdak-article-toc{
+  margin:20px 0 26px;padding:18px 22px;
+  border-radius:17px;border:1px solid #d6e6f4;
+  background:linear-gradient(120deg,#f1f8ff,#fff);
+  box-shadow:0 7px 23px #123b6c0c
+}
+.pvdak-article-toc-heading{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  color:#134975;margin-bottom:11px
+}
+.pvdak-article-toc-heading>span:first-child{
+  display:grid;place-items:center;width:32px;height:32px;border-radius:9px;
+  background:#dcefff;color:#0c7bb2;font-size:21px
+}
+.pvdak-article-toc-heading strong{font-size:15px;font-weight:900}
+.pvdak-article-toc-heading>span:last-child{
+  margin-inline-start:auto;color:#477e9c;background:#e5f3ff;
+  border-radius:99px;padding:5px 12px;font-size:11px;font-weight:850
+}
+.pvdak-article-toc ol{
+  list-style:decimal;padding-inline-start:26px;margin:0;columns:2;
+  column-gap:26px
+}
+.pvdak-article-toc li{break-inside:avoid;margin:4px 0;color:#1877af}
+.pvdak-article-toc li.is-subsection{padding-inline-start:12px;font-size:12px}
+.pvdak-article-toc a{
+  display:inline-flex;padding:7px 2px;text-decoration:none;font-size:13px;
+  line-height:1.8;color:#255878;font-weight:800
+}
+.pvdak-article-toc a:hover{color:#087ea7;text-decoration:underline}
+.pvdak-article-toc a:focus-visible{outline:3px solid #ebb35a;outline-offset:2px}
+.pvdak-article-reading .entry-content :where(h2[id],h3[id]){scroll-margin-top:35px}
+@media(max-width:700px){
+  .pvdak-article-toc{padding:15px 14px;border-radius:14px}
+  .pvdak-article-toc ol{columns:1}
+}
