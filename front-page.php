@@ -201,7 +201,7 @@ $svg_icons = array(
     </ol>
   </section>
 
-  <?php if ( $magazine_feature || current_user_can( 'edit_posts' ) ): ?>
+  <?php if ( $magazine_feature ): ?>
   <section id="magazine" class="pvdak-home-section pvdak-magazine" aria-labelledby="magazine-title">
     <div class="pvdak-home-section-head">
       <h2 id="magazine-title"><?php echo esc_html( pvdak_home_value( 'magazine_title' ) ); ?></h2>
@@ -241,13 +241,11 @@ $svg_icons = array(
           </div>
         <?php endif; ?>
       </div>
-    <?php else: ?>
-      <p class="pvdak-legal-topics-setup">برای نمایش مجله، در پیشخوان «نوشته‌ها ← دسته‌ها» دسته مجله را بسازید، چند مقاله منتشر کنید و در «محتوای صفحه اصلی» آن دسته را انتخاب کنید.</p>
     <?php endif; ?>
   </section>
   <?php endif; ?>
 
-  <?php if ( $notice_posts || $news_feature || current_user_can( 'edit_posts' ) ): ?>
+  <?php if ( $notice_posts || $news_feature ): ?>
   <section id="news" class="pvdak-home-section pvdak-news" aria-labelledby="news-title">
     <div class="pvdak-home-section-head">
       <h2 id="news-title"><?php echo esc_html( pvdak_home_value( 'news_title' ) ); ?></h2>
@@ -267,9 +265,7 @@ $svg_icons = array(
               <p><?php echo esc_html( pvdak_home_post_summary( $notice_post, 13 ) ); ?></p></div>
             </div>
           <?php endforeach; ?>
-          <?php if ( ! $notice_posts && current_user_can( 'edit_posts' ) ): ?>
-            <p>برای این بخش دسته «اطلاعیه‌ها» را در ویرایشگر صفحه اصلی انتخاب کنید و در آن نوشته منتشر کنید.</p>
-          <?php endif; ?>
+
         </div>
       </article>
       <?php if ( $news_feature ): ?>
