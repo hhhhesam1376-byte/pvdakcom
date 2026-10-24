@@ -60,4 +60,74 @@ pvdak_public_smoke_require( false !== strpos( $code['login'], '$admin_preview' )
  'Site owner can safely preview login UI and footer includes FAQ' );
 pvdak_public_smoke_require( false !== strpos( $code['footer'], 'pvdak-footer-public' ) &&
  pvdak_test_release_at_least( $code['theme'], '0.8.29' ), 'Footer links and theme cache version' );
+
+/* Batch 096: ten employer-visible, real-data UI changes without fake endpoints. */
+$ui_paths = array(
+ 'recovery' => 'page-templates/pvdak-recovery.php',
+ 'register' => 'page-templates/pvdak-register.php',
+ 'search' => 'search.php',
+ 'archive' => 'archive.php',
+ 'journal' => 'index.php',
+ 'single' => 'template-parts/content-single.php',
+ 'none' => 'template-parts/content-none.php',
+ 'editorial' => 'assets/css/pvdak-editorial.css',
+);
+$ui = array();
+foreach ( $ui_paths as $key => $file ) {
+    pvdak_public_smoke_require( is_readable( $root . '/' . $file ), 'Missing UI source: ' . $file );
+    $ui[ $key ] = file_get_contents( $root . '/' . $file );
+}
+pvdak_public_smoke_require(
+ strpos( $code['login'], 'pvdak-auth-visual' ) !== false &&
+ strpos( $code['login'], 'data-pvdak-single-submit' ) !== false &&
+ strpos( $code['login'], "wp_nonce_field('pvdak_login'" ) !== false,
+ '096-01 Branded login retains native nonce/action' );
+pvdak_public_smoke_require(
+ strpos( $ui['register'], 'pvdak-register-steps' ) !== false &&
+ strpos( $ui['register'], 'if(!pvdak_registration_open())' ) !== false &&
+ strpos( $ui['register'], "wp_nonce_field('pvdak_register'" ) !== false,
+ '096-02 Registration closed-state is honest and gated' );
+pvdak_public_smoke_require(
+ strpos( $ui['recovery'], 'pvdak-recovery-steps' ) !== false &&
+ strpos( $ui['recovery'], 'check_password_reset_key(' ) !== false &&
+ strpos( $ui['recovery'], 'pvdak_recovery_change' ) !== false,
+ '096-03 Recovery UI retains token check and handlers' );
+pvdak_public_smoke_require(
+ strpos( $code['contact'], 'pvdak-contact-guidance' ) !== false &&
+ strpos( $code['contact'], 'pvdak_contact_allowed()' ) !== false &&
+ strpos( $code['contact'], "wp_nonce_field('pvdak_contact_form'" ) !== false,
+ '096-04 Contact confidentiality guide keeps guard and nonce' );
+pvdak_public_smoke_require(
+ strpos( $code['info'], 'pvdak-info-sidebar' ) !== false &&
+ strpos( $code['info'], 'pvdak_public_page_url( $slug )' ) !== false &&
+ strpos( $code['info'], 'the_content();' ) !== false,
+ '096-05 Informational pages link only published Pages' );
+pvdak_public_smoke_require(
+ strpos( $ui['search'], 'pvdak-discovery-hero' ) !== false &&
+ strpos( $ui['search'], 'esc_html( $term )' ) !== false &&
+ strpos( $ui['search'], "get_template_part( 'template-parts/loop' )" ) !== false,
+ '096-06 Search result count and query are displayed safely' );
+pvdak_public_smoke_require(
+ strpos( $ui['archive'], 'pvdak-discovery-categories' ) !== false &&
+ strpos( $ui['archive'], 'get_categories(' ) !== false &&
+ strpos( $ui['archive'], 'get_category_link(' ) !== false,
+ '096-07 Archive filters come from actual WordPress categories' );
+pvdak_public_smoke_require(
+ strpos( $ui['journal'], 'pvdak-journal-page' ) !== false &&
+ strpos( $ui['journal'], 'get_search_form();' ) !== false &&
+ strpos( $ui['journal'], "get_template_part( 'template-parts/loop' )" ) !== false,
+ '096-08 Journal page uses published content and native search' );
+pvdak_public_smoke_require(
+ strpos( $ui['single'], 'pvdak-article-jumpnav' ) !== false &&
+ strpos( $ui['single'], 'id="pvdak-article-text"' ) !== false &&
+ strpos( $ui['editorial'], '.pvdak-article-service-note' ) !== false &&
+ strpos( $ui['single'], 'the_content();' ) !== false,
+ '096-09 Article navigation and disclaimer preserve authored content' );
+pvdak_public_smoke_require(
+ strpos( $ui['none'], 'pvdak-empty-state' ) !== false &&
+ strpos( $ui['none'], 'get_categories(' ) !== false &&
+ strpos( $ui['none'], 'get_search_form();' ) !== false &&
+ strpos( $code['theme'], '.pvdak-discovery-page .post-card' ) !== false,
+ '096-10 Responsive empty results offer real published categories' );
+
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
