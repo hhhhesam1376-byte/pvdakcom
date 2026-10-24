@@ -29,6 +29,10 @@ foreach ( $paths as $name => $file ) {
   $v[$name] = file_get_contents( $path );
 }
 $checks = array(
+  'D10 Homepage never offers a dead topics anchor or empty section' =>
+    strpos($v['front'], "if ( $all_legal_pages ): ?><a href=\"#topics\"")!==false &&
+    strpos($v['front'], "if ( $all_legal_pages ): ?>\n  <section id=\"topics\"")!==false &&
+    strpos($v['front'], "add_query_arg( 's', 'حقوق', home_url( '/' ) )")!==false,
   'D07 Core form CSS is loaded on the template-based dashboard' =>
     strpos($v['assets'], "shortcode_exists( 'pvdak_account_dashboard' )")!==false &&
     strpos($v['assets'], "plugins_url( 'assets/forms.css', " )!==false &&
@@ -98,8 +102,9 @@ $checks = array(
     strpos($v['css'],'WORK_BATCH_098')!==false &&
     strpos($v['javascript'],'fetch(')===false,
 
-  '097-01 Homepage has no empty topics or technical setup' =>
-    strpos($v['front'],'pvdak-topics-help')!==false &&
+  '097-01 Homepage hides empty topics without technical setup' =>
+    strpos($v['front'],'<?php if ( $all_legal_pages ): ?>')!==false &&
+    strpos($v['front'],'pvdak-topics-help')===false &&
     strpos($v['front'],'pvdak-legal-topics-setup')===false,
   '097-02 Live dashboard uses real Core shortcode and stats layout' =>
     strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
