@@ -90,7 +90,7 @@ pvdak_layout_expect( false !== strpos( $css, 'flex-flow: row nowrap' ) &&
 pvdak_layout_expect( false !== strpos( $js, 'new window.Swiper(container' ) &&
     false !== strpos( $js, 'loop: true' ) &&
     false !== strpos( $js, 'autoplay:' ) &&
-    false !== strpos( $js, 'delay: 3000' ) &&
+    false !== strpos( $js, 'delay: 4700' ) &&
     false !== strpos( $js, 'slidesPerView: 6' ) &&
     false !== strpos( $js, '701: { slidesPerView: 3' ) &&
     false !== strpos( $js, 'breakpoints:' ) &&
