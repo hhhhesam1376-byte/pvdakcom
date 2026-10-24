@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.35
+Version: 0.8.36
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -2926,4 +2926,161 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 @media(prefers-reduced-motion:reduce){
   .pvdak-discovery-page .post-card{transition:none!important;transform:none!important}
+}
+
+
+/* UI 0.8.36 — account overview and homepage empty-state corrections.
+ * Uses the existing Core 0.8.3 dashboard HTML; no plugin upgrade necessary. */
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard{
+  display:flex;flex-direction:column;gap:0;min-width:0;
+  padding:clamp(17px,3vw,28px);
+  border:1px solid #d9e8f6;border-radius:22px;
+  background:linear-gradient(165deg,#fff 0%,#fbfdff 100%);
+  box-shadow:0 15px 40px #113b7214;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-eyebrow{
+  display:inline-flex;align-self:flex-start;align-items:center;
+  width:max-content;max-width:100%;border-radius:99px;
+  background:#e5f5ff;color:#116d9d;font-size:11px;font-weight:900;
+  border:1px solid #cbe7f6;padding:5px 13px;margin:0 0 9px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h2{
+  font-size:clamp(25px,3vw,32px);font-weight:900;letter-spacing:-.4px;
+  color:#102e53;line-height:1.6;margin:0 0 3px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>p:not(.pvdak-core-eyebrow):not(.pvdak-core-notice):not(.pvdak-core-empty){
+  margin:0 0 21px;font-size:13px;line-height:2;color:#5c748c;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:13px;margin:0 0 24px;padding:0;background:transparent;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div{
+  position:relative;display:flex;flex-direction:column;align-items:flex-start;
+  gap:8px;min-width:0;min-height:126px;margin:0;
+  padding:20px 20px 17px;border-radius:17px;
+  border:1px solid #d8e8f7;background:linear-gradient(135deg,#edf6ff,#fff);
+  box-shadow:0 7px 22px #0c59920b;overflow:hidden;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div:nth-child(2){
+  background:linear-gradient(135deg,#e8f9f4,#fff);border-color:#ccece1;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div:nth-child(3){
+  background:linear-gradient(135deg,#fff7e9,#fff);border-color:#f2e4ce;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div::before{
+  content:"◈";position:absolute;inset-inline-end:14px;top:16px;
+  width:35px;height:35px;display:grid;place-items:center;
+  border-radius:11px;background:#d4eafe;color:#1f73ae;font-size:20px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div:nth-child(2)::before{
+  content:"◷";background:#cfefe2;color:#158e6f;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div:nth-child(3)::before{
+  content:"⚖";background:#fff0d2;color:#a67825;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats strong{
+  display:block;color:#103c66;font-weight:950;font-size:clamp(26px,3vw,36px);
+  font-variant-numeric:tabular-nums;line-height:1.4;margin:0;order:0;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-stats span{
+  display:block;color:#57758e;font-size:12px;font-weight:850;line-height:1.7;order:1;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3{
+  position:relative;display:flex;align-items:center;gap:10px;min-height:40px;
+  margin:8px 0 12px;font-size:clamp(17px,2vw,21px);
+  font-weight:900;color:#153e65;line-height:1.7;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3::before{
+  content:"";width:5px;height:23px;border-radius:7px;
+  background:linear-gradient(#0c8fa7,#2579c3);flex:0 0 5px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard-actions{
+  display:flex;flex-wrap:wrap;gap:9px;margin:0 0 23px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard-actions a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:42px;gap:8px;max-width:100%;
+  background:#e5f3ff;border:1px solid #c4dff3;border-radius:11px;
+  padding:9px 16px;color:#126ea7;text-decoration:none;
+  font-size:12px;font-weight:900;box-shadow:none;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard-actions a:hover{
+  background:#d8ecff;border-color:#84b9dc;color:#084f80;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3:has(+ .pvdak-core-dashboard-actions:empty),
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard-actions:empty{display:none}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>.pvdak-core-notice{
+  margin:0 0 12px;padding:13px 16px;border-radius:13px;
+  border:1px solid #d4e7f5;background:#f1f8ff;
+  color:#426c8b;font-size:12px;line-height:1.9;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>.pvdak-core-empty{
+  position:relative;min-height:106px;margin:0 0 24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;border:1px dashed #bcd8ed;border-radius:17px;
+  background:#f8fbff;color:#557a96;padding:19px 14px;
+  font-size:12px;font-weight:750;line-height:1.9;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>.pvdak-core-empty::before{
+  content:"◇";display:grid;place-items:center;
+  width:42px;height:42px;border-radius:13px;background:#e1f1ff;
+  color:#147eae;font-size:26px;margin-bottom:10px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3:last-of-type + .pvdak-core-empty{
+  background:#f0faf6;border-color:#b9e5d3;color:#377762;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3:last-of-type + .pvdak-core-empty::before{
+  content:"⚖";color:#0b8a72;background:#dcf4e9;font-size:23px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests{
+  margin:0 0 24px;list-style:none;padding:0;
+  display:grid;gap:10px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;
+  align-items:center;border:1px solid #dce8f6;border-radius:12px;
+  background:#fbfdff;padding:13px 15px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li strong{
+  color:#163f63;font-size:13px;font-weight:850;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li time{
+  direction:ltr;color:#7a8ca1;font-size:11px;
+}
+.pvdak-unified-account #pvdak-dashboard .pvdak-core-requests li span{
+  grid-column:1/-1;color:#497692;font-size:12px;
+}
+@media(max-width:720px){
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats{gap:8px}
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div{
+    padding:13px 10px;min-height:103px;
+  }
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div::before{
+    top:10px;inset-inline-end:8px;width:26px;height:26px;font-size:14px;
+  }
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats strong{font-size:25px}
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats span{font-size:10px}
+}
+@media(max-width:450px){
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-stats>div:last-child{grid-column:1/-1}
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard{padding:16px 13px}
+  .pvdak-unified-account #pvdak-dashboard .pvdak-core-dashboard>h3{font-size:17px}
+}
+/* Homepage community art: real vector, not an empty decorative placeholder. */
+.pvdak-home-community .pvdak-community-illustration{
+  display:grid;place-items:center;width:305px;max-width:34%;height:190px;
+  flex:0 0 305px;overflow:hidden;border-radius:14px;
+  background:#0b4c73;box-shadow:0 8px 26px #10496e1f;
+}
+.pvdak-home-community .pvdak-community-illustration svg{
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+@media(max-width:760px){
+  .pvdak-home-community .pvdak-community-illustration{
+    width:100%;max-width:none;flex:0 1 100%;height:190px;
+  }
 }
