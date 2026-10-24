@@ -74,6 +74,18 @@ grep -Eq '^Theme Name:[[:space:]]*PVDak[[:space:]]*$' "$STAGE/style.css" || die 
 while IFS= read -r -d '' file; do
   "$PHP" -l "$file" >/dev/null || die "PHP syntax error: ${file#"$STAGE/"}"
 done < <(find "$STAGE" -type f -name '*.php' -print0)
+# Run the EXISTING read-only project regression suite on this exact fetched
+# commit BEFORE touching the live theme. No extra Cron, site files or secrets.
+PREFLIGHT="$STAGE/scripts/check-batch-readonly.sh"
+[[ -s "$PREFLIGHT" ]] || die "Existing read-only source regression missing"
+if PREFLIGHT_OUTPUT="$(bash "$PREFLIGHT" "$STAGE" 2>&1)" &&
+   [[ "$PREFLIGHT_OUTPUT" == *"PVDAK_BATCH_PREFLIGHT_OK:"* ]]; then
+  log "SOURCE_PREFLIGHT_OK $SHA"
+else
+  printf '%s\\n' "$SHA" > "$STATE/failed"
+  printf '%s\\n' "$PREFLIGHT_OUTPUT" | tail -n 16 >&2
+  die "SOURCE_PREFLIGHT_FAILED $SHA; no live files changed"
+fi
 # Check the existing site before changing files. Check it again after deployment.
 health() {
   code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 40 "https://pvdak.com/?pvdak_deploy_check=$SHA-$(date +%s)")" || return 1
