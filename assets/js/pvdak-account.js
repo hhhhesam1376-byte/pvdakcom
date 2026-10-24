@@ -66,10 +66,23 @@
     var id = window.location.hash.slice(1);
     var target = id ? document.getElementById(id) : null;
     if (target && target.closest('[data-pvdak-panel]')) {
+      var destination = target.hasAttribute('tabindex') ? target : target.closest('[data-pvdak-panel]');
+      destination.focus({ preventScroll: true });
       target.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
   });
   refreshNavigation();
+
+  /* Native details remains fully functional without JS. Escape closes it for
+   * keyboard users and returns focus to the trigger. */
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    var menu = document.querySelector('.pvdak-mobile-menu[open]');
+    if (!menu) return;
+    menu.open = false;
+    var summary = menu.querySelector('summary');
+    if (summary) summary.focus();
+  });
 
   function updateCount(counter) {
     var id = counter.getAttribute('data-pvdak-count-for');
