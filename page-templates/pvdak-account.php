@@ -51,7 +51,7 @@ get_header(); ?>
           <small dir="auto"><?php echo esc_html( $user->user_email ); ?></small>
         </div>
       </div>
-      <div class="pvdak-account-identity-meta"><span>حساب واردشده</span><span aria-hidden="true">●</span></div>
+      <div class="pvdak-account-identity-meta"><span>حساب کاربری واردشده</span><span aria-hidden="true">●</span></div>
       <nav class="pvdak-account-menu" aria-label="بخش‌های پنل">
         <a href="#pvdak-dashboard" aria-current="location"><span aria-hidden="true">▦</span> داشبورد <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a>
         <a href="#pvdak-profile"><span aria-hidden="true">◉</span> اطلاعات حساب <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a>
@@ -70,7 +70,7 @@ get_header(); ?>
         <?php if ( $has_dashboard ): ?>
           <?php echo do_shortcode( '[pvdak_account_dashboard]' ); ?>
         <?php else: ?>
-          <div class="pvdak-static-body"><h2>نمای کلی حساب</h2><p>شما وارد حساب خود شده‌اید؛ خلاصه درخواست‌ها در حال حاضر در دسترس نیست.</p><p class="pvdak-static-note">وضعیت فعال‌بودن خدمات و درخواست‌ها باید جداگانه بررسی شود.</p></div>
+          <div class="pvdak-static-body pvdak-unified-empty-dashboard" role="status"><span class="pvdak-dashboard-empty-icon" aria-hidden="true">⚖</span><h2>اطلاعات پنل فعلاً در دسترس نیست</h2><p>حساب شما وارد شده است؛ با فعال شدن بخش خلاصه، اطلاعات واقعی درخواست‌ها در همین قسمت نمایش داده خواهد شد.</p><a href="#pvdak-profile">مشاهده اطلاعات حساب ←</a></div>
         <?php endif; ?>
       </section>
 
@@ -169,7 +169,7 @@ get_header(); ?>
 
       <?php if ( $has_support ): ?>
         <div class="pvdak-account-panel pvdak-account-support pvdak-unified-section" data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها" tabindex="-1">
-          <header class="pvdak-unified-section-header"><span>ارتباط با پشتیبانی</span><h2>پیام‌های پشتیبانی من</h2><p>پیام‌ها و پاسخ‌های اختصاصی حساب خود را پیگیری کنید؛ اطلاعات محرمانه پرونده ارسال نکنید.</p></header>
+          <header class="pvdak-unified-section-header"><span>ارتباط با پشتیبانی • فقط حساب شما</span><h2>پیام‌های پشتیبانی من</h2><p>پیام‌ها و پاسخ‌های اختصاصی حساب خود را پیگیری کنید؛ اطلاعات محرمانه پرونده ارسال نکنید.</p></header>
           <?php echo do_shortcode( '[pvdak_support_tickets]' ); ?>
           <p class="pvdak-panel-return"><a href="#pvdak-dashboard">↑ بازگشت به نمای کلی حساب</a></p>
         </div>
