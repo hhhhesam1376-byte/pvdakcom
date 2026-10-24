@@ -44,7 +44,10 @@
             return !!(field && normalize(field.value));
         }
         function canSlide() {
-            return slides.filter(function (slide) { return !slide.hidden; }).length > visibleSlots();
+            // Loop mode requires an extra original slide; at 1.15 visible
+            // slides two items are insufficient and can produce broken clones.
+            return slides.filter(function (slide) { return !slide.hidden; }).length >=
+                Math.max(3, visibleSlots() + 1);
         }
         function stop() {
             if (swiper) {
@@ -106,6 +109,7 @@
                 return;
             }
             if (controls) { controls.hidden = false; }
+            updateAutoplay();
         }
 
         function syncSwiper() {
