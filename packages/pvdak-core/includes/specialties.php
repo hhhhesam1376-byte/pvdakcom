@@ -57,10 +57,22 @@ function pvdak_core_specialty_ids( $profile_id ) {
  * must be checked after independent review. It is NOT license verification
  * from an official registry and must never be represented as such publicly.
  */
+/**
+ * A reviewed profile must still belong to a real WordPress account.
+ * Imported/orphaned profiles (author 0 or a deleted user) fail closed.
+ */
+function pvdak_core_profile_has_owner( $profile_id ) {
+    $owner_id = absint( get_post_field( 'post_author', absint( $profile_id ) ) );
+    if ( ! $owner_id ) { return false; }
+    $owner = get_userdata( $owner_id );
+    return $owner && isset( $owner->ID ) && (int) $owner->ID === $owner_id;
+}
+
 function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $request_type = 'lawyer' ) {
     if ( 'pvdak_professional' !== get_post_type( $profile_id ) ||
          'private' !== get_post_status( $profile_id ) ||
-         ! pvdak_core_valid_specialty( $specialty_id ) ) { return false; }
+         ! pvdak_core_valid_specialty( $specialty_id ) ||
+         ! pvdak_core_profile_has_owner( $profile_id ) ) { return false; }
     if ( 'approved' !== get_post_meta( $profile_id, '_pvdak_member_state', true ) ||
          '1' !== (string) get_post_meta( $profile_id, '_pvdak_referral_cleared', true ) ||
          ! pvdak_core_license_review_current( $profile_id ) ) { return false; }
