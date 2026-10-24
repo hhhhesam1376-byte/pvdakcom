@@ -34,7 +34,7 @@ get_header(); ?>
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 8v48M11 18h42M18 19 8 42h20L18 19Zm28 0L36 42h20L46 19ZM21 55h22"/></svg>
     </span>
   </header>
-  <div class="pvdak-dashboard-overline"><span class="pvdak-dashboard-online"><span aria-hidden="true">●</span> حساب کاربری فعال</span><span>دسترسی شخصی شما به امکانات پویش</span></div>
+  <div class="pvdak-dashboard-overline"><span class="pvdak-dashboard-online"><span aria-hidden="true">●</span> وارد حساب شده‌اید</span><span>دسترسی شخصی شما به امکانات پویش</span></div>
   <nav class="pvdak-dashboard-quicklinks" aria-label="دسترسی سریع حساب">
     <a href="#pvdak-dashboard" aria-current="location"><span aria-hidden="true">◈</span><strong>نمای کلی</strong><small>خلاصه وضعیت حساب</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
     <a href="#pvdak-profile"><span aria-hidden="true">◉</span><strong>اطلاعات حساب</strong><small>ویرایش نام نمایشی</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
