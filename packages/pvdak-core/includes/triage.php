@@ -21,7 +21,17 @@ function pvdak_core_triage_menu() {
 }
 add_action( 'admin_menu', 'pvdak_core_triage_menu' );
 
-/** Aggregate metadata only; no request descriptions, people or private notes. */
+/** A single clock is shared by SQL aggregation and WP_Query date filters. */
+function pvdak_core_triage_cutoff( $days, $now = null ) {
+    if ( null === $now ) { $now = current_datetime(); }
+    return $now->modify( '-' . max( 0, (int) $days ) . ' days' )->format( 'Y-m-d H:i:s' );
+}
+
+/**
+ * Aggregate only private requests. Select the FIRST value for each meta key,
+ * matching get_post_meta(..., true). Multiple legacy rows must never multiply
+ * the same request across status/type groups.
+ */
 function pvdak_core_triage_snapshot() {
     global $wpdb;
     $statuses = pvdak_core_request_statuses();
@@ -30,26 +40,52 @@ function pvdak_core_triage_snapshot() {
         'statuses' => array_fill_keys( array_keys( $statuses ), 0 ),
         'types' => array_fill_keys( array_keys( $types ), 0 ),
         'total' => 0, 'legacy_state' => 0, 'legacy_type' => 0,
-        'pending' => 0, 'pending7' => 0, 'pending30' => 0, 'oldest_pending' => '',
+        'pending' => 0, 'pending1' => 0, 'pending3' => 0,
+        'pending7' => 0, 'pending14' => 0, 'pending30' => 0,
+        'pending60' => 0, 'pending_future' => 0,
+        'oldest_pending' => '', 'query_ok' => true, 'generated_at' => '',
     );
     if ( ! pvdak_core_triage_can_manage() ) { return $result; }
     $now = current_datetime();
-    $cutoff7 = $now->modify( '-7 days' )->format( 'Y-m-d' );
-    $cutoff30 = $now->modify( '-30 days' )->format( 'Y-m-d' );
+    $result['generated_at'] = $now->format( 'Y-m-d H:i:s' );
+    // Each post is represented by one derived-table row, regardless of
+    // duplicated/legacy postmeta. Never select case text or owner information.
     $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT COALESCE(s.meta_value, '') AS state, COALESCE(t.meta_value, '') AS kind,
-                COUNT(DISTINCT p.ID) AS total,
-                COUNT(DISTINCT CASE WHEN p.post_date < %s THEN p.ID END) AS older7,
-                COUNT(DISTINCT CASE WHEN p.post_date < %s THEN p.ID END) AS older30,
-                MIN(p.post_date) AS oldest
-         FROM {$wpdb->posts} AS p
-         LEFT JOIN {$wpdb->postmeta} AS s ON s.post_id = p.ID AND s.meta_key = %s
-         LEFT JOIN {$wpdb->postmeta} AS t ON t.post_id = p.ID AND t.meta_key = %s
-         WHERE p.post_type = %s AND p.post_status = %s
-         GROUP BY s.meta_value, t.meta_value",
-        $cutoff7, $cutoff30, '_pvdak_request_state', '_pvdak_request_type',
+        "SELECT r.state, r.kind, COUNT(*) AS total,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older1,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older3,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older7,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older14,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older30,
+                SUM(CASE WHEN r.post_date < %s THEN 1 ELSE 0 END) AS older60,
+                SUM(CASE WHEN r.post_date > %s THEN 1 ELSE 0 END) AS future,
+                MIN(r.post_date) AS oldest
+         FROM (
+            SELECT p.ID, p.post_date,
+                COALESCE((SELECT m.meta_value FROM {$wpdb->postmeta} AS m
+                    WHERE m.post_id = p.ID AND m.meta_key = %s
+                    ORDER BY m.meta_id ASC LIMIT 1), '') AS state,
+                COALESCE((SELECT m.meta_value FROM {$wpdb->postmeta} AS m
+                    WHERE m.post_id = p.ID AND m.meta_key = %s
+                    ORDER BY m.meta_id ASC LIMIT 1), '') AS kind
+            FROM {$wpdb->posts} AS p
+            WHERE p.post_type = %s AND p.post_status = %s
+         ) AS r
+         GROUP BY r.state, r.kind",
+        pvdak_core_triage_cutoff( 1, $now ),
+        pvdak_core_triage_cutoff( 3, $now ),
+        pvdak_core_triage_cutoff( 7, $now ),
+        pvdak_core_triage_cutoff( 14, $now ),
+        pvdak_core_triage_cutoff( 30, $now ),
+        pvdak_core_triage_cutoff( 60, $now ),
+        $result['generated_at'],
+        '_pvdak_request_state', '_pvdak_request_type',
         'pvdak_request', 'private'
     ), ARRAY_A );
+    if ( null === $rows ) {
+        $result['query_ok'] = false;
+        return $result;
+    }
     foreach ( (array) $rows as $row ) {
         $state = (string) $row['state'];
         $kind = (string) $row['kind'];
@@ -67,8 +103,10 @@ function pvdak_core_triage_snapshot() {
         }
         if ( in_array( $state, array( 'submitted', 'review' ), true ) ) {
             $result['pending'] += $count;
-            $result['pending7'] += (int) $row['older7'];
-            $result['pending30'] += (int) $row['older30'];
+            foreach ( array( 1, 3, 7, 14, 30, 60 ) as $days ) {
+                $result['pending' . $days] += (int) $row['older' . $days];
+            }
+            $result['pending_future'] += (int) $row['future'];
             if ( ! empty( $row['oldest'] ) &&
                 ( '' === $result['oldest_pending'] || $row['oldest'] < $result['oldest_pending'] ) ) {
                 $result['oldest_pending'] = $row['oldest'];
@@ -90,7 +128,7 @@ function pvdak_core_triage_filters() {
     $choices = array(
         'pvdak_filter_type' => array_merge( $types, array( 'legacy' ) ),
         'pvdak_filter_state' => array_merge( $states, array( 'legacy' ) ),
-        'pvdak_filter_queue' => array( 'pending', 'pending7', 'pending30' ),
+        'pvdak_filter_queue' => array( 'pending', 'pending1', 'pending3', 'pending7', 'pending14', 'pending30', 'pending60', 'pending_future' ),
     );
     $selected = array();
     foreach ( $choices as $name => $allowed ) {
@@ -126,8 +164,12 @@ function pvdak_core_triage_page() {
     $snapshot = pvdak_core_triage_snapshot();
     $statuses = pvdak_core_request_statuses();
     $types = pvdak_core_request_types();
-    $base = admin_url( 'edit.php?post_type=pvdak_request' );
+    $base = add_query_arg( 'post_status', 'private', admin_url( 'edit.php?post_type=pvdak_request' ) );
     echo '<div class="wrap pvdak-triage" dir="rtl"><h1>صف بررسی درخواست‌های حقوقی</h1>';
+    if ( ! $snapshot['query_ok'] ) {
+        echo '<div class="notice notice-error"><p>دریافت آمار صف فعلاً ممکن نیست؛ لطفاً گزارش خطای پایگاه داده را در محیط امن بررسی کنید.</p></div></div>';
+        return;
+    }
     echo '<p class="description">نمای مدیریتی فقط‌خواندنی برای درخواست‌های خصوصی. متن پرونده، هویت مراجعه‌کننده و یادداشت‌های داخلی در این صفحه نمایش داده نمی‌شوند.</p>';
     echo '<div class="notice notice-info inline"><p>ارجاع خودکار به متخصص و احراز حرفه‌ای هنوز فعال نیست. وضعیت پذیرش درخواست: <strong>' .
         ( pvdak_core_intake_open() ? 'فعال (صرفاً نمایش وضعیت)' : 'غیرفعال' ) . '</strong>.</p></div>';
@@ -141,9 +183,13 @@ function pvdak_core_triage_page() {
     .pvdak-triage-label{font-weight:600;color:#233a49}
     .pvdak-triage-hint{color:#50575e;font-size:12px}
     .pvdak-triage-note{padding:14px 18px;background:#fff;border-inline-start:4px solid #2271b1}
+    .pvdak-triage-card--urgent{border-inline-start:4px solid #a54519}
+    .pvdak-triage-summary{font-weight:600;color:#233a49}
+    .pvdak-triage-meta{color:#50575e;font-size:12px}
     .pvdak-triage-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
     .pvdak-triage .button{white-space:normal;text-align:center}
     @media(max-width:600px){.pvdak-triage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pvdak-triage-card{padding:12px;min-width:0}}
+    @media(max-width:420px){.pvdak-triage-grid{grid-template-columns:minmax(0,1fr)}}
     </style>';
     echo '<h2>خلاصه درخواست‌ها</h2><div class="pvdak-triage-grid">';
     pvdak_core_triage_link_card( 'همه درخواست‌های خصوصی', $snapshot['total'], $base, 'بدون نمایش اطلاعات محرمانه' );
@@ -155,13 +201,29 @@ function pvdak_core_triage_page() {
         pvdak_core_triage_link_card( 'وضعیت قدیمی / نامعتبر', $snapshot['legacy_state'],
             add_query_arg( 'pvdak_filter_state', 'legacy', $base ), 'نیازمند بررسی دستی' );
     }
-    echo '</div><h2>اولویت بررسی</h2><div class="pvdak-triage-grid">';
+    echo '</div><h2>اولویت بررسی</h2>';
+    echo '<p class="pvdak-triage-summary">' . esc_html( number_format_i18n( $snapshot['pending'] ) ) .
+        ' درخواست در صف؛ ' . esc_html( number_format_i18n( $snapshot['total'] ? round( 100 * $snapshot['pending'] / $snapshot['total'] ) : 0 ) ) .
+        '٪ از درخواست‌های خصوصی.</p>';
+    echo '<p class="pvdak-triage-meta">زمان محاسبه (ساعت سایت): <time datetime="' .
+        esc_attr( str_replace( ' ', 'T', $snapshot['generated_at'] ) ) . '">' .
+        esc_html( $snapshot['generated_at'] ) . '</time>. معیار قدمت: بیش از تعداد روز کامل از زمان ثبت.</p>';
+    echo '<div class="pvdak-triage-grid">';
+    $oldest_first = array( 'pvdak_case_order' => 'oldest' );
     pvdak_core_triage_link_card( 'ثبت‌شده یا در حال بررسی', $snapshot['pending'],
-        add_query_arg( 'pvdak_filter_queue', 'pending', $base ) );
-    pvdak_core_triage_link_card( 'در انتظار بیش از ۷ روز', $snapshot['pending7'],
-        add_query_arg( 'pvdak_filter_queue', 'pending7', $base ) );
-    pvdak_core_triage_link_card( 'در انتظار بیش از ۳۰ روز', $snapshot['pending30'],
-        add_query_arg( 'pvdak_filter_queue', 'pending30', $base ) );
+        add_query_arg( array_merge( $oldest_first, array( 'pvdak_filter_queue' => 'pending' ) ), $base ),
+        'قدیمی‌ترین ابتدا' );
+    foreach ( array( 1, 3, 7, 14, 30, 60 ) as $days ) {
+        pvdak_core_triage_link_card( 'در انتظار بیش از ' . $days . ' روز',
+            $snapshot['pending' . $days],
+            add_query_arg( array_merge( $oldest_first, array( 'pvdak_filter_queue' => 'pending' . $days ) ), $base ),
+            $days >= 14 ? 'برای بازبینی اولویت' : 'مرتب‌شده از قدیمی‌ترین' );
+    }
+    if ( $snapshot['pending_future'] ) {
+        pvdak_core_triage_link_card( 'تاریخ ثبت آینده / نیازمند بررسی', $snapshot['pending_future'],
+            add_query_arg( array_merge( $oldest_first, array( 'pvdak_filter_queue' => 'pending_future' ) ), $base ),
+            'اختلاف زمان یا داده قدیمی؛ بدون تغییر خودکار' );
+    }
     echo '</div>';
     if ( $snapshot['oldest_pending'] ) {
         echo '<p class="pvdak-triage-note">قدیمی‌ترین درخواست در انتظار بررسی: <strong><time datetime="' .
@@ -200,7 +262,10 @@ function pvdak_core_triage_list_filters( $post_type ) {
             pvdak_core_request_statuses(), array( 'legacy' => 'وضعیت نامشخص / قدیمی' ) ),
         'pvdak_filter_queue' => array(
             '' => 'همه صف‌ها', 'pending' => 'ثبت‌شده یا در حال بررسی',
-            'pending7' => 'در انتظار بیش از ۷ روز', 'pending30' => 'در انتظار بیش از ۳۰ روز',
+            'pending1' => 'در انتظار بیش از ۱ روز', 'pending3' => 'در انتظار بیش از ۳ روز',
+            'pending7' => 'در انتظار بیش از ۷ روز', 'pending14' => 'در انتظار بیش از ۱۴ روز',
+            'pending30' => 'در انتظار بیش از ۳۰ روز', 'pending60' => 'در انتظار بیش از ۶۰ روز',
+            'pending_future' => 'تاریخ ثبت آینده / بررسی',
         ),
     );
     $labels = array(
@@ -259,13 +324,16 @@ function pvdak_core_triage_filter_query( $query ) {
         foreach ( $filters as $condition ) { $combined[] = $condition; }
         $query->set( 'meta_query', $combined );
     }
-    if ( in_array( $f['pvdak_filter_queue'], array( 'pending7', 'pending30' ), true ) ) {
-        $days = 'pending7' === $f['pvdak_filter_queue'] ? 7 : 30;
-        $cutoff = current_datetime()->modify( '-' . $days . ' days' )->format( 'Y-m-d' );
+    $queue = $f['pvdak_filter_queue'];
+    $age_days = array( 'pending1' => 1, 'pending3' => 3, 'pending7' => 7,
+        'pending14' => 14, 'pending30' => 30, 'pending60' => 60 );
+    if ( isset( $age_days[ $queue ] ) || 'pending_future' === $queue ) {
         $existing_dates = $query->get( 'date_query' );
         $dates = array( 'relation' => 'AND' );
         if ( is_array( $existing_dates ) && $existing_dates ) { $dates[] = $existing_dates; }
-        $dates[] = array( 'before' => $cutoff, 'inclusive' => false, 'column' => 'post_date' );
+        $dates[] = 'pending_future' === $queue
+            ? array( 'after' => current_datetime()->format( 'Y-m-d H:i:s' ), 'inclusive' => false, 'column' => 'post_date' )
+            : array( 'before' => pvdak_core_triage_cutoff( $age_days[ $queue ] ), 'inclusive' => false, 'column' => 'post_date' );
         $query->set( 'date_query', $dates );
     }
 }
