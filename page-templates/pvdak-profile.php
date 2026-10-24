@@ -12,6 +12,7 @@ $recovery_url = pvdak_public_page_url( 'account-recovery' );
 $published_posts = count_user_posts( $user->ID, 'post', true );
 $member_since = mysql2date( get_option( 'date_format' ), $user->user_registered );
 $account_role = current_user_can( 'manage_options' ) ? 'مدیر سایت' : 'عضو پویش';
+add_filter( 'body_class', function( $classes ) { $classes[] = 'pvdak-profile-screen'; return $classes; } );
 get_header(); ?>
 <main id="main-content" class="container pvdak-static pvdak-profile-page pvdak-profile-redesign" tabindex="-1">
   <nav class="pvdak-account-breadcrumbs pvdak-profile-crumbs" aria-label="مسیر صفحه">
