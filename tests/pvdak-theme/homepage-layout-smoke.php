@@ -266,7 +266,7 @@ pvdak_layout_expect(
 );
 pvdak_layout_expect(
     false !== strpos( $front, 'if ( $faq_pages )' ) &&
-    false === strpos( $front, "if ( $faq_pages || current_user_can( 'edit_pages' ) )" ) &&
+    false === strpos( $front, "if ( \$faq_pages || current_user_can( 'edit_pages' ) )" ) &&
     false === strpos( $front, 'یک برگه مادر «پرسش‌های متداول»' ),
     'FAQ section stays hidden without published FAQ pages and never shows internal setup text'
 );
@@ -329,8 +329,8 @@ pvdak_layout_expect(
 
 pvdak_layout_expect(
     false !== strpos( $front, "shortcode_exists( 'pvdak_forum' )" ) &&
-    false !== strpos( $front, "has_shortcode( $forum_page->post_content, 'pvdak_forum' )" ) &&
-    false !== strpos( $front, "get_permalink( $forum_page->ID )" ),
+    false !== strpos( $front, "has_shortcode( \$forum_page->post_content, 'pvdak_forum' )" ) &&
+    false !== strpos( $front, "get_permalink( \$forum_page->ID )" ),
     'D10: an editor URL alone cannot advertise an unimplemented forum'
 );
 
@@ -443,7 +443,7 @@ $GLOBALS['pvdak_test_member_open'] = false;
 
 $collection_source = file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' );
 pvdak_layout_expect(
-    false !== strpos( $collection_source, "array_filter( $published" ) &&
+    false !== strpos( $collection_source, "array_filter( \$published" ) &&
     false !== strpos( $collection_source, 'strip_shortcodes( $page->post_content )' ) &&
     false !== strpos( $collection_source, 'array_slice( $answered, 0, 12 )' ),
     'Published but empty FAQ Pages cannot appear as blank public accordions'
