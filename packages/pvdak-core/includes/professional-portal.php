@@ -139,6 +139,7 @@ function pvdak_core_professional_dashboard() {
         ( $access['ready'] ? 'دارای شرایط اولیه' : 'غیرفعال' ) . '</strong><p>' .
         esc_html( $access['reason'] ) . '</p></div>';
     $html .= '<p class="pvdak-core-notice">این پنل فقط اطلاعات خودتان را نمایش می‌دهد. جزئیات پرونده مراجعان، مشخصات اشخاص ثالث و مدارک حساس در این بخش نمایش داده نمی‌شوند.</p>';
+    $html .= pvdak_core_directory_consent_panel( $profile_id );
 
     // Neither a role alone nor a rejected/pending application unlocks capacity.
     // Read-only operational figures are not a substitute for clearance.
