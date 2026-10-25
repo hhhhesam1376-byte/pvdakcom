@@ -112,6 +112,9 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_subscription_plan' === $key ) { return $GLOBALS['pvdak_mock_subscription_plan'] ?? 'none'; }
     if ( '_pvdak_subscription_monthly_quota' === $key ) { return $GLOBALS['pvdak_mock_subscription_quota'] ?? '0'; }
     if ( '_pvdak_subscription_expires' === $key ) { return $GLOBALS['pvdak_mock_subscription_expiry'] ?? ''; }
+    if ( '_pvdak_subscription_source' === $key ) { return $GLOBALS['pvdak_mock_subscription_source'] ?? 'manual'; }
+    if ( '_pvdak_subscription_receipt' === $key ) { return $GLOBALS['pvdak_mock_subscription_receipt'] ?? ''; }
+    if ( '_pvdak_payment_event' === $key ) { return $GLOBALS['pvdak_mock_payment_events'] ?? array(); }
     if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
     if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
     if ( '_pvdak_assignment_audit' === $key ) { return $GLOBALS['pvdak_mock_assignment_audits'][ (int) $id ] ?? array(); }
@@ -392,6 +395,49 @@ $changed_snapshot['quota'] = 2;
 pvdak_expect( pvdak_core_subscription_revision( $sub_snapshot ) !==
     pvdak_core_subscription_revision( $changed_snapshot ),
     'D25 changed subscription values invalidate stale revision' );
+// D26: pure event-fold policy tests; no gateway or live payment confirmation.
+$payment_id = '11111111-1111-4111-8111-111111111111';
+$payment_created = array( 'receipt_id' => $payment_id, 'action' => 'created',
+    'reference' => 'TEST-REF-00001', 'amount_irr' => 100000, 'by' => 10,
+    'at' => '2026-10-25 04:00:00' );
+$payment_verified = array( 'receipt_id' => $payment_id, 'action' => 'verified',
+    'evidence' => 'provider_dashboard', 'by' => 10, 'at' => '2026-10-25 04:01:00' );
+$payment_refunded = array( 'receipt_id' => $payment_id, 'action' => 'refunded',
+    'by' => 10, 'at' => '2026-10-25 04:02:00' );
+pvdak_expect( pvdak_core_payment_fold( array( $payment_created ) )[$payment_id]['state'] === 'pending',
+    'D26 new receipt is pending and never implicitly verified' );
+pvdak_expect( ! pvdak_core_payment_transition_allowed( 'pending', 'refunded' ) &&
+    ! pvdak_core_payment_transition_allowed( 'failed', 'verified' ),
+    'D26 refund before verification and re-verification after failure are rejected' );
+pvdak_expect( pvdak_core_payment_fold( array( $payment_created, $payment_verified ) )[$payment_id]['state'] === 'verified',
+    'D26 explicit staff reconciliation creates verified receipt' );
+pvdak_expect( pvdak_core_payment_fold( array( $payment_created, $payment_verified, $payment_refunded ) )[$payment_id]['state'] === 'refunded',
+    'D26 refund supersedes earlier verified receipt' );
+pvdak_expect( array() === pvdak_core_payment_fold( array( $payment_created, $payment_verified, $payment_verified ) ),
+    'D26 repeated verification fails closed' );
+$bad_payment = $payment_created;
+$bad_payment['reference'] = '4111111111111111';
+$bad_payment['amount_irr'] = 0;
+pvdak_expect( array() === pvdak_core_payment_fold( array( $bad_payment ) ),
+    'D26 zero amount is rejected' );
+$bad_payment = $payment_verified;
+unset( $bad_payment['evidence'] );
+pvdak_expect( array() === pvdak_core_payment_fold( array( $payment_created, $bad_payment ) ),
+    'D26 verified event without provider evidence is rejected' );
+$GLOBALS['pvdak_mock_subscription_source'] = 'payment';
+$GLOBALS['pvdak_mock_subscription_receipt'] = $payment_id;
+$GLOBALS['pvdak_mock_payment_events'] = array( $payment_created );
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D26 pending receipt does not activate a paid entitlement' );
+$GLOBALS['pvdak_mock_payment_events'][] = $payment_verified;
+pvdak_expect( pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D26 verified receipt plus separate active subscription permits access' );
+$GLOBALS['pvdak_mock_payment_events'][] = $payment_refunded;
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D26 refunded receipt revokes paid referral access' );
+$GLOBALS['pvdak_mock_subscription_source'] = 'manual';
+$GLOBALS['pvdak_mock_subscription_receipt'] = '';
+$GLOBALS['pvdak_mock_payment_events'] = array();
 $GLOBALS['pvdak_mock_subscription_gate'] = '0';
 $GLOBALS['pvdak_mock_assignment_audits'] = array();
 $GLOBALS['pvdak_mock_audit_request_ids'] = array();
