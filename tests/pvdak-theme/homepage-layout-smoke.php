@@ -582,4 +582,9 @@ pvdak_layout_expect(
     false !== strpos( $readiness_public_source, '$privacy_length >= 200' ) &&
     false !== strpos( $readiness_public_source, '$terms_length >= 200' ),
     'D08/D09: all FAQ children considered, sample/blank answers and short policies not ready' );
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, "get_post_status( \$front )" ) &&
+    false !== strpos( $readiness_public_source, "pvdak_public_text_length( \$topic_text )" ) &&
+    false !== strpos( $readiness_public_source, "pvdak_public_text_length( \$body )" ),
+    'D05/D09: only published front Pages and Unicode-length editorial content count as ready' );
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
