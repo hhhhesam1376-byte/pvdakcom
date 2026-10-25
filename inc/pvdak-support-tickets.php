@@ -275,22 +275,34 @@ function pvdak_support_new(){
     try {
         if(get_transient($key) || (int)get_transient($hourly_key)>=6) {
             $result_state='slow';
+        } elseif (!set_transient($key,1,90)) {
+            // Without a persisted cooldown, do not open a creation race.
+            $result_state='failed';
         } else {
-            set_transient($key,1,90);
             $created=wp_insert_post(array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
                 'post_author'=>$user,'post_title'=>$subject,'post_content'=>$body,
                 'comment_status'=>'closed'),true);
             if(is_wp_error($created)||!$created) {
                 delete_transient($key);
-            } elseif(!add_post_meta($created,'_pvdak_support_status','open',true)) {
+            } elseif('pvdak_support_ticket'!==get_post_type($created) ||
+                'private'!==get_post_status($created) ||
+                $user!==(int)get_post_field('post_author',$created)) {
+                wp_delete_post($created,true);
+                delete_transient($key);
+            } elseif(!add_post_meta($created,'_pvdak_support_status','open',true) ||
+                'open'!==get_post_meta($created,'_pvdak_support_status',true)) {
                 // Uninitialized tickets must not be displayed or remain stored.
                 wp_delete_post($created,true);
                 delete_transient($key);
             } else {
-                $id=absint($created);
                 $count=(int)get_transient($hourly_key);
-                set_transient($hourly_key,min(6,$count+1),HOUR_IN_SECONDS);
-                $result_state='new_sent';
+                if (!set_transient($hourly_key,min(6,$count+1),HOUR_IN_SECONDS)) {
+                    wp_delete_post($created,true);
+                    delete_transient($key);
+                } else {
+                    $id=absint($created);
+                    $result_state='new_sent';
+                }
             }
         }
     } finally {
@@ -323,7 +335,7 @@ function pvdak_support_followup() {
     $ticket=$id?get_post($id):null;
     if (!$ticket || 'pvdak_support_ticket'!==$ticket->post_type ||
         'private'!==$ticket->post_status || (int)$ticket->post_author!==get_current_user_id() ||
-        'closed'===get_post_meta($id,'_pvdak_support_status',true)) {
+        !in_array(get_post_meta($id,'_pvdak_support_status',true),array('open','answered'),true)) {
         wp_die('دسترسی به این پیام مجاز نیست.','',array('response'=>403));
     }
     $raw=wp_unslash($_POST['followup_body']??'');
@@ -340,9 +352,8 @@ function pvdak_support_followup() {
                 if ($current && 'pvdak_support_ticket'===$current->post_type &&
                     'private'===$current->post_status &&
                     (int)$current->post_author===get_current_user_id() &&
-                    'closed'!==get_post_meta($id,'_pvdak_support_status',true) &&
-                    !get_transient($key)) {
-                    set_transient($key,'1',45);
+                    in_array(get_post_meta($id,'_pvdak_support_status',true),array('open','answered'),true) &&
+                    !get_transient($key) && set_transient($key,'1',45)) {
                     $ok=pvdak_support_append_message($id,'user',$text);
                     if ($ok) {
                         $previous=pvdak_support_status_key(get_post_meta($id,'_pvdak_support_status',true));
@@ -513,12 +524,17 @@ function pvdak_support_admin_status_filter($post_type) {
 }
 add_action('restrict_manage_posts','pvdak_support_admin_status_filter');
 function pvdak_support_admin_filter_query($query) {
-    if(!is_admin() || !$query->is_main_query() || !current_user_can('manage_options') ||
+    global $pagenow;
+    if(!is_admin() || 'edit.php'!==$pagenow || !$query->is_main_query() || !current_user_can('manage_options') ||
        'pvdak_support_ticket'!==$query->get('post_type'))return;
     $raw=isset($_GET['pvdak_ticket_status']) && is_string($_GET['pvdak_ticket_status']) ?
         sanitize_key(wp_unslash($_GET['pvdak_ticket_status'])) : '';
     if(in_array($raw,array('open','answered','closed'),true)) {
-        $query->set('meta_query',array(array('key'=>'_pvdak_support_status','value'=>$raw,'compare'=>'=')));
+        $existing=$query->get('meta_query');
+        $combined=array('relation'=>'AND');
+        if(is_array($existing) && $existing)$combined[]=$existing;
+        $combined[]=array('key'=>'_pvdak_support_status','value'=>$raw,'compare'=>'=');
+        $query->set('meta_query',$combined);
     }
 }
 add_action('pre_get_posts','pvdak_support_admin_filter_query');
