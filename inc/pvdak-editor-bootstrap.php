@@ -46,6 +46,25 @@ function pvdak_editor_find_or_create_category( $slug, $title ) {
     return is_wp_error( $inserted ) ? 0 : (int) $inserted['term_id'];
 }
 
+/**
+ * Preserve editor customizations while renaming the two original WordPress
+ * category labels created by the old PVDak starter. No slug or post changes.
+ */
+function pvdak_editor_relabel_legacy_brand_categories() {
+    if ( ! is_admin() || ! current_user_can( 'manage_categories' ) ) { return; }
+    $legacy = array(
+        'pvdak-notices' => array( 'اطلاعیه‌های پویش', 'اطلاعیه‌های PVDak' ),
+        'pvdak-news' => array( 'اخبار پویش', 'اخبار PVDak' ),
+    );
+    foreach ( $legacy as $slug => $names ) {
+        $term = get_term_by( 'slug', $slug, 'category' );
+        if ( $term instanceof WP_Term && $term->name === $names[0] ) {
+            wp_update_term( $term->term_id, 'category', array( 'name' => $names[1] ) );
+        }
+    }
+}
+add_action( 'admin_init', 'pvdak_editor_relabel_legacy_brand_categories', 30 );
+
 /** Don't overwrite selections already made by the site's editor. */
 function pvdak_editor_prefill_acf( $home_id, $field, $value ) {
     if ( ! $home_id || ! $value || ! function_exists( 'get_field' ) || ! function_exists( 'update_field' ) ) {
@@ -189,8 +208,8 @@ function pvdak_editor_prepare_structure() {
     $faq = pvdak_editor_find_or_create_page( 'legal-faq', 'پرسش‌های متداول' );
     $categories = array(
         'magazine_category' => array( 'legal-magazine', 'مجله حقوقی' ),
-        'notice_category' => array( 'pvdak-notices', 'اطلاعیه‌های پویش' ),
-        'news_category' => array( 'pvdak-news', 'اخبار پویش' ),
+        'notice_category' => array( 'pvdak-notices', 'اطلاعیه‌های PVDak' ),
+        'news_category' => array( 'pvdak-news', 'اخبار PVDak' ),
     );
     $ids = array();
     foreach ( $categories as $field => $parts ) {
