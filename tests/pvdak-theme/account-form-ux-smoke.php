@@ -40,7 +40,7 @@ $checks = array(
   'SMS provider must explicitly opt in before OTP form works' =>
     strpos($s['sms'],"apply_filters('pvdak_sms_auth_enabled', false)")!==false &&
     strpos($s['sms'],"has_filter('pvdak_sms_otp_deliver')")!==false &&
-    strpos($s['sms'],"true!==$delivered")!==false &&
+    strpos($s['sms'],'true!==$delivered')!==false &&
     strpos($s['login'],'if (!$sms_ready)')!==false,
   'SMS OTP uses expiry, attempt ceiling, nonces and one-time deletion' =>
     strpos($s['sms'],"check_admin_referer('pvdak_sms_send'")!==false &&
@@ -52,10 +52,10 @@ $checks = array(
   'SMS signup never assigns lawyer roles from self-report' =>
     strpos($s['sms'],"'role'=>get_role('pvdak_client')?'pvdak_client':'subscriber'")!==false &&
     strpos($s['sms'],"'_pvdak_self_reported_category'")!==false &&
-    strpos($s['sms'],"user_can($user,'manage_options')")!==false,
+    strpos($s['sms'],"user_can(\$user,'manage_options')")!==false,
   'Email account can bind verified phone before using SMS sign-in' =>
     strpos($s['portal'],'name="sms_intent" value="bind"')!==false &&
-    strpos($s['sms'],"(int)($challenge['user_id']??0)!==get_current_user_id()")!==false &&
+    strpos($s['sms'],"(int)(\$challenge['user_id']??0)!==get_current_user_id()")!==false &&
     strpos($s['sms'],"'_pvdak_phone_verified'")!==false,
   'Unicode helper counts all characters' => strpos( $s['public'], "preg_match_all( '/[\\s\\S]/u'" ) !== false,
   'Contact name Unicode length' => strpos( $s['public'], 'pvdak_public_text_length($name)>100' ) !== false,
