@@ -197,11 +197,16 @@ pvdak_layout_expect( false !== strpos( $comments_file, 'have_comments()' ) &&
 $favicon = file_get_contents( $root . '/assets/icons/pvdak-pv.svg' );
 $maintenance = file_get_contents( $root . '/pvdak-maintenance.php' );
 pvdak_layout_expect(
-    false !== strpos( $maintenance, "return defined( 'PVDAK_MAINTENANCE_MODE' ) && (bool) PVDAK_MAINTENANCE_MODE;" ) &&
+    false !== strpos( $maintenance, "if ( defined( 'PVDAK_MAINTENANCE_MODE' ) && PVDAK_MAINTENANCE_MODE )" ) &&
+    false !== strpos( $maintenance, "return '1' === (string) get_option( 'pvdak_maintenance_enabled', '0' );" ) &&
+    false !== strpos( $maintenance, "register_setting( 'general', 'pvdak_maintenance_enabled'" ) &&
+    false !== strpos( $maintenance, "add_settings_field(" ) &&
+    false !== strpos( $maintenance, "checked( \$enabled, true, false )" ) &&
+    false !== strpos( $maintenance, "add_action( 'admin_init', 'pvdak_maintenance_register_general_setting' );" ) &&
     false !== strpos( $maintenance, "add_filter( 'wp_robots', 'pvdak_preview_robots', 100 );" ) &&
     false !== strpos( $maintenance, "\$robots['noindex'] = true;" ) &&
     false !== strpos( $maintenance, "add_action( 'template_redirect', 'pvdak_maintenance_render', 0 );" ),
-    'Employer preview defaults to normal frontend with noindex and emergency maintenance override' );
+    'Native WordPress General Settings controls maintenance, retains default-OFF, noindex and emergency override' );
 pvdak_layout_expect( false !== strpos( $favicon, '<svg' ) &&
     false !== strpos( $favicon, 'aria-label="PV"' ) &&
     false !== strpos( $favicon, 'fill="url(#pvdak-pv-bg)"' ),
