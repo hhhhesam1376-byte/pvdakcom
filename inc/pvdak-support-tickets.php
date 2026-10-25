@@ -110,13 +110,15 @@ function pvdak_support_ticket_form(){
     }
     $url=admin_url('admin-post.php');
     ob_start(); ?>
-    <section id="pvdak-support" class="pvdak-support" aria-labelledby="pvdak-support-title">
+    <section class="pvdak-support" aria-labelledby="pvdak-support-title">
       <h2 id="pvdak-support-title">پشتیبانی من</h2>
       <p>برای مشکلات حساب و استفاده از سایت پیام بفرستید؛ اطلاعات پرونده قضایی وارد نکنید.</p>
       <?php $notice=isset($_GET['support']) && is_string($_GET['support']) ? sanitize_key(wp_unslash($_GET['support'])) : ''; ?>
       <?php if(in_array($notice,array('sent','new_sent','followup_sent'),true)):?>
         <p role="status" class="pvdak-static-note" tabindex="-1" id="pvdak-support-notice"><?php echo esc_html('followup_sent'===$notice?'پاسخ شما به گفتگو اضافه شد.':'پیام پشتیبانی شما ثبت شد.'); ?></p>
-      <?php elseif('failed'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">ارسال پیام انجام نشد؛ اطلاعات را بررسی کنید و دوباره تلاش کنید.</p><?php endif;?>
+      <?php elseif('slow'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">برای جلوگیری از ارسال تکراری، کمی بعد دوباره تلاش کنید.</p>
+      <?php elseif('invalid'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">عنوان یا متن پیام معتبر نیست؛ طول ورودی را بررسی کنید.</p>
+      <?php elseif('failed'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">ارسال پیام انجام نشد؛ دوباره تلاش کنید.</p><?php endif;?>
       <form class="pvdak-forms pvdak-ticket-new" data-pvdak-support-form action="<?php echo esc_url($url); ?>" method="post">
       <input type="hidden" name="action" value="pvdak_support_new">
       <?php wp_nonce_field('pvdak_support_new','_pvdak_support_nonce'); ?>
@@ -241,8 +243,11 @@ function pvdak_support_new(){
     $subject=trim($subject);
     $body=trim($body);
     if(pvdak_support_length($subject)<3||pvdak_support_length($subject)>120||
-       pvdak_support_length($body)<10||pvdak_support_length($body)>2500||get_transient($key)){
-        wp_safe_redirect(add_query_arg('support','failed',$base).'#pvdak-support');exit;
+       pvdak_support_length($body)<10||pvdak_support_length($body)>2500){
+        wp_safe_redirect(add_query_arg('support','invalid',$base).'#pvdak-support');exit;
+    }
+    if(get_transient($key)){
+        wp_safe_redirect(add_query_arg('support','slow',$base).'#pvdak-support');exit;
     }
     set_transient($key,1,90);
     $id=wp_insert_post(array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
