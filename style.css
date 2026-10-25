@@ -3587,3 +3587,12 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
   .pvdak-login-page .pvdak-auth-otp-verification{padding:14px 12px}
 }
 @media(prefers-reduced-motion:reduce){.pvdak-login-page [data-pvdak-auth-pane]{animation:none}}
+
+.pvdak-login-page .pvdak-auth-form-fields{display:block;border:0;padding:0;margin:0;min-width:0}
+.pvdak-login-page .pvdak-auth-form-fields[disabled]{opacity:.62}
+.pvdak-login-page [data-pvdak-auth-pane] button:disabled{
+  opacity:.55;cursor:not-allowed;box-shadow:none
+}
+.pvdak-login-page [data-pvdak-auth-pane] select{max-width:100%}
+.pvdak-sms-bind-card{margin-block:14px}
+.pvdak-sms-bind-card .pvdak-forms{margin-top:12px}
