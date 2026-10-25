@@ -5,9 +5,16 @@ set -Eeuo pipefail
 ROOT="${1:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 [[ -s "$ROOT/functions.php" && -s "$ROOT/packages/pvdak-core/pvdak-core.php" ]] || { echo "FAIL: SOURCE_NOT_FOUND" >&2; exit 2; }
 command -v php >/dev/null || { echo "FAIL: PHP_REQUIRED" >&2; exit 2; }
+linted=0
 while IFS= read -r -d '' f; do
   php -l "$f" >/dev/null || { echo "FAIL: PHP_PARSE $f" >&2; exit 1; }
+  linted=$((linted+1))
 done < <(find "$ROOT" -type f -name '*.php' -print0)
+if [[ "$linted" -lt 40 ]]; then
+  echo "FAIL: PHP_LINT_SCOPE_INCOMPLETE ($linted PHP files; expected full project tree)" >&2
+  exit 1
+fi
+echo "PVDAK_BATCH_PHP_LINT_OK: files=$linted"
 php "$ROOT/tests/pvdak-theme/feature-batch-smoke.php"
 php "$ROOT/tests/pvdak-theme/account-experience-smoke.php"
 php "$ROOT/tests/pvdak-theme/account-form-ux-smoke.php"
