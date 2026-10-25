@@ -109,8 +109,8 @@ $checks = array(
   '098-10 News card includes real publication date' =>
     strpos($v['front'], "get_the_date( 'Y-m-d', " . '$news_feature->ID )')!==false,
   '098-11 Global logged-in support shortcut retains role gate' =>
-    strpos($v['header'],"is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' )")!==false &&
-    strpos($v['header'],"pvdak_auth_account_url() . '#pvdak-support'")!==false,
+    strpos($v['header'],"is_user_logged_in() && \$support_account_url && shortcode_exists( 'pvdak_support_tickets' )")!==false &&
+    strpos($v['header'],"\$support_account_url . '#pvdak-support'")!==false,
   '098-12 Header search requires a nonempty native WordPress term' =>
     strpos($v['header'],'name="s"')!==false &&
     strpos($v['header'],'maxlength="100" required')!==false,
@@ -329,9 +329,9 @@ $checks = array(
     strpos( $v['javascript'], "target.closest('[data-pvdak-panel]')" ) !== false &&
     strpos( $v['javascript'], 'panels.forEach(' ) !== false &&
     strpos( $v['css'], '[data-pvdak-panel][hidden]{display:none!important}' ) !== false,
-  'Support shortcode ID remains unique while wrapper is a panel' =>
+  'Support anchor exists exactly once on the unified panel' =>
     strpos( $v['portal'], 'data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها"' ) !== false &&
-    substr_count( $v['portal'], 'id="pvdak-support"' ) === 0 &&
+    substr_count( $v['portal'], 'id="pvdak-support"' ) === 1 &&
     strpos( $v['portal'], "do_shortcode( '[pvdak_support_tickets]' )" ) !== false,
   'Legacy profile transparently redirects to the unified panel' =>
     strpos($v['profile'], "wp_safe_redirect( \$target . '#pvdak-profile', 302 )")!==false &&
