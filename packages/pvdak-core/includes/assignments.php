@@ -36,8 +36,15 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
             array( 'key' => '_pvdak_referral_cleared', 'value' => '1' ),
         ),
     ) );
+    global $wpdb;
+    if ( ! is_array( $profiles ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+        return array(); // A failed preview query cannot produce candidates.
+    }
     $eligible = array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type ) {
-        return pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) &&
+        return $profile instanceof WP_Post &&
+            'pvdak_professional' === $profile->post_type &&
+            'private' === $profile->post_status &&
+            pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) &&
             pvdak_core_capacity_available( $profile->ID );
     } ) );
     // Fair ordering for the manager only, NOT automatic assignment:
@@ -160,8 +167,14 @@ function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
     if ( ! add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true ) ) {
         return 'duplicate';
     }
+    if ( (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) !== (int) $profile_id ) {
+        delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
+        return 'write_failed';
+    }
     // Compare-and-set: another admin can change state outside these locks.
-    if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' ) ) {
+    if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' ) ||
+         'matched' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ) {
+        update_post_meta( $request_id, '_pvdak_request_state', 'review', 'matched' );
         delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
         return 'write_failed';
     }
@@ -190,13 +203,18 @@ function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
 }
 
 function pvdak_core_assign_request() {
+    if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+        wp_die( 'روش درخواست معتبر نیست.', '', array( 'response' => 405 ) );
+    }
     if ( ! current_user_can( 'edit_pvdak_requests' ) ) {
         wp_die( 'مجوز کافی نیست.', '', array( 'response' => 403 ) );
     }
-    $request_id = isset( $_POST['request_id'] ) && is_scalar( $_POST['request_id'] ) ?
-        absint( wp_unslash( $_POST['request_id'] ) ) : 0;
-    $profile_id = isset( $_POST['profile_id'] ) && is_scalar( $_POST['profile_id'] ) ?
-        absint( wp_unslash( $_POST['profile_id'] ) ) : 0;
+    $request_raw = isset( $_POST['request_id'] ) && is_string( $_POST['request_id'] ) ?
+        wp_unslash( $_POST['request_id'] ) : '';
+    $profile_raw = isset( $_POST['profile_id'] ) && is_string( $_POST['profile_id'] ) ?
+        wp_unslash( $_POST['profile_id'] ) : '';
+    $request_id = preg_match( '/^[1-9][0-9]{0,17}$/D', $request_raw ) ? absint( $request_raw ) : 0;
+    $profile_id = preg_match( '/^[1-9][0-9]{0,17}$/D', $profile_raw ) ? absint( $profile_raw ) : 0;
     if ( ! $request_id || ! $profile_id || 'pvdak_request' !== get_post_type( $request_id ) ||
          ! current_user_can( 'edit_post', $request_id ) ) {
         wp_die( 'ورودی نامعتبر است.', '', array( 'response' => 403 ) );
@@ -247,19 +265,35 @@ function pvdak_core_assignment_link_html( $post ) {
  * Case contents remain private; historical assignment evidence is retained.
  */
 function pvdak_core_recheck_assigned_professional( $profile_id ) {
-    if ( ! current_user_can( 'edit_post', $profile_id ) ||
+    $profile_id = absint( $profile_id );
+    if ( ! $profile_id || ! current_user_can( 'edit_post', $profile_id ) ||
          'pvdak_professional' !== get_post_type( $profile_id ) ) { return; }
     $requests = get_posts( array(
         'post_type' => 'pvdak_request',
         'post_status' => 'private',
         'posts_per_page' => -1,
+        'suppress_filters' => true,
         'meta_key' => '_pvdak_assigned_profile_id',
         'meta_value' => (int) $profile_id,
     ) );
+    global $wpdb;
+    if ( ! is_array( $requests ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+        update_post_meta( $profile_id, '_pvdak_referral_review_warning', array(
+            'request_id' => 0, 'at' => current_time( 'mysql', true ),
+            'reason' => 'assignment_query_failed',
+        ) );
+        return;
+    }
     foreach ( $requests as $request ) {
+        // No arbitrary result injected by query filters can be mutated.
+        if ( ! ( $request instanceof WP_Post ) ||
+             'pvdak_request' !== $request->post_type || 'private' !== $request->post_status ||
+             ! current_user_can( 'edit_post', $request->ID ) ) { continue; }
         $request_id = (int) $request->ID;
         $result = pvdak_core_with_assignment_locks( $request_id, $profile_id, function () use ( $request_id, $profile_id ) {
             pvdak_core_refresh_assignment_meta( $request_id, $profile_id );
+            if ( 'pvdak_request' !== get_post_type( $request_id ) ||
+                 'private' !== get_post_status( $request_id ) ) { return 'invalid_request'; }
             if ( (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) !== (int) $profile_id ) {
                 return 'already_removed';
             }
@@ -269,29 +303,52 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
                  pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) ) {
                 return 'eligible';
             }
-            $previous = get_post_meta( $request_id, '_pvdak_request_state', true );
-            delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id );
-            if ( 'matched' === $previous ) {
-                update_post_meta( $request_id, '_pvdak_request_state', 'review' );
-                add_post_meta( $request_id, '_pvdak_state_audit', array(
-                    'from' => 'matched', 'to' => 'review',
-                    'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
-                    'reason' => 'eligibility_revoked',
-                ), false );
+            // Completed or legacy states require human review: never rewrite
+            // historical assignments based solely on today's eligibility.
+            if ( 'matched' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ) {
+                return 'manual_review';
             }
-            add_post_meta( $request_id, '_pvdak_assignment_audit', array(
+            // Both the status and the link must change, or neither is treated
+            // as a successful revocation. Rollback is best-effort (no DB tx).
+            if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'review', 'matched' ) ||
+                 'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ) {
+                return 'state_write_failed';
+            }
+            if ( ! delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id ) ||
+                 (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) === (int) $profile_id ) {
+                update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' );
+                return 'assignment_delete_failed';
+            }
+            $assignment_event = array(
                 'profile_id' => (int) $profile_id,
                 'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
                 'action' => 'eligibility_revoked', 'scope' => 'internal_only',
-            ), false );
+            );
+            $state_event = array(
+                'from' => 'matched', 'to' => 'review',
+                'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
+                'reason' => 'eligibility_revoked',
+            );
+            $assignment_logged = add_post_meta( $request_id, '_pvdak_assignment_audit', $assignment_event, false );
+            $state_logged = $assignment_logged &&
+                add_post_meta( $request_id, '_pvdak_state_audit', $state_event, false );
+            if ( ! $state_logged ) {
+                if ( $assignment_logged ) {
+                    delete_post_meta( $request_id, '_pvdak_assignment_audit', $assignment_event );
+                }
+                add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true );
+                update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' );
+                return 'audit_write_failed';
+            }
             return 'revoked';
         } );
-        if ( 'lock_unavailable' === $result ) {
-            // Fail visibly: staff must re-run review after a timeout.
-            add_post_meta( $profile_id, '_pvdak_referral_review_warning', array(
+        if ( ! in_array( $result, array( 'revoked', 'eligible', 'already_removed' ), true ) ) {
+            // One bounded diagnostic per profile, not unbounded duplicate rows.
+            // It is an internal warning, not proof of successful rollback.
+            update_post_meta( $profile_id, '_pvdak_referral_review_warning', array(
                 'request_id' => $request_id, 'at' => current_time( 'mysql', true ),
-                'reason' => 'assignment_lock_timeout',
-            ), false );
+                'reason' => is_string( $result ) ? sanitize_key( $result ) : 'unknown',
+            ) );
         }
     }
 }
