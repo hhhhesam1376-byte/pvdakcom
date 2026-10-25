@@ -3707,7 +3707,9 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
   color:#08749c;font-weight:800;text-decoration:underline;text-underline-offset:3px
 }
 .pvdak-unified-account .pvdak-request-help-link small{display:block;color:#546e83}
-.pvdak-unified-account .pvdak-request-manager-link{margin:14px 0}
+.pvdak-unified-account .pvdak-request-manager-link{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px 17px;margin:14px 0
+}
 @media(max-width:600px){
   .pvdak-unified-account .pvdak-request-status-guide dl{grid-template-columns:minmax(0,1fr)}
 }
