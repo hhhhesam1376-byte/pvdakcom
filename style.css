@@ -1447,7 +1447,7 @@ a.pvdak-start-card:hover,a.pvdak-start-card:focus-visible{transform:translateY(-
 .pvdak-account-panel .pvdak-core-panel,.pvdak-account-panel .pvdak-static-body{max-width:none;margin:0}
 .pvdak-account-panel .pvdak-core-panel{border:1px solid #dce9e5;border-radius:20px;padding:clamp(18px,3vw,28px);background:#fff;box-shadow:0 8px 26px rgba(12,50,62,.05)}
 .pvdak-account-support{border:1px solid #dce9e5;border-radius:20px;background:#fff;padding:clamp(18px,3vw,28px);box-shadow:0 8px 26px rgba(12,50,62,.05)}
-.pvdak-account-support #pvdak-support{scroll-margin-top:25px}
+.pvdak-unified-account #pvdak-support{scroll-margin-top:25px}
 .pvdak-account-main .pvdak-core-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
 .pvdak-account-main :where(.pvdak-core-requests,.pvdak-ticket-list){overflow-wrap:anywhere}
 .pvdak-profile-page>.pvdak-static-body{max-width:740px}
