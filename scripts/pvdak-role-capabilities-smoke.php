@@ -15,8 +15,14 @@ function pvdak_role_audit_check( $label, $ok ) {
     WP_CLI::line( ( $ok ? 'PASS ' : 'FAIL ' ) . $label );
 }
 pvdak_role_audit_check( 'Core loaded', function_exists( 'pvdak_core_register_post_types' ) );
-pvdak_role_audit_check( 'Public maintenance enabled',
-    function_exists( 'pvdak_maintenance_enabled' ) && pvdak_maintenance_enabled() );
+// Maintenance may be OFF for employer preview. Until explicit public launch,
+ // the actual WordPress robots filter must still disallow indexing.
+$preview_robots = apply_filters( 'wp_robots', array() );
+pvdak_role_audit_check( 'Unapproved public preview is noindex/nofollow',
+    function_exists( 'pvdak_preview_robots' ) &&
+    ( ! defined( 'PVDAK_PUBLIC_LAUNCH_APPROVED' ) || ! PVDAK_PUBLIC_LAUNCH_APPROVED ) &&
+    is_array( $preview_robots ) &&
+    ! empty( $preview_robots['noindex'] ) && ! empty( $preview_robots['nofollow'] ) );
 pvdak_role_audit_check( 'Legal intake disabled',
     function_exists( 'pvdak_core_intake_open' ) && ! pvdak_core_intake_open() );
 pvdak_role_audit_check( 'Member intake disabled',
