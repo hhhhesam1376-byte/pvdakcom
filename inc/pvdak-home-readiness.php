@@ -126,20 +126,24 @@ function pvdak_home_readiness_items() {
     $privacy_is_template = false !== stripos( $privacy_text, 'Suggested text' ) ||
         false !== stripos( $privacy_text, 'Who we are' ) ||
         false !== strpos( $privacy_text, 'این متن اولیه باید پیش از شروع رسمی خدمات بازبینی شود' );
+    $privacy_length = function_exists( 'mb_strlen' ) ?
+        mb_strlen( $privacy_text, 'UTF-8' ) : strlen( $privacy_text );
     $privacy_ready = $privacy_page instanceof WP_Post &&
         'publish' === $privacy_page->post_status &&
         '1' !== (string) get_post_meta( $privacy_page->ID, '_pvdak_provisional_policy', true ) &&
-        ! $privacy_is_template && '' !== $privacy_text;
+        ! $privacy_is_template && $privacy_length >= 200;
 
     $terms_page = get_page_by_path( 'terms-of-use', OBJECT, 'page' );
     $terms_text = $terms_page instanceof WP_Post ?
         trim( wp_strip_all_tags( strip_shortcodes( $terms_page->post_content ) ) ) : '';
     $terms_is_draft = false !== strpos( $terms_text, 'پیش‌نویس شرایط' ) ||
         false !== strpos( $terms_text, 'این متن اولیه شرایط نهایی خدمات محسوب نمی‌شود' );
+    $terms_length = function_exists( 'mb_strlen' ) ?
+        mb_strlen( $terms_text, 'UTF-8' ) : strlen( $terms_text );
     $terms_ready = $terms_page instanceof WP_Post &&
         'publish' === $terms_page->post_status &&
         '1' !== (string) get_post_meta( $terms_page->ID, '_pvdak_provisional_policy', true ) &&
-        ! $terms_is_draft && '' !== $terms_text;
+        ! $terms_is_draft && $terms_length >= 200;
     $hello_post = get_page_by_path( 'hello-world', OBJECT, 'post' );
     $hello_sample_published = $hello_post instanceof WP_Post &&
         'publish' === $hello_post->post_status &&
@@ -152,10 +156,10 @@ function pvdak_home_readiness_items() {
                 'عنوان فعلی «' . $site_title . '» است؛ از تنظیمات عمومی به PVDak تغییر دهید', admin_url( 'options-general.php' ) ),
         array( 'حریم خصوصی اختصاصی منتشرشده', $privacy_ready,
             $privacy_ready ? 'متن پیش‌فرض تشخیص داده نشد؛ تأیید حقوقی همچنان با کارفرماست' :
-                'متن پیش‌فرض/اولیه یا برگه نامعتبر است؛ پس از بررسی حقوقی در خود برگه جایگزین شود', admin_url( 'edit.php?post_type=page' ) ),
+                'متن پیش‌فرض، کمتر از ۲۰۰ نویسه یا برگه نامعتبر است؛ پس از بررسی حقوقی در خود برگه جایگزین شود', admin_url( 'edit.php?post_type=page' ) ),
         array( 'شرایط استفاده نهایی منتشرشده', $terms_ready,
             $terms_ready ? 'پیش‌نویس شناخته‌شده تشخیص داده نشد؛ تأیید حقوقی جداگانه لازم است' :
-                'پیش‌نویس شرایط یا برگه نامعتبر است؛ متن مصوب را منتشر کنید', admin_url( 'edit.php?post_type=page' ) ),
+                'پیش‌نویس، متن کمتر از ۲۰۰ نویسه یا برگه نامعتبر است؛ متن مصوب را منتشر کنید', admin_url( 'edit.php?post_type=page' ) ),
         array( 'حذف نمونه پیش‌فرض Hello world', ! $hello_sample_published,
             $hello_sample_published ? 'نوشته Hello world هنوز عمومی است؛ در نوشته‌ها اصلاح یا پیش‌نویس شود' :
                 'نوشته نمونه پیش‌فرض منتشرشده‌ای با عنوان اولیه تشخیص داده نشد', admin_url( 'edit.php' ) ),
