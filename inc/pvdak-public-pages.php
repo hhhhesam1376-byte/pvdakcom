@@ -115,6 +115,28 @@ function pvdak_public_relabel_legacy_brand_pages() {
   }
 }
 add_action('admin_init','pvdak_public_relabel_legacy_brand_pages',25);
+
+/**
+ * D10: Work observed the untouched WordPress sample site name "Bloggers Unite"
+ * in public browser tabs. Do not mutate the owner's WordPress setting behind
+ * their back: show the PVDak brand only for this exact uncustomized scaffold.
+ * The admin readiness panel points to Settings > General for a lasting fix.
+ */
+function pvdak_public_document_title_brand_fallback( $parts ) {
+  if ( ! is_array( $parts ) ||
+       'Bloggers Unite' !== trim( (string) get_option( 'blogname', '' ) ) ) {
+    return $parts;
+  }
+  foreach ( array( 'title', 'site' ) as $key ) {
+    if ( isset( $parts[ $key ] ) &&
+         'Bloggers Unite' === trim( (string) $parts[ $key ] ) ) {
+      $parts[ $key ] = 'PVDak';
+    }
+  }
+  return $parts;
+}
+add_filter( 'document_title_parts', 'pvdak_public_document_title_brand_fallback', 20 );
+
 function pvdak_public_policy_noindex($robots) {
   $post=is_singular('page') ? get_queried_object() : null;
   if($post instanceof WP_Post && '1'===get_post_meta($post->ID,'_pvdak_provisional_policy',true)) {
