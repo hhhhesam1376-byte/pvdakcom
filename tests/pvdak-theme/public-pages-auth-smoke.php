@@ -154,4 +154,23 @@ pvdak_public_smoke_require(
  strpos( $code['theme'], '.pvdak-discovery-page .post-card' ) !== false,
  '096-10 Responsive empty results offer real published categories' );
 
+// Branding regression: user-facing labels are PVDak across the branded
+// templates, while legacy stored defaults and installed Core are normalized
+// without touching editor-authored content or the Core release itself.
+$brand_acf = file_get_contents( $root . '/inc/pvdak-home-acf.php' );
+$brand_editor = file_get_contents( $root . '/inc/pvdak-editor-bootstrap.php' );
+pvdak_public_smoke_require(
+ false !== strpos( $code['login'], 'حساب کاربری PVDak' ) &&
+ false === strpos( $code['login'], 'حساب کاربری پویش' ) &&
+ false !== strpos( $code['header'], '<span class="site-description">PVDak</span>' ) &&
+ false !== strpos( $code['header'], "str_replace( array( 'پویش وکلای دادگستری کشور', 'پویش' )" ) &&
+ false !== strpos( $code['footer'], 'تماس با PVDak' ) &&
+ false !== strpos( $code['account'], 'امکانات PVDak' ) &&
+ false !== strpos( $brand_acf, "'hero_label' => 'PVDak'" ) &&
+ false !== strpos( $brand_acf, 'function pvdak_home_brand_copy(' ) &&
+ false !== strpos( $brand_editor, 'function pvdak_editor_relabel_legacy_brand_categories(' ) &&
+ false !== strpos( $code['pages'], 'function pvdak_public_relabel_legacy_brand_pages(' ) &&
+ false !== strpos( $code['functions'], "add_filter( 'do_shortcode_tag', 'pvdak_core_shortcode_brand_labels', 10, 2 );" ),
+ 'PVDak branding replaces the legacy name on frontend, existing ACF values and installed Core shortcode labels' );
+
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
