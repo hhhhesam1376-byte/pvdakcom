@@ -170,6 +170,8 @@ pvdak_public_smoke_require(
  false !== strpos( $brand_acf, 'function pvdak_home_brand_copy(' ) &&
  false !== strpos( $brand_editor, 'function pvdak_editor_relabel_legacy_brand_categories(' ) &&
  false !== strpos( $code['pages'], 'function pvdak_public_relabel_legacy_brand_pages(' ) &&
+ false !== strpos( $code['pages'], "update_option( 'blogname', 'PVDak' )" ) &&
+ false !== strpos( $code['pages'], "get_option( 'blogdescription', '' )" ) &&
  false !== strpos( $code['functions'], "add_filter( 'do_shortcode_tag', 'pvdak_core_shortcode_brand_labels', 10, 2 );" ),
  'PVDak branding replaces the legacy name on frontend, existing ACF values and installed Core shortcode labels' );
 
