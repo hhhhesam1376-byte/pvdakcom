@@ -18,6 +18,8 @@ $paths = array(
   'sms' => 'inc/pvdak-sms-auth.php',
   'register' => 'inc/pvdak-registration.php',
   'register-ui' => 'page-templates/pvdak-register.php',
+  'verification' => 'inc/pvdak-email-verification.php',
+  'readiness' => 'inc/pvdak-home-readiness.php',
 
 );
 $s = array();
@@ -26,6 +28,30 @@ foreach ( $paths as $name => $path ) {
   $s[ $name ] = file_get_contents( $root . '/' . $path );
 }
 $checks = array(
+  'Private profile allows name editing but not role, email or owner changes' =>
+    strpos($s['portal'],'name="first_name"')!==false &&
+    strpos($s['portal'],'name="last_name"')!==false &&
+    strpos($s['tools'],"array( 'first_name', 'last_name' )")!==false &&
+    strpos($s['tools'],"'ID' => $id, 'display_name' => $value")!==false &&
+    strpos($s['tools'],"array_key_exists( $field, $_POST )")!==false &&
+    strpos($s['script'],'#pvdak-first-name, #pvdak-last-name')!==false,
+  'Password recovery link avoids mismatched Pages and SMS-only emails' =>
+    strpos($s['portal'],"pvdak_account_tool_url( 'account-recovery' )")!==false &&
+    strpos($s['portal'],"is_email( (string) $user->user_email )")!==false,
+  'Applicants can reach a real professional application without auto-approval' =>
+    strpos($s['portal'],"'_pvdak_self_reported_category'")!==false &&
+    strpos($s['portal'],'pvdak_core_member_intake_open()')!==false &&
+    strpos($s['portal'],"'join-legal-community','pvdak_professional_application'")!==false &&
+    strpos($s['portal'],'انتخاب نوع حساب در ثبت‌نام، به معنی تأیید صلاحیت')!==false,
+  'Email send failures and closed-signup resend are handled separately' =>
+    strpos($s['register'],'$mailed=pvdak_email_verification_issue($user)')!==false &&
+    strpos($s['register-ui'],"'email_issue'=>'")!==false &&
+    strpos($s['register-ui'],'<details class="pvdak-register-resend">')!==false &&
+    strpos($s['verification'],"if (!pvdak_registration_open())")===false,
+  'Homepage readiness checks live preview and complete account routes' =>
+    strpos($s['readiness'],"'account-register' => 'page-templates/pvdak-register.php'")!==false &&
+    strpos($s['readiness'],"'account-recovery' => 'page-templates/pvdak-recovery.php'")!==false &&
+    strpos($s['readiness'],"'دسترسی نمایشی بازدیدکننده بدون تعمیرات', ! $maintenance_on")!==false,
   'Login has only password/SMS tabs; signup keeps its separate email/SMS tabs' =>
     strpos($s['login'],'name="action" value="pvdak_login"')!==false &&
     strpos($s['login'],'data-pvdak-auth-tab="password"')!==false &&
