@@ -61,11 +61,11 @@ $checks = array(
         false !== strpos($data['register'],"pvdak_maintenance_enabled()") &&
         false !== strpos($data['register'],"get_option('pvdak_registration_enabled', '0')") &&
         false !== strpos($data['register'],"get_option('users_can_register', false)") &&
-        false !== strpos($data['register'],"'role'=>$role") &&
+        false !== strpos($data['register'],"'role'=>\$role") &&
         false !== strpos($data['register'],"'_pvdak_email_verification_pending'"),
     'Tickets private; user sees only own submitted tickets' =>
         false !== strpos($data['tickets'],"'public'=>false") &&
-        false !== strpos($data['tickets'],"'author'=>$user") &&
+        false !== strpos($data['tickets'],"'author'=>\$user") &&
         false !== strpos($data['tickets'],"current_user_can('manage_options')") &&
         false !== strpos($data['tickets'],"check_admin_referer("),
     'Manual matching protects assignment with locks and confirmed capacity' =>
