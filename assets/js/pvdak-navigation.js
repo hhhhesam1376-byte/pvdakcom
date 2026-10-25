@@ -64,7 +64,10 @@
         menu.classList.add('is-enhanced');
 
         function closeMenu(restoreFocus) {
-            if (!menu.open) { return; }
+            if (!menu.open) {
+                document.body.classList.remove('pvdak-mobile-drawer-open');
+                return;
+            }
             menu.open = false;
             document.body.classList.remove('pvdak-mobile-drawer-open');
             if (restoreFocus && trigger) { trigger.focus(); }
@@ -108,7 +111,11 @@
                 return !element.closest('[hidden]') && element.getClientRects().length > 0 &&
                     window.getComputedStyle(element).visibility !== 'hidden';
             });
-            if (!focusable.length) { return; }
+            if (!focusable.length) {
+                event.preventDefault();
+                if (drawer) { drawer.focus(); }
+                return;
+            }
             var first = focusable[0];
             var last = focusable[focusable.length - 1];
             if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
@@ -122,18 +129,41 @@
         });
         list.addEventListener('click', function (event) {
             var link = event.target.closest('a[href]');
-            // An in-page link must not leave the overlay and body scroll locked.
-            if (link && list.contains(link) && link.getAttribute('href') !== '#') { closeMenu(false); }
+            // In-page links must close the drawer and transfer keyboard focus
+            // to their destination instead of leaving it on a hidden link.
+            if (!link || !list.contains(link) || link.getAttribute('href') === '#') { return; }
+            var destination = null;
+            try {
+                var url = new URL(link.href, window.location.href);
+                if (url.origin === window.location.origin &&
+                    url.pathname === window.location.pathname &&
+                    url.search === window.location.search && url.hash.length > 1) {
+                    destination = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+                }
+            } catch (err) { destination = null; }
+            closeMenu(false);
+            if (destination) {
+                window.setTimeout(function () {
+                    if (!destination.hasAttribute('tabindex')) { destination.setAttribute('tabindex', '-1'); }
+                    destination.focus({ preventScroll: true });
+                }, 0);
+            }
         });
         document.addEventListener('click', function (event) {
-            if (menu.open && !menu.contains(event.target)) { closeMenu(false); }
+            if (menu.open && !menu.contains(event.target)) {
+                closeMenu(!!(drawer && drawer.contains(document.activeElement)));
+            }
         });
         window.addEventListener('resize', function () {
-            if (window.innerWidth > 1030) { closeMenu(false); }
+            if (window.innerWidth > 1030) {
+                closeMenu(!!(drawer && drawer.contains(document.activeElement)));
+            }
         });
         window.addEventListener('pageshow', function (event) {
             // A browser back/forward cache restore must not resurrect a locked drawer.
-            if (event.persisted) { closeMenu(false); }
+            if (event.persisted) {
+                closeMenu(!!(drawer && drawer.contains(document.activeElement)));
+            }
             if (!menu.open) { document.body.classList.remove('pvdak-mobile-drawer-open'); }
         });
     }
