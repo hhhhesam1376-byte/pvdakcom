@@ -45,6 +45,18 @@ pvdak_public_smoke_require(
  false !== strpos( $tools_source, "'action' => 'rp'" ),
  'D05/D07: missing branded login, dashboard and recovery Pages use valid native WordPress routes' );
 
+// D05/D07: Pages that are published with the wrong native template are NOT
+// valid destinations for login, dashboard or password recovery.
+pvdak_public_smoke_require(
+ false !== strpos( $code['pages'], 'function pvdak_public_template_page_url(' ) &&
+ false !== strpos( $code['pages'], 'get_page_template_slug( $page->ID )' ) &&
+ false !== strpos( $code['auth'], "pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')" ) &&
+ false !== strpos( $code['auth'], "pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php')" ) &&
+ false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' )" ) &&
+ false !== strpos( $code['login'], "pvdak_public_template_page_url( 'account-register', 'page-templates/pvdak-register.php' )" ) &&
+ false !== strpos( $code['login'], 'ثبت‌نام فعلاً در دسترس نیست' ),
+ 'D05/D07: account navigation rejects wrong-template Pages and hides a missing registration route'
+);
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
 }
