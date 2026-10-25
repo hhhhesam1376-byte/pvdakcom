@@ -38,7 +38,7 @@ $checks = array(
     strpos($v['tools'], 'get_current_user_id()')!==false &&
     strpos($v['tools'], "'post_status' => 'private'")!==false &&
     strpos($v['tools'], "'author' => \$owner")!==false &&
-    strpos($v['tools'], '(int) \$request->post_author !== \$owner')!==false &&
+    strpos($v['tools'], '(int) $request->post_author !== $owner')!==false &&
     strpos($v['tools'], "'_pvdak_state_audit'")!==false &&
     strpos($v['tools'], "'state' => \$event['to']")!==false &&
     strpos($v['tools'], "'posts_per_page' => 5")!==false &&
