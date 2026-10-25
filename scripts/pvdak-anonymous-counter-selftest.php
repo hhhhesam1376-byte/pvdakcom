@@ -32,7 +32,18 @@ function pvdak_core_dashboard() { return '<p>login required</p>'; }
 function pvdak_core_professional_dashboard() { return '<p>login required</p>'; }
 function pvdak_core_intake_open() { return false; }
 function pvdak_core_member_intake_open() { return false; }
-function pvdak_maintenance_enabled() { return $GLOBALS['pvdak_test_mode'] !== 'fail'; }
+// Emulate the active theme's robots filter in the isolated fixture.
+ // In fail mode the missing noindex/nofollow policy must be detected.
+function pvdak_preview_robots( $robots ) {
+    if ( 'fail' !== $GLOBALS['pvdak_test_mode'] ) {
+        $robots['noindex'] = true;
+        $robots['nofollow'] = true;
+    }
+    return $robots;
+}
+function apply_filters( $name, $value ) {
+    return 'wp_robots' === $name ? pvdak_preview_robots( $value ) : $value;
+}
 function do_shortcode( $text ) { return '<p>locked</p>'; }
 class PVDak_Anonymous_Test_REST {
     public function get_routes() { return array( '/wp/v2/posts' => array() ); }
