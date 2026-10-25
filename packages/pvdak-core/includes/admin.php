@@ -22,6 +22,10 @@ function pvdak_core_register_settings() {
         'type'=>'string', 'default'=>'0',
         'sanitize_callback'=>function($v){return '1'===(string)$v?'1':'0';}
     ) );
+    register_setting( 'pvdak_core_settings', 'pvdak_core_directory_enabled', array(
+        'type' => 'string', 'default' => '0',
+        'sanitize_callback' => function( $v ) { return '1' === (string) $v ? '1' : '0'; },
+    ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_email_notifications_enabled', array(
         'type' => 'string', 'default' => '0',
         'sanitize_callback' => function( $v ) { return '1' === (string) $v ? '1' : '0'; },
@@ -107,6 +111,12 @@ function pvdak_core_settings_page() {
          checked( '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ), true, false ) .
          '> فعال‌سازی پس از بررسی تنظیمات ایمیل و حریم خصوصی (پیش‌فرض خاموش)</label>';
     echo '<p class="description">فقط ایمیل مالک فعلی رکورد خصوصی، به‌جز حساب در انتظار تأیید ایمیل؛ wp_mail تحویل واقعی را تضمین نمی‌کند.</p>';
+    echo '<p>فهرست عمومی اعضای حرفه‌ای، فقط با رضایت معتبر هر شخص و بررسی صلاحیت جاری:</p>';
+    echo '<input type="hidden" name="pvdak_core_directory_enabled" value="0">';
+    echo '<label><input type="checkbox" name="pvdak_core_directory_enabled" value="1" ' .
+         checked( pvdak_core_directory_enabled(), true, false ) .
+         '> فعال‌کردن فهرست عمومی (پیش‌فرض خاموش؛ فقط پس از تأیید سیاست حریم خصوصی و آزمون)</label>';
+    echo '<p class="description">تنها نام نمایشی، شهر و عنوان تخصص منتشر می‌شود. رضایت هر فرد در پنل همکاری ثبت یا لغو می‌شود. کش عمومی این صفحه باید غیرفعال باشد.</p>';
     submit_button( 'ذخیره تنظیمات' );
     echo '</form>';
     echo '<h2>ساخت برگه‌های خدمات (بدون انتشار عمومی)</h2>';
@@ -125,6 +135,7 @@ function pvdak_core_settings_page() {
     echo '<p>فرم عضویت جامعه حقوقی: <code>[pvdak_professional_application]</code></p>';
     echo '<p>داشبورد شخصی کاربران: <code>[pvdak_account_dashboard]</code></p>';
     echo '<p>پنل همکاری حرفه‌ای (بدون اطلاعات پرونده): <code>[pvdak_professional_dashboard]</code></p>';
+    echo '<p>فهرست عمومی رضایت‌محور (برگه فقط با تصمیم مدیر منتشر شود): <code>[pvdak_professional_directory]</code></p>';
     echo '<p>وقتی برگه‌ها تست شدند، لینک‌های سه خدمت را در منوی «محتوای صفحه اصلی» قالب روی همان برگه‌ها قرار دهید.</p>';
     echo '</div>';
 }
@@ -163,7 +174,8 @@ function pvdak_core_assets() {
         has_shortcode( $post->post_content, 'pvdak_my_requests' ) ||
         has_shortcode( $post->post_content, 'pvdak_professional_application' ) ||
         has_shortcode( $post->post_content, 'pvdak_account_dashboard' ) ||
-        has_shortcode( $post->post_content, 'pvdak_professional_dashboard' )
+        has_shortcode( $post->post_content, 'pvdak_professional_dashboard' ) ||
+        has_shortcode( $post->post_content, 'pvdak_professional_directory' )
     ) ) {
         wp_enqueue_style( 'pvdak-core', plugins_url( 'assets/forms.css', PVDAK_CORE_PLUGIN_FILE ), array(), PVDAK_CORE_VERSION );
     }
@@ -213,6 +225,11 @@ function pvdak_core_private_page_headers() {
     if ( ! is_singular( 'page' ) ) { return; }
     $post = get_queried_object();
     if ( ! $post instanceof WP_Post ) { return; }
+    // A revoked directory consent must not linger in WordPress page caches.
+    if ( has_shortcode( $post->post_content, 'pvdak_professional_directory' ) ) {
+        nocache_headers();
+        return;
+    }
     $shortcodes = array( 'pvdak_account_dashboard', 'pvdak_my_requests', 'pvdak_request_form', 'pvdak_professional_application', 'pvdak_professional_dashboard' );
     foreach ( $shortcodes as $code ) {
         if ( has_shortcode( $post->post_content, $code ) ) {
