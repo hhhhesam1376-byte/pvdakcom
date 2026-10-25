@@ -2,7 +2,8 @@
 /**
  * PVDak email verification for future opt-in registrations.
  * Uses a hashed single-use 24h token; never upgrades a self-declared
- * professional role. Public registration remains OFF by default.
+ * professional role. Public registration is governed by the independent
+ * PVDak manager setting, published Page and maintenance gate.
  */
 if (!defined('ABSPATH')) { exit; }
 
