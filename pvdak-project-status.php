@@ -103,10 +103,10 @@ if ($deployed !== null && is_file($deploy_log) && is_readable($deploy_log)) {
         if (is_int($size) && $size > 0) {
             @fseek($handle, max(0, $size - 262144), SEEK_SET);
             $tail = (string) @stream_get_contents($handle, 262144);
-            $preflight_confirmed = (bool) preg_match(
+            $preflight_confirmed = preg_match(
                 '/^\\[[0-9TZ:-]+\\] SOURCE_PREFLIGHT_OK ' . preg_quote($deployed, '/') . '$/m',
                 $tail
-            );
+            ) === 1 ? true : null;
         }
         fclose($handle);
     }
