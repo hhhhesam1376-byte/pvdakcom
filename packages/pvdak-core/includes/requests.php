@@ -69,7 +69,11 @@ function pvdak_core_request_form( $atts ) {
     if ( ! is_user_logged_in() ) {
         return '<p class="pvdak-core-notice">برای ثبت و پیگیری درخواست باید وارد حساب خود شوید. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">ورود به حساب</a></p>';
     }
-    $landing_pages = pvdak_core_specialty_pages();
+    // Do not offer blank-title, moved or unpublished topics to applicants.
+    $landing_pages = array_values( array_filter( pvdak_core_specialty_pages(), function ( $page ) {
+        return $page instanceof WP_Post &&
+            'ready' === pvdak_core_topic_resolution( $page->ID )['status'];
+    } ) );
     if ( ! $landing_pages ) {
         return '<p class="pvdak-core-notice">پذیرش این درخواست هنوز آماده نیست؛ موضوعات حقوقی باید توسط مدیر سایت تنظیم شوند.</p>';
     }
@@ -122,7 +126,7 @@ function pvdak_core_handle_request() {
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
     $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
-    if ( ! $consent || ! isset( $types[ $type ] ) || ! pvdak_core_valid_specialty( $landing_id ) ||
+    if ( ! $consent || ! isset( $types[ $type ] ) || 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ||
          ! pvdak_core_request_input_valid( $title, $description ) ) {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
         exit;
@@ -342,8 +346,9 @@ function pvdak_core_request_metabox_html( $post ) {
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
     $landing_id = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
+    $topic = pvdak_core_topic_resolution( $landing_id );
     echo '<p><strong>موضوع حقوقی:</strong> ' .
-        ( pvdak_core_valid_specialty( $landing_id ) ? esc_html( get_the_title( $landing_id ) ) : 'نامشخص/قدیمی' ) . '</p>';
+        ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
     $current = get_post_meta( $post->ID, '_pvdak_request_state', true );
     if ( ! isset( $statuses[ $current ] ) ) { $current = 'submitted'; }
     echo '<input type="hidden" name="_pvdak_expected_state" value="' . esc_attr( $current ) . '">';
