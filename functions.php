@@ -77,6 +77,26 @@ function pvdak_core_shortcode_brand_labels( $output, $tag ) {
 }
 add_filter( 'do_shortcode_tag', 'pvdak_core_shortcode_brand_labels', 10, 2 );
 
+/**
+ * Bundled/installed Core 0.8.14 also names the internal request-history
+ * section "pvdak-requests". On the unified account Page the theme already
+ * owns that ID; duplicate IDs break hash navigation and filter return links.
+ * Restrict the compatibility fix to this one Core shortcode on this template.
+ * No change to Core installation, user text, ownership or query results.
+ */
+function pvdak_core_request_history_unique_anchor( $output, $tag ) {
+    if ( 'pvdak_my_requests' !== $tag || ! is_string( $output ) ||
+         ! is_page_template( 'page-templates/pvdak-account.php' ) ) {
+        return $output;
+    }
+    return str_replace(
+        '<section id="pvdak-requests" class="pvdak-core-panel pvdak-core-request-history"',
+        '<section class="pvdak-core-panel pvdak-core-request-history"',
+        $output
+    );
+}
+add_filter( 'do_shortcode_tag', 'pvdak_core_request_history_unique_anchor', 15, 2 );
+
 // Optional admin starter: native Page and Post Category content structure.
 require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
