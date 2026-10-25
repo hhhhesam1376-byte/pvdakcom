@@ -13,9 +13,15 @@ function add_shortcode() {}
 function register_activation_hook() {}
 function register_deactivation_hook() {}
 function get_option( $name, $default = false ) {
-    return 'pvdak_core_email_notifications_enabled' === $name ?
-        ( $GLOBALS['pvdak_mock_notify_enabled'] ?? '0' ) : $default;
+    if ( 'pvdak_core_email_notifications_enabled' === $name ) {
+        return $GLOBALS['pvdak_mock_notify_enabled'] ?? '0';
+    }
+    if ( 'pvdak_core_subscription_gate_enabled' === $name ) {
+        return $GLOBALS['pvdak_mock_subscription_gate'] ?? '0';
+    }
+    return $default;
 }
+function wp_salt( $scheme = 'auth' ) { return 'test-only-salt-' . $scheme; }
 
 // Synthetic records — no connection to a real WordPress installation.
 class WP_Post {
@@ -102,6 +108,10 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_license_review_expires' === $key ) { return $GLOBALS['pvdak_mock_license_expiry']; }
     if ( '_pvdak_license_review_by' === $key ) { return $GLOBALS['pvdak_mock_license_reviewer']; }
     if ( '_pvdak_capacity_limit' === $key ) { return $GLOBALS['pvdak_mock_capacity_limit']; }
+    if ( '_pvdak_subscription_state' === $key ) { return $GLOBALS['pvdak_mock_subscription_state'] ?? 'inactive'; }
+    if ( '_pvdak_subscription_plan' === $key ) { return $GLOBALS['pvdak_mock_subscription_plan'] ?? 'none'; }
+    if ( '_pvdak_subscription_monthly_quota' === $key ) { return $GLOBALS['pvdak_mock_subscription_quota'] ?? '0'; }
+    if ( '_pvdak_subscription_expires' === $key ) { return $GLOBALS['pvdak_mock_subscription_expiry'] ?? ''; }
     if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
     if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
     if ( '_pvdak_assignment_audit' === $key ) { return $GLOBALS['pvdak_mock_assignment_audits'][ (int) $id ] ?? array(); }
@@ -340,6 +350,49 @@ $GLOBALS['wpdb']->last_error = 'synthetic query failure';
 pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
     'Failed audit query cannot silently reset quota usage' );
 $GLOBALS['wpdb']->last_error = '';
+$GLOBALS['pvdak_mock_assignment_audits'] = array();
+$GLOBALS['pvdak_mock_audit_request_ids'] = array();
+// D25: synthetic entitlement checks; not a real MariaDB or WordPress save test.
+pvdak_expect( pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 disabled subscription gate preserves existing referral behavior' );
+$GLOBALS['pvdak_mock_subscription_gate'] = '1';
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 enabled gate rejects inactive subscriptions' );
+$GLOBALS['pvdak_mock_subscription_state'] = 'active';
+$GLOBALS['pvdak_mock_subscription_quota'] = '4';
+$GLOBALS['pvdak_mock_subscription_expiry'] = '2099-12-31';
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 enabled gate rejects an active record without a valid plan' );
+$GLOBALS['pvdak_mock_subscription_plan'] = 'basic';
+pvdak_expect( pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 valid active tier, quota and future expiry allow a new referral' );
+$GLOBALS['pvdak_mock_subscription_expiry'] = '2020-01-01';
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 expired subscription blocks a new referral' );
+$GLOBALS['pvdak_mock_subscription_expiry'] = '2099-12-31';
+$GLOBALS['pvdak_mock_subscription_quota'] = '1';
+$GLOBALS['pvdak_mock_audit_request_ids'] = array( 701 );
+$GLOBALS['pvdak_mock_assignment_audits'] = array(
+    701 => array( array( 'profile_id' => 501, 'at' => $pvdak_this_month,
+        'scope' => 'internal_only', 'action' => 'assigned' ) ),
+);
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 exhausted monthly quota blocks a new referral' );
+$GLOBALS['pvdak_mock_subscription_quota'] = '4';
+$GLOBALS['pvdak_mock_profile_author'] = 0;
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 ownerless professional profile cannot use a subscription' );
+$GLOBALS['pvdak_mock_profile_author'] = 21;
+$sub_snapshot = pvdak_core_subscription_snapshot( 501 );
+pvdak_expect( pvdak_core_subscription_revision( $sub_snapshot ) ===
+    pvdak_core_subscription_revision( pvdak_core_subscription_snapshot( 501 ) ),
+    'D25 unchanged manual subscription form has stable revision' );
+$changed_snapshot = $sub_snapshot;
+$changed_snapshot['quota'] = 2;
+pvdak_expect( pvdak_core_subscription_revision( $sub_snapshot ) !==
+    pvdak_core_subscription_revision( $changed_snapshot ),
+    'D25 changed subscription values invalidate stale revision' );
+$GLOBALS['pvdak_mock_subscription_gate'] = '0';
 $GLOBALS['pvdak_mock_assignment_audits'] = array();
 $GLOBALS['pvdak_mock_audit_request_ids'] = array();
 pvdak_expect(
