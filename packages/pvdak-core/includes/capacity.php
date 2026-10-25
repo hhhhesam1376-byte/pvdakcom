@@ -91,7 +91,18 @@ function pvdak_core_capacity_metabox_html( $post ) {
     echo '<p><label for="pvdak_capacity_limit">حداکثر پرونده فعال (۱ تا ۲۵)</label>';
     echo '<input id="pvdak_capacity_limit" class="small-text" type="number" min="0" max="25" step="1" name="pvdak_capacity_limit" value="' .
         esc_attr( $limit ) . '"> <small>صفر: غیرفعال</small></p>';
-    echo '<p><strong>پرونده‌های فعال ثبت‌شده:</strong> ' . esc_html( $active ) . '</p>';
+    if ( PHP_INT_MAX === $active ) {
+        echo '<p class="notice notice-error inline">شمارش ظرفیت قابل اعتماد نیست؛ ارجاع تازه تا بررسی داده‌ها متوقف است.</p>';
+    } else {
+        echo '<p><strong>پرونده‌های فعال ثبت‌شده:</strong> ' . esc_html( $active ) . '</p>';
+    }
+    $warning = get_post_meta( $post->ID, '_pvdak_referral_review_warning', true );
+    if ( is_array( $warning ) && isset( $warning['reason'] ) && is_string( $warning['reason'] ) ) {
+        $request = isset( $warning['request_id'] ) ? absint( $warning['request_id'] ) : 0;
+        echo '<p class="notice notice-warning inline">بازبینی ارجاع داخلی لازم است' .
+            ( $request ? '؛ شماره درخواست #' . esc_html( $request ) : '' ) .
+            '. دلیل ثبت‌شده: <code>' . esc_html( sanitize_key( $warning['reason'] ) ) . '</code></p>';
+    }
     echo '<label><input type="checkbox" name="pvdak_accepting_assignments" value="1" ' .
         checked( $accepting, true, false ) . '> پذیرش انتساب داخلی جدید</label>';
     if ( $limit > 0 && $active >= $limit ) {
