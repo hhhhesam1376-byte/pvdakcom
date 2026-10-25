@@ -256,6 +256,7 @@ pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 999 )['status'], 'Unkno
 $GLOBALS['pvdak_mock_topic_title'] = '  ';
 pvdak_expect( 'untitled' === pvdak_core_topic_resolution( 11 )['status'], 'Untitled topic is flagged for repair' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Untitled topic cannot silently match a lawyer' );
+pvdak_expect( pvdak_core_specialty_ids( 501 ) === array(), 'Untitled topic is omitted from stored specialist mappings' );
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 $GLOBALS['pvdak_mock_topic_draft'] = true;
 pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 11 )['status'], 'Unpublished topic loses referral eligibility' );
