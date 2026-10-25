@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             <?php endif; ?>
         </div>
         <nav class="pvdak-footer-public" aria-label="اطلاعات سایت">
-          <?php $account_link = is_user_logged_in() ? pvdak_public_page_url( 'my-pvdak-account' ) : pvdak_public_page_url( 'account-login' );
+          <?php $account_link = is_user_logged_in() ? pvdak_auth_account_url() : pvdak_auth_login_url();
           if ( $account_link ): ?><a class="pvdak-footer-account-link" href="<?php echo esc_url( $account_link ); ?>"><?php echo is_user_logged_in() ? 'پنل من' : 'ورود به حساب'; ?></a><?php endif; ?>
           <strong class="pvdak-footer-heading">لینک‌های مهم</strong>
           <?php foreach(array('about-us'=>'درباره ما','contact-us'=>'تماس با ما','legal-faq'=>'پرسش‌های متداول','privacy-policy'=>'حریم خصوصی','terms-of-use'=>'شرایط استفاده') as $slug=>$label):
@@ -34,7 +34,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             <strong class="pvdak-footer-heading">ارتباط و راهنمایی</strong><p class="pvdak-footer-contact-description">برای پرسش‌های عمومی و مشکلات دسترسی از صفحه تماس استفاده کنید.</p>
             <span>نشانی اینترنتی</span>
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html(wp_parse_url(home_url('/'), PHP_URL_HOST)); ?></a>
-            <?php $contact_url = pvdak_public_page_url( 'contact-us' ); if ( $contact_url ): ?>
+            <?php $contact_url = pvdak_public_template_page_url( 'contact-us', 'page-templates/pvdak-contact.php' ); if ( $contact_url ): ?>
               <a class="pvdak-footer-contact-link" href="<?php echo esc_url( $contact_url ); ?>">تماس با PVDak <span aria-hidden="true">←</span></a>
             <?php endif; ?>
             <?php if ( is_page_template( 'page-templates/pvdak-account.php' ) ): ?>
