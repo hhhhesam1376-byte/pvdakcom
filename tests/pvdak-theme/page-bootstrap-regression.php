@@ -4,11 +4,13 @@
  * No WordPress, filesystem mutation, network or production database access.
  */
 define('ABSPATH', __DIR__);
+define('OBJECT', 'OBJECT'); // Real WP_Query get_page_by_path(..., OBJECT, ...).
 $GLOBALS['seed_marker'] = '0.8.26';
 $GLOBALS['fake_posts'] = array(
-    'about-us' => (object)array('post_status'=>'publish','ID'=>10),
-    'legal-faq' => (object)array('post_status'=>'draft','ID'=>11),
-    'account-register' => (object)array('post_status'=>'trash','ID'=>12),
+    'about-us' => (object)array('post_status'=>'publish','ID'=>10,
+        'post_content'=>'<p>Editor-authored content must be preserved.</p>'),
+    'legal-faq' => (object)array('post_status'=>'draft','ID'=>11,'post_content'=>''),
+    'account-register' => (object)array('post_status'=>'trash','ID'=>12,'post_content'=>''),
 );
 $GLOBALS['fake_created'] = array();
 function add_action(...$args) {}
@@ -33,7 +35,8 @@ function wp_insert_post($args,$wp_error=false) {
     }
     $id=100+count($GLOBALS['fake_created']);
     $GLOBALS['fake_posts'][$args['post_name']]=(object)array(
-        'ID'=>$id,'post_status'=>$args['post_status']);
+        'ID'=>$id,'post_status'=>$args['post_status'],
+        'post_content'=>$args['post_content']);
     $GLOBALS['fake_created'][]=$args['post_name'];
     return $id;
 }
@@ -46,6 +49,8 @@ function pvdak_bootstrap_assert($condition,$label) {
 pvdak_public_create_missing_pages();
 pvdak_bootstrap_assert(count($GLOBALS['fake_created'])===7,
     'Seven absent Pages are created even when legacy marker says done');
+pvdak_bootstrap_assert($GLOBALS['fake_posts']['about-us']->post_content==='<p>Editor-authored content must be preserved.</p>',
+    'Published custom editor content is never overwritten');
 pvdak_bootstrap_assert($GLOBALS['fake_posts']['legal-faq']->post_status==='draft',
     'Draft remains untouched');
 pvdak_bootstrap_assert($GLOBALS['fake_posts']['account-register']->post_status==='trash',
@@ -65,4 +70,4 @@ pvdak_bootstrap_assert(count($GLOBALS['fake_created'])===8,
     'Missing Page is restored without resetting current version marker');
 pvdak_bootstrap_assert(end($GLOBALS['fake_created'])==='contact-us',
     'Only absent Page was recreated');
-echo "PVDAK_PAGE_BOOTSTRAP_OK: 8 synthetic assertions, no WordPress writes.\n";
+echo "PVDAK_PAGE_BOOTSTRAP_OK: 9 synthetic assertions, no WordPress writes.\n";
