@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_home_defaults() {
     return array(
-        'hero_label' => 'پویش وکلای دادگستری کشور',
+        'hero_label' => 'PVDak',
         'hero_title' => 'حق شما، نقطه شروع ماست',
         'hero_description' => 'یک مسیر روشن برای خدمات حقوقی و همراهی جامعه وکلا',
         'hero_search_label' => 'موضوع حقوقی خود را پیدا کنید؛ خانواده، ملک، قرارداد…',
@@ -55,9 +55,9 @@ function pvdak_home_defaults() {
         'magazine_side_2_title' => 'جایی برای گفت‌وگوی تخصصی',
         'magazine_side_2_description' => 'تبادل تجربه و طرح مسائل در انجمن وکلا',
         'magazine_side_2_button' => 'ورود به انجمن',
-        'news_title' => 'تازه‌های پویش و اطلاعیه‌ها',
+        'news_title' => 'تازه‌های PVDak و اطلاعیه‌ها',
         'news_archive_label' => 'آرشیو اطلاعیه‌ها',
-        'notice_heading' => 'تابلوی اطلاعیه‌های پویش',
+        'notice_heading' => 'تابلوی اطلاعیه‌های PVDak',
         'notice_badge' => 'اطلاع‌رسانی',
         'notice_1_title' => 'راهنمای عضویت جامعه حقوقی',
         'notice_1_description' => 'مراحل معرفی تخصص و تکمیل حساب',
@@ -99,6 +99,23 @@ function pvdak_home_start_copy( $name, $new_default ) {
         $new_default : $saved;
 }
 
+/**
+ * Older ACF defaults can remain in saved Page fields after a theme update.
+ * Normalize ONLY exact legacy default copy, never editor-authored values.
+ */
+function pvdak_home_brand_copy( $name, $value ) {
+    if ( ! is_string( $value ) ) { return $value; }
+    $old = array(
+        'hero_label'     => 'پویش وکلای دادگستری کشور',
+        'news_title'     => 'تازه‌های پویش و اطلاعیه‌ها',
+        'notice_heading' => 'تابلوی اطلاعیه‌های پویش',
+    );
+    if ( isset( $old[$name] ) && $value === $old[$name] ) {
+        $defaults = pvdak_home_defaults();
+        return $defaults[$name];
+    }
+    return $value;
+}
 function pvdak_home_value( $name, $default = null ) {
     if ( null === $default ) {
         $defaults = pvdak_home_defaults();
@@ -107,7 +124,7 @@ function pvdak_home_value( $name, $default = null ) {
     $page_id = (int) get_option( 'page_on_front' );
     if ( $page_id && function_exists( 'get_field' ) ) {
         $value = get_field( $name, $page_id );
-        if ( false !== $value && null !== $value && '' !== $value ) { return $value; }
+        if ( false !== $value && null !== $value && '' !== $value ) { return pvdak_home_brand_copy( $name, $value ); }
     }
     // Transitional support for custom shortcut text saved before migration to WP Menus.
     if ( $page_id && preg_match( '/^quick_[1-4]_(title|url)$/', (string) $name ) ) {
@@ -219,9 +236,9 @@ function pvdak_register_home_acf_fields() {
             'instructions' => 'فقط برگه منتشرشده. برای چهار کارت، هر چهار جایگاه را پر کنید.',
         );
     }
-    $fields[] = array( 'key' => 'field_pvdak_tab_notices', 'label' => '۹. اطلاعیه‌ها و تازه‌های پویش', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
-    $fields[] = array( 'key' => 'field_pvdak_home_news_title', 'name' => 'news_title', 'label' => 'عنوان بخش تازه‌ها', 'type' => 'text', 'default_value' => 'تازه‌های پویش و اطلاعیه‌ها' );
-    $fields[] = array( 'key' => 'field_pvdak_home_notice_heading', 'name' => 'notice_heading', 'label' => 'عنوان تابلوی اطلاعیه‌ها', 'type' => 'text', 'default_value' => 'تابلوی اطلاعیه‌های پویش' );
+    $fields[] = array( 'key' => 'field_pvdak_tab_notices', 'label' => '۹. اطلاعیه‌ها و تازه‌های PVDak', 'name' => '', 'type' => 'tab', 'placement' => 'top' );
+    $fields[] = array( 'key' => 'field_pvdak_home_news_title', 'name' => 'news_title', 'label' => 'عنوان بخش تازه‌ها', 'type' => 'text', 'default_value' => 'تازه‌های PVDak و اطلاعیه‌ها' );
+    $fields[] = array( 'key' => 'field_pvdak_home_notice_heading', 'name' => 'notice_heading', 'label' => 'عنوان تابلوی اطلاعیه‌ها', 'type' => 'text', 'default_value' => 'تابلوی اطلاعیه‌های PVDak' );
     $fields[] = array( 'key' => 'field_pvdak_home_notice_badge', 'name' => 'notice_badge', 'label' => 'برچسب تابلوی اطلاعیه‌ها', 'type' => 'text', 'default_value' => 'اطلاع‌رسانی' );
     $fields[] = array( 'key' => 'field_pvdak_home_notice_category', 'name' => 'notice_category', 'label' => 'دسته اطلاعیه‌ها', 'type' => 'taxonomy', 'taxonomy' => 'category', 'field_type' => 'select', 'return_format' => 'id', 'add_term' => 0, 'save_terms' => 0, 'load_terms' => 0, 'allow_null' => 1, 'instructions' => 'از نوشته‌ها ← دسته‌ها یک دسته بسازید؛ اینجا فقط منبع مطالب را انتخاب کنید.' );
     $fields[] = array( 'key' => 'field_pvdak_home_news_category', 'name' => 'news_category', 'label' => 'دسته مطالب ویژه/تازه‌ها', 'type' => 'taxonomy', 'taxonomy' => 'category', 'field_type' => 'select', 'return_format' => 'id', 'add_term' => 0, 'save_terms' => 0, 'load_terms' => 0, 'allow_null' => 1, 'instructions' => 'از نوشته‌ها ← دسته‌ها یک دسته بسازید؛ اینجا فقط منبع مطالب را انتخاب کنید.' );
