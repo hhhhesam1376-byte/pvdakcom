@@ -31,6 +31,7 @@ function pvdak_core_active_assignment_count( $profile_id ) {
         'no_found_rows' => true,
         'cache_results' => false,
         'update_post_meta_cache' => false,
+        'suppress_filters' => true, // Capacity decisions must not inherit unrelated query filters.
     ) );
     // A failed query must never be mistaken for free capacity.
     if ( ! is_array( $ids ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
@@ -38,12 +39,23 @@ function pvdak_core_active_assignment_count( $profile_id ) {
     }
     $total = 0;
     foreach ( $ids as $request_id ) {
-        // Another manager might have completed a case in a separate request.
+        // Corrupt query results cannot establish spare capacity.
+        if ( ! is_scalar( $request_id ) || ! ctype_digit( (string) $request_id ) ||
+             ! absint( $request_id ) ) { return PHP_INT_MAX; }
+        $request_id = absint( $request_id );
         if ( function_exists( 'wp_cache_delete' ) ) {
-            wp_cache_delete( absint( $request_id ), 'post_meta' );
+            wp_cache_delete( $request_id, 'post_meta' );
         }
-        $state = get_post_meta( absint( $request_id ), '_pvdak_request_state', true );
-        if ( in_array( $state, array( 'matched', 'answered' ), true ) ) { $total++; }
+        // Revalidate the private model and assignee despite SQL/query hooks.
+        if ( 'pvdak_request' !== get_post_type( $request_id ) ||
+             'private' !== get_post_status( $request_id ) ||
+             (string) $profile_id !== (string) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ) {
+            return PHP_INT_MAX;
+        }
+        $state = get_post_meta( $request_id, '_pvdak_request_state', true );
+        // Only explicitly completed states release capacity. Unknown legacy
+        // states must never be treated as free slots.
+        if ( ! in_array( $state, array( 'closed', 'rejected' ), true ) ) { $total++; }
     }
     return $total;
 }
