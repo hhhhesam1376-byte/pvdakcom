@@ -9,7 +9,7 @@ get_header(); ?>
     <a href="<?php echo esc_url( home_url( '/' ) ); ?>">صفحه اصلی</a><span aria-hidden="true">›</span><span aria-current="page">جست‌وجو</span>
   </nav>
   <header class="pvdak-discovery-hero">
-    <span class="pvdak-discovery-eyebrow">جست‌وجو در پویش</span>
+    <span class="pvdak-discovery-eyebrow">جست‌وجو در PVDak</span>
     <h1>نتایج جست‌وجو</h1>
     <?php if ( '' !== trim( $term ) ): ?>
       <p>برای عبارت <strong>«<?php echo esc_html( $term ); ?>»</strong>
