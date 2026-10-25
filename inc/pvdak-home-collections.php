@@ -66,7 +66,8 @@ function pvdak_home_faq_answer_ready( $page ) {
     $body = trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
     // A visually blank answer may consist only of NBSP/zero-width markers.
     $body = trim( preg_replace( '/[\\x{00A0}\\x{200B}\\x{200C}\\x{200D}\\x{FEFF}]/u', ' ', $body ) );
-    $length = function_exists( 'mb_strlen' ) ? mb_strlen( $body, 'UTF-8' ) : strlen( $body );
+    $length = function_exists( 'mb_strlen' ) ?
+        mb_strlen( $body, 'UTF-8' ) : preg_match_all( '/[\\s\\S]/u', $body );
     return '' !== $title && $length >= 15 &&
         false === stripos( $body, 'lorem ipsum' ) &&
         false === strpos( $body, 'این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است' ) &&
