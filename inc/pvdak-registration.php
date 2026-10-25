@@ -6,9 +6,10 @@
  */
 if (!defined('ABSPATH')) { exit; }
 function pvdak_registration_open() {
+    // Native public registration is not needed: PVDak has a nonce-protected,
+    // rate-limited wp_insert_user handler which always assigns a client role.
     return ! ( function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled() ) &&
-        '1' === (string) get_option('pvdak_registration_enabled', '0') &&
-        (bool) get_option('users_can_register', false) &&
+        '1' === (string) get_option('pvdak_registration_enabled', '1') &&
         function_exists('pvdak_public_template_page_url') &&
         (bool) pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php');
 }
@@ -17,15 +18,15 @@ function pvdak_registration_open() {
  * General Settings screen, alongside WordPress's "Anyone can register" switch.
  */
 function pvdak_registration_setting_field() {
-    $checked = '1' === (string)get_option('pvdak_registration_enabled','0');
+    $checked = '1' === (string)get_option('pvdak_registration_enabled','1');
     echo '<input type="hidden" name="pvdak_registration_enabled" value="0">';
     echo '<label><input type="checkbox" name="pvdak_registration_enabled" value="1" ' .
         checked($checked,true,false) . '> فعال‌سازی ثبت‌نام عمومی PVDak (ایمیل و پیامک)</label>';
-    echo '<p class="description">ثبت‌نام فقط وقتی فعال می‌شود که گزینه «هر کسی می‌تواند نام‌نویسی کند» وردپرس هم روشن و تعمیرات خاموش باشد. ورود پیامکی علاوه بر این تنظیمات به سرویس ارسال پیامک متصل نیاز دارد.</p>';
+    echo '<p class="description">ثبت‌نام PVDak از فرم اختصاصی امن انجام می‌شود؛ گزینه نام‌نویسی عمومی وردپرس لازم نیست. برای غیرفعال کردن ثبت‌نام این گزینه را خاموش کنید.</p>';
 }
 function pvdak_registration_register_general_setting() {
     register_setting('general','pvdak_registration_enabled',array(
-        'type'=>'string','default'=>'0',
+        'type'=>'string','default'=>'1',
         'sanitize_callback'=>static function($value) {
             return is_scalar($value) && '1'===(string)$value ? '1' : '0';
         }
@@ -36,14 +37,13 @@ function pvdak_registration_register_general_setting() {
 add_action('admin_init','pvdak_registration_register_general_setting');
 
 /**
- * "Anyone can register" is needed for PVDak's existing opt-in gate, but
- * the native wp-login.php?action=register handler does not run our email
- * verification/role policy. Redirect it and fail closed if the handler runs.
+ * The native WordPress register endpoint must not bypass PVDak's own email
+ * verification and unprivileged-role policy. Redirect it and fail closed.
  * Manager-created WordPress accounts and our wp_insert_user path are unaffected.
  */
 function pvdak_native_register_redirect() {
     if (is_user_logged_in()) { return; }
-    wp_safe_redirect(add_query_arg('auth','register-email',pvdak_auth_login_url()));
+    wp_safe_redirect(pvdak_registration_result_url());
     exit;
 }
 add_action('login_form_register','pvdak_native_register_redirect');
@@ -56,12 +56,8 @@ function pvdak_native_registration_guard($errors,$login,$email) {
 add_filter('registration_errors','pvdak_native_registration_guard',10,3);
 
 function pvdak_registration_result_url() {
-    $source=isset($_POST['register_source']) && is_string($_POST['register_source']) ?
-        sanitize_key(wp_unslash($_POST['register_source'])) : '';
-    if ('login'===$source) {
-        return add_query_arg('auth','register-email',pvdak_auth_login_url());
-    }
-    return pvdak_public_page_url('account-register')?:home_url('/account-register/');
+    return pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php')
+        ?: pvdak_auth_login_url();
 }
 
 /**
@@ -81,7 +77,10 @@ function pvdak_registration_rate_exceeded($scope, $limit, $seconds) {
     return false;
 }
 function pvdak_register_submit() {
-    if (!pvdak_registration_open()) { wp_die('ثبت‌نام فعلاً غیرفعال است.','',array('response'=>403)); }
+    if (!pvdak_registration_open()) {
+        wp_safe_redirect(add_query_arg('state','unavailable',pvdak_registration_result_url()));
+        exit;
+    }
     if ('POST' !== ($_SERVER['REQUEST_METHOD']??'')) { wp_die('Method not allowed','',array('response'=>405)); }
     check_admin_referer('pvdak_register','_pvdak_register_nonce');
     $url=pvdak_registration_result_url();
