@@ -32,12 +32,12 @@ $checks = array(
     strpos($s['portal'],'name="first_name"')!==false &&
     strpos($s['portal'],'name="last_name"')!==false &&
     strpos($s['tools'],"array( 'first_name', 'last_name' )")!==false &&
-    strpos($s['tools'],"'ID' => $id, 'display_name' => $value")!==false &&
-    strpos($s['tools'],"array_key_exists( $field, $_POST )")!==false &&
+    strpos($s['tools'],"'ID' => \$id, 'display_name' => \$value")!==false &&
+    strpos($s['tools'],"array_key_exists( \$field, \$_POST )")!==false &&
     strpos($s['script'],'#pvdak-first-name, #pvdak-last-name')!==false,
   'Password recovery link avoids mismatched Pages and SMS-only emails' =>
     strpos($s['portal'],"pvdak_account_tool_url( 'account-recovery' )")!==false &&
-    strpos($s['portal'],"is_email( (string) $user->user_email )")!==false,
+    strpos($s['portal'],"is_email( (string) \$user->user_email )")!==false,
   'Applicants can reach a real professional application without auto-approval' =>
     strpos($s['portal'],"'_pvdak_self_reported_category'")!==false &&
     strpos($s['portal'],'pvdak_core_member_intake_open()')!==false &&
