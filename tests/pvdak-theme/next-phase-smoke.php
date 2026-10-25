@@ -31,6 +31,20 @@ function wp_generate_password($n,$special=false,$extra=false) {return str_repeat
 function wp_hash_password($token) {return password_hash($token,PASSWORD_DEFAULT);}
 function wp_check_password($token,$hash,$id=0) {return password_verify($token,$hash);}
 function pvdak_public_page_url($slug) {return 'https://example.invalid/'.$slug.'/';}
+// Exercise the REAL registration policy with isolated WordPress option/Page mocks.
+// Public case intake, live users, and real signup endpoints are never accessed.
+function get_option($name,$default=false) {
+    if ($name==='pvdak_registration_enabled' && array_key_exists('mock_registration_enabled',$GLOBALS)) {
+        return $GLOBALS['mock_registration_enabled'];
+    }
+    return $default;
+}
+function pvdak_maintenance_enabled() {return !empty($GLOBALS['mock_maintenance']);}
+function pvdak_public_template_page_url($slug,$template) {
+    return !empty($GLOBALS['mock_registration_page']) &&
+        $slug==='account-register' && $template==='page-templates/pvdak-register.php'
+        ? 'https://example.invalid/account-register/' : false;
+}
 function home_url($path) {return 'https://example.invalid'.$path;}
 function add_query_arg($args,$url) {return $url.'?'.http_build_query($args);}
 function esc_url_raw($url) {return $url;}
@@ -66,8 +80,23 @@ test_check(false!==strpos($ticket,"add_post_meta(absint(\$ticket_id)") &&
     false!==strpos($ticket,"'role'=>\$actor"),'Thread messages are append-only');
 test_check(false!==strpos($ticket,"check_admin_referer('pvdak_support_followup_'"),
     'Follow-up requires nonce');
-test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')"),
-    'Registration stays OFF by default');
+$GLOBALS['mock_registration_page']=true;
+require $root.'/inc/pvdak-registration.php';
+test_check(pvdak_registration_open(),
+    'Published PVDak registration Page and default manager option permit the signup flow');
+$GLOBALS['mock_registration_enabled']='0';
+test_check(!pvdak_registration_open(), 'Manager switch OFF blocks PVDak registration');
+unset($GLOBALS['mock_registration_enabled']);
+$GLOBALS['mock_maintenance']=true;
+test_check(!pvdak_registration_open(), 'Maintenance ON blocks PVDak registration');
+$GLOBALS['mock_maintenance']=false;
+$GLOBALS['mock_registration_page']=false;
+test_check(!pvdak_registration_open(), 'Missing published registration Page blocks signup');
+$GLOBALS['mock_registration_page']=true;
+test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '1')") &&
+    false!==strpos($registration,"function pvdak_native_registration_guard(") &&
+    false!==strpos($registration,"'role'=>$role"),
+    'Manager signup policy retains native bypass guard and least-privilege WordPress role');
 // D14: source-level guardrails; this does not replace a real multi-client WP test.
 $auth=file_get_contents($root.'/inc/pvdak-auth.php');
 $verification=file_get_contents($root.'/inc/pvdak-email-verification.php');
