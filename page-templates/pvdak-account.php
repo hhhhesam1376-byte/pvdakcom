@@ -240,7 +240,7 @@ get_header(); ?>
       <?php endif; ?>
 
       <?php if ( $has_support ): ?>
-        <div class="pvdak-account-panel pvdak-account-support pvdak-unified-section" data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها" tabindex="-1">
+        <div id="pvdak-support" class="pvdak-account-panel pvdak-account-support pvdak-unified-section" data-pvdak-panel aria-label="پشتیبانی و تیکت‌ها" tabindex="-1">
           <header class="pvdak-unified-section-header"><span>ارتباط با پشتیبانی • فقط حساب شما</span><h2>پیام‌های پشتیبانی من</h2><p>پیام‌ها و پاسخ‌های اختصاصی حساب خود را پیگیری کنید؛ اطلاعات محرمانه پرونده ارسال نکنید.</p></header>
           <?php echo do_shortcode( '[pvdak_support_tickets]' ); ?>
           <p class="pvdak-panel-return"><a href="#pvdak-dashboard">↑ بازگشت به نمای کلی حساب</a></p>
