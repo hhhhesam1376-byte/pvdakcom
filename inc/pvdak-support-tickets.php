@@ -178,7 +178,13 @@ function pvdak_support_ticket_form(){
         $reply=get_post_meta($item->ID,'_pvdak_support_reply',true);
         $state=pvdak_support_status_key(get_post_meta($item->ID,'_pvdak_support_status',true));
         $messages=get_post_meta($item->ID,'_pvdak_support_message',false);
-        $message_count=is_array($messages)?count($messages):0;
+        // Count only displayable messages; malformed legacy meta must not
+        // inflate the conversation badge or hide the legacy reply fallback.
+        $messages=array_values(array_filter(is_array($messages)?$messages:array(),static function($entry){
+            return is_array($entry) && isset($entry['text'],$entry['role']) &&
+                is_string($entry['text']) && in_array($entry['role'],array('user','staff'),true);
+        }));
+        $message_count=count($messages);
         ?>
         <li id="pvdak-ticket-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-item">
           <details class="pvdak-ticket-details"<?php echo $open_id===(int)$item->ID ? ' open' : ''; ?>>
@@ -355,7 +361,10 @@ function pvdak_support_followup() {
         }
     }
     // Rebuild return URL from allowlisted controls, never accept a client-supplied URL.
-    $return=array('support'=>$ok?'followup_sent':'failed');
+    // A repeated reply inside the 45-second window is a rate-limit event,
+    // not a database failure. Never claim delivery unless append succeeded.
+    $result_state=$ok?'followup_sent':(get_transient($key)?'slow':'failed');
+    $return=array('support'=>$result_state);
     $posted_page=isset($_POST['ticket_page']) && is_scalar($_POST['ticket_page']) ? absint(wp_unslash($_POST['ticket_page'])) : 1;
     if($posted_page>1 && $posted_page<=1000)$return['ticket_page']=$posted_page;
     $posted_status=isset($_POST['ticket_status']) && is_string($_POST['ticket_status']) ? sanitize_key(wp_unslash($_POST['ticket_status'])) : '';
@@ -398,7 +407,10 @@ function pvdak_support_reply_box_html($post){
         echo '<details><summary>تاریخچه تغییر وضعیت</summary><ol>';
         foreach(array_slice($events,-15) as $event) {
             if(!is_array($event))continue;
-            echo '<li>'.esc_html(pvdak_support_status_label($event['from']??'')).' ← '.esc_html(pvdak_support_status_label($event['to']??'')).' — '.esc_html($event['at']??'').'</li>';
+            $from=isset($event['from']) && is_string($event['from']) ? $event['from'] : '';
+            $to=isset($event['to']) && is_string($event['to']) ? $event['to'] : '';
+            $at=isset($event['at']) && is_string($event['at']) ? $event['at'] : '';
+            echo '<li>'.esc_html(pvdak_support_status_label($from)).' ← '.esc_html(pvdak_support_status_label($to)).' — '.esc_html($at).'</li>';
         }
         echo '</ol></details>';
     }
