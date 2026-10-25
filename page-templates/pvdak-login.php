@@ -15,8 +15,9 @@ get_header(); ?>
 <span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری PVDak</span><h1>ورود به پنل</h1>
 <p class="pvdak-auth-subheading">با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
 <?php
-  $sms_selected=isset($_GET['auth']) && is_string($_GET['auth']) &&
-    'sms-login'===sanitize_key(wp_unslash($_GET['auth']));
+  $sms_selected=(isset($_GET['auth']) && is_string($_GET['auth']) &&
+    'sms-login'===sanitize_key(wp_unslash($_GET['auth']))) ||
+    (!isset($_GET['auth']) && isset($_GET['sms_status']) && is_string($_GET['sms_status']));
   $sms_ready=function_exists('pvdak_sms_auth_ready') && pvdak_sms_auth_ready();
 ?>
 <div class="pvdak-auth-mode-picker pvdak-login-tabs" data-pvdak-auth-picker role="tablist" aria-label="روش ورود">
@@ -47,7 +48,7 @@ get_header(); ?>
       <input type="hidden" name="action" value="pvdak_sms_send"><input type="hidden" name="sms_intent" value="login">
       <?php wp_nonce_field('pvdak_sms_send','_pvdak_sms_nonce'); ?>
       <label for="pvdak-login-sms-phone">شماره موبایل</label>
-      <input id="pvdak-login-sms-phone" name="sms_phone" type="tel" dir="ltr" inputmode="tel" autocomplete="tel-national" placeholder="09123456789" required>
+      <input id="pvdak-login-sms-phone" name="sms_phone" type="tel" dir="ltr" inputmode="tel" autocomplete="tel-national" placeholder="09123456789" maxlength="20" required>
       <button type="submit" <?php disabled(!$sms_ready,true); ?>>دریافت کد</button>
     </form>
     <?php if($sms_ready && $sms_status==='sent'): ?>
@@ -55,7 +56,7 @@ get_header(); ?>
       <input type="hidden" name="action" value="pvdak_sms_verify"><input type="hidden" name="sms_intent" value="login">
       <?php wp_nonce_field('pvdak_sms_verify','_pvdak_sms_verify_nonce'); ?>
       <label for="pvdak-login-sms-verify-phone">شماره موبایل</label>
-      <input id="pvdak-login-sms-verify-phone" name="sms_phone" type="tel" dir="ltr" inputmode="tel" placeholder="09123456789" required>
+      <input id="pvdak-login-sms-verify-phone" name="sms_phone" type="tel" dir="ltr" inputmode="tel" placeholder="09123456789" maxlength="20" required>
       <label for="pvdak-login-sms-code">کد تأیید</label>
       <input id="pvdak-login-sms-code" name="sms_code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9۰-۹]{6}" maxlength="6" required>
       <button type="submit">ورود با کد</button>
