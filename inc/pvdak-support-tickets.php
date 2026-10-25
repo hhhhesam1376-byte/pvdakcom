@@ -50,6 +50,15 @@ function pvdak_support_ticket_lock($ticket_id) {
     $held=$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 3)', $name));
     return (string)$held==='1' ? $name : false;
 }
+/** Serialize ticket creation per account across concurrent PHP workers. */
+function pvdak_support_creation_lock($user_id) {
+    global $wpdb;
+    $user_id=absint($user_id);
+    if(!$user_id || !isset($wpdb) || !is_object($wpdb))return false;
+    $name='pvdak_support_new_'.$user_id;
+    return '1'===(string)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 3)',$name))
+        ? $name : false;
+}
 function pvdak_support_ticket_unlock($lock_name) {
     global $wpdb;
     if ($lock_name && isset($wpdb) && is_object($wpdb)) {
@@ -246,24 +255,37 @@ function pvdak_support_new(){
        pvdak_support_length($body)<10||pvdak_support_length($body)>2500){
         wp_safe_redirect(add_query_arg('support','invalid',$base).'#pvdak-support');exit;
     }
-    if(get_transient($key)){
-        wp_safe_redirect(add_query_arg('support','slow',$base).'#pvdak-support');exit;
+    $lock=pvdak_support_creation_lock($user);
+    if(false===$lock){
+        wp_safe_redirect(add_query_arg('support','failed',$base).'#pvdak-support');exit;
     }
-    set_transient($key,1,90);
-    $id=wp_insert_post(array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
-        'post_author'=>$user,'post_title'=>$subject,'post_content'=>$body,
-        'comment_status'=>'closed'),true);
-    if(is_wp_error($id)||!$id){delete_transient($key);}
-    elseif(!add_post_meta($id,'_pvdak_support_status','open',true)) {
-        // Do not expose a ticket with an uninitialized workflow state.
-        wp_delete_post($id,true);
-        delete_transient($key);
-        $id=0;
+    $id=0;
+    $result_state='failed';
+    try {
+        if(get_transient($key)) {
+            $result_state='slow';
+        } else {
+            set_transient($key,1,90);
+            $created=wp_insert_post(array('post_type'=>'pvdak_support_ticket','post_status'=>'private',
+                'post_author'=>$user,'post_title'=>$subject,'post_content'=>$body,
+                'comment_status'=>'closed'),true);
+            if(is_wp_error($created)||!$created) {
+                delete_transient($key);
+            } elseif(!add_post_meta($created,'_pvdak_support_status','open',true)) {
+                // Uninitialized tickets must not be displayed or remain stored.
+                wp_delete_post($created,true);
+                delete_transient($key);
+            } else {
+                $id=absint($created);
+                $result_state='new_sent';
+            }
+        }
+    } finally {
+        pvdak_support_ticket_unlock($lock);
     }
-    $success=!is_wp_error($id)&&$id;
-    $destination=add_query_arg('support',$success?'new_sent':'failed',$base);
-    if($success)$destination=add_query_arg('ticket_open',absint($id),$destination);
-    wp_safe_redirect($destination.($success?'#pvdak-ticket-'.absint($id):'#pvdak-support'));exit;
+    $destination=add_query_arg('support',$result_state,$base);
+    if($id)$destination=add_query_arg('ticket_open',$id,$destination);
+    wp_safe_redirect($destination.($id?'#pvdak-ticket-'.$id:'#pvdak-support'));exit;
 }
 add_action('admin_post_pvdak_support_new','pvdak_support_new');
 /**
