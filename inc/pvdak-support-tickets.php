@@ -249,6 +249,7 @@ function pvdak_support_new(){
     $body=is_string($bodyRaw)?sanitize_textarea_field($bodyRaw):'';
     $user=get_current_user_id();
     $key='pvdak_ticket_'. $user;
+    $hourly_key='pvdak_ticket_hour_'. $user;
     $subject=trim($subject);
     $body=trim($body);
     if(pvdak_support_length($subject)<3||pvdak_support_length($subject)>120||
@@ -262,7 +263,7 @@ function pvdak_support_new(){
     $id=0;
     $result_state='failed';
     try {
-        if(get_transient($key)) {
+        if(get_transient($key) || (int)get_transient($hourly_key)>=6) {
             $result_state='slow';
         } else {
             set_transient($key,1,90);
@@ -277,6 +278,8 @@ function pvdak_support_new(){
                 delete_transient($key);
             } else {
                 $id=absint($created);
+                $count=(int)get_transient($hourly_key);
+                set_transient($hourly_key,min(6,$count+1),HOUR_IN_SECONDS);
                 $result_state='new_sent';
             }
         }
