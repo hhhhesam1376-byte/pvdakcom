@@ -46,7 +46,7 @@ get_header(); ?>
   <div class="pvdak-dashboard-overline"><span class="pvdak-dashboard-online"><span aria-hidden="true">●</span> وارد حساب شده‌اید</span><span>دسترسی شخصی شما به امکانات PVDak</span></div>
   <nav class="pvdak-dashboard-quicklinks" aria-label="دسترسی سریع حساب">
     <a href="#pvdak-dashboard" aria-current="location"><span aria-hidden="true">◈</span><strong>نمای کلی</strong><small>خلاصه وضعیت حساب</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
-    <a href="#pvdak-profile"><span aria-hidden="true">◉</span><strong>اطلاعات حساب</strong><small>ویرایش نام نمایشی</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
+    <a href="#pvdak-profile"><span aria-hidden="true">◉</span><strong>اطلاعات حساب</strong><small>ویرایش مشخصات شخصی</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a>
     <?php if ( $has_requests ): ?><a href="#pvdak-requests"><span aria-hidden="true">⚖</span><strong>درخواست‌های من</strong><small>پیگیری درخواست‌ها</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a><?php endif; ?>
     <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span><strong>پشتیبانی</strong><small>پیام‌ها و تیکت‌ها</small><span class="pvdak-dashboard-card-arrow" aria-hidden="true">←</span></a><?php endif; ?>
   </nav>
@@ -106,7 +106,29 @@ get_header(); ?>
       <?php if ( $has_requests ): ?>
         <section id="pvdak-requests" class="pvdak-account-panel pvdak-unified-section" data-pvdak-panel aria-labelledby="pvdak-requests-title" tabindex="-1">
           <header class="pvdak-unified-section-header"><span>پیگیری درخواست‌های ثبت‌شده</span><h2 id="pvdak-requests-title">درخواست‌های من</h2><p>سوابق درخواست‌های متعلق به حساب خودتان را مشاهده و پیگیری کنید.</p><span class="pvdak-unified-private-note">فقط برای شما قابل مشاهده</span></header>
+          <details class="pvdak-request-status-guide">
+            <summary>راهنمای پیگیری و وضعیت درخواست‌ها</summary>
+            <dl>
+              <div><dt>ثبت‌شده</dt><dd>درخواست دریافت شده و منتظر بررسی است.</dd></div>
+              <div><dt>در حال بررسی</dt><dd>کارشناسان مجاز اطلاعات ثبت‌شده را بررسی می‌کنند.</dd></div>
+              <div><dt>انتساب داخلی ثبت‌شده</dt><dd>در درخواست‌های واجد شرایط، ارجاع داخلی توسط مدیر ثبت شده است.</dd></div>
+              <div><dt>پاسخ داده‌شده</dt><dd>وضعیت پاسخ‌دهی توسط مدیر ثبت شده است.</dd></div>
+              <div><dt>بسته‌شده</dt><dd>رسیدگی در سامانه خاتمه یافته است.</dd></div>
+            </dl>
+            <p>هر درخواست لزوماً از همه مراحل عبور نمی‌کند؛ وضعیت واقعی هر درخواست در کارت خودش نمایش داده می‌شود.</p>
+          </details>
           <?php echo do_shortcode( '[pvdak_my_requests]' ); ?>
+          <?php if ( $has_support ): ?>
+            <p class="pvdak-request-help-link">در مورد دسترسی به حساب یا وضعیت نمایش درخواست مشکلی دارید؟
+              <a href="#pvdak-support">ارتباط با پشتیبانی</a>
+              <small>مدارک یا اطلاعات محرمانه پرونده را در تیکت پشتیبانی نفرستید.</small>
+            </p>
+          <?php endif; ?>
+          <?php if ( current_user_can( 'manage_options' ) ): ?>
+            <p class="pvdak-request-manager-link">
+              <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ); ?>">مدیریت درخواست‌های حقوقی در پیشخوان</a>
+            </p>
+          <?php endif; ?>
         </section>
       <?php endif; ?>
 
