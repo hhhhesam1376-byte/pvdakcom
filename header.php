@@ -26,8 +26,15 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
 <header class="site-header">
     <div class="container header-inner">
     <details class="pvdak-mobile-menu">
-        <summary aria-label="باز و بسته کردن فهرست سایت"><span class="pvdak-mobile-menu-label">فهرست</span> <span class="pvdak-mobile-menu-icon" aria-hidden="true">☰</span></summary>
-        <nav aria-label="منوی موبایل">
+        <summary aria-label="باز و بسته کردن فهرست سایت" aria-controls="pvdak-mobile-drawer"><span class="pvdak-mobile-menu-label">فهرست</span> <span class="pvdak-mobile-menu-icon" aria-hidden="true">☰</span></summary>
+        <span class="pvdak-mobile-backdrop" aria-hidden="true"></span>
+        <nav aria-label="منوی موبایل" id="pvdak-mobile-drawer">
+            <div class="pvdak-mobile-drawer-head">
+                <span class="pvdak-mobile-drawer-title">فهرست سایت</span>
+                <button class="pvdak-mobile-drawer-close" type="button" aria-label="بستن منوی سایت">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
             <?php if ( has_nav_menu( 'primary' ) ) :
                 wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'pvdak-mobile-links', 'depth'=>3, 'fallback_cb'=>false ) );
             else : ?>
