@@ -52,6 +52,16 @@ function get_the_title( $id ) {
 function get_post_meta( $id, $key, $single = true ) {
     return isset( $GLOBALS['mock_meta'][$id][$key] ) ? $GLOBALS['mock_meta'][$id][$key] : '';
 }
+// Existing WordPress users only; a forged/deleted profile owner stays invalid.
+function get_userdata( $id ) {
+    $id = (int) $id;
+    return in_array( $id, array( 11, 22 ), true ) ? (object) array( 'ID' => $id ) : false;
+}
+function admin_url( $path = '' ) { return 'https://example.invalid/wp-admin/' . $path; }
+function wp_nonce_field( $action, $name = '_wpnonce', $referer = true, $display = true ) {
+    // Synthetic view-only marker: never writes a nonce or changes a user.
+    return '';
+}
 function get_user_meta( $id, $key, $single = true ) {
     return isset( $GLOBALS['mock_user_meta'][$id][$key] ) ? $GLOBALS['mock_user_meta'][$id][$key] : '';
 }
