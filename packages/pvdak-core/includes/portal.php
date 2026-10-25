@@ -111,8 +111,8 @@ function pvdak_core_dashboard( $atts = array() ) {
     $html .= '<h3>وضعیت همکاری حقوقی</h3>';
     if ( $application_id ) {
         $html .= '<p class="pvdak-core-notice">' .
-            esc_html( isset( $member_types[ $member_type ] ) ? $member_types[ $member_type ] : 'درخواست عضویت' ) .
-            ' — ' . esc_html( isset( $member_states[ $member_state ] ) ? $member_states[ $member_state ] : $member_states['pending'] ) .
+            esc_html( is_string( $member_type ) && isset( $member_types[ $member_type ] ) ? $member_types[ $member_type ] : 'درخواست عضویت' ) .
+            ' — ' . esc_html( is_string( $member_state ) && isset( $member_states[ $member_state ] ) ? $member_states[ $member_state ] : 'نیازمند بررسی' ) .
             '. این وضعیت به‌معنای تأیید پروانه یا صلاحیت حرفه‌ای نیست.</p>';
     } else {
         $html .= '<p class="pvdak-core-empty">درخواستی برای همکاری ثبت نشده است.</p>';

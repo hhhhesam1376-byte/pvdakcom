@@ -48,6 +48,7 @@ function pvdak_core_request_input_valid( $title, $description ) {
 function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
         ! is_string( $receipt['type'] ) || ! is_scalar( $receipt['id'] ) ||
+        ! ctype_digit( (string) $receipt['id'] ) ||
         $receipt['type'] !== $type || (int) $receipt['id'] < 1 ) {
         return 0;
     }
