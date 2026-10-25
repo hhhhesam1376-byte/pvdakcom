@@ -68,7 +68,9 @@ $checks = array(
     strpos($s['admin'],'get_page_by_path(')!==false &&
     pvdak_test_release_at_least($s['theme'],'0.8.29') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
-    strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false,
+    strpos($s['registration'],"get_option('pvdak_registration_enabled', '1')")!==false &&
+    strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
+    strpos($s['registration'],"pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php')")!==false,
 );
 $count = 0;
 foreach ($checks as $label=>$passes) {
