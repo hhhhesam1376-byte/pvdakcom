@@ -59,9 +59,17 @@ function pvdak_home_post_summary( $post, $words = 22 ) {
 /** Native hierarchical Pages are suitable for short informational FAQs. */
 function pvdak_home_faq_pages( $include_empty = false ) {
     $page_id = (int) get_option( 'page_on_front' );
-    if ( ! $page_id || ! function_exists( 'get_field' ) ) { return array(); }
-    $value = get_field( 'faq_parent_page', $page_id );
+    $value = $page_id && function_exists( 'get_field' ) ?
+        get_field( 'faq_parent_page', $page_id ) : null;
     $id = $value instanceof WP_Post ? (int) $value->ID : absint( $value );
+    // The public FAQ Page already exists in WordPress. If ACF has not been
+    // configured, use its published children rather than hiding valid FAQs.
+    // Never replace an explicitly chosen (even invalid) editorial parent.
+    if ( ! $id && ! $value ) {
+        $default_faq = get_page_by_path( 'legal-faq', OBJECT, 'page' );
+        $id = $default_faq instanceof WP_Post && 'publish' === $default_faq->post_status ?
+            (int) $default_faq->ID : 0;
+    }
     if ( ! $id || 'page' !== get_post_type( $id ) || 'publish' !== get_post_status( $id ) ) {
         return array();
     }
