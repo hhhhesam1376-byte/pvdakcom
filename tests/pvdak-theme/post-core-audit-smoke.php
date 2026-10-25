@@ -12,3 +12,35 @@ foreach(array('wp_insert_post(', 'wp_insert_user(', 'update_option(', 'wp_mail('
     if(strpos($src,$write)!==false){fwrite(STDERR,"AUDIT_NOT_READ_ONLY: ".$write."\n");exit(1);}
 }
 echo "PVD_POST_CORE_AUDIT_SOURCE_OK\n";
+
+/**
+ * D04: employer preview is intentionally maintenance-OFF. Guard the two real
+ * WP-CLI audits against accidentally reviving the old maintenance-ON gate.
+ * Public preview still requires noindex/nofollow and closed private intakes.
+ */
+$root=dirname(__DIR__,2);
+foreach(array(
+    'scripts/pvdak-role-capabilities-smoke.php',
+    'scripts/pvdak-anonymous-live-smoke.php'
+) as $file){
+    $audit=file_get_contents($root.'/'.$file);
+    foreach(array("apply_filters( 'wp_robots', array() )",
+                  "function_exists( 'pvdak_preview_robots' )",
+                  "! empty( \$preview_robots['noindex'] )",
+                  "! empty( \$preview_robots['nofollow'] )",
+                  "PVDAK_PUBLIC_LAUNCH_APPROVED") as $required){
+        if(strpos($audit,$required)===false){
+            fwrite(STDERR,"D04_PREVIEW_GUARD_MISSING: ".$file." ".$required."\n");exit(1);
+        }
+    }
+    if(strpos($audit,"maintenance remains ON")!==false ||
+       strpos($audit,"Public maintenance enabled")!==false){
+        fwrite(STDERR,"D04_STALE_MAINTENANCE_ASSUMPTION: ".$file."\n");exit(1);
+    }
+}
+$selftest=file_get_contents($root.'/scripts/pvdak-anonymous-counter-selftest.php');
+if(strpos($selftest,"function pvdak_preview_robots(")===false ||
+   strpos($selftest,"'fail' !== \$GLOBALS['pvdak_test_mode']")===false){
+    fwrite(STDERR,"D04_NEGATIVE_FIXTURE_MISSING\n");exit(1);
+}
+echo "D04_PREVIEW_SOURCE_GUARDS_OK\n";
