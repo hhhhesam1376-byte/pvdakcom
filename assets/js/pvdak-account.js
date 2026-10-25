@@ -68,6 +68,15 @@
       });
     });
     showAuthMode(activeMode, false, false);
+    // BFCache restores the DOM, not necessarily the tab that the current URL
+    // now selects. Respect the server's SMS feedback tab without a reload.
+    window.addEventListener('pageshow', function (event) {
+      if (!event.persisted) return;
+      var restored = new URLSearchParams(window.location.search);
+      var mode = modes.indexOf(restored.get('auth')) >= 0 ? restored.get('auth') :
+        (restored.has('sms_status') && smsMode ? smsMode : defaultMode);
+      showAuthMode(mode, false, false);
+    });
   }
 
   /* Progressive one-dashboard navigation. Without JavaScript all sections remain
@@ -150,9 +159,12 @@
     form.addEventListener('submit', function (event) {
       if (!form.checkValidity()) return;
       if (form.dataset.pvdakSubmitting === '1') { event.preventDefault(); return; }
-      form.dataset.pvdakSubmitting = '1';
       var button = form.querySelector('button[type="submit"]');
+      // Never enable or mark server-disabled controls (e.g. SMS without a
+      // provider) as if this script had disabled them for submission.
       if (!button || button.disabled) return;
+      form.dataset.pvdakSubmitting = '1';
+      button.dataset.pvdakDisabledBySubmit = '1';
       button.disabled = true;
       button.setAttribute('aria-disabled', 'true');
     });
@@ -228,7 +240,11 @@
     document.querySelectorAll('form[data-pvdak-support-form], form[data-pvdak-single-submit]').forEach(function (form) {
       delete form.dataset.pvdakSubmitting;
       var button = form.querySelector('button[type="submit"]');
-      if (button) { button.disabled = false; button.removeAttribute('aria-disabled'); }
+      if (button && button.dataset.pvdakDisabledBySubmit === '1') {
+        delete button.dataset.pvdakDisabledBySubmit;
+        button.disabled = false;
+        button.removeAttribute('aria-disabled');
+      }
     });
     refreshProfile();
   });
