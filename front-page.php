@@ -24,6 +24,7 @@ $all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
 $legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
+$faq_archive  = pvdak_public_page_url( 'legal-faq' );
 $magazine_category_id = pvdak_home_selected_category( 'magazine_category' );
 $notice_category_id   = pvdak_home_selected_category( 'notice_category' );
 $magazine_archive = pvdak_home_value( 'magazine_url', '' );
@@ -154,7 +155,7 @@ $svg_icons = array(
     </div>
 
     <?php if ( $legal_pages ): ?>
-    <p class="pvdak-home-section-caption"><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
+    <p class="pvdak-home-section-caption" data-pvdak-topic-count role="status" aria-live="polite"><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
       <div id="pvdak-topics-track" class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>
@@ -351,16 +352,23 @@ $svg_icons = array(
   <?php endif; ?>
   </section>
 
-  <?php if ( $faq_pages ): ?>
+  <?php if ( $faq_pages || $faq_archive ): ?>
   <section class="pvdak-home-section pvdak-home-faq" aria-labelledby="faq-title">
-    <div class="pvdak-home-section-head"><div><span class="pvdak-faq-eyebrow">پاسخ‌های کوتاه و کاربردی</span><h2 id="faq-title"><?php echo esc_html( pvdak_home_value( 'faq_title' ) ); ?></h2></div><span class="pvdak-faq-count"><?php echo esc_html( number_format_i18n( count( $faq_pages ) ) ); ?> پرسش منتشرشده</span></div>
-    <?php if ( $faq_pages ): ?>
-      <?php foreach ( $faq_pages as $faq_page ): ?>
-        <details class="pvdak-faq-item">
-          <summary><span class="pvdak-faq-q" aria-hidden="true">؟</span><?php echo esc_html( get_the_title( $faq_page->ID ) ); ?></summary>
-          <div><?php echo wp_kses_post( apply_filters( 'the_content', $faq_page->post_content ) ); ?></div>
-        </details>
-      <?php endforeach; ?>
+    <div class="pvdak-home-section-head">
+      <div><span class="pvdak-faq-eyebrow">پاسخ‌های کوتاه و کاربردی</span><h2 id="faq-title"><?php echo esc_html( pvdak_home_value( 'faq_title' ) ); ?></h2></div>
+      <?php if ( $faq_pages ): ?><span class="pvdak-faq-count"><?php echo esc_html( number_format_i18n( count( $faq_pages ) ) ); ?> پرسش منتشرشده</span><?php endif; ?>
+    </div>
+    <?php foreach ( $faq_pages as $faq_page ): ?>
+      <details class="pvdak-faq-item">
+        <summary><span class="pvdak-faq-q" aria-hidden="true">؟</span><?php echo esc_html( get_the_title( $faq_page->ID ) ); ?></summary>
+        <div><?php echo wp_kses_post( apply_filters( 'the_content', $faq_page->post_content ) ); ?></div>
+      </details>
+    <?php endforeach; ?>
+    <?php if ( ! $faq_pages ): ?>
+      <p class="pvdak-faq-pending">پاسخ‌های تفصیلی در حال تکمیل هستند؛ راهنمای فعلی سایت را در صفحه پرسش‌های متداول بخوانید.</p>
+    <?php endif; ?>
+    <?php if ( $faq_archive ): ?>
+      <a class="pvdak-section-aside pvdak-faq-archive-link" href="<?php echo esc_url( $faq_archive ); ?>">مشاهده همه پرسش‌های متداول ←</a>
     <?php endif; ?>
   </section>
   <?php endif; ?>
