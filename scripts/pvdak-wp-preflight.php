@@ -65,8 +65,8 @@ pvdak_preflight_check( 'Private support thread handler present',
     function_exists('pvdak_support_followup') && function_exists('pvdak_support_append_message') );
 pvdak_preflight_check( 'No public WordPress self-registration enabled yet',
     ! (bool) get_option('users_can_register', false), false );
-pvdak_preflight_check( 'Default newsletter/case intake untouched; maintenance currently ON',
-    ! function_exists('pvdak_maintenance_enabled') || pvdak_maintenance_enabled(), false );
+pvdak_preflight_check( 'Ordinary-user preview visible; maintenance OFF unless explicitly forced ON',
+    function_exists('pvdak_maintenance_enabled') && ! pvdak_maintenance_enabled(), false );
 // A missing Page needs a real administrator dashboard visit; WP-CLI does
 // not trigger admin_init. Trashed/draft Pages are preserved intentionally.
 WP_CLI::line('PAGE_BOOTSTRAP_MARKER: ' . (string)get_option('_pvdak_public_pages_bootstrap','NONE'));
