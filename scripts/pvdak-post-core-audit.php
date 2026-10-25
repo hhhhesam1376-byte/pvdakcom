@@ -16,8 +16,8 @@ pvdak_audit_check('Active PVDak theme at least 0.8.43',
 pvdak_audit_check('Active Core version 0.8.14',
     defined('PVDAK_CORE_VERSION') && PVDAK_CORE_VERSION==='0.8.14' &&
     in_array('pvdak-core/pvdak-core.php',(array)get_option('active_plugins',array()),true));
-pvdak_audit_check('Maintenance ON',function_exists('pvdak_maintenance_enabled') &&
-    pvdak_maintenance_enabled());
+pvdak_audit_check('Ordinary-user preview: maintenance OFF',function_exists('pvdak_maintenance_enabled') &&
+    !pvdak_maintenance_enabled());
 pvdak_audit_check('WordPress registration OFF',!(bool)get_option('users_can_register',false));
 pvdak_audit_check('PVDak registration OFF',function_exists('pvdak_registration_open') &&
     !pvdak_registration_open());
