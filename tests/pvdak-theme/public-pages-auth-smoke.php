@@ -53,9 +53,9 @@ pvdak_public_smoke_require(
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')" ) &&
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php')" ) &&
  false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' )" ) &&
- false !== strpos( $code['login'], "add_query_arg('auth','register-email',pvdak_auth_login_url())" ) &&
- false !== strpos( $code['login'], "add_query_arg('auth','sms-register',pvdak_auth_login_url())" ),
- 'D05/D07: account navigation rejects wrong-template Pages and directs registration to its same-page pane'
+ false !== strpos( $code['login'], "pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php')" ) &&
+ false !== strpos( $code['login'], 'ثبت‌نام در PVDak' ),
+ 'D05/D07: account login links to the separate published registration Page'
 );
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
@@ -106,10 +106,12 @@ pvdak_public_smoke_require(
  strpos( $code['login'], "wp_nonce_field('pvdak_login'" ) !== false,
  '096-01 Branded login retains native nonce/action' );
 pvdak_public_smoke_require(
- strpos( $ui['register'], 'pvdak-register-steps' ) !== false &&
- strpos( $ui['register'], 'if(!pvdak_registration_open())' ) !== false &&
- strpos( $ui['register'], "wp_nonce_field('pvdak_register'" ) !== false,
- '096-02 Registration closed-state is honest and gated' );
+ strpos( $ui['register'], 'data-pvdak-auth-tab="register-email"' ) !== false &&
+ strpos( $ui['register'], 'data-pvdak-auth-tab="sms-register"' ) !== false &&
+ strpos( $ui['register'], "wp_nonce_field('pvdak_register'" ) !== false &&
+ strpos( $ui['register'], "wp_nonce_field('pvdak_sms_send'" ) !== false &&
+ strpos( $ui['register'], 'ثبت‌نام هنوز آغاز نشده است' ) === false,
+ '096-02 Registration is a separate two-tab form, no public admin instructions' );
 pvdak_public_smoke_require(
  strpos( $ui['recovery'], 'pvdak-recovery-steps' ) !== false &&
  strpos( $ui['recovery'], 'check_password_reset_key(' ) !== false &&
