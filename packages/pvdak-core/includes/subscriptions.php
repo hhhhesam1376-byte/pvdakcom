@@ -278,7 +278,7 @@ function pvdak_core_payment_fold( $events ) {
     foreach ( $events as $event ) {
         if ( ! is_array( $event ) || ! isset( $event['receipt_id'], $event['action'], $event['by'], $event['at'] ) ||
              ! pvdak_core_payment_receipt_id_valid( $event['receipt_id'] ) ||
-             ! is_string( $event['action'] ) || (int) $event['by'] < 1 ||
+             ! is_string( $event['action'] ) || ! is_int( $event['by'] ) || $event['by'] < 1 ||
              ! is_string( $event['at'] ) ||
              ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $event['at'] ) ) { return array(); }
         $id = $event['receipt_id'];
@@ -324,7 +324,7 @@ function pvdak_core_payment_metabox_html( $post ) {
     echo '<p><label>رسید موجود <select name="pvdak_payment_receipt"><option value="">انتخاب رسید</option>';
     foreach ( array_reverse( $receipts, true ) as $id => $item ) {
         echo '<option value="' . esc_attr( $id ) . '">' .
-            esc_html( $id . ' — ' . $item['state'] . ' — ' . $item['amount_irr'] . ' IRR' ) . '</option>';
+            esc_html( $id . ' — ' . $item['reference'] . ' — ' . $item['state'] . ' — ' . $item['amount_irr'] . ' IRR' ) . '</option>';
     }
     echo '</select></label></p>';
     echo '<p><label>اقدام <select name="pvdak_payment_action">';
