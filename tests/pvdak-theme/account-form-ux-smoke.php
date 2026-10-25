@@ -26,15 +26,25 @@ foreach ( $paths as $name => $path ) {
   $s[ $name ] = file_get_contents( $root . '/' . $path );
 }
 $checks = array(
-  'Original login is retained and signup uses a separate 2-tab page' =>
+  'Login has only password/SMS tabs; signup keeps its separate email/SMS tabs' =>
     strpos($s['login'],'name="action" value="pvdak_login"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-tab="password"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-tab="sms-login"')!==false &&
+    substr_count($s['login'],'data-pvdak-auth-tab=')===2 &&
+    strpos($s['login'],'data-pvdak-auth-pane="password"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-pane="sms-login"')!==false &&
+    strpos($s['login'],'role="tabpanel"')!==false &&
+    strpos($s['login'],'name="action" value="pvdak_sms_send"')!==false &&
+    strpos($s['login'],'name="action" value="pvdak_sms_verify"')!==false &&
     strpos($s['login'],'ثبت‌نام در PVDak')!==false &&
+    strpos($s['login'],'<details class="pvdak-login-sms-panel"')===false &&
     strpos($s['login'],'data-pvdak-auth-tab="register-email"')===false &&
     strpos($s['login'],'چهار مسیر در یک حساب کاربری وردپرس')===false &&
     strpos($s['register-ui'],'data-pvdak-auth-tab="register-email"')!==false &&
     strpos($s['register-ui'],'data-pvdak-auth-tab="sms-register"')!==false &&
     strpos($s['register-ui'],'name="action" value="pvdak_register"')!==false &&
-    strpos($s['register-ui'],'name="action" value="pvdak_sms_send"')!==false,
+    strpos($s['register-ui'],'name="action" value="pvdak_sms_send"')!==false &&
+    strpos($s['script'],"var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];")!==false,
   'Registration uses branded controlled email verification, without native WP signup' =>
     strpos($s['register'],"get_option('pvdak_registration_enabled', '1')")!==false &&
     strpos($s['register'],'pvdak_public_template_page_url(')!==false &&
