@@ -1,7 +1,8 @@
 <?php
 /**
- * Opt-in registration scaffolding, hard OFF until manager enables it AFTER
- * removing maintenance AND WordPress permits registration.
+ * Branded registration uses the independent manager setting (default ON),
+ * a published dedicated registration Page and maintenance-OFF as its gates.
+ * The native WordPress registration endpoint is blocked from bypassing verification.
  * Applicant-selected profession is a self-report; NEVER grants lawyer rights.
  */
 if (!defined('ABSPATH')) { exit; }
