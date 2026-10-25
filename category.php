@@ -14,7 +14,7 @@ $related = array();
 foreach ( array(
     'magazine_category' => 'مجله حقوقی',
     'notice_category'   => 'اطلاعیه‌ها',
-    'news_category'     => 'اخبار پویش',
+    'news_category'     => 'اخبار PVDak',
 ) as $field => $label ) {
     $id = pvdak_home_selected_category( $field );
     if ( ! $id || $id === $category_id || isset( $related[ $id ] ) ) { continue; }
@@ -32,7 +32,7 @@ get_header();
             <span aria-hidden="true">←</span>
             <span aria-current="page"><?php echo esc_html( single_cat_title( '', false ) ); ?></span>
         </nav>
-        <span class="pvdak-archive-eyebrow">مطالب و محتوای پویش</span>
+        <span class="pvdak-archive-eyebrow">مطالب و محتوای PVDak</span>
         <h1><?php echo esc_html( single_cat_title( '', false ) ); ?></h1>
         <?php $description = term_description( $term, 'category' ); ?>
         <?php if ( $description ) : ?>
