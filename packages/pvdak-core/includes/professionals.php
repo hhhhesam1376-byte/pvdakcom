@@ -27,7 +27,8 @@ function pvdak_core_member_states() {
 function pvdak_core_existing_application( $user_id ) {
     $user_id = absint( $user_id );
     if ( ! $user_id ) { return 0; }
-    $linked = absint( get_user_meta( $user_id, '_pvdak_core_application', true ) );
+    $linked_raw = get_user_meta( $user_id, '_pvdak_core_application', true );
+    $linked = is_scalar( $linked_raw ) && ctype_digit( (string) $linked_raw ) ? absint( $linked_raw ) : 0;
     if ( $linked && 'pvdak_professional' === get_post_type( $linked ) &&
          in_array( get_post_status( $linked ), array( 'private', 'draft' ), true ) &&
          (int) get_post_field( 'post_author', $linked ) === $user_id ) {
@@ -37,14 +38,22 @@ function pvdak_core_existing_application( $user_id ) {
         'post_type' => 'pvdak_professional',
         'post_status' => array( 'private', 'draft' ),
         'author' => (int) $user_id,
-        'posts_per_page' => 1,
+        'posts_per_page' => 20,
         'fields' => 'ids',
         'no_found_rows' => true,
         'cache_results' => false,
+        'suppress_filters' => false,
     ) );
-    if ( $matches ) {
-        update_user_meta( $user_id, '_pvdak_core_application', (int) $matches[0] );
-        return (int) $matches[0];
+    if ( ! is_array( $matches ) ) { return 0; }
+    foreach ( $matches as $candidate ) {
+        if ( ! is_scalar( $candidate ) || ! ctype_digit( (string) $candidate ) ) { continue; }
+        $id = absint( $candidate );
+        // A third-party query filter may return another account's application.
+        if ( ! $id || 'pvdak_professional' !== get_post_type( $id ) ||
+             ! in_array( get_post_status( $id ), array( 'private', 'draft' ), true ) ||
+             (int) get_post_field( 'post_author', $id ) !== $user_id ) { continue; }
+        update_user_meta( $user_id, '_pvdak_core_application', $id );
+        return $id;
     }
     return 0;
 }
@@ -69,7 +78,8 @@ function pvdak_core_member_application_form() {
     }
     $html = '<section class="pvdak-core-panel"><h2>اعلام آمادگی برای همکاری</h2>';
     $html .= '<p>این فرم صرفاً درخواست بررسی عضویت است و به‌معنای احراز صلاحیت حرفه‌ای یا اعطای دسترسی وکالت نیست. از وارد کردن شماره مدارک هویتی یا ارسال اسناد حساس خودداری کنید.</p>';
-    if ( isset( $_GET['pvdak_application'] ) && 'error' === sanitize_key( wp_unslash( $_GET['pvdak_application'] ) ) ) {
+    if ( isset( $_GET['pvdak_application'] ) && is_string( $_GET['pvdak_application'] ) &&
+         'error' === sanitize_key( wp_unslash( $_GET['pvdak_application'] ) ) ) {
         $html .= '<p class="pvdak-core-error" role="alert">ثبت درخواست انجام نشد. اطلاعات را بررسی کنید.</p>';
     }
     $html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="pvdak-core-form">';
@@ -161,7 +171,22 @@ function pvdak_core_submit_application() {
             ),
         ), true );
         if ( is_wp_error( $id ) || ! $id ) { return 'write_failed'; }
-        update_user_meta( $user_id, '_pvdak_core_application', (int) $id );
+        $id = absint( $id );
+        // WP may return a post ID even if individual meta_input writes failed.
+        if ( 'pvdak_professional' !== get_post_type( $id ) ||
+             'private' !== get_post_status( $id ) ||
+             (int) get_post_field( 'post_author', $id ) !== $user_id ||
+             $type !== get_post_meta( $id, '_pvdak_member_type', true ) ||
+             $city !== get_post_meta( $id, '_pvdak_member_city', true ) ||
+             'pending' !== get_post_meta( $id, '_pvdak_member_state', true ) ) {
+            wp_delete_post( $id, true ); // Only this newly created incomplete record.
+            return 'write_failed';
+        }
+        if ( ! update_user_meta( $user_id, '_pvdak_core_application', $id ) &&
+             $id !== absint( get_user_meta( $user_id, '_pvdak_core_application', true ) ) ) {
+            wp_delete_post( $id, true );
+            return 'write_failed';
+        }
         return 'created';
     } );
     wp_safe_redirect( add_query_arg( 'pvdak_application',
@@ -190,12 +215,13 @@ function pvdak_core_member_meta_box_html( $post ) {
     wp_nonce_field( 'pvdak_core_member_review_' . $post->ID, '_pvdak_member_review_nonce' );
     $type = get_post_meta( $post->ID, '_pvdak_member_type', true );
     $types = pvdak_core_member_types();
-    echo '<p><strong>نوع درخواست:</strong> ' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
-    echo '<p><strong>شهر:</strong> ' . esc_html( get_post_meta( $post->ID, '_pvdak_member_city', true ) ) . '</p>';
+    echo '<p><strong>نوع درخواست:</strong> ' . esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
+    $city = get_post_meta( $post->ID, '_pvdak_member_city', true );
+    echo '<p><strong>شهر:</strong> ' . esc_html( is_string( $city ) ? $city : 'نامشخص' ) . '</p>';
     echo '<p>تغییر وضعیت صرفاً اداری است؛ تأیید رسمی مدارک و انتشار پروفایل در این نسخه انجام نمی‌شود.</p>';
     $state = get_post_meta( $post->ID, '_pvdak_member_state', true );
     $states = pvdak_core_member_states();
-    if ( ! isset( $states[ $state ] ) ) {
+    if ( ! is_string( $state ) || ! isset( $states[ $state ] ) ) {
         echo '<p class="notice notice-warning">وضعیت اولیه نامعتبر یا خالی است؛ تغییر خودکار مسدود شد.</p>';
         return;
     }
@@ -222,7 +248,8 @@ function pvdak_core_save_member_review( $id ) {
     $expected = isset( $_POST['pvdak_member_previous_state'] ) && is_string( $_POST['pvdak_member_previous_state'] ) ?
         sanitize_key( wp_unslash( $_POST['pvdak_member_previous_state'] ) ) : '';
     $old = get_post_meta( $id, '_pvdak_member_state', true );
-    if ( ! isset( pvdak_core_member_states()[ $old ] ) || $expected !== $old || $new === $old ||
+    if ( ! is_string( $old ) || ! isset( pvdak_core_member_states()[ $old ] ) ||
+         $expected !== $old || $new === $old ||
          ! in_array( $new, pvdak_core_member_allowed_transitions( $old ), true ) ) { return; }
     // Compare-and-set blocks stale editor tabs; audit failures attempt rollback.
     if ( ! update_post_meta( $id, '_pvdak_member_state', $new, $old ) ) { return; }
@@ -249,13 +276,14 @@ function pvdak_core_member_admin_column( $column, $id ) {
     if ( 'pvdak_member_type' === $column ) {
         $types = pvdak_core_member_types();
         $type = get_post_meta( $id, '_pvdak_member_type', true );
-        echo esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' );
+        echo esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' );
     } elseif ( 'pvdak_member_state' === $column ) {
         $states = pvdak_core_member_states();
         $state = get_post_meta( $id, '_pvdak_member_state', true );
-        echo esc_html( isset( $states[ $state ] ) ? $states[ $state ] : $states['pending'] );
+        echo esc_html( is_string( $state ) && isset( $states[ $state ] ) ? $states[ $state ] : 'نیازمند بررسی' );
     } elseif ( 'pvdak_member_city' === $column ) {
-        echo esc_html( get_post_meta( $id, '_pvdak_member_city', true ) );
+        $city = get_post_meta( $id, '_pvdak_member_city', true );
+        echo esc_html( is_string( $city ) ? $city : 'نامشخص' );
     }
 }
 add_action( 'manage_pvdak_professional_posts_custom_column', 'pvdak_core_member_admin_column', 10, 2 );

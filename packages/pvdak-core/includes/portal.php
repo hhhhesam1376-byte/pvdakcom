@@ -35,14 +35,21 @@ function pvdak_core_dashboard( $atts = array() ) {
         'order' => 'DESC',
         'suppress_filters' => false,
     ) );
+    if ( ! is_array( $items ) ) { $items = array(); }
     $mine = array();
     foreach ( $items as $item ) {
-        if ( 'pvdak_request' === $item->post_type && (int) $item->post_author === $user_id ) {
+        if ( $item instanceof WP_Post && 'pvdak_request' === $item->post_type &&
+             'private' === $item->post_status && (int) $item->post_author === $user_id ) {
             $mine[] = $item;
         }
     }
 
     $application_id = pvdak_core_existing_application( $user_id );
+    if ( $application_id && ( 'pvdak_professional' !== get_post_type( $application_id ) ||
+         ! in_array( get_post_status( $application_id ), array( 'private', 'draft' ), true ) ||
+         (int) get_post_field( 'post_author', $application_id ) !== $user_id ) ) {
+        $application_id = 0;
+    }
     $member_states = pvdak_core_member_states();
     $member_types = pvdak_core_member_types();
     $member_state = $application_id ? get_post_meta( $application_id, '_pvdak_member_state', true ) : '';

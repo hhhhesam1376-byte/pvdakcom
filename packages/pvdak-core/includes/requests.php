@@ -45,13 +45,18 @@ function pvdak_core_request_input_valid( $title, $description ) {
 }
 
 /** One-time receipt is scoped to the owner AND the submitted service type. */
-function pvdak_core_request_receipt_id( $receipt, $type ) {
+function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
         ! is_string( $receipt['type'] ) || ! is_scalar( $receipt['id'] ) ||
         $receipt['type'] !== $type || (int) $receipt['id'] < 1 ) {
         return 0;
     }
-    return absint( $receipt['id'] );
+    $id = absint( $receipt['id'] );
+    if ( $owner_id && ( 'pvdak_request' !== get_post_type( $id ) ||
+         'private' !== get_post_status( $id ) ||
+         (int) get_post_field( 'post_author', $id ) !== absint( $owner_id ) ||
+         $type !== get_post_meta( $id, '_pvdak_request_type', true ) ) { return 0; }
+    return $id;
 }
 
 function pvdak_core_request_form( $atts ) {
@@ -79,7 +84,7 @@ function pvdak_core_request_form( $atts ) {
     }
     $html = '<section class="pvdak-core-panel"><h2>' . esc_html( $types[ $type ] ) . '</h2>';
     $receipt_key = 'pvdak_receipt_' . get_current_user_id();
-    $receipt_id = pvdak_core_request_receipt_id( get_transient( $receipt_key ), $type );
+    $receipt_id = pvdak_core_request_receipt_id( get_transient( $receipt_key ), $type, get_current_user_id() );
     if ( $receipt_id ) {
         delete_transient( $receipt_key );
         $html .= '<p class="pvdak-core-success" role="status">درخواست شما ثبت شد و در صف بررسی قرار گرفت. شماره پیگیری: <strong>#' .
@@ -112,6 +117,9 @@ function pvdak_core_request_form( $atts ) {
 add_shortcode( 'pvdak_request_form', 'pvdak_core_request_form' );
 
 function pvdak_core_handle_request() {
+    if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+        wp_die( 'روش درخواست نامعتبر است.', '', array( 'response' => 405 ) );
+    }
     if ( ! is_user_logged_in() || ! current_user_can( 'read' ) || ! pvdak_core_intake_open() ) {
         wp_die( 'ثبت درخواست در دسترس نیست.', '', array( 'response' => 403 ) );
     }
@@ -137,7 +145,16 @@ function pvdak_core_handle_request() {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'limit', $destination ) );
         exit;
     }
-    set_transient( $rate_key, 1, 90 );
+    if ( ! set_transient( $rate_key, 1, 90 ) ) {
+        wp_safe_redirect( add_query_arg( 'pvdak_error', 'limit', $destination ) );
+        exit;
+    }
+    // An administrator may close intake between form rendering and submission.
+    if ( ! pvdak_core_intake_open() ) {
+        delete_transient( $rate_key );
+        wp_safe_redirect( add_query_arg( 'pvdak_error', 'closed', $destination ) );
+        exit;
+    }
     $id = wp_insert_post( array(
         'post_type' => 'pvdak_request',
         'post_status' => 'private',
@@ -155,7 +172,19 @@ function pvdak_core_handle_request() {
         wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
         exit;
     }
-    set_transient( 'pvdak_receipt_' . $user_id, array( 'type' => $type, 'id' => absint( $id ) ), 300 );
+    $id = absint( $id );
+    if ( 'pvdak_request' !== get_post_type( $id ) ||
+         'private' !== get_post_status( $id ) ||
+         (int) get_post_field( 'post_author', $id ) !== $user_id ||
+         $type !== get_post_meta( $id, '_pvdak_request_type', true ) ||
+         $landing_id !== absint( get_post_meta( $id, '_pvdak_legal_landing_id', true ) ) ||
+         'submitted' !== get_post_meta( $id, '_pvdak_request_state', true ) ) {
+        wp_delete_post( $id, true ); // Newly inserted incomplete request only.
+        delete_transient( $rate_key );
+        wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
+        exit;
+    }
+    set_transient( 'pvdak_receipt_' . $user_id, array( 'type' => $type, 'id' => $id ), 300 );
     wp_safe_redirect( $destination );
     exit;
 }
@@ -204,9 +233,9 @@ function pvdak_core_my_requests() {
     if ( '' !== $search ) { $args['s'] = $search; }
     $query = new WP_Query( $args );
     $items = array();
-    foreach ( $query->posts as $item ) {
+    foreach ( (array) $query->posts as $item ) {
         // Defense in depth against third-party query filters or stale records.
-        if ( 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
+        if ( $item instanceof WP_Post && 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
             (int) $item->post_author === $user_id ) {
             $items[] = $item;
         }
@@ -350,7 +379,10 @@ function pvdak_core_request_metabox_html( $post ) {
     echo '<p><strong>موضوع حقوقی:</strong> ' .
         ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
     $current = get_post_meta( $post->ID, '_pvdak_request_state', true );
-    if ( ! isset( $statuses[ $current ] ) ) { $current = 'submitted'; }
+    if ( ! is_string( $current ) || ! isset( $statuses[ $current ] ) ) {
+        echo '<p class="notice notice-warning">وضعیت ذخیره‌شده نامعتبر است؛ ویرایش گردش کار و یادداشت تا بررسی داده توسط مدیر مسدود است.</p>';
+        return;
+    }
     echo '<input type="hidden" name="_pvdak_expected_state" value="' . esc_attr( $current ) . '">';
     echo '<input type="hidden" name="_pvdak_note_token" value="' . esc_attr( wp_generate_uuid4() ) . '">';
     echo '<p><strong>نوع:</strong> ' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
@@ -369,9 +401,9 @@ function pvdak_core_request_metabox_html( $post ) {
     if ( $notes ) {
         echo '<div style="max-height:220px;overflow:auto"><strong>آخرین یادداشت‌ها</strong><ul>';
         foreach ( array_reverse( array_slice( $notes, -5 ) ) as $note ) {
-            if ( ! is_array( $note ) ) { continue; }
+            if ( ! is_array( $note ) || ! isset( $note['text'] ) || ! is_string( $note['text'] ) ) { continue; }
             echo '<li style="border-bottom:1px solid #ddd;padding:8px 0"><small>' .
-                esc_html( isset( $note['at'] ) ? $note['at'] : '' ) . '</small><p>' .
+                esc_html( isset( $note['at'] ) && is_string( $note['at'] ) ? $note['at'] : '' ) . '</small><p>' .
                 esc_html( isset( $note['text'] ) ? $note['text'] : '' ) . '</p></li>';
         }
         echo '</ul></div>';
@@ -381,11 +413,11 @@ function pvdak_core_request_metabox_html( $post ) {
         echo '<details><summary>تاریخچه تغییر وضعیت</summary><ol>';
         foreach ( array_reverse( array_slice( $audit, -10 ) ) as $event ) {
             if ( ! is_array( $event ) ) { continue; }
-            $from = isset( $event['from'] ) ? $event['from'] : '';
-            $to = isset( $event['to'] ) ? $event['to'] : '';
+            $from = isset( $event['from'] ) && is_string( $event['from'] ) ? $event['from'] : '';
+            $to = isset( $event['to'] ) && is_string( $event['to'] ) ? $event['to'] : '';
             echo '<li>' . esc_html( isset( $statuses[ $from ] ) ? $statuses[ $from ] : $from ) .
                 ' ← ' . esc_html( isset( $statuses[ $to ] ) ? $statuses[ $to ] : $to ) .
-                ' <small>' . esc_html( isset( $event['at'] ) ? $event['at'] : '' ) . '</small></li>';
+                ' <small>' . esc_html( isset( $event['at'] ) && is_string( $event['at'] ) ? $event['at'] : '' ) . '</small></li>';
         }
         echo '</ol></details>';
     }
@@ -402,7 +434,7 @@ function pvdak_core_save_request_state( $post_id, $post ) {
     $statuses = pvdak_core_request_statuses();
     $raw_previous = get_post_meta( $post_id, '_pvdak_request_state', true );
     // Missing legacy state is treated as submitted; an unknown nonempty state is never overwritten.
-    if ( '' !== $raw_previous && ! isset( $statuses[ $raw_previous ] ) ) { return; }
+    if ( ! is_string( $raw_previous ) || ( '' !== $raw_previous && ! isset( $statuses[ $raw_previous ] ) ) ) { return; }
     $previous = '' === $raw_previous ? 'submitted' : $raw_previous;
     $expected = isset( $_POST['_pvdak_expected_state'] ) && is_string( $_POST['_pvdak_expected_state'] ) ?
         sanitize_key( wp_unslash( $_POST['_pvdak_expected_state'] ) ) : '';
@@ -414,14 +446,17 @@ function pvdak_core_save_request_state( $post_id, $post ) {
         if ( ! in_array( $next, pvdak_core_allowed_request_transitions( $previous ), true ) ) { return; }
         // Compare the previous stored value when available to avoid overwriting a concurrent transition.
         if ( ! update_post_meta( $post_id, '_pvdak_request_state', $next, $raw_previous ) ) { return; }
-        if ( add_post_meta( $post_id, '_pvdak_state_audit', array(
+        if ( ! add_post_meta( $post_id, '_pvdak_state_audit', array(
             'from' => $previous,
             'to' => $next,
             'at' => current_time( 'mysql', true ),
             'by' => get_current_user_id(),
         ), false ) ) {
-            pvdak_core_notify_owner( $post_id, 'pvdak_request' );
+            // A state without its audit trail must not be reported as completed.
+            update_post_meta( $post_id, '_pvdak_request_state', $previous, $next );
+            return;
         }
+        pvdak_core_notify_owner( $post_id, 'pvdak_request' );
     }
 
     if ( isset( $_POST['pvdak_internal_note'] ) && is_string( $_POST['pvdak_internal_note'] ) ) {

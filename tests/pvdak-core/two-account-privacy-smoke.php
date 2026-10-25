@@ -95,6 +95,7 @@ class WP_Post {
 $GLOBALS['viewer_id'] = 0;
 $GLOBALS['write_attempts'] = 0;
 $GLOBALS['poison_query'] = false;
+$GLOBALS['poison_member_query'] = false;
 $GLOBALS['case_posts'] = array(
     1101 => new WP_Post( 1101, 11, 'pvdak_request', 'ALPHA_CASE_ONLY' ),
     2202 => new WP_Post( 2202, 22, 'pvdak_request', 'BETA_CASE_ONLY' ),
@@ -130,6 +131,9 @@ function get_posts( $args ) {
     }
     // Misbehaving query provider returns a foreign case as well as own records.
     // Privacy code must perform its own final ownership check.
+    if ( $GLOBALS['poison_member_query'] && 'pvdak_professional' === $type ) {
+        $owned = array_values( $source );
+    }
     if ( $GLOBALS['poison_query'] && 'pvdak_request' === $type ) {
         foreach ( $source as $item ) {
             if ( $item->post_author !== $author ) { $owned[] = $item; }
@@ -200,12 +204,14 @@ foreach ( array( 11, 22 ) as $id ) {
     pvdak_privacy_assert( false === strpos( $professional, $other ), 'Professional dashboard exposes no client case titles' );
 }
 $GLOBALS['viewer_id'] = 33;
+$GLOBALS['poison_member_query'] = true;
 $forged = pvdak_core_professional_dashboard();
+pvdak_privacy_assert( 0 === pvdak_core_existing_application( 33 ), 'Foreign-only member query fails closed' );
 pvdak_privacy_assert( false === strpos( $forged, 'BETA_CITY_ONLY' ), 'Forged cross-owner professional link rejected' );
 pvdak_privacy_assert( $GLOBALS['write_attempts'] === 0, 'Read-only simulated views do not attempt writes' );
 pvdak_privacy_assert( '2026-10-23' === get_the_date( 'Y-m-d', 1101 ) &&
     '2026/10/23' === get_the_date( 'Y/m/d', 2202 ),
     'Date formatting mock covers both dashboard date formats' );
-$expected = 24; // 4 anonymous + 8 per user + 3 forged/write/date + 1 exact-count check.
+$expected = 25; // 4 anonymous + 8 per user + 4 forged/write/date/foreign-query + 1 exact-count check.
 pvdak_privacy_assert( $checks + 1 === $expected, 'Exact synthetic assertion count executed' );
-echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=24 (synthetic; no real accounts, data or writes)\n";
+echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=25 (synthetic; no real accounts, data or writes)\n";

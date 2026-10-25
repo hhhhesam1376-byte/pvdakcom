@@ -18,6 +18,7 @@ function pvdak_core_capacity_accepting( $profile_id ) {
 
 /** Count only internally assigned cases that have not been closed. */
 function pvdak_core_active_assignment_count( $profile_id ) {
+    global $wpdb;
     $profile_id = absint( $profile_id );
     if ( ! $profile_id ) { return 0; }
     $ids = get_posts( array(
@@ -31,6 +32,10 @@ function pvdak_core_active_assignment_count( $profile_id ) {
         'cache_results' => false,
         'update_post_meta_cache' => false,
     ) );
+    // A failed query must never be mistaken for free capacity.
+    if ( ! is_array( $ids ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+        return PHP_INT_MAX;
+    }
     $total = 0;
     foreach ( $ids as $request_id ) {
         // Another manager might have completed a case in a separate request.
