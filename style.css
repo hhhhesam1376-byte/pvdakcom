@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.46
+Version: 0.8.47
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -3649,4 +3649,25 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 @media(max-width:480px){
   .pvdak-login-page .pvdak-login-tabs button{font-size:12px;min-height:45px;padding:8px 5px}
+}
+
+/* 0.8.47 - account first/last name, application guidance and small screens. */
+.pvdak-unified-account .pvdak-profile-editable-details{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;margin:14px 0 20px
+}
+.pvdak-unified-account .pvdak-profile-editable-details .pvdak-profile-field{min-width:0}
+.pvdak-unified-account .pvdak-profile-editable-details input{
+  width:100%;max-width:100%;box-sizing:border-box;min-height:45px
+}
+.pvdak-unified-account .pvdak-professional-next-step{
+  padding:20px;background:#f6fbff;border:1px solid #d2e7f3;border-radius:16px
+}
+.pvdak-unified-account .pvdak-professional-next-step p{font-size:13px;line-height:1.9}
+.pvdak-unified-account .pvdak-professional-next-step a{
+  display:inline-flex;align-items:center;min-height:43px;padding:10px 16px;
+  border-radius:10px;background:#eef7ff;color:#12688d;font-weight:800;text-decoration:none
+}
+@media(max-width:560px){
+  .pvdak-unified-account .pvdak-profile-editable-details{grid-template-columns:minmax(0,1fr)}
 }
