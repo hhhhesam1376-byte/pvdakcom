@@ -11,6 +11,19 @@ function pvdak_public_page_url($slug) {
   $p = get_page_by_path(sanitize_title($slug), OBJECT, 'page');
   return $p && 'publish' === $p->post_status ? get_permalink($p->ID) : '';
 }
+/**
+ * Resolve a branded route only when the published Page actually uses its
+ * expected PHP template. Editors may change templates after the initial seed;
+ * a published URL alone does not guarantee a functioning account screen.
+ */
+function pvdak_public_template_page_url( $slug, $template ) {
+  $page = get_page_by_path( sanitize_title( $slug ), OBJECT, 'page' );
+  if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ||
+       $template !== get_page_template_slug( $page->ID ) ) {
+    return '';
+  }
+  return get_permalink( $page->ID );
+}
 function pvdak_public_page_seeds() {
   return array(
     'about-us'=>array('درباره ما','page-templates/pvdak-information.php','<h2>درباره پویش</h2><p>پویش وکلای دادگستری کشور بستری در حال توسعه برای آشنایی با موضوعات حقوقی و جامعه متخصصان است.</p><h2>مسیر توسعه</h2><p>مجله و محتوای آموزشی در حال تکمیل هستند. خدمات پذیرش پرونده و عضویت تا پایان آزمون‌ها غیرفعال‌اند.</p>'),
