@@ -80,25 +80,50 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
     return $used;
 }
 
+/** A disabled gate preserves the existing internal workflow; enabled means fail closed. */
 function pvdak_core_subscription_allows_new_assignment( $profile_id ) {
     if ( ! pvdak_core_subscription_gate_on() ) { return true; }
-    if ( 'active' !== get_post_meta( absint( $profile_id ), '_pvdak_subscription_state', true ) ) { return false; }
+    $profile_id = absint( $profile_id );
+    if ( ! $profile_id || 'pvdak_professional' !== get_post_type( $profile_id ) ||
+         'private' !== get_post_status( $profile_id ) ||
+         ! pvdak_core_profile_has_owner( $profile_id ) ||
+         'active' !== get_post_meta( $profile_id, '_pvdak_subscription_state', true ) ||
+         'none' === pvdak_core_subscription_plan( $profile_id ) ) {
+        return false;
+    }
     $expires = pvdak_core_subscription_expiry( $profile_id );
-    if ( ! $expires || $expires < current_time( 'Y-m-d' ) ) { return false; }
     $quota = pvdak_core_subscription_monthly_quota( $profile_id );
-    return $quota > 0 && pvdak_core_subscription_month_assignments( $profile_id ) < $quota;
+    if ( ! $expires || $expires < current_time( 'Y-m-d' ) || $quota < 1 ) { return false; }
+    return pvdak_core_subscription_month_assignments( $profile_id ) < $quota;
+}
+
+/** Canonical readback used for stale-form detection; no payment claims. */
+function pvdak_core_subscription_snapshot( $profile_id ) {
+    $profile_id = absint( $profile_id );
+    return array(
+        'state' => (string) get_post_meta( $profile_id, '_pvdak_subscription_state', true ),
+        'plan' => pvdak_core_subscription_plan( $profile_id ),
+        'quota' => pvdak_core_subscription_monthly_quota( $profile_id ),
+        'expires' => pvdak_core_subscription_expiry( $profile_id ),
+    );
+}
+function pvdak_core_subscription_revision( $snapshot ) {
+    return hash_hmac( 'sha256', wp_json_encode( $snapshot ), wp_salt( 'auth' ) );
 }
 function pvdak_core_subscription_metabox() {
     add_meta_box('pvdak_subscription_admin','اشتراک آزمایشی و سهمیه ارجاع','pvdak_core_subscription_metabox_html','pvdak_professional','side','default');
 }
 add_action('add_meta_boxes','pvdak_core_subscription_metabox');
 function pvdak_core_subscription_metabox_html( $post ) {
-    if ( ! current_user_can( 'edit_post', $post->ID ) ) { return; }
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post->ID ) ) { return; }
     wp_nonce_field( 'pvdak_sub_'.$post->ID, '_pvdak_subscription_nonce' );
-    $state = get_post_meta( $post->ID, '_pvdak_subscription_state', true );
-    $plan = pvdak_core_subscription_plan( $post->ID );
-    $quota = pvdak_core_subscription_monthly_quota( $post->ID );
-    $expiry = pvdak_core_subscription_expiry( $post->ID );
+    $snapshot = pvdak_core_subscription_snapshot( $post->ID );
+    echo '<input type="hidden" name="_pvdak_subscription_revision" value="' .
+        esc_attr( pvdak_core_subscription_revision( $snapshot ) ) . '">';
+    $state = $snapshot['state'];
+    $plan = $snapshot['plan'];
+    $quota = $snapshot['quota'];
+    $expiry = $snapshot['expires'];
     echo '<p><strong>این فقط ثبت دستی است.</strong> پرداخت یا خرید آنلاین هنوز وجود ندارد. کنترل سهمیه به‌صورت پیش‌فرض خاموش است.</p>';
     echo '<p><label for="pvdak_sub_state">وضعیت</label> <select id="pvdak_sub_state" name="pvdak_sub_state">';
     foreach(array('inactive'=>'غیرفعال','active'=>'فعال دستی','paused'=>'تعلیق') as $k=>$label){
@@ -114,42 +139,92 @@ function pvdak_core_subscription_metabox_html( $post ) {
     echo '<p>استفاده از سهمیه در ماه جاری: '.esc_html(pvdak_core_subscription_month_assignments($post->ID)).'</p>';
     echo '<p>اجرای محدودیت: '.(pvdak_core_subscription_gate_on()?'فعال (با مجوز مدیر)':'خاموش').'</p>';
 }
+/**
+ * Manual admin-only updates. Serialize concurrent staff saves and reject
+ * stale forms before any write; meta writes still are not DB transactions.
+ */
 function pvdak_core_subscription_save( $post_id ) {
-    if ( ! current_user_can( 'edit_post', $post_id ) || ! isset($_POST['_pvdak_subscription_nonce']) ||
-         ! is_string($_POST['_pvdak_subscription_nonce']) ||
-         ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_pvdak_subscription_nonce'])),'pvdak_sub_'.$post_id) ) { return; }
-    $raw_state = wp_unslash($_POST['pvdak_sub_state']??'');
-    $raw_plan = wp_unslash($_POST['pvdak_sub_plan']??'');
-    $raw_limit = wp_unslash($_POST['pvdak_sub_limit']??'');
-    $raw_expiry = wp_unslash($_POST['pvdak_sub_expires']??'');
-    if (!is_string($raw_state)||!is_string($raw_plan)||!is_string($raw_limit)||!is_string($raw_expiry))return;
-    $state=sanitize_key($raw_state);
-    $plan=sanitize_key($raw_plan);
-    $limit=trim($raw_limit);
-    $date=trim($raw_expiry);
-    if(!in_array($state,array('active','paused','inactive'),true)||
-       !in_array($plan,array('none','basic','standard','advanced'),true)||
-       !ctype_digit($limit)||(int)$limit>100||
-       ($date!==''&&(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date)||!checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4)))))return;
-    // An active manual plan must be internally coherent; never promise access
-    // for a missing tier, zero quota, empty or already expired end date.
-    if ('active'===$state &&
-        ('none'===$plan || (int)$limit===0 || $date==='' || $date<current_time('Y-m-d')))return;
-    $old=array(
-        'state'=>get_post_meta($post_id,'_pvdak_subscription_state',true),
-        'plan'=>pvdak_core_subscription_plan($post_id),
-        'quota'=>pvdak_core_subscription_monthly_quota($post_id),
-        'expires'=>pvdak_core_subscription_expiry($post_id)
-    );
-    $next=array('state'=>$state,'plan'=>$plan,'quota'=>(int)$limit,'expires'=>$date);
-    if($old===$next)return;
-    update_post_meta($post_id,'_pvdak_subscription_state',$state);
-    update_post_meta($post_id,'_pvdak_subscription_plan',$plan);
-    update_post_meta($post_id,'_pvdak_subscription_monthly_quota',(int)$limit);
-    update_post_meta($post_id,'_pvdak_subscription_expires',$date);
-    add_post_meta($post_id,'_pvdak_subscription_audit',array(
-        'previous'=>$old,'next'=>$next,'by'=>get_current_user_id(),
-        'at'=>current_time('mysql',true)
-    ),false);
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
+         ! isset( $_POST['_pvdak_subscription_nonce'], $_POST['_pvdak_subscription_revision'] ) ||
+         ! is_string( $_POST['_pvdak_subscription_nonce'] ) ||
+         ! is_string( $_POST['_pvdak_subscription_revision'] ) ||
+         ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_pvdak_subscription_nonce'] ) ), 'pvdak_sub_' . $post_id ) ) {
+        return;
+    }
+    $revision = wp_unslash( $_POST['_pvdak_subscription_revision'] );
+    if ( ! preg_match( '/^[a-f0-9]{64}$/D', $revision ) ) { return; }
+    $raw_state = wp_unslash( $_POST['pvdak_sub_state'] ?? '' );
+    $raw_plan = wp_unslash( $_POST['pvdak_sub_plan'] ?? '' );
+    $raw_limit = wp_unslash( $_POST['pvdak_sub_limit'] ?? '' );
+    $raw_expiry = wp_unslash( $_POST['pvdak_sub_expires'] ?? '' );
+    if ( ! is_string( $raw_state ) || ! is_string( $raw_plan ) ||
+         ! is_string( $raw_limit ) || ! is_string( $raw_expiry ) ) { return; }
+    $state = sanitize_key( $raw_state );
+    $plan = sanitize_key( $raw_plan );
+    $limit = trim( $raw_limit );
+    $date = trim( $raw_expiry );
+    if ( ! in_array( $state, array( 'active', 'paused', 'inactive' ), true ) ||
+         ! in_array( $plan, array( 'none', 'basic', 'standard', 'advanced' ), true ) ||
+         ! ctype_digit( $limit ) || (int) $limit > 100 ||
+         ( '' !== $date && ( ! preg_match( '/^\\d{4}-\\d{2}-\\d{2}$/D', $date ) ||
+           ! checkdate( (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 ) ) ) ) ) {
+        return;
+    }
+    if ( 'active' === $state &&
+         ( 'none' === $plan || 0 === (int) $limit || '' === $date || $date < current_time( 'Y-m-d' ) ) ) {
+        return;
+    }
+    global $wpdb;
+    if ( ! is_object( $wpdb ) ) { return; }
+    $lock = 'pvdak:sub:' . absint( $post_id );
+    if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, 5 ) ) ) {
+        return; // Never save without the per-profile lock.
+    }
+    try {
+        $old = pvdak_core_subscription_snapshot( $post_id );
+        if ( ! hash_equals( pvdak_core_subscription_revision( $old ), $revision ) ) {
+            return; // Another administrator changed the subscription since form load.
+        }
+        $next = array( 'state' => $state, 'plan' => $plan, 'quota' => (int) $limit, 'expires' => $date );
+        if ( $old === $next ) { return; }
+        $changes = array(
+            '_pvdak_subscription_state' => $state,
+            '_pvdak_subscription_plan' => $plan,
+            '_pvdak_subscription_monthly_quota' => (int) $limit,
+            '_pvdak_subscription_expires' => $date,
+        );
+        $previous = array();
+        $written = array();
+        foreach ( $changes as $key => $value ) {
+            $had = metadata_exists( 'post', $post_id, $key );
+            $before = get_post_meta( $post_id, $key, true );
+            if ( $had && (string) $before === (string) $value ) { continue; }
+            $previous[ $key ] = array( 'had' => $had, 'value' => $before );
+            if ( false === update_post_meta( $post_id, $key, $value ) ) {
+                pvdak_core_subscription_restore( $post_id, $written, $previous );
+                return;
+            }
+            $written[] = $key;
+        }
+        if ( false === add_post_meta( $post_id, '_pvdak_subscription_audit', array(
+            'previous' => $old, 'next' => $next, 'by' => get_current_user_id(),
+            'at' => current_time( 'mysql', true ),
+        ), false ) ) {
+            pvdak_core_subscription_restore( $post_id, $written, $previous );
+        }
+    } finally {
+        $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+    }
+}
+
+/** Best-effort restoration on a failed write; WP postmeta is not atomic. */
+function pvdak_core_subscription_restore( $post_id, $written, $previous ) {
+    foreach ( array_reverse( $written ) as $key ) {
+        if ( $previous[ $key ]['had'] ) {
+            update_post_meta( $post_id, $key, $previous[ $key ]['value'] );
+        } else {
+            delete_post_meta( $post_id, $key );
+        }
+    }
 }
 add_action('save_post_pvdak_professional','pvdak_core_subscription_save',24);
