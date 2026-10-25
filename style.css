@@ -3555,3 +3555,35 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
     width:32px;height:32px;flex-basis:32px;font-size:17px
   }
 }
+
+/* Account methods | PVDak 0.8.44: extend existing login without a new page. */
+.pvdak-auth-mode-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:20px 0 18px}
+.pvdak-auth-mode-picker button{
+  min-width:0;min-height:48px;padding:11px 9px;border:1px solid #c8dfec;border-radius:11px;
+  color:#2c5771;background:#f3f9fd;font:inherit;font-size:12px;font-weight:800;
+  line-height:1.75;text-align:center;cursor:pointer;transition:background .16s,border-color .16s
+}
+.pvdak-auth-mode-picker button:hover{background:#e5f4fb;border-color:#7fbcd7}
+.pvdak-auth-mode-picker button[aria-selected="true"]{
+  border-color:#147f9d;background:#117b9d;color:white;
+  box-shadow:0 7px 17px rgba(18,111,146,.16)
+}
+.pvdak-auth-mode-picker button:focus-visible{outline:3px solid #efc16e;outline-offset:3px}
+.pvdak-login-page [data-pvdak-auth-pane][hidden]{display:none!important}
+.pvdak-login-page [data-pvdak-auth-pane]{min-width:0;animation:pvdak-auth-show .16s ease-out}
+.pvdak-login-page .pvdak-auth-pane-heading{font-size:16px;margin:0 0 14px;color:#153e61;line-height:1.85}
+.pvdak-login-page .pvdak-auth-method-description{color:#51718a;font-size:12px;line-height:2}
+.pvdak-login-page .pvdak-auth-otp-verification{
+  margin-top:23px;padding:19px 17px;border-radius:15px;border:1px solid #c6e0ed;
+  background:#f5faff
+}
+.pvdak-login-page .pvdak-auth-otp-verification h3{font-size:14px;margin:0 0 10px;color:#234e69}
+.pvdak-login-page [data-pvdak-auth-pane] input[dir="ltr"]{text-align:left;direction:ltr}
+.pvdak-login-page .pvdak-auth-mode-picker + .pvdak-static-note{margin-block:10px}
+@keyframes pvdak-auth-show{from{opacity:.75;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(max-width:450px){
+  .pvdak-auth-mode-picker{gap:7px}
+  .pvdak-auth-mode-picker button{font-size:11px;padding:10px 5px}
+  .pvdak-login-page .pvdak-auth-otp-verification{padding:14px 12px}
+}
+@media(prefers-reduced-motion:reduce){.pvdak-login-page [data-pvdak-auth-pane]{animation:none}}
