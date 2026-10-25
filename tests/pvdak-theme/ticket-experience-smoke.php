@@ -70,9 +70,9 @@ $checks=array(
   strpos($s['support'],"'closed'!==get_post_meta(\$id,'_pvdak_support_status',true)")!==false,
  'staff rejects stale status and nonprivate tickets'=>strpos($s['support'],'name="pvdak_support_previous_state"')!==false &&
   strpos($s['support'],'$previous!==$expected_state')!==false &&
-  strpos($s['support'],"'private'!==get_post_status($post_id)")!==false,
- 'new ticket requires initial workflow state'=>strpos($s['support'],"!add_post_meta($id,'_pvdak_support_status','open',true)")!==false &&
-  strpos($s['support'],"wp_delete_post($id,true)")!==false,
+  strpos($s['support'],"'private'!==get_post_status(\$post_id)")!==false,
+ 'new ticket requires initial workflow state'=>strpos($s['support'],"!add_post_meta(\$id,'_pvdak_support_status','open',true)")!==false &&
+  strpos($s['support'],"wp_delete_post(\$id,true)")!==false,
  'admin filter and scoped assets'=>strpos($s['support'],"add_action('restrict_manage_posts'")!==false &&
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
