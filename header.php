@@ -19,7 +19,7 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
     <div class="container"><?php
         $site_tagline = trim( (string) get_bloginfo( 'description' ) );
         // Normalize only the former brand name; preserve any custom tagline.
-        $site_tagline = str_replace( array( 'PVDak', 'PVDak' ), 'PVDak', $site_tagline );
+        $site_tagline = str_replace( array( 'پویش وکلای دادگستری کشور', 'پویش' ), 'PVDak', $site_tagline );
         echo esc_html( $site_tagline ?: 'PVDak • همراه مسیر حقوقی شما' );
     ?></div>
 </div>
