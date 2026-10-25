@@ -17,8 +17,8 @@ $checks=array(
  'status allowlist'=>strpos($s['support'],'function pvdak_support_status_key(')!==false,
  'D22 count only valid conversation entries'=>strpos($s['support'],'$message_count=count($messages);')!==false &&
   strpos($s['support'],'array_values(array_filter(')!==false,
- 'D22 repeated followup gets rate feedback'=>strpos($s['support'],"$result_state=$ok?'followup_sent':(get_transient($key)?'slow':'failed');")!==false,
- 'D22 malformed audit entries are scalar-guarded'=>strpos($s['support'],"is_string($event['at'])")!==false,
+ 'D22 repeated followup gets rate feedback'=>strpos($s['support'],"\$result_state=\$ok?'followup_sent':(get_transient(\$key)?'slow':'failed');")!==false,
+ 'D22 malformed audit entries are scalar-guarded'=>strpos($s['support'],"is_string(\$event['at'])")!==false,
  'status badges'=>strpos($s['support'],'pvdak-ticket-status--')!==false,
  'creation date'=>strpos($s['support'],"get_the_date('j F Y'")!==false,
  'conversation count'=>strpos($s['support'],'number_format_i18n($message_count)')!==false,
