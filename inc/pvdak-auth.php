@@ -2,7 +2,7 @@
 /** WordPress-backed branded PVDak login; WP administrators retain their native access. */
 if(!defined('ABSPATH')){exit;}
 function pvdak_auth_login_url(){
-  $page = pvdak_public_page_url('account-login');
+  $page = pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php');
   // If the administrator has not published the branded Page yet, use the
   // actual WordPress entry point; never send visitors to a guessed 404 slug.
   // site_url() deliberately avoids calling wp_login_url() and its login_url filter.
@@ -10,10 +10,10 @@ function pvdak_auth_login_url(){
 }
 function pvdak_auth_account_url(){
   $core=function_exists('pvdak_core_account_url')?pvdak_core_account_url():'';
-  $page = pvdak_public_page_url('my-pvdak-account');
+  $page = pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php');
   // WordPress's own protected profile is a safe emergency destination.
   // A missing dashboard Page must not turn a successful login into a 404.
-  return $core ?: ($page ?: admin_url('profile.php'));
+  return $page ?: ($core ?: admin_url('profile.php'));
 }
 function pvdak_frontend_login_url($url,$redirect,$force_reauth){
   if(is_admin()||wp_doing_ajax()||(defined('WP_CLI')&&WP_CLI))return $url;
