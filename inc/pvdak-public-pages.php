@@ -80,6 +80,25 @@ function pvdak_public_create_missing_pages() {
   }
 }
 add_action('admin_init','pvdak_public_create_missing_pages',20);
+/**
+ * Only original, unchanged Core page titles are renamed after an admin visit.
+ * Never overwrite a title edited by the site owner or modify a page slug.
+ */
+function pvdak_public_relabel_legacy_brand_pages() {
+  if ( ! is_admin() || ! current_user_can('edit_pages') ) { return; }
+  $old_titles = array(
+    'my-pvdak-account' => array( 'پنل کاربری پویش', 'پنل کاربری PVDak' ),
+    'join-legal-community' => array( 'همکاری با پویش وکلا', 'همکاری با PVDak' ),
+  );
+  foreach ( $old_titles as $slug => $names ) {
+    $page = get_page_by_path( $slug, OBJECT, 'page' );
+    if ( $page instanceof WP_Post && $page->post_title === $names[0] &&
+         current_user_can( 'edit_post', $page->ID ) ) {
+      wp_update_post( array( 'ID' => $page->ID, 'post_title' => $names[1] ) );
+    }
+  }
+}
+add_action('admin_init','pvdak_public_relabel_legacy_brand_pages',25);
 function pvdak_public_policy_noindex($robots) {
   $post=is_singular('page') ? get_queried_object() : null;
   if($post instanceof WP_Post && '1'===get_post_meta($post->ID,'_pvdak_provisional_policy',true)) {
