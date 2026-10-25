@@ -17,17 +17,18 @@
     control.setAttribute('aria-label', visible ? 'پنهان‌کردن رمز عبور' : 'نمایش رمز عبور');
   });
 
-  /* Four account methods share the existing branded page and WordPress
-   * handlers. All panes remain readable without JavaScript. */
+  /* Reuse the two-tab switcher on the login and registration pages.
+   * The first available tab is the default unless the URL names another. */
   var authPicker = document.querySelector('[data-pvdak-auth-picker]');
   if (authPicker) {
     var tabs = Array.prototype.slice.call(authPicker.querySelectorAll('[data-pvdak-auth-tab]'));
     var panes = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-pane]'));
     var modes = tabs.map(function (tab) { return tab.getAttribute('data-pvdak-auth-tab'); });
     var query = new URLSearchParams(window.location.search);
-    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') : 'password';
+    var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];
+    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') : defaultMode;
     function showAuthMode(mode, focus, remember) {
-      if (modes.indexOf(mode) === -1) mode = 'password';
+      if (modes.indexOf(mode) === -1) mode = defaultMode;
       activeMode = mode;
       tabs.forEach(function (tab) {
         var on = tab.getAttribute('data-pvdak-auth-tab') === mode;
@@ -40,7 +41,7 @@
       });
       if (remember && window.history && window.history.replaceState) {
         var link = new URL(window.location.href);
-        if (mode === 'password') link.searchParams.delete('auth');
+        if (mode === defaultMode) link.searchParams.delete('auth');
         else link.searchParams.set('auth', mode);
         link.searchParams.delete('sms_status');
         link.searchParams.delete('error');
