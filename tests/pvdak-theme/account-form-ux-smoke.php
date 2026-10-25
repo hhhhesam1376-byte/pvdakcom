@@ -141,6 +141,12 @@ $checks = array(
     strpos( $s['login'], 'id="pvdak-sms-login-result" tabindex="-1"' ) !== false &&
     strpos( $s['recovery'], 'id="pvdak-recovery-result" tabindex="-1"' ) !== false &&
     strpos( $s['script'], "params.has('sms_status')" ) !== false,
+  'D07 SMS feedback stays on correct pane even without JavaScript' =>
+    strpos( $s['login'], "!isset(\$_GET['auth']) && isset(\$_GET['sms_status'])" ) !== false &&
+    strpos( $s['register-ui'], "!isset(\$_GET['auth'])&&''!==\$sms_status" ) !== false &&
+    strpos( $s['script'], "query.has('sms_status') && smsMode" ) !== false,
+  'D07 hidden feedback never steals keyboard focus' =>
+    strpos( $s['script'], "!notice.closest('[hidden]')" ) !== false,
   'No remote JS calls or credential storage' => strpos( $s['script'], 'fetch(' ) === false && strpos( $s['script'], 'localStorage' ) === false,
   'Prevent repeated valid submissions' => strpos( $s['script'], 'form.dataset.pvdakSubmitting' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
