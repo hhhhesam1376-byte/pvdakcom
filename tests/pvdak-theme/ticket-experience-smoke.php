@@ -61,6 +61,18 @@ $checks=array(
   strpos($s['support'],"(int)\$item->post_author===\$user")!==false &&
   strpos($s['support'],'$items=array_values(array_filter(') <
   strpos($s['support'],'$has_next=count($items)>10'),
+ 'no duplicate account support target on a single dashboard page'=>
+  strpos($s['support'],'<section id="pvdak-support"')===false &&
+  strpos($s['support'],'class="pvdak-support" aria-labelledby="pvdak-support-title"')!==false,
+ 'per-owner support creation uses DB lock and rate ceiling atomically'=>
+  strpos($s['support'],'function pvdak_support_creation_lock($user_id)')!==false &&
+  strpos($s['support'],"'pvdak_support_new_'")!==false &&
+  strpos($s['support'],'$lock=pvdak_support_creation_lock($user);')!==false &&
+  strpos($s['support'],'pvdak_support_ticket_unlock($lock);')!==false,
+ 'user feedback distinguishes validation and throttling failures'=>
+  strpos($s['support'],"'support','invalid'")!==false &&
+  strpos($s['support'],"'support','slow'")!==false &&
+  strpos($s['support'],"'support','failed'")!==false,
  'owned focused ticket'=>strpos($s['support'],"(int)\$focused->post_author===\$user")!==false,
  'followup audit'=>strpos($s['support'],"'to'=>'open'")!==false,
  'save idempotency'=>strpos($s['support'],'static $processed=array()')!==false,
@@ -71,15 +83,15 @@ $checks=array(
   strpos($s['support'],'name="pagename"')!==false,
  'ticket DB lock and guaranteed release'=>strpos($s['support'],"SELECT GET_LOCK(%s, 3)")!==false &&
   strpos($s['support'],"SELECT RELEASE_LOCK(%s)")!==false &&
-  substr_count($s['support'],'pvdak_support_ticket_unlock($lock);')===2,
+  substr_count($s['support'],'pvdak_support_ticket_unlock($lock);')===3,
  'followup ownership and closure rechecked under lock'=>strpos($s['support'],'$current=get_post($id);')!==false &&
   strpos($s['support'],'(int)$current->post_author===get_current_user_id()')!==false &&
   strpos($s['support'],"'closed'!==get_post_meta(\$id,'_pvdak_support_status',true)")!==false,
  'staff rejects stale status and nonprivate tickets'=>strpos($s['support'],'name="pvdak_support_previous_state"')!==false &&
   strpos($s['support'],'$previous!==$expected_state')!==false &&
   strpos($s['support'],"'private'!==get_post_status(\$post_id)")!==false,
- 'new ticket requires initial workflow state'=>strpos($s['support'],"!add_post_meta(\$id,'_pvdak_support_status','open',true)")!==false &&
-  strpos($s['support'],"wp_delete_post(\$id,true)")!==false,
+ 'new ticket requires initial workflow state'=>strpos($s['support'],"!add_post_meta(\$created,'_pvdak_support_status','open',true)")!==false &&
+  strpos($s['support'],"wp_delete_post(\$created,true)")!==false,
  'admin filter and scoped assets'=>strpos($s['support'],"add_action('restrict_manage_posts'")!==false &&
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
