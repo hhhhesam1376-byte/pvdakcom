@@ -32,6 +32,12 @@ $checks = array(
     strpos($v['front'], 'if ( $all_legal_pages ): ?><a href="#topics"')!==false &&
     strpos($v['front'], 'if ( $all_legal_pages ): ?>' . "\n" . '  <section id="topics"')!==false &&
     strpos($v['front'], "add_query_arg( 's', 'حقوق', home_url( '/' ) )")!==false,
+  'D07 Private request notice is readable on narrow screens' =>
+    strpos($v['portal'], "do_shortcode( '[pvdak_my_requests]' )")!==false &&
+    strpos($v['css'], 'PVDak 0.8.43 — private request notice')!==false &&
+    strpos($v['css'], '.pvdak-unified-account .pvdak-core-request-history>.pvdak-core-request-privacy')!==false &&
+    strpos($v['css'], 'border-inline-start:4px solid #188fa8')!==false &&
+    strpos($v['css'], '@media(max-width:480px)')!==false,
   'D07 Core form CSS is loaded on the template-based dashboard' =>
     strpos($v['assets'], "shortcode_exists( 'pvdak_account_dashboard' )")!==false &&
     strpos($v['assets'], "plugins_url( 'assets/forms.css', " )!==false &&
