@@ -54,6 +54,13 @@ $checks=array(
  'dynamic counter limit'=>strpos($s['js'],'field.maxLength > 0')!==false,
  'near limit visual'=>strpos($s['css'],'.pvdak-ticket-counter--near')!==false,
  'focus server notice'=>strpos($s['js'],"params.has('support')")!==false,
+ 'ticket lists enforce private owner and model after query filters'=>
+  strpos($s['support'],'$items=array_values(array_filter(is_array($items)?$items:array()')!==false &&
+  strpos($s['support'],"'pvdak_support_ticket'===\$item->post_type")!==false &&
+  strpos($s['support'],"'private'===\$item->post_status")!==false &&
+  strpos($s['support'],"(int)\$item->post_author===\$user")!==false &&
+  strpos($s['support'],'$items=array_values(array_filter(') <
+  strpos($s['support'],'$has_next=count($items)>10'),
  'owned focused ticket'=>strpos($s['support'],"(int)\$focused->post_author===\$user")!==false,
  'followup audit'=>strpos($s['support'],"'to'=>'open'")!==false,
  'save idempotency'=>strpos($s['support'],'static $processed=array()')!==false,
