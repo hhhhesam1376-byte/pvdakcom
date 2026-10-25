@@ -17,6 +17,7 @@ $paths = array(
   'css' => 'style.css',
   'sms' => 'inc/pvdak-sms-auth.php',
   'register' => 'inc/pvdak-registration.php',
+  'register-ui' => 'page-templates/pvdak-register.php',
 
 );
 $s = array();
@@ -25,16 +26,18 @@ foreach ( $paths as $name => $path ) {
   $s[ $name ] = file_get_contents( $root . '/' . $path );
 }
 $checks = array(
-  'Four visible PVDak auth paths use existing WordPress handlers' =>
-    strpos($s['login'],'data-pvdak-auth-tab="password"')!==false &&
-    strpos($s['login'],'data-pvdak-auth-tab="sms-login"')!==false &&
-    strpos($s['login'],'data-pvdak-auth-tab="register-email"')!==false &&
-    strpos($s['login'],'data-pvdak-auth-tab="sms-register"')!==false &&
+  'Original login is retained and signup uses a separate 2-tab page' =>
     strpos($s['login'],'name="action" value="pvdak_login"')!==false &&
-    strpos($s['login'],'name="action" value="pvdak_register"')!==false,
-  'Registration retains admin opt-in and native email verification' =>
-    strpos($s['register'],"get_option('pvdak_registration_enabled', '0')")!==false &&
-    strpos($s['register'],"get_option('users_can_register', false)")!==false &&
+    strpos($s['login'],'ثبت‌نام در PVDak')!==false &&
+    strpos($s['login'],'data-pvdak-auth-tab="register-email"')===false &&
+    strpos($s['login'],'چهار مسیر در یک حساب کاربری وردپرس')===false &&
+    strpos($s['register-ui'],'data-pvdak-auth-tab="register-email"')!==false &&
+    strpos($s['register-ui'],'data-pvdak-auth-tab="sms-register"')!==false &&
+    strpos($s['register-ui'],'name="action" value="pvdak_register"')!==false &&
+    strpos($s['register-ui'],'name="action" value="pvdak_sms_send"')!==false,
+  'Registration uses branded controlled email verification, without native WP signup' =>
+    strpos($s['register'],"get_option('pvdak_registration_enabled', '1')")!==false &&
+    strpos($s['register'],'pvdak_public_template_page_url(')!==false &&
     strpos($s['register'],"check_admin_referer('pvdak_register'")!==false &&
     strpos($s['register'],'pvdak_email_verification_issue($user)')!==false,
   'Native WordPress public registration cannot bypass PVDak email verification' =>
@@ -46,7 +49,7 @@ $checks = array(
     strpos($s['sms'],"apply_filters('pvdak_sms_auth_enabled', false)")!==false &&
     strpos($s['sms'],"has_filter('pvdak_sms_otp_deliver')")!==false &&
     strpos($s['sms'],'true!==$delivered')!==false &&
-    strpos($s['login'],'if (!$sms_ready)')!==false,
+    strpos($s['register-ui'],'if($sms_ready&&$registration_open)')!==false,
   'SMS OTP uses expiry, attempt ceiling, nonces and one-time deletion' =>
     strpos($s['sms'],"check_admin_referer('pvdak_sms_send'")!==false &&
     strpos($s['sms'],"check_admin_referer('pvdak_sms_verify'")!==false &&
