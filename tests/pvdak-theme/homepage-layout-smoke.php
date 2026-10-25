@@ -556,4 +556,23 @@ pvdak_layout_expect(
     false === strpos( $public_pages_source, "update_option( 'blogname', 'Bloggers Unite'" ),
     'D10: stock browser title is corrected only on display, preserving stored site options'
 );
+$info_source = file_get_contents( $root . '/page-templates/pvdak-information.php' );
+pvdak_layout_expect(
+    false !== strpos( $collection_source, 'function pvdak_home_faq_answer_ready' ) &&
+    false !== strpos( $collection_source, "get_the_title( \$page->ID )" ) &&
+    false !== strpos( $collection_source, 'return pvdak_home_faq_answer_ready( $page );' ) &&
+    false !== strpos( $readiness_public_source, 'pvdak_home_faq_answer_ready( $faq_page )' ),
+    'D08: blank-title/placeholder FAQ Pages cannot appear in accordion or pass admin readiness' );
+pvdak_layout_expect(
+    false !== strpos( $info_source, "is_page( 'legal-faq' )" ) &&
+    false !== strpos( $info_source, "str_replace(" ) &&
+    false !== strpos( $info_source, "echo apply_filters( 'the_content', \$info_content )" ) &&
+    false === strpos( $info_source, 'wp_update_post' ),
+    'D08: only the exact old FAQ scaffold gets neutral display text; no Page write' );
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, '$topics_count > 0 && 0 === $topic_placeholders' ) &&
+    false !== strpos( $readiness_public_source, '$magazine_count > 0 && 0 === $magazine_sample_count' ) &&
+    false !== strpos( $readiness_public_source, 'else { $topic_placeholders++; }' ) &&
+    false !== strpos( $readiness_public_source, 'else { $magazine_sample_count++; }' ),
+    'D09: zero items and short published placeholders cannot falsely pass editorial readiness' );
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";

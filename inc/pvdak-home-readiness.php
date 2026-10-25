@@ -22,6 +22,7 @@ function pvdak_home_readiness_items() {
         $topic_length = function_exists( 'mb_strlen' ) ?
             mb_strlen( $topic_text, 'UTF-8' ) : strlen( $topic_text );
         if ( $topic_length >= 120 ) { $topics_with_text++; }
+        else { $topic_placeholders++; } // Short draft-like text is not editorial-ready.
     }
     $sample_total = function_exists( 'pvdak_editor_example_legal_topics' ) ?
         count( pvdak_editor_example_legal_topics() ) : 0;
@@ -52,6 +53,7 @@ function pvdak_home_readiness_items() {
         if ( $demo ) { $magazine_sample_count++; continue; }
         $body_length = function_exists( 'mb_strlen' ) ? mb_strlen( $body, 'UTF-8' ) : strlen( $body );
         if ( $body_length >= 160 ) { $magazine_editorial_count++; }
+        else { $magazine_sample_count++; } // Published but too short for a demo article.
     }
     $notice_term = pvdak_home_selected_category( 'notice_category' );
     $notice_count = count( pvdak_home_category_posts( 'notice_category', 1 ) );
@@ -66,8 +68,7 @@ function pvdak_home_readiness_items() {
     $faq_count = count( $faq_pages );
     $faq_written = 0;
     foreach ( $faq_pages as $faq_page ) {
-        if ( $faq_page instanceof WP_Post &&
-             '' !== trim( wp_strip_all_tags( strip_shortcodes( $faq_page->post_content ) ) ) ) {
+        if ( $faq_page instanceof WP_Post && pvdak_home_faq_answer_ready( $faq_page ) ) {
             $faq_written++;
         }
     }
@@ -168,16 +169,16 @@ function pvdak_home_readiness_items() {
         array( 'لندینگ‌های موضوعات حقوقی', $topics_count > 0, $topics_count . ' برگه فرزند منتشر شده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'حداقل سه لندینگ دارای متن', $topics_with_text >= 3,
             $topics_with_text . ' لندینگ با حداقل ۱۲۰ نویسه و بدون نشانه متن نمونه؛ محتوای واقعی نیازمند تأیید حقوقی است', admin_url( 'edit.php?post_type=page' ) ),
-        array( 'لندینگ‌های خالی یا نمونه', 0 === $topic_placeholders,
-            $topic_placeholders . ' برگه خالی یا دارای متن نمونه شناسایی شد؛ در ویرایشگر خود برگه تکمیل کنید', admin_url( 'edit.php?post_type=page' ) ),
-        array( '۱۷ لندینگ نمونه موضوعی', $sample_total > 0 && $sample_ready === $sample_total,
+        array( 'لندینگ‌های خالی، نمونه یا کوتاه', $topics_count > 0 && 0 === $topic_placeholders,
+            $topic_placeholders . ' برگه خالی، نمونه یا کوتاه‌تر از ۱۲۰ نویسه شناسایی شد؛ در ویرایشگر خود برگه تکمیل کنید', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'ساختار ۱۷ موضوع (نه تأیید محتوا)', $sample_total > 0 && $sample_ready === $sample_total,
             $sample_ready . ' از ' . $sample_total . ' لندینگ نمونه منتشرشده (برای تکمیل در همین صفحه دکمه نمونه‌ها را بزنید)', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'مجله حقوقی', $magazine_term > 0 && $magazine_editorial_count > 0,
             $magazine_editorial_count . ' مقاله غیرنمونه از ' . $magazine_count . ' نوشته بررسی‌شده؛ صرف انتشار مطلب نمونه کافی نیست', admin_url( 'edit.php' ) ),
-        array( 'مقالات آزمایشی مجله', 0 === $magazine_sample_count,
-            $magazine_sample_count . ' مقاله نمونه در حداکثر ۱۲ نوشته اخیر تشخیص داده شد؛ محتوای واقعی را جایگزین کنید', admin_url( 'edit.php' ) ),
+        array( 'مقالات نمونه یا کوتاه مجله', $magazine_count > 0 && 0 === $magazine_sample_count,
+            $magazine_sample_count . ' مقاله نمونه یا کوتاه در حداکثر ۱۲ نوشته اخیر تشخیص داده شد؛ محتوای واقعی را جایگزین کنید', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های PVDak', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
-        array( 'پرسش‌های متداول', $faq_written > 0, $faq_written . ' پاسخ معتبر از ' . $faq_count . ' برگه منتشرشده', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'پرسش‌های متداول', $faq_written > 0, $faq_written . ' پاسخ دارای عنوان و متن غیرنمونه از ' . $faq_count . ' برگه منتشرشده', admin_url( 'edit.php?post_type=page' ) ),
         array( 'چهار دسترسی سریع منتشرشده', 4 === $quick_count,
             $quick_count . ' از ۴ برگه معتبر انتخاب شده؛ برگه تکراری یا پیش‌نویس پذیرفته نمی‌شود', admin_url( 'admin.php?page=pvdak-home-content' ) ),
         array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,

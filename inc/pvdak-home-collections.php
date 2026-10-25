@@ -56,6 +56,18 @@ function pvdak_home_post_summary( $post, $words = 22 ) {
     return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $text ) ), $words, '…' );
 }
 
+/**
+ * A published Page is not a usable FAQ answer merely because it has a body.
+ * Reuse this one predicate in the public accordion and the admin checklist.
+ */
+function pvdak_home_faq_answer_ready( $page ) {
+    if ( ! $page instanceof WP_Post ) { return false; }
+    $title = trim( wp_strip_all_tags( (string) get_the_title( $page->ID ) ) );
+    $body = trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
+    return '' !== $title && '' !== $body &&
+        false === strpos( $body, 'این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است' );
+}
+
 /** Native hierarchical Pages are suitable for short informational FAQs. */
 function pvdak_home_faq_pages( $include_empty = false ) {
     $page_id = (int) get_option( 'page_on_front' );
@@ -88,8 +100,7 @@ function pvdak_home_faq_pages( $include_empty = false ) {
     // D08/D10: a published empty FAQ Page should never become a blank
     // accordion in the employer demo. Keep the source Page untouched.
     $answered = array_values( array_filter( $published, static function( $page ) {
-        return $page instanceof WP_Post &&
-            '' !== trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
+        return pvdak_home_faq_answer_ready( $page );
     } ) );
     return array_slice( $answered, 0, 12 );
 }

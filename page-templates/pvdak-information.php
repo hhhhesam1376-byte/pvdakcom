@@ -14,7 +14,23 @@ get_header(); ?>
 <?php if('1'===(string)get_post_meta(get_the_ID(),'_pvdak_provisional_policy',true)): ?>
   <aside class="pvdak-static-note" role="note">متن این صفحه مقدماتی است و قبل از آغاز خدمات باید توسط مدیر سایت بازبینی و تأیید شود.</aside>
 <?php endif; ?>
-<?php the_content(); ?>
+<?php
+// The exact original FAQ scaffold claimed that all account and intake paths
+// were closed together. They are independent settings. Correct that stale
+// statement on display ONLY; never overwrite the editor's WordPress Page.
+$info_content = get_the_content();
+if ( is_page( 'legal-faq' ) &&
+     false !== strpos( $info_content, '<h2>راهنمای استفاده از سایت</h2>' ) &&
+     false !== strpos( $info_content, 'این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است' ) &&
+     false !== strpos( $info_content, 'خیر؛ ثبت درخواست و عضویت تا پایان آزمایش و راه‌اندازی رسمی غیرفعال است.' ) ) {
+    $info_content = str_replace(
+        'خیر؛ ثبت درخواست و عضویت تا پایان آزمایش و راه‌اندازی رسمی غیرفعال است.',
+        'ایجاد حساب، ثبت درخواست حقوقی و عضویت حرفه‌ای مستقل‌اند؛ فعال‌بودن هر خدمت را از صفحه مربوط بررسی کنید.',
+        $info_content
+    );
+}
+echo apply_filters( 'the_content', $info_content );
+?>
 </article>
 <aside class="pvdak-info-sidebar" aria-label="دسترسی به صفحه‌های راهنما">
   <span class="pvdak-static-label">دسترسی سریع</span><h2>راهنمای PVDak</h2>
