@@ -25,6 +25,23 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
 </div>
 <header class="site-header">
     <div class="container header-inner">
+    <details class="pvdak-mobile-menu">
+        <summary aria-label="باز و بسته کردن فهرست سایت"><span class="pvdak-mobile-menu-label">فهرست</span> <span class="pvdak-mobile-menu-icon" aria-hidden="true">☰</span></summary>
+        <nav aria-label="منوی موبایل">
+            <?php if ( has_nav_menu( 'primary' ) ) :
+                wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'pvdak-mobile-links', 'depth'=>3, 'fallback_cb'=>false ) );
+            else : ?>
+                <ul class="pvdak-mobile-links">
+                    <?php foreach ( pvdak_default_navigation_links() as $link ): ?>
+                    <li><a href="<?php echo esc_url( $link['url'] ); ?>"<?php if ( ( ! empty( $link['slug'] ) && is_page( $link['slug'] ) ) || ( ! empty( $link['home'] ) && is_front_page() ) ): ?> aria-current="page"<?php endif; ?>><?php echo esc_html( $link['label'] ); ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+            <?php if ( is_user_logged_in() && shortcode_exists( 'pvdak_support_tickets' ) ): ?>
+                <a class="pvdak-mobile-support-link" href="<?php echo esc_url( pvdak_auth_account_url() . '#pvdak-support' ); ?>">پیام‌ها و پشتیبانی</a>
+            <?php endif; ?>
+        </nav>
+    </details>
         <div class="site-branding">
             <?php if ( has_custom_logo() ) { the_custom_logo(); } ?>
             <div class="pvdak-site-brand">
@@ -35,7 +52,7 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
         </div>
         <nav class="primary-navigation" aria-label="<?php esc_attr_e( 'منوی اصلی', 'pvdak' ); ?>">
             <?php if ( has_nav_menu( 'primary' ) ) :
-                wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'menu', 'fallback_cb'=>false ) );
+                wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'menu', 'depth'=>3, 'fallback_cb'=>false ) );
             else : ?>
                 <ul class="menu">
                     <?php foreach ( pvdak_default_navigation_links() as $link ): ?>
@@ -58,20 +75,7 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
               </a>
             <?php endif; ?>
             <a class="pvdak-login-button" href="<?php echo esc_url( $auth_url ); ?>"><?php echo esc_html( $account_layout && is_user_logged_in() ? 'حساب من' : $auth_label ); ?></a>
-            <details class="pvdak-mobile-menu">
-                <summary aria-label="باز و بسته کردن فهرست سایت">فهرست <span class="pvdak-mobile-menu-icon" aria-hidden="true">☰</span></summary>
-                <nav aria-label="منوی موبایل">
-                    <?php if ( has_nav_menu( 'primary' ) ) :
-                        wp_nav_menu( array( 'theme_location'=>'primary', 'container'=>false, 'menu_class'=>'pvdak-mobile-links', 'fallback_cb'=>false ) );
-                    else : ?>
-                        <ul class="pvdak-mobile-links">
-                            <?php foreach ( pvdak_default_navigation_links() as $link ): ?>
-                            <li><a href="<?php echo esc_url( $link['url'] ); ?>"<?php if ( ( ! empty( $link['slug'] ) && is_page( $link['slug'] ) ) || ( ! empty( $link['home'] ) && is_front_page() ) ): ?> aria-current="page"<?php endif; ?>><?php echo esc_html( $link['label'] ); ?></a></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-                </nav>
-            </details>
+
         </div>
     </div>
 </header>
