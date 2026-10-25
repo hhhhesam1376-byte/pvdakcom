@@ -16,7 +16,12 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
 <?php wp_body_open(); ?>
 <a class="skip-link screen-reader-text" href="#main-content" title="پرش به بخش اصلی صفحه"><?php esc_html_e( 'رفتن به محتوا', 'pvdak' ); ?></a>
 <div class="pvdak-topbar">
-    <div class="container"><?php echo esc_html( get_bloginfo( 'description' ) ?: 'پویش وکلای دادگستری کشور • همراه مسیر حقوقی شما' ); ?></div>
+    <div class="container"><?php
+        $site_tagline = trim( (string) get_bloginfo( 'description' ) );
+        // Normalize only the former brand name; preserve any custom tagline.
+        $site_tagline = str_replace( array( 'PVDak', 'PVDak' ), 'PVDak', $site_tagline );
+        echo esc_html( $site_tagline ?: 'PVDak • همراه مسیر حقوقی شما' );
+    ?></div>
 </div>
 <header class="site-header">
     <div class="container header-inner">
@@ -24,7 +29,7 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
             <?php if ( has_custom_logo() ) { the_custom_logo(); } ?>
             <div class="pvdak-site-brand">
                 <a class="site-title" href="<?php echo esc_url( home_url( '/' ) ); ?>">PVDAK</a>
-                <span class="site-description">پویش وکلای دادگستری کشور</span>
+                <span class="site-description">PVDak</span>
                 <svg class="pvdak-profile-brand-scale" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M20 4v31M6 10h28M9 11 4 23h10L9 11Zm22 0-5 12h10l-5-12ZM13 35h14M17 30h6"/><circle cx="20" cy="5" r="2" fill="currentColor"/></svg>
             </div>
         </div>
