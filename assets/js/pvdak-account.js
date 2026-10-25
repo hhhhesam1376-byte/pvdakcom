@@ -87,8 +87,12 @@
     if (!panel) {
       var params = new URLSearchParams(window.location.search);
       var fallback = params.has('status') ? 'pvdak-profile' :
+        (params.has('pvdak_page') || params.has('request_type') ||
+        params.has('request_status') || params.has('request_search') ||
+        params.has('request_order')) ? 'pvdak-requests' :
         (params.has('support') || params.has('ticket_page') || params.has('ticket_status') ||
-        params.has('ticket_search') || params.has('ticket_order')) ? 'pvdak-support' :
+        params.has('ticket_search') || params.has('ticket_order') ||
+        params.has('ticket_open')) ? 'pvdak-support' :
         'pvdak-dashboard';
       var match = document.getElementById(fallback);
       panel = match && workspace.contains(match) ? match.closest('[data-pvdak-panel]') : null;
