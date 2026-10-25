@@ -53,9 +53,9 @@ pvdak_public_smoke_require(
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')" ) &&
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php')" ) &&
  false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' )" ) &&
- false !== strpos( $code['login'], "pvdak_public_template_page_url( 'account-register', 'page-templates/pvdak-register.php' )" ) &&
- false !== strpos( $code['login'], 'ثبت‌نام فعلاً در دسترس نیست' ),
- 'D05/D07: account navigation rejects wrong-template Pages and hides a missing registration route'
+ false !== strpos( $code['login'], "add_query_arg('auth','register-email',pvdak_auth_login_url())" ) &&
+ false !== strpos( $code['login'], "add_query_arg('auth','sms-register',pvdak_auth_login_url())" ),
+ 'D05/D07: account navigation rejects wrong-template Pages and directs registration to its same-page pane'
 );
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
