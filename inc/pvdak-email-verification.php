@@ -102,7 +102,13 @@ function pvdak_verification_users_value($value,$column,$user_id) {
     if (!current_user_can('list_users'))return '';
     if('pvdak_email_status'===$column) {
         if('1'===(string)get_user_meta($user_id,'_pvdak_email_verification_pending',true))return 'در انتظار تأیید';
-        if(get_user_meta($user_id,'_pvdak_self_reported_category',true))return 'ایمیل تأییدشده';
+        $person=get_userdata(absint($user_id));
+        if($person instanceof WP_User && ''===trim((string)$person->user_email) &&
+            get_user_meta($user_id,'_pvdak_phone_verified',true)) {
+            return 'شماره موبایل تأییدشده (ایمیل ثبت نشده)';
+        }
+        if($person instanceof WP_User && is_email($person->user_email) &&
+            get_user_meta($user_id,'_pvdak_self_reported_category',true))return 'ایمیل تأییدشده';
         return 'کاربر موجود / نامشخص';
     }
     if('pvdak_requested_role'===$column){
