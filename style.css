@@ -3623,3 +3623,30 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
   .pvdak-register-page .pvdak-register-tabs{gap:7px}
   .pvdak-register-page .pvdak-register-tabs button{padding:11px 6px;font-size:12px}
 }
+
+/* Login method tabs: keep the existing card, replace only its credential pane. */
+.pvdak-login-page .pvdak-login-tabs{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;margin:20px 0 22px;width:100%
+}
+.pvdak-login-page .pvdak-login-tabs button{
+  min-height:48px;white-space:normal;font-size:13px;
+  border-radius:11px;line-height:1.8
+}
+.pvdak-login-page .pvdak-login-tabs button[aria-selected="true"]{
+  background:#137b9d;color:#fff;border-color:#137b9d
+}
+.pvdak-login-page [data-pvdak-auth-pane][hidden] {display:none!important}
+.pvdak-login-page #pvdak-auth-sms-login .pvdak-login-sms-content{
+  padding:0;margin:0;border:0
+}
+.pvdak-login-page #pvdak-auth-sms-login .pvdak-auth-method-description{
+  border-radius:10px;padding:12px 14px;background:#f2f8fb;
+  color:#3e617a;font-size:12px;line-height:1.9;margin:0 0 15px
+}
+.pvdak-login-page #pvdak-auth-sms-login button:disabled{
+  opacity:.55;cursor:not-allowed;box-shadow:none
+}
+@media(max-width:480px){
+  .pvdak-login-page .pvdak-login-tabs button{font-size:12px;min-height:45px;padding:8px 5px}
+}
