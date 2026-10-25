@@ -9,8 +9,9 @@ $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash(
 $sms_status=isset($_GET['sms_status'])&&is_string($_GET['sms_status'])?sanitize_key(wp_unslash($_GET['sms_status'])):'';
 $sms_ready=function_exists('pvdak_sms_auth_ready')&&pvdak_sms_auth_ready();
 // Match the SMS handler's ?auth=sms-register redirect even without JavaScript.
-$sms_selected=isset($_GET['auth'])&&is_string($_GET['auth'])&&
-    'sms-register'===sanitize_key(wp_unslash($_GET['auth']));
+$sms_selected=(isset($_GET['auth'])&&is_string($_GET['auth'])&&
+    'sms-register'===sanitize_key(wp_unslash($_GET['auth']))) ||
+    (!isset($_GET['auth'])&&''!==$sms_status);
 $registration_open=pvdak_registration_open();
 $terms=pvdak_public_page_url('terms-of-use');
 $privacy=pvdak_public_page_url('privacy-policy');
