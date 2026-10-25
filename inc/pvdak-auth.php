@@ -10,7 +10,10 @@ function pvdak_auth_login_url(){
 }
 function pvdak_auth_account_url(){
   $core=function_exists('pvdak_core_account_url')?pvdak_core_account_url():'';
-  return $core?: (pvdak_public_page_url('my-pvdak-account')?:home_url('/my-pvdak-account/'));
+  $page = pvdak_public_page_url('my-pvdak-account');
+  // WordPress's own protected profile is a safe emergency destination.
+  // A missing dashboard Page must not turn a successful login into a 404.
+  return $core ?: ($page ?: admin_url('profile.php'));
 }
 function pvdak_frontend_login_url($url,$redirect,$force_reauth){
   if(is_admin()||wp_doing_ajax()||(defined('WP_CLI')&&WP_CLI))return $url;
