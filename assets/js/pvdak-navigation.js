@@ -63,13 +63,25 @@
         // Hide descendants only after their independent controls exist.
         menu.classList.add('is-enhanced');
 
+        function resetBranches() {
+            toggles.forEach(function (entry) {
+                entry.submenu.hidden = true;
+                entry.button.setAttribute('aria-expanded', 'false');
+                entry.button.setAttribute('aria-label', 'باز کردن زیرمنوی ' + entry.name);
+            });
+        }
+
         function closeMenu(restoreFocus) {
             if (!menu.open) {
                 document.body.classList.remove('pvdak-mobile-drawer-open');
+                resetBranches();
                 return;
             }
             menu.open = false;
             document.body.classList.remove('pvdak-mobile-drawer-open');
+            // Reset synchronously: native <details> toggle events are async,
+            // so a rapid reopen must not expose stale expanded submenus.
+            resetBranches();
             if (restoreFocus && trigger) {
                 // At desktop width the mobile trigger is hidden. Focus the
                 // visible primary menu instead of stranding focus off-screen.
@@ -90,11 +102,7 @@
             }
             // Native summary close may leave focus inside a now-hidden drawer.
             if (drawer && drawer.contains(document.activeElement) && trigger) { trigger.focus(); }
-            toggles.forEach(function (entry) {
-                entry.submenu.hidden = true;
-                entry.button.setAttribute('aria-expanded', 'false');
-                entry.button.setAttribute('aria-label', 'باز کردن زیرمنوی ' + entry.name);
-            });
+            resetBranches();
         });
         if (backdrop) {
             backdrop.addEventListener('click', function () { closeMenu(true); });
