@@ -15,6 +15,8 @@ get_header(); ?>
 <span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری PVDak</span><h1>ورود به پنل</h1>
 <p class="pvdak-auth-subheading">با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
 <?php
+  // SMS handler may redirect with a status but no explicit tab parameter.
+  // Do not hide that feedback behind the password tab when JS is disabled.
   $sms_selected=(isset($_GET['auth']) && is_string($_GET['auth']) &&
     'sms-login'===sanitize_key(wp_unslash($_GET['auth']))) ||
     (!isset($_GET['auth']) && isset($_GET['sms_status']) && is_string($_GET['sms_status']));
