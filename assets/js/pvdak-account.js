@@ -17,6 +17,55 @@
     control.setAttribute('aria-label', visible ? 'پنهان‌کردن رمز عبور' : 'نمایش رمز عبور');
   });
 
+  /* Four account methods share the existing branded page and WordPress
+   * handlers. All panes remain readable without JavaScript. */
+  var authPicker = document.querySelector('[data-pvdak-auth-picker]');
+  if (authPicker) {
+    var tabs = Array.prototype.slice.call(authPicker.querySelectorAll('[data-pvdak-auth-tab]'));
+    var panes = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-pane]'));
+    var modes = tabs.map(function (tab) { return tab.getAttribute('data-pvdak-auth-tab'); });
+    var query = new URLSearchParams(window.location.search);
+    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') : 'password';
+    function showAuthMode(mode, focus, remember) {
+      if (modes.indexOf(mode) === -1) mode = 'password';
+      activeMode = mode;
+      tabs.forEach(function (tab) {
+        var on = tab.getAttribute('data-pvdak-auth-tab') === mode;
+        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      });
+      panes.forEach(function (pane) {
+        pane.hidden = pane.getAttribute('data-pvdak-auth-pane') !== mode;
+      });
+      if (remember && window.history && window.history.replaceState) {
+        var link = new URL(window.location.href);
+        if (mode === 'password') link.searchParams.delete('auth');
+        else link.searchParams.set('auth', mode);
+        link.searchParams.delete('sms_status');
+        link.searchParams.delete('error');
+        link.searchParams.delete('state');
+        window.history.replaceState({}, '', link.pathname + link.search + link.hash);
+      }
+    }
+    tabs.forEach(function (tab, index) {
+      tab.addEventListener('click', function () {
+        showAuthMode(tab.getAttribute('data-pvdak-auth-tab'), false, true);
+      });
+      tab.addEventListener('keydown', function (event) {
+        var next = index;
+        if (event.key === 'ArrowLeft') next = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowRight') next = (index + tabs.length - 1) % tabs.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        showAuthMode(modes[next], true, true);
+      });
+    });
+    showAuthMode(activeMode, false, false);
+  }
+
   /* Progressive one-dashboard navigation. Without JavaScript all sections remain
    * accessible as ordinary document anchors; no account data is stored here. */
   function refreshNavigation() {
