@@ -8,7 +8,9 @@ if (!defined('ABSPATH')) { exit; }
 function pvdak_registration_open() {
     return ! ( function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled() ) &&
         '1' === (string) get_option('pvdak_registration_enabled', '0') &&
-        (bool) get_option('users_can_register', false);
+        (bool) get_option('users_can_register', false) &&
+        function_exists('pvdak_public_template_page_url') &&
+        (bool) pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php');
 }
 /**
  * Public signup is deliberately opt-in. Expose its existing gate in the native
