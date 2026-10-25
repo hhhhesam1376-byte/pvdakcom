@@ -18,6 +18,13 @@ function absint( $v ) { return abs( (int) $v ); }
 function esc_html( $v ) { return htmlspecialchars( (string) $v, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $v ) { return esc_html( $v ); }
 function esc_url( $v ) { return esc_html( $v ); }
+function is_page() { return false; } // Fixture is not a rendered WP Page.
+function number_format_i18n( $number ) { return (string) $number; }
+function selected( $selected, $current, $echo = true ) {
+    $markup = (string) $selected === (string) $current ? ' selected="selected"' : '';
+    if ( $echo ) { echo $markup; }
+    return $markup;
+}
 function get_the_date( $format = '', $post = 0 ) {
     // The real dashboard renders a date label for each request. Supply a
     // deterministic fake so privacy assertions exercise its complete HTML.
@@ -122,8 +129,12 @@ function get_posts( $args ) {
 }
 class WP_Query {
     public $posts;
+    public $found_posts = 0;
     public $max_num_pages = 1;
-    public function __construct( $args ) { $this->posts = get_posts( $args ); }
+    public function __construct( $args ) {
+        $this->posts = get_posts( $args );
+        $this->found_posts = count( $this->posts );
+    }
 }
 
 $core = getenv( 'PVDAK_CORE_SOURCE' );
