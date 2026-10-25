@@ -86,6 +86,22 @@ add_action('admin_init','pvdak_public_create_missing_pages',20);
  */
 function pvdak_public_relabel_legacy_brand_pages() {
   if ( ! is_admin() || ! current_user_can('edit_pages') ) { return; }
+  // Only migrate a WordPress site title/tagline that is exactly the old
+  // scaffold brand. Never reset a customized name or description.
+  if ( current_user_can( 'manage_options' ) ) {
+    $old_site_names = array( 'پویش', 'پویش وکلای دادگستری کشور' );
+    if ( in_array( (string) get_option('blogname'), $old_site_names, true ) ) {
+      update_option( 'blogname', 'PVDak' );
+    }
+    $old_taglines = array(
+      'پویش وکلای دادگستری کشور' => 'PVDak',
+      'پویش وکلای دادگستری کشور • همراه مسیر حقوقی شما' => 'PVDak • همراه مسیر حقوقی شما',
+    );
+    $tagline = (string) get_option( 'blogdescription', '' );
+    if ( isset( $old_taglines[$tagline] ) ) {
+      update_option( 'blogdescription', $old_taglines[$tagline] );
+    }
+  }
   $old_titles = array(
     'my-pvdak-account' => array( 'پنل کاربری پویش', 'پنل کاربری PVDak' ),
     'join-legal-community' => array( 'همکاری با پویش وکلا', 'همکاری با PVDak' ),
