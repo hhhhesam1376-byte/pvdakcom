@@ -4,7 +4,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_home_readiness_items() {
     $front = (int) get_option( 'page_on_front' );
-    $has_front = 'page' === get_option( 'show_on_front' ) && 'page' === get_post_type( $front );
+    $has_front = $front > 0 && 'page' === get_option( 'show_on_front' ) &&
+        'page' === get_post_type( $front ) && 'publish' === get_post_status( $front ) &&
+        (bool) get_permalink( $front );
     $topics_root = function_exists( 'pvdak_legal_topics_root_id' ) ? pvdak_legal_topics_root_id() : 0;
     $topic_pages = $topics_root ? pvdak_legal_topic_pages( $topics_root ) : array();
     $topics_count = count( $topic_pages );
@@ -19,8 +21,7 @@ function pvdak_home_readiness_items() {
         $topic_is_sample = false !== strpos( $topic_text, 'موضوع نمونه برای تکمیل ساختار سایت' ) ||
             false !== stripos( $topic_text, 'lorem ipsum' );
         if ( $topic_is_sample || '' === $topic_text ) { $topic_placeholders++; continue; }
-        $topic_length = function_exists( 'mb_strlen' ) ?
-            mb_strlen( $topic_text, 'UTF-8' ) : strlen( $topic_text );
+        $topic_length = pvdak_public_text_length( $topic_text );
         if ( $topic_length >= 120 ) { $topics_with_text++; }
         else { $topic_placeholders++; } // Short draft-like text is not editorial-ready.
     }
@@ -51,7 +52,7 @@ function pvdak_home_readiness_items() {
             false !== stripos( $body, 'lorem ipsum' ) ||
             'hello-world' === $magazine_post->post_name;
         if ( $demo ) { $magazine_sample_count++; continue; }
-        $body_length = function_exists( 'mb_strlen' ) ? mb_strlen( $body, 'UTF-8' ) : strlen( $body );
+        $body_length = pvdak_public_text_length( $body );
         if ( $body_length >= 160 ) { $magazine_editorial_count++; }
         else { $magazine_sample_count++; } // Published but too short for a demo article.
     }
