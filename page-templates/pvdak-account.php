@@ -124,10 +124,11 @@ get_header(); ?>
               <small>مدارک یا اطلاعات محرمانه پرونده را در تیکت پشتیبانی نفرستید.</small>
             </p>
           <?php endif; ?>
-          <?php if ( current_user_can( 'manage_options' ) ): ?>
-            <p class="pvdak-request-manager-link">
-              <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ); ?>">مدیریت درخواست‌های حقوقی در پیشخوان</a>
-            </p>
+          <?php if ( current_user_can( 'edit_pvdak_requests' ) ): ?>
+            <nav class="pvdak-request-manager-link" aria-label="مدیریت مجاز درخواست‌ها">
+              <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ); ?>">فهرست درخواست‌ها در پیشخوان</a>
+              <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=pvdak_request&page=pvdak-request-triage' ) ); ?>">صف بررسی و وضعیت پرونده‌ها</a>
+            </nav>
           <?php endif; ?>
         </section>
       <?php endif; ?>
