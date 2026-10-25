@@ -27,8 +27,14 @@ pvdak_anon_check( 'Core frontend features loaded', $loaded );
 if ( ! $loaded ) {
     WP_CLI::error( 'PVDak Core is not active. Cannot run anonymous-access test.' );
 }
-pvdak_anon_check( 'Public maintenance remains ON',
-    function_exists( 'pvdak_maintenance_enabled' ) && pvdak_maintenance_enabled() );
+// Employer preview deliberately permits maintenance OFF. What must remain
+// protected until launch is search indexing and all sensitive intake routes.
+$preview_robots = apply_filters( 'wp_robots', array() );
+pvdak_anon_check( 'Unapproved preview is noindex/nofollow',
+    function_exists( 'pvdak_preview_robots' ) &&
+    ( ! defined( 'PVDAK_PUBLIC_LAUNCH_APPROVED' ) || ! PVDAK_PUBLIC_LAUNCH_APPROVED ) &&
+    is_array( $preview_robots ) &&
+    ! empty( $preview_robots['noindex'] ) && ! empty( $preview_robots['nofollow'] ) );
 pvdak_anon_check( 'Legal request intake remains closed', ! pvdak_core_intake_open() );
 pvdak_anon_check( 'Professional application intake remains closed', ! pvdak_core_member_intake_open() );
 
