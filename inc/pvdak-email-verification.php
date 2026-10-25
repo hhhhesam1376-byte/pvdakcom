@@ -13,9 +13,17 @@ function pvdak_email_verification_issue($user_id) {
         return false;
     }
     $token = wp_generate_password(48, false, false);
-    update_user_meta($user->ID, '_pvdak_email_verification_token_hash', wp_hash_password($token));
-    update_user_meta($user->ID, '_pvdak_email_verification_expires', time() + DAY_IN_SECONDS);
-    $base = pvdak_public_page_url('account-register') ?: home_url('/account-register/');
+    // Do not email a broken link or a token that could not be persisted.
+    $base = pvdak_public_template_page_url('account-register', 'page-templates/pvdak-register.php');
+    if (!$base) { return false; }
+    if (!update_user_meta($user->ID, '_pvdak_email_verification_token_hash', wp_hash_password($token))) {
+        return false;
+    }
+    $expires = time() + DAY_IN_SECONDS;
+    if (!update_user_meta($user->ID, '_pvdak_email_verification_expires', $expires) &&
+        (int)get_user_meta($user->ID, '_pvdak_email_verification_expires', true) !== $expires) {
+        return false;
+    }
     $url = add_query_arg(array('pvdak_verify'=>'1', 'uid'=>$user->ID, 'token'=>$token), $base);
     $body = "برای تأیید ایمیل حساب PVDak، پیوند زیر را باز کنید:\n\n" .
         esc_url_raw($url) . "\n\nاین پیوند تا ۲۴ ساعت معتبر است. اگر ثبت‌نام نکرده‌اید، پیام را نادیده بگیرید.";
@@ -24,7 +32,8 @@ function pvdak_email_verification_issue($user_id) {
 
 /** Verify a token without showing its value in rendered pages or analytics links. */
 function pvdak_email_verification_confirm() {
-    if (!is_page('account-register') || !isset($_GET['pvdak_verify'])) { return; }
+    if (!is_page('account-register') || !is_page_template('page-templates/pvdak-register.php') ||
+        !isset($_GET['pvdak_verify'])) { return; }
     nocache_headers();
     $uid_raw = wp_unslash($_GET['uid'] ?? '');
     $token_raw = wp_unslash($_GET['token'] ?? '');
@@ -39,11 +48,14 @@ function pvdak_email_verification_confirm() {
             (bool)wp_check_password($token, $hash, $user_id);
     }
     if ($valid) {
-        delete_user_meta($user_id, '_pvdak_email_verification_pending');
-        delete_user_meta($user_id, '_pvdak_email_verification_token_hash');
-        delete_user_meta($user_id, '_pvdak_email_verification_expires');
+        // A failed DB update must not claim successful verification.
+        $valid = (bool)delete_user_meta($user_id, '_pvdak_email_verification_pending');
+        if ($valid) {
+            delete_user_meta($user_id, '_pvdak_email_verification_token_hash');
+            delete_user_meta($user_id, '_pvdak_email_verification_expires');
+        }
     }
-    $url = pvdak_public_page_url('account-register') ?: home_url('/account-register/');
+    $url = pvdak_registration_result_url();
     wp_safe_redirect(add_query_arg('state', $valid ? 'verified' : 'invalid_token', $url));
     exit;
 }
@@ -69,7 +81,7 @@ function pvdak_email_verification_resend() {
     check_admin_referer('pvdak_verify_resend', '_pvdak_verify_nonce');
     $raw = wp_unslash($_POST['verify_email'] ?? '');
     $email = is_string($raw) ? sanitize_email($raw) : '';
-    $url = pvdak_public_page_url('account-register') ?: home_url('/account-register/');
+    $url = pvdak_registration_result_url();
     // D14: a rotating list of emails must not bypass the existing per-email cooldown.
     // Always return the same generic response, including on an IP-wide throttle.
     if (pvdak_registration_rate_exceeded('verify-resend', 12, HOUR_IN_SECONDS)) {

@@ -32,10 +32,19 @@ function pvdak_support_length($value) {
 /** Keep all client-visible status labels on an explicit allowlist. */
 function pvdak_support_status_label($status) {
     $labels = array('open'=>'نیازمند پاسخ', 'answered'=>'پاسخ داده شده', 'closed'=>'بسته شده');
-    return isset($labels[$status]) ? $labels[$status] : 'در انتظار بررسی';
+    return is_string($status) && isset($labels[$status]) ? $labels[$status] : 'در انتظار بررسی';
 }
 function pvdak_support_status_key($status) {
     return in_array($status, array('open','answered','closed'), true) ? $status : 'open';
+}
+/** One canonical visibility filter for client, staff history and list counts. */
+function pvdak_support_visible_messages($ticket_id) {
+    $entries=get_post_meta(absint($ticket_id),'_pvdak_support_message',false);
+    return array_values(array_filter(is_array($entries)?$entries:array(),static function($entry){
+        return is_array($entry) && isset($entry['text'],$entry['role']) &&
+            is_string($entry['text']) && trim($entry['text'])!=='' &&
+            in_array($entry['role'],array('user','staff'),true);
+    }));
 }
 
 /**
@@ -177,13 +186,8 @@ function pvdak_support_ticket_form(){
            'private'!==$item->post_status || (int)$item->post_author!==$user)continue;
         $reply=get_post_meta($item->ID,'_pvdak_support_reply',true);
         $state=pvdak_support_status_key(get_post_meta($item->ID,'_pvdak_support_status',true));
-        $messages=get_post_meta($item->ID,'_pvdak_support_message',false);
-        // Count only displayable messages; malformed legacy meta must not
-        // inflate the conversation badge or hide the legacy reply fallback.
-        $messages=array_values(array_filter(is_array($messages)?$messages:array(),static function($entry){
-            return is_array($entry) && isset($entry['text'],$entry['role']) &&
-                is_string($entry['text']) && in_array($entry['role'],array('user','staff'),true);
-        }));
+        $messages=pvdak_support_visible_messages($item->ID);
+        // Count and render the same displayable conversation entries.
         $message_count=count($messages);
         ?>
         <li id="pvdak-ticket-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-item">
@@ -209,7 +213,7 @@ function pvdak_support_ticket_form(){
                     <p><?php echo esc_html($entry['text']); ?></p>
                   </li>
                 <?php endforeach; ?></ol>
-              <?php elseif(is_string($reply) && $reply!==''): ?><p class="pvdak-ticket-legacy-reply">پاسخ پشتیبانی: <?php echo esc_html($reply); ?></p><?php endif; ?>
+              <?php elseif(is_string($reply) && trim($reply)!==''): ?><p class="pvdak-ticket-legacy-reply">پاسخ پشتیبانی: <?php echo esc_html($reply); ?></p><?php endif; ?>
               <?php if('closed'===$state): ?>
                 <p class="pvdak-static-note">این گفتگو بسته شده است؛ برای موضوع تازه تیکت جدید ثبت کنید.</p>
               <?php else: ?>
@@ -326,7 +330,8 @@ function pvdak_support_followup() {
     $text=is_string($raw)?trim(sanitize_textarea_field($raw)):'';
     $key='pvdak_followup_'.get_current_user_id().'_'.$id;
     $ok=false;
-    if (pvdak_support_length($text)>=2 && pvdak_support_length($text)<=2500) {
+    $valid_body=pvdak_support_length($text)>=2 && pvdak_support_length($text)<=2500;
+    if ($valid_body) {
         $lock=pvdak_support_ticket_lock($id);
         if ($lock!==false) {
             try {
@@ -363,7 +368,7 @@ function pvdak_support_followup() {
     // Rebuild return URL from allowlisted controls, never accept a client-supplied URL.
     // A repeated reply inside the 45-second window is a rate-limit event,
     // not a database failure. Never claim delivery unless append succeeded.
-    $result_state=$ok?'followup_sent':(get_transient($key)?'slow':'failed');
+    $result_state=$ok?'followup_sent':(!$valid_body?'invalid':(get_transient($key)?'slow':'failed'));
     $return=array('support'=>$result_state);
     $posted_page=isset($_POST['ticket_page']) && is_scalar($_POST['ticket_page']) ? absint(wp_unslash($_POST['ticket_page'])) : 1;
     if($posted_page>1 && $posted_page<=1000)$return['ticket_page']=$posted_page;
@@ -391,7 +396,7 @@ function pvdak_support_reply_box_html($post){
     echo '<textarea id="pvdak_support_answer" name="pvdak_support_answer" style="width:100%" rows="5" maxlength="2500" placeholder="پاسخ جدید را اینجا بنویسید؛ متن قبلی دوباره ارسال نمی‌شود."></textarea>';
     echo '<p class="description">این گفتگو فقط برای صاحب حساب و مدیر قابل مشاهده است. مدارک پرونده قضایی را اینجا دریافت نکنید.</p>';
     if(is_string($reply) && $reply!=='')echo '<p><strong>آخرین پاسخ ثبت‌شده:</strong> '.esc_html($reply).'</p>';
-    $thread=get_post_meta($post->ID,'_pvdak_support_message',false);
+    $thread=pvdak_support_visible_messages($post->ID);
     if(is_array($thread) && $thread) {
         echo '<h4>تاریخچه گفتگو (حداکثر ۳۰ پیام اخیر)</h4><ol style="max-height:360px;overflow:auto;direction:rtl">';
         foreach(array_slice($thread,-30) as $entry) {
@@ -487,10 +492,9 @@ function pvdak_support_admin_column($column,$post_id) {
     if(!current_user_can('manage_options'))return;
     if('pvdak_support_status'===$column){
         $state=get_post_meta($post_id,'_pvdak_support_status',true);
-        $labels=array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده‌شده','closed'=>'بسته‌شده');
-        echo esc_html($labels[$state]??'در انتظار بررسی');
+        echo esc_html(pvdak_support_status_label($state));
     } elseif('pvdak_support_message_count'===$column){
-        echo esc_html(count(get_post_meta($post_id,'_pvdak_support_message',false)));
+        echo esc_html(count(pvdak_support_visible_messages($post_id)));
     }
 }
 add_action('manage_pvdak_support_ticket_posts_custom_column','pvdak_support_admin_column',10,2);

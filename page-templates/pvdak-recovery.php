@@ -7,7 +7,8 @@ if(!defined('ABSPATH'))exit;
 $login=isset($_GET['login'])&&is_string($_GET['login'])?sanitize_text_field(wp_unslash($_GET['login'])):'';
 $key=isset($_GET['key'])&&is_string($_GET['key'])?sanitize_text_field(wp_unslash($_GET['key'])):'';
 $reset=isset($_GET['reset'])&&'1'===(string)$_GET['reset'];
-$valid=$reset&&$login&&$key&&!is_wp_error(check_password_reset_key($key,$login));
+$valid=$reset&&$login&&$key&&strlen($login)<=250&&strlen($key)<=64&&
+    !is_wp_error(check_password_reset_key($key,$login));
 $status=isset($_GET['status'])&&is_string($_GET['status'])?sanitize_key(wp_unslash($_GET['status'])):'';
 get_header(); ?>
 <main id="main-content" class="container pvdak-static pvdak-login-page" tabindex="-1">
@@ -32,9 +33,9 @@ get_header(); ?>
       <input type="hidden" name="login" value="<?php echo esc_attr($login); ?>">
       <input type="hidden" name="key" value="<?php echo esc_attr($key); ?>">
       <label for="new-password">رمز عبور جدید (حداقل ۱۲ نویسه)</label>
-      <div class="pvdak-password-field"><input id="new-password" type="password" name="new_password" minlength="12" autocomplete="new-password" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="new-password" aria-controls="new-password" aria-pressed="false">نمایش</button></div>
+      <div class="pvdak-password-field"><input id="new-password" type="password" name="new_password" minlength="12" maxlength="256" autocomplete="new-password" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="new-password" aria-controls="new-password" aria-pressed="false">نمایش</button></div>
       <label for="confirm-password">تکرار رمز عبور</label>
-      <div class="pvdak-password-field"><input id="confirm-password" type="password" name="confirm_password" minlength="12" autocomplete="new-password" aria-describedby="pvdak-password-match" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="confirm-password" aria-controls="confirm-password" aria-pressed="false">نمایش</button></div><p id="pvdak-password-match" class="pvdak-field-help" role="status" aria-live="polite">رمز عبور و تکرار آن باید یکسان باشند.</p>
+      <div class="pvdak-password-field"><input id="confirm-password" type="password" name="confirm_password" minlength="12" maxlength="256" autocomplete="new-password" aria-describedby="pvdak-password-match" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="confirm-password" aria-controls="confirm-password" aria-pressed="false">نمایش</button></div><p id="pvdak-password-match" class="pvdak-field-help" role="status" aria-live="polite">رمز عبور و تکرار آن باید یکسان باشند.</p>
       <button type="submit">ثبت رمز جدید</button>
     </form>
   <?php else: ?>

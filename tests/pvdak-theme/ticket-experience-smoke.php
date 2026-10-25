@@ -17,7 +17,7 @@ $checks=array(
  'status allowlist'=>strpos($s['support'],'function pvdak_support_status_key(')!==false,
  'D22 count only valid conversation entries'=>strpos($s['support'],'$message_count=count($messages);')!==false &&
   strpos($s['support'],'array_values(array_filter(')!==false,
- 'D22 repeated followup gets rate feedback'=>strpos($s['support'],"\$result_state=\$ok?'followup_sent':(get_transient(\$key)?'slow':'failed');")!==false,
+ 'D22 repeated followup gets rate feedback'=>strpos($s['support'],"\$result_state=\$ok?'followup_sent':(!\$valid_body?'invalid':(get_transient(\$key)?'slow':'failed'));")!==false,
  'D22 malformed audit entries are scalar-guarded'=>strpos($s['support'],"is_string(\$event['at'])")!==false,
  'status badges'=>strpos($s['support'],'pvdak-ticket-status--')!==false,
  'creation date'=>strpos($s['support'],"get_the_date('j F Y'")!==false,
@@ -105,6 +105,17 @@ $checks=array(
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
   strpos($s['css'],'.pvdak-ticket-pagination')!==false
+
+ 'D22 one filtered message list drives client, staff and admin counts'=>
+   strpos($s['support'],'function pvdak_support_visible_messages($ticket_id)')!==false &&
+   strpos($s['support'],"trim(\$entry['text'])!==''")!==false &&
+   strpos($s['support'],'$messages=pvdak_support_visible_messages($item->ID)')!==false &&
+   strpos($s['support'],'$thread=pvdak_support_visible_messages($post->ID)')!==false &&
+   strpos($s['support'],'count(pvdak_support_visible_messages($post_id))')!==false,
+ 'D22 malformed status and blank legacy replies are handled safely'=>
+   strpos($s['support'],'is_string($status) && isset($labels[$status])')!==false &&
+   strpos($s['support'],"elseif(is_string(\$reply) && trim(\$reply)!=='')")!==false,
+
 );
 foreach($checks as $name=>$ok) {
  if(!$ok){fwrite(STDERR,"TICKET_UX_FAIL: ".$name."\n");exit(1);}

@@ -103,9 +103,11 @@ function pvdak_register_submit() {
     $rate='pvdak_signup_'.substr(hash_hmac('sha256',($_SERVER['REMOTE_ADDR']??'').'|'.$email,wp_salt('nonce')),0,30);
     if (get_transient($rate)) { wp_safe_redirect(add_query_arg('state','slow',$url));exit; }
     if (!$username || strlen($username)<3 || strlen($username)>50 ||
-        !validate_username($username) || !is_email($email) ||
-        strlen($password)<12 || strlen($password)>256 || !in_array($claim,$allowed,true) ||
-        empty($_POST['register_consent']) || username_exists($username) || email_exists($email)) {
+        !validate_username($username) || !is_email($email) || strlen($email)>254 ||
+        pvdak_public_text_length($password)<12 || pvdak_public_text_length($password)>256 ||
+        strlen($password)>1024 || !in_array($claim,$allowed,true) ||
+        !in_array($_POST['register_consent']??null,array('on','1'),true) ||
+        username_exists($username) || email_exists($email)) {
         wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
     }
     set_transient($rate,1,180);

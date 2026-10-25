@@ -173,6 +173,10 @@ function pvdak_recovery_request() {
     $raw = wp_unslash( $_POST['identity'] ?? '' );
     $identity = is_string( $raw ) ? trim( sanitize_text_field( $raw ) ) : '';
     $url = pvdak_account_tool_url( 'account-recovery' );
+    // Rotating identities must not evade the IP-wide recovery ceiling.
+    if ( pvdak_registration_rate_exceeded( 'recovery-request', 12, HOUR_IN_SECONDS ) ) {
+        wp_safe_redirect( add_query_arg( 'status', 'sent', $url ) ); exit;
+    }
     if ( '' === $identity || strlen( $identity ) > 250 ) {
         wp_safe_redirect( add_query_arg( 'status', 'sent', $url ) ); exit;
     }
@@ -201,8 +205,13 @@ function pvdak_recovery_change() {
     $password = is_string( $pass_raw ) ? $pass_raw : '';
     $confirm = is_string( $confirm_raw ) ? $confirm_raw : '';
     $url = pvdak_account_tool_url( 'account-recovery' );
+    if ( '' === $login || strlen( $login ) > 250 || '' === $key || strlen( $key ) > 64 ) {
+        wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
+    }
     $user = check_password_reset_key( $key, $login );
-    if ( is_wp_error( $user ) || pvdak_public_text_length( $password ) < 12 || $password !== $confirm ) {
+    if ( is_wp_error( $user ) || pvdak_public_text_length( $password ) < 12 ||
+         pvdak_public_text_length( $password ) > 256 || strlen( $password ) > 1024 ||
+         $password !== $confirm ) {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
     }
     reset_password( $user, $password );

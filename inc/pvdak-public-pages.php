@@ -146,14 +146,20 @@ function pvdak_public_policy_noindex($robots) {
 }
 add_filter('wp_robots','pvdak_public_policy_noindex');
 function pvdak_contact_allowed() {
-  return !function_exists('pvdak_maintenance_enabled') || !pvdak_maintenance_enabled() ||
-   (function_exists('pvdak_maintenance_can_preview_site') && pvdak_maintenance_can_preview_site());
+  // An unpublished or misconfigured Page must not leave admin-post intake open.
+  return (bool)pvdak_public_template_page_url('contact-us','page-templates/pvdak-contact.php') &&
+    (!function_exists('pvdak_maintenance_enabled') || !pvdak_maintenance_enabled() ||
+     (function_exists('pvdak_maintenance_can_preview_site') && pvdak_maintenance_can_preview_site()));
 }
 function pvdak_contact_handle() {
   if(!pvdak_contact_allowed()) wp_die('فرم تا پایان توسعه غیرفعال است.','',array('response'=>403));
   if('POST'!==($_SERVER['REQUEST_METHOD']??'')) wp_die('Invalid method','',array('response'=>405));
   check_admin_referer('pvdak_contact_form','_pvdak_contact_nonce');
   $url=pvdak_public_page_url('contact-us')?:home_url('/');
+  // Include honeypot and malformed submissions in an IP-wide limit.
+  if(pvdak_registration_rate_exceeded('contact',12,HOUR_IN_SECONDS)) {
+    wp_safe_redirect(add_query_arg('sent','slow',$url));exit;
+  }
   if(!empty($_POST['contact_website'])) {wp_safe_redirect(add_query_arg('sent','1',$url));exit;}
   $raw_name=wp_unslash($_POST['contact_name']??'');
   $raw_email=wp_unslash($_POST['contact_email']??'');
@@ -163,7 +169,7 @@ function pvdak_contact_handle() {
   $msg=is_string($raw_message)?sanitize_textarea_field($raw_message):'';
   if(!$name || pvdak_public_text_length($name)>100 || !is_email($email) || strlen($email)>254 ||
      pvdak_public_text_length($msg)<10 || pvdak_public_text_length($msg)>3500 ||
-     !isset($_POST['contact_consent'])) {
+     !in_array($_POST['contact_consent']??null,array('on','1'),true)) {
     wp_safe_redirect(add_query_arg('sent','invalid',$url));exit;
   }
   $key='pvdak_contact_'.substr(hash_hmac('sha256',($_SERVER['REMOTE_ADDR']??'').$email,wp_salt('nonce')),0,30);

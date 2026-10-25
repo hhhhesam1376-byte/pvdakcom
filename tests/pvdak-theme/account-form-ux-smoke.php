@@ -153,6 +153,26 @@ $checks = array(
   'D07 provider-disabled buttons remain disabled on pageshow' => strpos( $s['script'], 'button.dataset.pvdakDisabledBySubmit' ) !== false && strpos( $s['script'], "button.dataset.pvdakDisabledBySubmit === '1'" ) !== false,
   'D07 auth tabs follow restored URL on BFCache' => strpos( $s['script'], "if (!event.persisted) return;" ) !== false && strpos( $s['script'], 'showAuthMode(mode, false, false)' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
+
+  'D07 recovery token and password bounded on GET, POST and in the form' =>
+    strpos($s['recovery'],'strlen($key)<=64')!==false &&
+    strpos($s['recovery'],'name="new_password" minlength="12" maxlength="256"')!==false &&
+    strpos($s['tools'],'strlen( $key ) > 64')!==false &&
+    strpos($s['tools'],'pvdak_public_text_length( $password ) > 256')!==false,
+  'D13 verification requires a published template and real persistence' =>
+    strpos($s['verification'],"pvdak_public_template_page_url('account-register', 'page-templates/pvdak-register.php')")!==false &&
+    strpos($s['verification'],"is_page_template('page-templates/pvdak-register.php')")!==false &&
+    strpos($s['verification'],'(bool)delete_user_meta($user_id')!==false &&
+    strpos($s['verification'],'pvdak_registration_result_url()')!==false,
+  'D14 signup/contact explicit consent and Unicode password length' =>
+    strpos($s['register'],'pvdak_public_text_length($password)<12')!==false &&
+    strpos($s['register'],"!in_array(\$_POST['register_consent']??null")!==false &&
+    strpos($s['public'],"!in_array(\$_POST['contact_consent']??null")!==false,
+  'D13/D14 recovery/contact IP ceilings and published contact route' =>
+    strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
+    strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
+    strpos($s['public'],"pvdak_public_template_page_url('contact-us','page-templates/pvdak-contact.php')")!==false,
+
 );
 foreach ( $checks as $label => $pass ) {
   if ( ! $pass ) { fwrite( STDERR, "ACCOUNT_FORM_FAIL: $label\n" ); exit( 1 ); }
