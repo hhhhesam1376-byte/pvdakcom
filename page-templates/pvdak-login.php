@@ -55,9 +55,10 @@ $sms_messages=array(
     ?></p>
   <?php endif; ?>
   <?php if (!pvdak_registration_open()): ?>
-    <p class="pvdak-static-note" role="status">ثبت‌نام هنوز توسط مدیر فعال نشده است. پس از فعال‌سازی در تنظیمات سایت، همین فرم قابل استفاده خواهد بود.</p>
-  <?php else: ?>
+    <p class="pvdak-static-note" role="status">ثبت‌نام هنوز توسط مدیر فعال نشده است. می‌توانید فرم را ببینید؛ امکان ارسال پس از فعال‌سازی در تنظیمات عمومی در دسترس قرار می‌گیرد.</p>
+  <?php endif; ?>
     <form class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+    <fieldset class="pvdak-auth-form-fields" <?php disabled(!pvdak_registration_open(),true); ?>>
       <input type="hidden" name="action" value="pvdak_register">
       <input type="hidden" name="register_source" value="login">
       <?php wp_nonce_field('pvdak_register','_pvdak_register_nonce'); ?>
@@ -73,8 +74,8 @@ $sms_messages=array(
       <p class="pvdak-static-note">نوع حساب حرفه‌ای تنها درخواست بررسی است و دسترسی وکیل ایجاد نمی‌کند.</p>
       <label class="pvdak-check"><input name="register_consent" type="checkbox" required><span>با شرایط استفاده و حریم خصوصی PVDak موافقم.</span></label>
       <button type="submit">ساخت حساب و دریافت ایمیل تأیید</button>
+    </fieldset>
     </form>
-  <?php endif; ?>
 </section>
 <?php foreach (array('login'=>'sms-login','register'=>'sms-register') as $intent=>$pane): ?>
 <section id="pvdak-auth-<?php echo esc_attr($pane); ?>" data-pvdak-auth-pane="<?php echo esc_attr($pane); ?>" aria-label="<?php echo esc_attr('login'===$intent?'ورود با کد پیامکی':'ثبت‌نام با کد پیامکی'); ?>">
@@ -84,10 +85,10 @@ $sms_messages=array(
     <p class="pvdak-static-note" role="status"><?php echo esc_html($sms_messages[$auth_status]); ?></p>
   <?php endif; ?>
   <?php if (!$sms_ready): ?>
-    <p class="pvdak-static-note" role="status">اتصال به سرویس ارسال پیامک هنوز انجام نشده است؛ این روش فعلاً فعال نیست. ورود با ایمیل و رمز عبور در دسترس است.</p>
+    <p class="pvdak-static-note" role="status">اتصال به سرویس ارسال پیامک هنوز انجام نشده است؛ فرم‌ها پیش‌نمایش هستند و دکمه ارسال کد تا اتصال سرویس فعال نمی‌شود.</p>
   <?php elseif ('register'===$intent && !pvdak_registration_open()): ?>
     <p class="pvdak-static-note">ثبت‌نام هنوز توسط مدیر سایت فعال نشده است.</p>
-  <?php else: ?>
+  <?php endif; ?>
     <p class="pvdak-auth-method-description">شماره موبایل ایران را وارد کنید. برای ورود، شماره باید قبلاً در همین سامانه تأیید شده باشد.</p>
     <form class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_sms_send"><input type="hidden" name="sms_intent" value="<?php echo esc_attr($intent); ?>">
@@ -101,7 +102,7 @@ $sms_messages=array(
       </select>
       <label class="pvdak-check"><input type="checkbox" name="sms_consent" required><span>با شرایط استفاده و حریم خصوصی PVDak موافقم.</span></label>
       <?php endif; ?>
-      <button type="submit">دریافت کد تأیید</button>
+      <button type="submit" <?php disabled(!$sms_ready || ('register'===$intent && !pvdak_registration_open()),true); ?>>دریافت کد تأیید</button>
     </form>
     <div class="pvdak-auth-otp-verification">
       <h3>کد را دریافت کرده‌ام</h3>
@@ -112,10 +113,9 @@ $sms_messages=array(
         <input id="pvdak-sms-verify-phone-<?php echo esc_attr($intent); ?>" type="tel" name="sms_phone" dir="ltr" autocomplete="tel-national" placeholder="09123456789" maxlength="20" required>
         <label for="pvdak-sms-code-<?php echo esc_attr($intent); ?>">کد ۶ رقمی</label>
         <input id="pvdak-sms-code-<?php echo esc_attr($intent); ?>" type="text" name="sms_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9۰-۹]{6}" maxlength="6" required>
-        <button type="submit">تأیید کد و <?php echo esc_html('login'===$intent?'ورود':'ساخت حساب'); ?></button>
+        <button type="submit" <?php disabled(!$sms_ready || ('register'===$intent && !pvdak_registration_open()),true); ?>>تأیید کد و <?php echo esc_html('login'===$intent?'ورود':'ساخت حساب'); ?></button>
       </form>
     </div>
-  <?php endif; ?>
 </section>
 <?php endforeach; ?>
 
