@@ -75,4 +75,46 @@ pvdak_nav_assert( false !== strpos( $header, '<details class="pvdak-mobile-menu"
     'Touch/mobile native disclosure and RTL rules remain available' );
 pvdak_nav_assert( false !== strpos( $css, 'prefers-reduced-motion' ),
     'Reduced-motion preferences are respected' );
+
+// D06: three WordPress levels, independent nested toggles, real RTL header slots.
+// No WordPress account/menus are modified by these source-only checks.
+$mobile_js_path = $root . '/assets/js/pvdak-navigation.js';
+pvdak_nav_assert(
+    is_readable( $mobile_js_path ) &&
+    false !== strpos( $functions, "'pvdak-mobile-navigation'" ) &&
+    false !== strpos( $functions, "'/assets/js/pvdak-navigation.js'" ),
+    'Independent mobile menu logic is enqueued on all pages, not homepage only' );
+$mobile_js = file_get_contents( $mobile_js_path );
+pvdak_nav_assert(
+    2 === substr_count( $header, "'depth'=>3" ) &&
+    false !== strpos( $header, "'menu_class'=>'pvdak-mobile-links'" ) &&
+    false !== strpos( $header, "'menu_class'=>'menu'" ),
+    'The same WordPress primary menu is capped at parent/child/grandchild on both layouts' );
+pvdak_nav_assert(
+    strpos( $header, '<details class="pvdak-mobile-menu">' ) <
+        strpos( $header, '<div class="site-branding">' ) &&
+    false !== strpos( $header, 'class="pvdak-login-button"' ) &&
+    false !== strpos( $css, 'grid-template-areas:"mobile-menu mobile-brand mobile-account"' ) &&
+    false !== strpos( $css, 'grid-area:mobile-menu' ) &&
+    false !== strpos( $css, 'grid-area:mobile-brand' ) &&
+    false !== strpos( $css, 'grid-area:mobile-account' ),
+    'Mobile RTL header has right menu, centered brand and left account button' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "document.createElement('button')" ) &&
+    false !== strpos( $mobile_js, "setAttribute('aria-expanded'" ) &&
+    false !== strpos( $mobile_js, "setAttribute('aria-controls'" ) &&
+    false !== strpos( $mobile_js, "submenu.hidden" ) &&
+    false !== strpos( $mobile_js, "item.insertBefore(button, submenu)" ),
+    'Child/grandchild disclosure buttons are separate from navigable parent links' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "event.key === 'Escape'" ) &&
+    false !== strpos( $mobile_js, "menu.contains(event.target)" ) &&
+    false !== strpos( $css, '.pvdak-mobile-menu.is-enhanced .pvdak-mobile-links .sub-menu[hidden]' ) &&
+    false !== strpos( $css, 'display:none !important;' ),
+    'Mobile hierarchy closes by Escape/outside click and hides collapsed descendants' );
+pvdak_nav_assert(
+    false !== strpos( $css, '.pvdak-mobile-links .sub-menu .sub-menu' ) &&
+    false !== strpos( $css, 'max-height:min(75vh,650px)' ) &&
+    false !== strpos( $header, 'pvdak-mobile-support-link' ),
+    'Third-level links stay in scrollable right-aligned drawer; support remains reachable' );
 echo "PVDAK_MEGA_NAV_OK: checks={$checks} (static source checks only)\n";
