@@ -59,7 +59,7 @@ $checks = array(
   'Manual quota audit and pagination' =>
     strpos($s['quota'],"get_option( 'pvdak_core_subscription_gate_enabled', '0' )")!==false &&
     strpos($s['quota'],'_pvdak_subscription_audit')!==false &&
-    strpos($s['quota'],'while(count($ids)===$batch_size)')!==false,
+    preg_match('/while\s*\(\s*count\s*\(\s*\$ids\s*\)\s*===\s*\$batch_size\s*\)/', $s['quota'])===1,
   'Provisional policy content notice' =>
     strpos($s['info'],'_pvdak_provisional_policy')!==false &&
     strpos($s['info'],'the_content();')!==false,
