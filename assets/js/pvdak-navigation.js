@@ -12,6 +12,10 @@
         if (!list || menu.classList.contains('is-enhanced')) { return; }
         var toggles = [];
         var serial = 0;
+        var trigger = menu.querySelector('summary');
+        var drawer = menu.querySelector('#pvdak-mobile-drawer');
+        var backdrop = menu.querySelector('.pvdak-mobile-backdrop');
+        var closeButton = menu.querySelector('.pvdak-mobile-drawer-close');
 
         Array.prototype.forEach.call(list.querySelectorAll('li'), function (item) {
             var submenu = null;
@@ -57,27 +61,62 @@
         // Hide descendants only after their independent controls exist.
         menu.classList.add('is-enhanced');
 
-        function closeMenu() {
+        function closeMenu(restoreFocus) {
             if (!menu.open) { return; }
             menu.open = false;
+            document.body.classList.remove('pvdak-mobile-drawer-open');
+            if (restoreFocus && trigger) { trigger.focus(); }
         }
+
+        // A native details trigger stays functional if JavaScript is blocked.
+        // When enhanced, the drawer occupies the viewport, locks background
+        // scrolling, and restores the keyboard to the original menu control.
         menu.addEventListener('toggle', function () {
-            if (menu.open) { return; }
+            document.body.classList.toggle('pvdak-mobile-drawer-open', menu.open);
+            if (menu.open) {
+                if (closeButton) { closeButton.focus(); }
+                return;
+            }
             toggles.forEach(function (entry) {
                 entry.submenu.hidden = true;
                 entry.button.setAttribute('aria-expanded', 'false');
                 entry.button.setAttribute('aria-label', 'باز کردن زیرمنوی ' + entry.name);
             });
         });
-        menu.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && menu.open) {
-                closeMenu();
-                var summary = menu.querySelector('summary');
-                if (summary) { summary.focus(); }
+        if (backdrop) {
+            backdrop.addEventListener('click', function () { closeMenu(true); });
+        }
+        if (closeButton) {
+            closeButton.addEventListener('click', function () { closeMenu(true); });
+        }
+        document.addEventListener('keydown', function (event) {
+            if (!menu.open) { return; }
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeMenu(true);
+                return;
+            }
+            if (event.key !== 'Tab' || !drawer) { return; }
+            var focusable = drawer.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            );
+            if (!focusable.length) { return; }
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey &&
+                (document.activeElement === last || !drawer.contains(document.activeElement))) {
+                event.preventDefault();
+                first.focus();
             }
         });
         document.addEventListener('click', function (event) {
-            if (menu.open && !menu.contains(event.target)) { closeMenu(); }
+            if (menu.open && !menu.contains(event.target)) { closeMenu(false); }
+        });
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 1030) { closeMenu(false); }
         });
     }
 
