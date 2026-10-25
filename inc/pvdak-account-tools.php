@@ -9,7 +9,14 @@ function pvdak_account_tool_url( $slug ) {
     if ( 'account-profile' === $slug ) {
         return pvdak_auth_account_url() . '#pvdak-profile';
     }
-    return pvdak_public_page_url( $slug ) ?: home_url( '/' . $slug . '/' );
+    $page = pvdak_public_page_url( $slug );
+    if ( $page ) { return $page; }
+    // The branded recovery Page might be missing before admin page bootstrap.
+    // Use the native WordPress recovery route instead of sending reset requests to 404.
+    if ( 'account-recovery' === $slug ) {
+        return site_url( 'wp-login.php?action=lostpassword', 'login' );
+    }
+    return home_url( '/' . $slug . '/' );
 }
 function pvdak_account_noindex( $robots ) {
     if ( is_page( array( 'account-login', 'account-profile', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
@@ -47,9 +54,14 @@ add_action( 'admin_post_pvdak_profile_save', 'pvdak_profile_save' );
 
 /** Send one generic response for existent and non-existent identities. */
 function pvdak_recovery_email_message( $message, $key, $login, $user ) {
-    $url = add_query_arg( array(
-        'reset' => '1', 'key' => $key, 'login' => rawurlencode( $login )
-    ), pvdak_account_tool_url( 'account-recovery' ) );
+    $custom = pvdak_public_page_url( 'account-recovery' );
+    $url = $custom
+        ? add_query_arg( array(
+            'reset' => '1', 'key' => $key, 'login' => rawurlencode( $login )
+        ), $custom )
+        : add_query_arg( array(
+            'action' => 'rp', 'key' => $key, 'login' => rawurlencode( $login )
+        ), site_url( 'wp-login.php', 'login' ) );
     return "برای انتخاب رمز جدید حساب PVDak به پیوند زیر مراجعه کنید:\n\n" . esc_url_raw( $url ) .
         "\n\nاگر شما این درخواست را ارسال نکرده‌اید، این پیام را نادیده بگیرید.";
 }
