@@ -50,6 +50,32 @@ require_once get_template_directory() . '/inc/pvdak-home-collections.php';
 require_once get_template_directory() . '/inc/pvdak-navigation-links.php';
 require_once get_template_directory() . '/inc/pvdak-home-readiness.php';
 require_once get_template_directory() . '/inc/pvdak-readiness-admin.php';
+/**
+ * Display-only compatibility for wording embedded in the already installed
+ * PVDak Core 0.8.14 shortcodes. Keep the plugin's byte-for-byte release
+ * parity intact; do not touch case/user content or other shortcode outputs.
+ */
+function pvdak_core_shortcode_brand_labels( $output, $tag ) {
+    if ( ! is_string( $output ) ||
+        ! in_array( $tag, array( 'pvdak_account_dashboard', 'pvdak_professional_dashboard' ), true ) ) {
+        return $output;
+    }
+    return str_replace(
+        array(
+            '<h2>پنل کاربری پویش</h2>',
+            '<p class="pvdak-core-eyebrow">پویش وکلای دادگستری کشور</p>',
+            '>همکاری با پویش</a>',
+        ),
+        array(
+            '<h2>پنل کاربری PVDak</h2>',
+            '<p class="pvdak-core-eyebrow">PVDak</p>',
+            '>همکاری با PVDak</a>',
+        ),
+        $output
+    );
+}
+add_filter( 'do_shortcode_tag', 'pvdak_core_shortcode_brand_labels', 10, 2 );
+
 // Optional admin starter: native Page and Post Category content structure.
 require_once get_template_directory() . '/inc/pvdak-editor-bootstrap.php';
 
