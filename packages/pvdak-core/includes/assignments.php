@@ -288,7 +288,13 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
         // No arbitrary result injected by query filters can be mutated.
         if ( ! ( $request instanceof WP_Post ) ||
              'pvdak_request' !== $request->post_type || 'private' !== $request->post_status ||
-             ! current_user_can( 'edit_post', $request->ID ) ) { continue; }
+             ! current_user_can( 'edit_post', $request->ID ) ) {
+            update_post_meta( $profile_id, '_pvdak_referral_review_warning', array(
+                'request_id' => $request instanceof WP_Post ? absint( $request->ID ) : 0,
+                'at' => current_time( 'mysql', true ), 'reason' => 'invalid_or_forbidden_request',
+            ) );
+            continue;
+        }
         $request_id = (int) $request->ID;
         $result = pvdak_core_with_assignment_locks( $request_id, $profile_id, function () use ( $request_id, $profile_id ) {
             pvdak_core_refresh_assignment_meta( $request_id, $profile_id );
