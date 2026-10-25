@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.53
+Version: 0.8.54
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -4137,4 +4137,36 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
   .site-header .pvdak-mobile-menu[open] > .pvdak-mobile-backdrop {
     animation:none !important;
   }
+}
+/* 0.8.54 — Work QA D08: always expose the published FAQ guide,
+   while keeping unanswered placeholder Pages out of accordions. */
+.pvdak-home-faq .pvdak-faq-pending {
+  margin:0 0 15px;
+  border:1px solid #cbdfee;
+  background:#f3f9ff;
+  color:#35617f;
+  border-radius:13px;
+  padding:13px 17px;
+  font-size:12px;
+  line-height:2;
+}
+.pvdak-home-faq .pvdak-faq-archive-link {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:12px;
+  min-height:41px;
+  border:1px solid #c4def1;
+  background:#eaf6fe;
+  border-radius:11px;
+  padding:8px 15px;
+  color:#176c9e;
+  font-size:12px;
+  font-weight:850;
+  text-decoration:none;
+}
+.pvdak-home-faq .pvdak-faq-archive-link:hover,
+.pvdak-home-faq .pvdak-faq-archive-link:focus-visible {
+  border-color:#76badd;
+  background:#dbf0ff;
 }
