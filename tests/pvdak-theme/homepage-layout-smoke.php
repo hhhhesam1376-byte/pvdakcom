@@ -300,10 +300,20 @@ pvdak_layout_expect(
     false !== strpos( $readiness, "'حداقل سه لندینگ دارای متن'" ),
     'D09: admin demo readiness cannot mistake empty published legal samples for authored pages' );
 
+// Diagnose exact source/host parity when this contract is reported missing.
+// Never turn a missing template gate into a passing test.
+$template_guards = array(
+    'template slug inspected' => false !== strpos( $readiness, "get_page_template_slug( \$page->ID )" ),
+    'all required published templates counted' => false !== strpos( $readiness, 'count( $public_templates ) === $public_ready' ),
+    'account page uses its native template' => false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
+);
+foreach ( $template_guards as $name => $passed ) {
+    if ( ! $passed ) {
+        fwrite( STDERR, 'D05_TEMPLATE_MISSING: ' . $name . "\\n" );
+    }
+}
 pvdak_layout_expect(
-    false !== strpos( $readiness, "get_page_template_slug( $page->ID )" ) &&
-    false !== strpos( $readiness, 'count( $public_templates ) === $public_ready' ) &&
-    false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
+    ! in_array( false, $template_guards, true ),
     'D05: required public Pages must be published with their actual native templates' );
 
 pvdak_layout_expect(
