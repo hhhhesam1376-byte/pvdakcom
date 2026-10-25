@@ -127,7 +127,7 @@ function pvdak_home_readiness_items() {
         false !== stripos( $privacy_text, 'Who we are' ) ||
         false !== strpos( $privacy_text, 'این متن اولیه باید پیش از شروع رسمی خدمات بازبینی شود' );
     $privacy_length = function_exists( 'mb_strlen' ) ?
-        mb_strlen( $privacy_text, 'UTF-8' ) : strlen( $privacy_text );
+        mb_strlen( $privacy_text, 'UTF-8' ) : preg_match_all( '/[\\s\\S]/u', $privacy_text );
     $privacy_ready = $privacy_page instanceof WP_Post &&
         'publish' === $privacy_page->post_status &&
         '1' !== (string) get_post_meta( $privacy_page->ID, '_pvdak_provisional_policy', true ) &&
@@ -139,7 +139,7 @@ function pvdak_home_readiness_items() {
     $terms_is_draft = false !== strpos( $terms_text, 'پیش‌نویس شرایط' ) ||
         false !== strpos( $terms_text, 'این متن اولیه شرایط نهایی خدمات محسوب نمی‌شود' );
     $terms_length = function_exists( 'mb_strlen' ) ?
-        mb_strlen( $terms_text, 'UTF-8' ) : strlen( $terms_text );
+        mb_strlen( $terms_text, 'UTF-8' ) : preg_match_all( '/[\\s\\S]/u', $terms_text );
     $terms_ready = $terms_page instanceof WP_Post &&
         'publish' === $terms_page->post_status &&
         '1' !== (string) get_post_meta( $terms_page->ID, '_pvdak_provisional_policy', true ) &&
