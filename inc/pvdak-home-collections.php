@@ -64,8 +64,13 @@ function pvdak_home_faq_answer_ready( $page ) {
     if ( ! $page instanceof WP_Post ) { return false; }
     $title = trim( wp_strip_all_tags( (string) get_the_title( $page->ID ) ) );
     $body = trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
-    return '' !== $title && '' !== $body &&
-        false === strpos( $body, 'این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است' );
+    // A visually blank answer may consist only of NBSP/zero-width markers.
+    $body = trim( preg_replace( '/[\\x{00A0}\\x{200B}\\x{200C}\\x{200D}\\x{FEFF}]/u', ' ', $body ) );
+    $length = function_exists( 'mb_strlen' ) ? mb_strlen( $body, 'UTF-8' ) : strlen( $body );
+    return '' !== $title && $length >= 15 &&
+        false === stripos( $body, 'lorem ipsum' ) &&
+        false === strpos( $body, 'این بخش برای پاسخ به پرسش‌های عمومی و راهنمای استفاده از خدمات در حال آماده‌سازی است' ) &&
+        false === strpos( $body, 'پاسخ نمونه برای تکمیل' );
 }
 
 /** Native hierarchical Pages are suitable for short informational FAQs. */
@@ -89,11 +94,13 @@ function pvdak_home_faq_pages( $include_empty = false ) {
         'post_type'      => 'page',
         'post_status'    => 'publish',
         'post_parent'    => $id,
-        'posts_per_page' => 30,
+        'posts_per_page' => -1,
         'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
         'order'          => 'ASC',
         'no_found_rows'  => true,
     ) );
+    // Read all published direct children before filtering. A fixed 30-item
+    // query silently hid valid answers after older placeholders.
     // Admin readiness must also see the published-but-empty source Pages;
     // the public homepage keeps using only the answered subset.
     if ( $include_empty ) { return $published; }
