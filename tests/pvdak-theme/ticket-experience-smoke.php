@@ -69,6 +69,10 @@ $checks=array(
   strpos($s['support'],"'pvdak_support_new_'")!==false &&
   strpos($s['support'],'$lock=pvdak_support_creation_lock($user);')!==false &&
   strpos($s['support'],'pvdak_support_ticket_unlock($lock);')!==false,
+ 'private tickets have a six-per-hour owner limit after successful save'=>
+  strpos($s['support'],"'pvdak_ticket_hour_'")!==false &&
+  strpos($s['support'],'get_transient($hourly_key)>=6')!==false &&
+  strpos($s['support'],'set_transient($hourly_key,min(6,$count+1),HOUR_IN_SECONDS)')!==false,
  'user feedback distinguishes validation and throttling failures'=>
   strpos($s['support'],"'support','invalid'")!==false &&
   strpos($s['support'],"'support','slow'")!==false &&
