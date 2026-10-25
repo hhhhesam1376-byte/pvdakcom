@@ -16,7 +16,8 @@ $has_professional = shortcode_exists( 'pvdak_professional_dashboard' ) &&
 $status = isset( $_GET['status'] ) && is_string( $_GET['status'] ) ?
     sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 $account_url = pvdak_auth_account_url();
-$recovery_url = pvdak_public_page_url( 'account-recovery' );
+$recovery_url = is_email( (string) $user->user_email ) ?
+    pvdak_account_tool_url( 'account-recovery' ) : '';
 $intake_off = ! function_exists( 'pvdak_core_intake_open' ) || ! pvdak_core_intake_open();
 get_header(); ?>
 <main id="main-content" class="container pvdak-static pvdak-account-page pvdak-unified-account" tabindex="-1">
@@ -48,7 +49,8 @@ get_header(); ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3-8 8-8s8 3 8 8"/></svg>
         </span>
         <div><strong><?php echo esc_html( $user->display_name ); ?></strong>
-          <small dir="auto"><?php echo esc_html( $user->user_email ); ?></small>
+          <small dir="auto"><?php echo esc_html( is_email( (string) $user->user_email )
+            ? $user->user_email : 'حساب با شماره موبایل' ); ?></small>
         </div>
       </div>
       <div class="pvdak-account-identity-meta"><span>حساب کاربری واردشده</span><span aria-hidden="true">●</span></div>
@@ -90,14 +92,14 @@ get_header(); ?>
         <div>
           <span class="pvdak-profile-section-kicker">تنظیمات شخصی • ویرایش امن</span>
           <h2 id="pvdak-profile-editor-title">اطلاعات حساب کاربری</h2>
-          <p>نام نمایشی را ویرایش کنید؛ سایر مشخصات هویتی اینجا فقط برای مشاهده هستند.</p>
+          <p>نام و نام خانوادگی و نام نمایشی خود را ویرایش کنید؛ اطلاعات ورود و سطح دسترسی ثابت می‌مانند.</p>
         </div>
       </div>
 
       <div class="pvdak-profile-editor-body">
-        <?php if('saved'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="status" class="pvdak-static-note">نام نمایشی با موفقیت ذخیره شد.</p>
-        <?php elseif('unchanged'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="status" class="pvdak-static-note">نام نمایشی تغییری نکرده است.</p>
-        <?php elseif('invalid'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="alert" class="pvdak-static-error">نام نمایشی باید بین ۱ تا ۱۲۰ نویسه باشد.</p>
+        <?php if('saved'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="status" class="pvdak-static-note">اطلاعات حساب با موفقیت ذخیره شد.</p>
+        <?php elseif('unchanged'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="status" class="pvdak-static-note">اطلاعات حساب تغییری نکرده است.</p>
+        <?php elseif('invalid'===$status):?><p id="pvdak-profile-result" tabindex="-1" role="alert" class="pvdak-static-error">نام نمایشی باید بین ۱ تا ۱۲۰ نویسه و نام و نام خانوادگی هر کدام حداکثر ۸۰ نویسه باشند.</p>
         <?php elseif($status):?><p id="pvdak-profile-result" tabindex="-1" role="alert" class="pvdak-static-error">ذخیره اطلاعات انجام نشد؛ دوباره تلاش کنید.</p><?php endif; ?>
 
         <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="pvdak-forms pvdak-profile-form" data-pvdak-profile-form data-pvdak-single-submit>
@@ -116,6 +118,21 @@ get_header(); ?>
             <p class="pvdak-form-change-status" data-pvdak-profile-status role="status" aria-live="polite"></p>
           </div>
 
+          <div class="pvdak-profile-details pvdak-profile-editable-details" aria-label="نام و نام خانوادگی">
+            <div class="pvdak-profile-field">
+              <label for="pvdak-first-name">نام</label>
+              <input id="pvdak-first-name" name="first_name" type="text"
+                value="<?php echo esc_attr( get_user_meta( $user->ID, 'first_name', true ) ); ?>"
+                maxlength="80" autocomplete="given-name">
+            </div>
+            <div class="pvdak-profile-field">
+              <label for="pvdak-last-name">نام خانوادگی</label>
+              <input id="pvdak-last-name" name="last_name" type="text"
+                value="<?php echo esc_attr( get_user_meta( $user->ID, 'last_name', true ) ); ?>"
+                maxlength="80" autocomplete="family-name">
+            </div>
+          </div>
+
           <div class="pvdak-profile-details" aria-label="مشخصات ثابت حساب">
             <div class="pvdak-profile-readonly">
               <strong><span aria-hidden="true">@</span> نام کاربری</strong>
@@ -124,8 +141,10 @@ get_header(); ?>
             </div>
             <div class="pvdak-profile-readonly">
               <strong><span aria-hidden="true">✉</span> ایمیل حساب</strong>
-              <span dir="ltr"><?php echo esc_html( $user->user_email ); ?></span>
-              <small>برای تغییر ایمیل با مدیر سایت تماس بگیرید.</small>
+              <span dir="auto"><?php echo esc_html( is_email( (string) $user->user_email )
+                  ? $user->user_email : 'برای این حساب ایمیلی ثبت نشده است' ); ?></span>
+              <small><?php echo is_email( (string) $user->user_email )
+                  ? 'برای تغییر ایمیل با پشتیبانی تماس بگیرید.' : 'ورود و بازیابی حساب پیامکی پس از اتصال سرویس در دسترس است.'; ?></small>
             </div>
           </div>
 
@@ -145,7 +164,7 @@ get_header(); ?>
             <?php if ( $recovery_url ): ?>
               <a href="<?php echo esc_url( $recovery_url ); ?>">بازیابی یا تغییر رمز عبور با ایمیل ←</a>
             <?php else: ?>
-              <span>بازیابی رمز عبور از این صفحه در دسترس نیست.</span>
+              <span>این حساب ایمیل تأییدشده‌ای برای بازیابی رمز ندارد.</span>
             <?php endif; ?>
           </div>
         </div>
