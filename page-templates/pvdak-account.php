@@ -106,6 +106,9 @@ get_header(); ?>
       <?php if ( $has_requests ): ?>
         <section id="pvdak-requests" class="pvdak-account-panel pvdak-unified-section" data-pvdak-panel aria-labelledby="pvdak-requests-title" tabindex="-1">
           <header class="pvdak-unified-section-header"><span>پیگیری درخواست‌های ثبت‌شده</span><h2 id="pvdak-requests-title">درخواست‌های من</h2><p>سوابق درخواست‌های متعلق به حساب خودتان را مشاهده و پیگیری کنید.</p><span class="pvdak-unified-private-note">فقط برای شما قابل مشاهده</span></header>
+          <?php if ( function_exists( 'pvdak_account_request_timelines' ) ): ?>
+            <?php echo pvdak_account_request_timelines(); // Escaped, owner-only, read-only markup. ?>
+          <?php endif; ?>
           <details class="pvdak-request-status-guide">
             <summary>راهنمای پیگیری و وضعیت درخواست‌ها</summary>
             <dl>
