@@ -6,7 +6,7 @@
 if(!defined('ABSPATH'))exit;
 get_header();
 $sent=isset($_GET['sent'])?sanitize_key(wp_unslash($_GET['sent'])):'';
-$messages=array('1'=>'پیام شما برای تیم پویش ارسال شد.','invalid'=>'اطلاعات فرم را بررسی کنید.','slow'=>'کمی بعد دوباره امتحان کنید.','failed'=>'ارسال پیام ممکن نشد.');
+$messages=array('1'=>'پیام شما برای تیم PVDak ارسال شد.','invalid'=>'اطلاعات فرم را بررسی کنید.','slow'=>'کمی بعد دوباره امتحان کنید.','failed'=>'ارسال پیام ممکن نشد.');
 ?>
 <main id="main-content" class="container pvdak-static pvdak-contact-page" tabindex="-1">
 <nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">خانه</a><span aria-hidden="true"> / </span><span aria-current="page">تماس با ما</span></nav>
@@ -16,7 +16,7 @@ $messages=array('1'=>'پیام شما برای تیم پویش ارسال شد.'
 <article <?php post_class('pvdak-static-body pvdak-contact-intro'); ?>>
   <span class="pvdak-contact-intro-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 16a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9Z"/><path d="M8 9h8M8 13h5"/></svg></span>
   <span class="pvdak-static-label">کانال ارتباط عمومی</span>
-  <h2>ارتباط با پویش</h2><?php the_content(); ?>
+  <h2>ارتباط با PVDak</h2><?php the_content(); ?>
   <div class="pvdak-contact-guidance">
     <h3>پیش از ارسال پیام</h3>
     <ul><li>پرسش‌های عمومی، پیشنهاد و گزارش مشکل سایت را مطرح کنید.</li>
