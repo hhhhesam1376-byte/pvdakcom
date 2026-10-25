@@ -142,9 +142,9 @@ $checks = array(
     strpos($v['portal'],'data-pvdak-workspace')!==false &&
     strpos($v['javascript'],"event.key !== 'Escape'")!==false &&
     strpos($v['javascript'],"destination.focus({ preventScroll: true })")!==false,
-  '097-11 Login retains secure submit with readable trust note' =>
+  '097-11 Login retains secure submit and simple separate registration link' =>
     strpos($v['login'],"wp_nonce_field('pvdak_login'")!==false &&
-    strpos($v['login'],'pvdak-login-trust-note')!==false,
+    strpos($v['login'],'pvdak-login-signup')!==false,
   '097-12 Profile retains nonce and readonly account identity' =>
     strpos($v['portal'],"wp_nonce_field( 'pvdak_profile_save'")!==false &&
     strpos($v['portal'],'pvdak-profile-readonly')!==false,
@@ -311,8 +311,8 @@ $checks = array(
     strpos($v['portal'], "do_shortcode( '[pvdak_my_requests]' )")!==false &&
     strpos($v['portal'], "do_shortcode( '[pvdak_support_tickets]' )")!==false,
   'Consent links only go to published policies' =>
-    strpos($v['register'],"pvdak_public_page_url( 'terms-of-use' )")!==false &&
-    strpos($v['register'],"pvdak_public_page_url( 'privacy-policy' )")!==false &&
+    strpos($v['register'],"pvdak_public_page_url('terms-of-use')")!==false &&
+    strpos($v['register'],"pvdak_public_page_url('privacy-policy')")!==false &&
     strpos($v['contact'],"pvdak_public_page_url( 'privacy-policy' )")!==false,
   'Primary and footer links come from published Pages' =>
     substr_count($v['header'],'pvdak_default_navigation_links()')===2 &&
