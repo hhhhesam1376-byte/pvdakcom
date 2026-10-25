@@ -7,8 +7,8 @@ get_header(); ?>
     <a href="<?php echo esc_url( home_url( '/' ) ); ?>">صفحه اصلی</a><span aria-hidden="true">›</span><span aria-current="page">مجله حقوقی</span>
   </nav>
   <header class="pvdak-discovery-hero">
-    <span class="pvdak-discovery-eyebrow">دانشنامه و مطالب پویش</span>
-    <h1>مجله حقوقی پویش</h1>
+    <span class="pvdak-discovery-eyebrow">دانشنامه و مطالب PVDak</span>
+    <h1>مجله حقوقی PVDak</h1>
     <p>آخرین مطالب منتشرشده را بخوانید یا از دسته‌بندی‌های موجود موضوع دلخواهتان را پیدا کنید.</p>
     <div class="pvdak-discovery-search"><?php get_search_form(); ?></div>
   </header>
