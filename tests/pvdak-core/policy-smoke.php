@@ -33,7 +33,12 @@ function get_post_type( $id ) {
     return in_array( (int) $id, array( 10, 11, 12 ), true ) ? 'page' :
         ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' : '' );
 }
-function get_post_status( $id ) { return in_array( (int) $id, array( 501, 502 ), true ) ? 'private' : 'publish'; }
+$GLOBALS['pvdak_mock_topic_draft'] = false;
+$GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
+function get_post_status( $id ) {
+    if ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) { return 'draft'; }
+    return in_array( (int) $id, array( 501, 502 ), true ) ? 'private' : 'publish';
+}
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
 $GLOBALS['pvdak_mock_profile_author'] = 21;
 $GLOBALS['pvdak_mock_profile_name'] = 'وکیل نمونه';
@@ -41,6 +46,8 @@ $GLOBALS['pvdak_mock_profile_city'] = 'تهران';
 $GLOBALS['pvdak_mock_reviewer_exists'] = true;
 function get_post_field( $field, $id ) {
     if ( 'post_title' === $field && 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_name']; }
+    if ( 'post_title' === $field && 11 === (int) $id ) { return $GLOBALS['pvdak_mock_topic_title']; }
+    if ( 'post_title' === $field && 12 === (int) $id ) { return 'حقوق تجارت'; }
     if ( 'post_author' !== $field ) { return ''; }
     if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
     if ( 502 === (int) $id ) { return 22; }
@@ -243,6 +250,17 @@ pvdak_expect(
 pvdak_expect( pvdak_core_landing_parent_id() === 10, 'Real published landing Page is a valid parent' );
 pvdak_expect( pvdak_core_valid_specialty( 11 ), 'Published child landing Page is a valid specialty' );
 pvdak_expect( ! pvdak_core_valid_specialty( 999 ), 'Unrelated nonexistent Page cannot be selected' );
+pvdak_expect( 'ready' === pvdak_core_topic_resolution( 11 )['status'], 'Published child topic maps by Page ID' );
+pvdak_expect( 'missing' === pvdak_core_topic_resolution( 0 )['status'], 'Missing topic has explicit repair state' );
+pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 999 )['status'], 'Unknown topic cannot be guessed from its title' );
+$GLOBALS['pvdak_mock_topic_title'] = '  ';
+pvdak_expect( 'untitled' === pvdak_core_topic_resolution( 11 )['status'], 'Untitled topic is flagged for repair' );
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Untitled topic cannot silently match a lawyer' );
+$GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
+$GLOBALS['pvdak_mock_topic_draft'] = true;
+pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 11 )['status'], 'Unpublished topic loses referral eligibility' );
+pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 0, 'Unpublished topic has no candidate list' );
+$GLOBALS['pvdak_mock_topic_draft'] = false;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Internally cleared lawyer matches related landing' );
 pvdak_expect( pvdak_core_assignment_parties_distinct( 701, 501 ), 'Distinct real requester and lawyer owners permit internal referral' );
 pvdak_expect( ! pvdak_core_assignment_parties_distinct( 702, 501 ), 'Self-referral is blocked in preview, decision and recheck' );
