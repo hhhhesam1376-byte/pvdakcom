@@ -460,4 +460,12 @@ pvdak_layout_expect(
     'Published but empty FAQ Pages cannot appear as blank public accordions'
 );
 
+// D05/D06 screenshot regression: featured-article label must be absolutely
+// anchored above the content, not participate in its flex row and clip at bottom.
+pvdak_layout_expect(
+    false !== strpos( $css, 'a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {' ) &&
+    false !== strpos( $css, 'inset-block-start:18px;' ) &&
+    false !== strpos( $css, 'inset-inline-start:18px;' ) &&
+    false !== strpos( $css, 'position:absolute;' ),
+    'Featured magazine badge is pinned inside the card on desktop and mobile' );
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
