@@ -250,7 +250,8 @@ pvdak_layout_expect( false !== strpos( $single, 'comments_template();' ) &&
     'Native comments are placed after the article and linked from its heading' );
 pvdak_layout_expect( false !== strpos( $comments_file, 'pvdak-comments-compose' ) &&
     false !== strpos( $comments_file, 'comment_form( array(' ) &&
-    false !== strpos( $comments_file, 'pvdak-comments-preview-hint' ) &&
+    false === strpos( $comments_file, 'فرم آزمایشی مدیر' ) &&
+    false === strpos( $comments_file, 'مدیر می‌تواند آن را در تنظیمات' ) &&
     false !== strpos( $comments_file, 'comments_open()' ),
     'WordPress-native comment submission is visible where permissions allow' );
 pvdak_layout_expect( false === strpos( $related, 'ادامه مطالعه' ) &&
@@ -353,7 +354,8 @@ require dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
 // Exercise the actual FAQ selector with one empty published Page.
 function get_option( $name ) { return 'page_on_front' === $name ? 1 : null; }
 function get_field( $name, $page_id ) {
-    return 'faq_parent_page' === $name && 1 === (int) $page_id ? 20 : null;
+    return 'faq_parent_page' === $name && 1 === (int) $page_id &&
+        empty( $GLOBALS['pvdak_test_faq_unset'] ) ? 20 : null;
 }
 function get_posts( $args ) { return $GLOBALS['pvdak_faq_fixture']; }
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
@@ -404,6 +406,19 @@ function get_page_by_path( $slug, $output = OBJECT, $type = 'page' ) {
     }
     return null;
 }
+// D08: the real published FAQ parent is used when homepage ACF is unset.
+$GLOBALS['pvdak_cta_pages'][20] = array(
+    'slug' => 'legal-faq', 'content' => '<p>برگه مادر FAQ</p>', 'state' => 'publish'
+);
+$GLOBALS['pvdak_test_faq_unset'] = true;
+pvdak_layout_expect(
+    count( pvdak_home_faq_pages() ) === 2 &&
+    count( pvdak_home_faq_pages( true ) ) === 3,
+    'D08: unset ACF FAQ parent falls back to existing published legal-faq children'
+);
+$GLOBALS['pvdak_test_faq_unset'] = false;
+unset( $GLOBALS['pvdak_cta_pages'][20] );
+
 function url_to_postid( $url ) {
     if ( ! is_string( $url ) || ! preg_match( '~^https://example[.]invalid/page-([0-9]+)$~', $url, $m ) ) { return 0; }
     return (int) $m[1];
@@ -468,4 +483,30 @@ pvdak_layout_expect(
     false !== strpos( $css, 'inset-inline-start:18px;' ) &&
     false !== strpos( $css, 'position:absolute;' ),
     'Featured magazine badge is pinned inside the card on desktop and mobile' );
+// D05/D08/D10: Work Chrome 1363px QA regression guards.
+pvdak_layout_expect(
+    false !== strpos( $js, 'if (swiper) {' ) &&
+    false !== strpos( $js, 'controls.hidden = false;' ) &&
+    false !== strpos( $js, 'a11y: { enabled: false }' ) &&
+    false !== strpos( $js, "window.addEventListener('load'" ),
+    'D05: reinitialization must not hide controls or overwrite semantic topic link names'
+);
+pvdak_layout_expect(
+    false !== strpos( $front, 'data-pvdak-topic-count' ) &&
+    false !== strpos( $js, 'visibleCount.textContent' ) &&
+    false !== strpos( $js, "found.toLocaleString('fa-IR')" ),
+    'D08: count reflects the currently matched visible topic cards'
+);
+pvdak_layout_expect(
+    false !== strpos( $front, '$faq_archive  = pvdak_public_page_url( \'legal-faq\' );' ) &&
+    false !== strpos( $front, 'if ( $faq_pages || $faq_archive )' ) &&
+    false !== strpos( $front, 'pvdak-faq-pending' ) &&
+    false !== strpos( $front, 'pvdak-faq-archive-link' ),
+    'D08: when editor FAQ answers are missing, offer the real published guide page'
+);
+pvdak_layout_expect(
+    false !== strpos( $comments_file, "comments_open() ? 'نظر خود را" ) &&
+    false !== strpos( $comments_file, 'ثبت دیدگاه برای این نوشته در حال حاضر فعال نیست.' ),
+    'D10: closed comments do not solicit replies or reveal WordPress admin guidance'
+);
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
