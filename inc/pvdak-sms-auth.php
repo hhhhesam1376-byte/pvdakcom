@@ -32,7 +32,11 @@ function pvdak_sms_user($phone) {
     return $user instanceof WP_User ? $user : false;
 }
 function pvdak_sms_redirect($intent,$status) {
-    $url=pvdak_auth_login_url();
+    $url='bind'===$intent ? pvdak_auth_account_url() : pvdak_auth_login_url();
+    if ('bind'===$intent) {
+        wp_safe_redirect(add_query_arg('sms_status',$status,$url).'#pvdak-security');
+        exit;
+    }
     wp_safe_redirect(add_query_arg(array('auth'=> 'register'===$intent ? 'sms-register' : 'sms-login',
         'sms_status'=>$status),$url));
     exit;
@@ -43,8 +47,9 @@ function pvdak_sms_send() {
     check_admin_referer('pvdak_sms_send','_pvdak_sms_nonce');
     $intent=isset($_POST['sms_intent']) && is_string($_POST['sms_intent']) ?
         sanitize_key(wp_unslash($_POST['sms_intent'])) : '';
-    if (!in_array($intent,array('login','register'),true)) { wp_die('Invalid intent','',array('response'=>400)); }
+    if (!in_array($intent,array('login','register','bind'),true)) { wp_die('Invalid intent','',array('response'=>400)); }
     if (!pvdak_sms_auth_ready()) { pvdak_sms_redirect($intent,'unavailable'); }
+    if ($intent==='bind' && !is_user_logged_in()) { wp_die('Sign in required','',array('response'=>403)); }
     if ($intent==='register' && !pvdak_registration_open()) { pvdak_sms_redirect($intent,'closed'); }
     $raw=wp_unslash($_POST['sms_phone']??'');
     $phone=pvdak_sms_normalize_phone($raw);
@@ -60,6 +65,8 @@ function pvdak_sms_send() {
         if (!in_array($role,array('client','lawyer','trainee','student'),true) ||
             empty($_POST['sms_consent'])) { pvdak_sms_redirect($intent,'invalid'); }
         if (pvdak_sms_user($phone)) { pvdak_sms_redirect($intent,'sent'); }
+    } elseif ($intent==='bind') {
+        if (pvdak_sms_user($phone)) { pvdak_sms_redirect($intent,'invalid'); }
     } else {
         $user=pvdak_sms_user($phone);
         if (!$user || '1'===(string)get_user_meta($user->ID,'_pvdak_email_verification_pending',true) ||
@@ -71,7 +78,7 @@ function pvdak_sms_send() {
     if (true!==$delivered) { pvdak_sms_redirect($intent,'unavailable'); }
     set_transient(pvdak_sms_key('challenge-'.$intent,$phone),array(
         'hash'=>wp_hash_password($code),'expires'=>time()+5*MINUTE_IN_SECONDS,
-        'tries'=>0,'role'=>$role
+        'tries'=>0,'role'=>$role,'user_id'=>'bind'===$intent?get_current_user_id():0
     ),5*MINUTE_IN_SECONDS);
     pvdak_sms_redirect($intent,'sent');
 }
@@ -83,7 +90,7 @@ function pvdak_sms_verify() {
     check_admin_referer('pvdak_sms_verify','_pvdak_sms_verify_nonce');
     $intent=isset($_POST['sms_intent']) && is_string($_POST['sms_intent']) ?
         sanitize_key(wp_unslash($_POST['sms_intent'])) : '';
-    if (!in_array($intent,array('login','register'),true)) { wp_die('Invalid intent','',array('response'=>400)); }
+    if (!in_array($intent,array('login','register','bind'),true)) { wp_die('Invalid intent','',array('response'=>400)); }
     $phone=pvdak_sms_normalize_phone(wp_unslash($_POST['sms_phone']??''));
     $raw=wp_unslash($_POST['sms_code']??'');
     $code=is_string($raw)?trim(strtr($raw,array('۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9'))):'';
@@ -105,6 +112,16 @@ function pvdak_sms_verify() {
     }
     // Single-use challenge; no password or OTP is saved to user metadata.
     delete_transient($key);
+    if ($intent==='bind') {
+        if (!is_user_logged_in() ||
+            (int)($challenge['user_id']??0)!==get_current_user_id() ||
+            pvdak_sms_user($phone) ||
+            '1'===(string)get_user_meta(get_current_user_id(),'_pvdak_email_verification_pending',true)) {
+            pvdak_sms_redirect($intent,'invalid');
+        }
+        update_user_meta(get_current_user_id(),'_pvdak_phone_verified',$phone);
+        pvdak_sms_redirect($intent,'bound');
+    }
     if ($intent==='login') {
         $user=pvdak_sms_user($phone);
         if (!$user || user_can($user,'manage_options') ||
