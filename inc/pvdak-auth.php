@@ -1,7 +1,13 @@
 <?php
 /** WordPress-backed branded PVDak login; WP administrators retain their native access. */
 if(!defined('ABSPATH')){exit;}
-function pvdak_auth_login_url(){return pvdak_public_page_url('account-login')?:home_url('/account-login/');}
+function pvdak_auth_login_url(){
+  $page = pvdak_public_page_url('account-login');
+  // If the administrator has not published the branded Page yet, use the
+  // actual WordPress entry point; never send visitors to a guessed 404 slug.
+  // site_url() deliberately avoids calling wp_login_url() and its login_url filter.
+  return $page ?: site_url('wp-login.php', 'login');
+}
 function pvdak_auth_account_url(){
   $core=function_exists('pvdak_core_account_url')?pvdak_core_account_url():'';
   return $core?: (pvdak_public_page_url('my-pvdak-account')?:home_url('/my-pvdak-account/'));
