@@ -117,4 +117,37 @@ pvdak_nav_assert(
     false !== strpos( $css, 'max-height:min(75vh,650px)' ) &&
     false !== strpos( $header, 'pvdak-mobile-support-link' ),
     'Third-level links stay in scrollable right-aligned drawer; support remains reachable' );
+
+// D06 full-screen offcanvas: cannot regress to the old header-bounded popup.
+pvdak_nav_assert(
+    false !== strpos( $header, 'class="pvdak-mobile-backdrop"' ) &&
+    false !== strpos( $header, 'id="pvdak-mobile-drawer"' ) &&
+    false !== strpos( $header, 'class="pvdak-mobile-drawer-close"' ),
+    'Mobile navigation has viewport backdrop, labelled drawer and separate close button' );
+pvdak_nav_assert(
+    false !== strpos( $css, '.pvdak-mobile-menu[open] > nav#pvdak-mobile-drawer' ) &&
+    false !== strpos( $css, 'position:fixed;' ) &&
+    false !== strpos( $css, 'height:100dvh;' ) &&
+    false !== strpos( $css, 'max-height:none;' ) &&
+    false !== strpos( $css, 'right:0;' ) &&
+    false !== strpos( $css, 'bottom:0;' ),
+    'Offcanvas is fixed to the right viewport edge and covers full mobile screen height' );
+pvdak_nav_assert(
+    false !== strpos( $css, '@keyframes pvdak-drawer-enter' ) &&
+    false !== strpos( $css, 'transform:translateX(105%)' ) &&
+    false !== strpos( $css, '.pvdak-mobile-menu[open] > .pvdak-mobile-backdrop' ) &&
+    false !== strpos( $css, 'rgba(3,20,37,.68)' ),
+    'Right-to-left entrance uses real slide animation and a dimmed screen-wide backdrop' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "backdrop.addEventListener('click'" ) &&
+    false !== strpos( $mobile_js, "closeButton.addEventListener('click'" ) &&
+    false !== strpos( $mobile_js, "document.body.classList.toggle('pvdak-mobile-drawer-open'" ) &&
+    false !== strpos( $css, 'body.pvdak-mobile-drawer-open { overflow:hidden }' ),
+    'Backdrop and close button dismiss the drawer while background scrolling is locked' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "event.key !== 'Tab'" ) &&
+    false !== strpos( $mobile_js, "last.focus()" ) &&
+    false !== strpos( $mobile_js, "first.focus()" ) &&
+    false !== strpos( $mobile_js, "closeMenu(true)" ),
+    'Drawer traps keyboard focus and restores focus after Escape/close' );
 echo "PVDAK_MEGA_NAV_OK: checks={$checks} (static source checks only)\n";
