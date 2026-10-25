@@ -26,7 +26,10 @@
     var modes = tabs.map(function (tab) { return tab.getAttribute('data-pvdak-auth-tab'); });
     var query = new URLSearchParams(window.location.search);
     var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];
-    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') : defaultMode;
+    var smsMode = modes.indexOf('sms-login') >= 0 ? 'sms-login' :
+      (modes.indexOf('sms-register') >= 0 ? 'sms-register' : '');
+    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') :
+      (query.has('sms_status') && smsMode ? smsMode : defaultMode);
     function showAuthMode(mode, focus, remember) {
       if (modes.indexOf(mode) === -1) mode = defaultMode;
       activeMode = mode;
@@ -127,17 +130,6 @@
   });
   refreshNavigation();
 
-  /* Native details remains fully functional without JS. Escape closes it for
-   * keyboard users and returns focus to the trigger. */
-  document.addEventListener('keydown', function (event) {
-    if (event.key !== 'Escape') return;
-    var menu = document.querySelector('.pvdak-mobile-menu[open]');
-    if (!menu) return;
-    menu.open = false;
-    var summary = menu.querySelector('summary');
-    if (summary) summary.focus();
-  });
-
   function updateCount(counter) {
     var id = counter.getAttribute('data-pvdak-count-for');
     var field = id ? document.getElementById(id) : null;
@@ -178,7 +170,9 @@
     params.has('status') && document.querySelector('[data-pvdak-profile-form]') ? 'pvdak-profile-result' : '';
   if (feedback) {
     var notice = document.getElementById(feedback);
-    if (notice) notice.focus({ preventScroll: feedback !== 'pvdak-profile-result' });
+    if (notice && !notice.closest('[hidden]')) {
+      notice.focus({ preventScroll: feedback !== 'pvdak-profile-result' });
+    }
   }
   var profileForm = document.querySelector('form[data-pvdak-profile-form]');
   var profileFields = profileForm ?
@@ -229,6 +223,8 @@
   }
 
   window.addEventListener('pageshow', function () {
+    // Restore the correct private panel after browser back/forward cache.
+    refreshNavigation();
     document.querySelectorAll('form[data-pvdak-support-form], form[data-pvdak-single-submit]').forEach(function (form) {
       delete form.dataset.pvdakSubmitting;
       var button = form.querySelector('button[type="submit"]');
