@@ -11,6 +11,7 @@ $sms_ready=function_exists('pvdak_sms_auth_ready')&&pvdak_sms_auth_ready();
 $registration_open=pvdak_registration_open();
 $email_states=array(
     'received'=>'حساب شما ساخته شد. برای تکمیل ثبت‌نام، ایمیل خود را تأیید کنید.',
+    'email_issue'=>'حساب ایجاد شد، ولی ارسال ایمیل تأیید انجام نشد؛ از گزینه ارسال دوباره لینک تأیید استفاده کنید.',
     'verified'=>'ایمیل شما تأیید شد. حالا می‌توانید وارد حساب شوید.',
     'resent'=>'اگر حساب شما در انتظار تأیید باشد، ایمیل تازه ارسال می‌شود.',
     'invalid_token'=>'لینک تأیید معتبر نیست یا منقضی شده است.',
@@ -67,6 +68,9 @@ get_header();
             و <?php if($privacy): ?><a href="<?php echo esc_url($privacy); ?>">حریم خصوصی</a><?php else: ?>حریم خصوصی<?php endif; ?> موافقم.</span></label>
           <button type="submit">ایجاد حساب</button>
         </form>
+      <?php else: ?>
+        <p class="pvdak-auth-feedback" role="status">ثبت‌نام در حال حاضر در دسترس نیست.</p>
+      <?php endif; ?>
         <details class="pvdak-register-resend">
           <summary>ایمیل تأیید را دریافت نکرده‌ام</summary>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pvdak-forms" data-pvdak-single-submit>
@@ -77,9 +81,6 @@ get_header();
             <button type="submit">ارسال دوباره لینک تأیید</button>
           </form>
         </details>
-      <?php else: ?>
-        <p class="pvdak-auth-feedback" role="status">ثبت‌نام در حال حاضر در دسترس نیست.</p>
-      <?php endif; ?>
     </section>
 
     <section id="pvdak-auth-sms-register" role="tabpanel" aria-labelledby="pvdak-register-sms-tab" data-pvdak-auth-pane="sms-register">
