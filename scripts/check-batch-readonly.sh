@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 # Always identify a failing check, even when the host suppresses PHP fatal
 # diagnostics (PHP CLI failures otherwise show only exit 255 in status).
-trap 'rc=$?; printf "PVDAK_BATCH_FAILED: exit=%s line=%s command=%s\\n" "$rc" "$LINENO" "$BASH_COMMAND" >&2' ERR
+trap 'rc=$?; printf "PVDAK_BATCH_FAILED: exit=%s line=%s command=%s\n" "$rc" "$LINENO" "$BASH_COMMAND" >&2' ERR
 ROOT="${1:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 [[ -s "$ROOT/functions.php" && -s "$ROOT/packages/pvdak-core/pvdak-core.php" ]] || { echo "FAIL: SOURCE_NOT_FOUND" >&2; exit 2; }
 command -v php >/dev/null || { echo "FAIL: PHP_REQUIRED" >&2; exit 2; }
