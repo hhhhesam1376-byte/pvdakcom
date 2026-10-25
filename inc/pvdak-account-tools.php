@@ -76,6 +76,84 @@ function pvdak_profile_save() {
 }
 add_action( 'admin_post_pvdak_profile_save', 'pvdak_profile_save' );
 
+/**
+ * Recent status history for the CURRENT request owner only. Read-only.
+ * Core 0.8.14 stores transitions in repeated _pvdak_state_audit entries.
+ * Never expose request descriptions, internal notes, professional identities,
+ * assignment IDs or audit actor IDs to the applicant.
+ */
+function pvdak_account_request_timelines() {
+    if ( ! is_user_logged_in() ||
+         ! function_exists( 'pvdak_core_request_statuses' ) ) { return ''; }
+    $owner = get_current_user_id();
+    $statuses = pvdak_core_request_statuses();
+    $query = get_posts( array(
+        'post_type' => 'pvdak_request',
+        'post_status' => 'private',
+        'author' => $owner,
+        'posts_per_page' => 5,
+        'orderby' => 'date',
+        'order' => 'DESC',
+        'suppress_filters' => false,
+        'no_found_rows' => true,
+    ) );
+    if ( ! is_array( $query ) || ! $query ) { return ''; }
+    $html = '<section class="pvdak-request-progress" aria-labelledby="pvdak-request-progress-title">';
+    $html .= '<h3 id="pvdak-request-progress-title">آخرین تغییرات درخواست‌های من</h3>';
+    $html .= '<p>این تاریخچه فقط وضعیت رسیدگی را نشان می‌دهد؛ اطلاعات محرمانه پرونده و هویت متخصص در آن منتشر نمی‌شود.</p>';
+    $count = 0;
+    foreach ( $query as $request ) {
+        if ( ! ( $request instanceof WP_Post ) ||
+             'pvdak_request' !== $request->post_type ||
+             'private' !== $request->post_status ||
+             (int) $request->post_author !== $owner ) { continue; }
+        $state = get_post_meta( $request->ID, '_pvdak_request_state', true );
+        if ( ! is_string( $state ) || ! isset( $statuses[$state] ) ) {
+            $state = 'submitted';
+        }
+        $html .= '<details class="pvdak-request-progress-item">';
+        $html .= '<summary><span>' . esc_html( get_the_title( $request->ID ) ) .
+            ' <small>شماره پیگیری: ' . esc_html( number_format_i18n( $request->ID ) ) .
+            '</small></span><strong>' . esc_html( $statuses[$state] ) . '</strong></summary>';
+        $events = get_post_meta( $request->ID, '_pvdak_state_audit', false );
+        $public_events = array( array(
+            'state' => 'submitted',
+            'at' => get_post_time( 'U', true, $request->ID ),
+        ) );
+        if ( is_array( $events ) ) {
+            foreach ( $events as $event ) {
+                if ( ! is_array( $event ) || ! isset( $event['to'] ) ||
+                     ! is_string( $event['to'] ) || ! isset( $statuses[$event['to']] ) ) {
+                    continue;
+                }
+                $event_date = isset( $event['at'] ) && is_string( $event['at'] )
+                    ? strtotime( $event['at'] . ' UTC' ) : false;
+                if ( ! $event_date ) { continue; }
+                $public_events[] = array( 'state' => $event['to'], 'at' => $event_date );
+            }
+        }
+        // Bound rendering without changing historical data. Latest transitions
+        // are most useful; creation remains visible when fewer than 8 exist.
+        $public_events = array_slice( $public_events, -8 );
+        $html .= '<ol class="pvdak-request-progress-events">';
+        foreach ( $public_events as $event ) {
+            $html .= '<li><span>' . esc_html( $statuses[$event['state']] ) . '</span>';
+            if ( ! empty( $event['at'] ) ) {
+                $html .= '<time datetime="' . esc_attr( gmdate( 'c', (int) $event['at'] ) ) . '">' .
+                    esc_html( wp_date( 'j F Y، H:i', (int) $event['at'] ) ) . '</time>';
+            }
+            $html .= '</li>';
+        }
+        $html .= '</ol>';
+        if ( 'matched' === $state ) {
+            $html .= '<p class="pvdak-request-progress-note">این مرحله صرفاً انتساب داخلی سامانه است؛ به‌معنای قبول پرونده توسط وکیل یا ارسال اطلاعات به متخصص نیست.</p>';
+        }
+        $html .= '</details>';
+        $count++;
+    }
+    return $count ? $html . '</section>' : '';
+}
+
 /** Send one generic response for existent and non-existent identities. */
 function pvdak_recovery_email_message( $message, $key, $login, $user ) {
     $custom = pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' );
