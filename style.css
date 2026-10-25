@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.49
+Version: 0.8.50
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -3712,4 +3712,41 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 @media(max-width:600px){
   .pvdak-unified-account .pvdak-request-status-guide dl{grid-template-columns:minmax(0,1fr)}
+}
+
+/* 0.8.50 - owner-only legal request status timeline. */
+.pvdak-unified-account .pvdak-request-progress{margin:0 0 19px}
+.pvdak-unified-account .pvdak-request-progress>h3{font-size:16px;color:#153e61;margin:0 0 8px}
+.pvdak-unified-account .pvdak-request-progress>p{font-size:12px;line-height:1.9;color:#506c83}
+.pvdak-unified-account .pvdak-request-progress-item{
+  border:1px solid #d5e7ef;border-radius:12px;margin:9px 0;background:#fff;overflow:hidden
+}
+.pvdak-unified-account .pvdak-request-progress-item>summary{
+  display:flex;gap:13px;justify-content:space-between;align-items:center;
+  padding:13px 16px;cursor:pointer;color:#174e70;font-size:13px;line-height:1.85
+}
+.pvdak-unified-account .pvdak-request-progress-item>summary span{min-width:0;font-weight:800}
+.pvdak-unified-account .pvdak-request-progress-item>summary small{
+  display:block;font-weight:400;color:#607d8e;font-size:11px
+}
+.pvdak-unified-account .pvdak-request-progress-item>summary strong{
+  flex-shrink:0;color:#117493;background:#eaf7fd;border-radius:40px;padding:4px 11px;font-size:11px
+}
+.pvdak-unified-account .pvdak-request-progress-item>summary:focus-visible{
+  outline:3px solid #d9ab54;outline-offset:-3px
+}
+.pvdak-unified-account .pvdak-request-progress-events{
+  margin:0;padding:5px 34px 15px 16px;list-style:decimal;line-height:2;
+  border-top:1px solid #e4eff5
+}
+.pvdak-unified-account .pvdak-request-progress-events li{padding:5px 0;color:#2f536a;font-size:12px}
+.pvdak-unified-account .pvdak-request-progress-events time{
+  display:block;font-size:11px;color:#647c8c
+}
+.pvdak-unified-account .pvdak-request-progress-note{
+  background:#f4faff;color:#315771;border-radius:10px;padding:10px 12px;
+  margin:0 12px 15px;font-size:12px;line-height:1.9
+}
+@media(max-width:520px){
+  .pvdak-unified-account .pvdak-request-progress-item>summary{align-items:flex-start;flex-direction:column;gap:7px}
 }
