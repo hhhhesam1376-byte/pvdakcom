@@ -8,7 +8,7 @@ get_header(); ?>
 <main id="main-content" class="container pvdak-static" tabindex="-1">
 <nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">خانه</a><span aria-hidden="true"> / </span><span aria-current="page"><?php echo esc_html( get_the_title() ); ?></span></nav>
 <?php while(have_posts()):the_post(); ?>
-<header class="pvdak-static-head"><span>پویش وکلای دادگستری کشور</span><h1><?php the_title(); ?></h1></header>
+<header class="pvdak-static-head"><span>PVDak</span><h1><?php the_title(); ?></h1></header>
 <div class="pvdak-info-layout">
 <article <?php post_class('pvdak-static-body pvdak-info-article'); ?>>
 <?php if('1'===(string)get_post_meta(get_the_ID(),'_pvdak_provisional_policy',true)): ?>
@@ -17,9 +17,9 @@ get_header(); ?>
 <?php the_content(); ?>
 </article>
 <aside class="pvdak-info-sidebar" aria-label="دسترسی به صفحه‌های راهنما">
-  <span class="pvdak-static-label">دسترسی سریع</span><h2>راهنمای پویش</h2>
-  <nav aria-label="صفحه‌های عمومی پویش">
-  <?php foreach ( array( 'about-us' => 'درباره پویش', 'legal-faq' => 'پرسش‌های متداول', 'contact-us' => 'تماس با ما', 'privacy-policy' => 'حریم خصوصی', 'terms-of-use' => 'شرایط استفاده' ) as $slug => $label ):
+  <span class="pvdak-static-label">دسترسی سریع</span><h2>راهنمای PVDak</h2>
+  <nav aria-label="صفحه‌های عمومی PVDak">
+  <?php foreach ( array( 'about-us' => 'درباره PVDak', 'legal-faq' => 'پرسش‌های متداول', 'contact-us' => 'تماس با ما', 'privacy-policy' => 'حریم خصوصی', 'terms-of-use' => 'شرایط استفاده' ) as $slug => $label ):
     $page_url = pvdak_public_page_url( $slug );
     if ( ! $page_url ) { continue; } ?>
     <a href="<?php echo esc_url( $page_url ); ?>"<?php if ( is_page( $slug ) ): ?> aria-current="page"<?php endif; ?>><?php echo esc_html( $label ); ?> <span aria-hidden="true">←</span></a>
