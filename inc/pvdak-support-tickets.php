@@ -74,6 +74,14 @@ function pvdak_support_ticket_form(){
     if($filter)$query['meta_query']=array(array('key'=>'_pvdak_support_status','value'=>$filter,'compare'=>'='));
     if($search!=='')$query['s']=$search;
     $items=get_posts($query);
+    // Query hooks may modify the author, type or private-status constraints.
+    // Apply ownership and model isolation again before counts, pagination or HTML.
+    $items=array_values(array_filter(is_array($items)?$items:array(),static function($item)use($user){
+        return $item instanceof WP_Post &&
+            'pvdak_support_ticket'===$item->post_type &&
+            'private'===$item->post_status &&
+            (int)$item->post_author===$user;
+    }));
     $filters=array();
     if($filter)$filters['ticket_status']=$filter;
     if('ASC'===$order)$filters['ticket_order']='asc';
@@ -154,7 +162,8 @@ function pvdak_support_ticket_form(){
         <p class="pvdak-ticket-empty"><?php echo esc_html($page>1?'در این صفحه پیامی وجود ندارد؛ به صفحه قبل بازگردید.':($filters?'پیامی با این شرایط پیدا نشد؛ فیلترها را تغییر دهید.':'هنوز پیامی ثبت نشده است؛ می‌توانید از فرم بالا اولین پیام خود را بفرستید.')); ?></p>
       <?php else: ?>
       <ul class="pvdak-ticket-list" aria-labelledby="pvdak-ticket-list-title"><?php foreach($items as $item):
-        if((int)$item->post_author!==$user)continue;
+        if(!($item instanceof WP_Post) || 'pvdak_support_ticket'!==$item->post_type ||
+           'private'!==$item->post_status || (int)$item->post_author!==$user)continue;
         $reply=get_post_meta($item->ID,'_pvdak_support_reply',true);
         $state=pvdak_support_status_key(get_post_meta($item->ID,'_pvdak_support_status',true));
         $messages=get_post_meta($item->ID,'_pvdak_support_message',false);
