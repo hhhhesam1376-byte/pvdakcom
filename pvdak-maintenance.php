@@ -1,15 +1,31 @@
 <?php
 /**
  * PVDak temporary launch screen.
- * Enabled by default. Set PVDAK_MAINTENANCE_MODE to false in wp-config.php
- * to show the normal frontend to visitors when the site is ready.
+ * Ordinary-user preview is now the default. Administrators can restore
+ * maintenance by defining PVDAK_MAINTENANCE_MODE as true in wp-config.php.
+ * This does NOT enable registration, legal intakes or professional intakes.
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 function pvdak_maintenance_enabled() {
-    return ! defined( 'PVDAK_MAINTENANCE_MODE' ) || (bool) PVDAK_MAINTENANCE_MODE;
+    return defined( 'PVDAK_MAINTENANCE_MODE' ) && (bool) PVDAK_MAINTENANCE_MODE;
 }
+
+/**
+ * The employer preview is publicly viewable but is NOT the final launch.
+ * Keep preview pages out of search results until the owner explicitly
+ * authorizes indexing using PVDAK_PUBLIC_LAUNCH_APPROVED in wp-config.php.
+ * Do not change the site's existing WordPress search-visibility option.
+ */
+function pvdak_preview_robots( $robots ) {
+    if ( ! defined( 'PVDAK_PUBLIC_LAUNCH_APPROVED' ) || ! PVDAK_PUBLIC_LAUNCH_APPROVED ) {
+        $robots['noindex'] = true;
+        $robots['nofollow'] = true;
+    }
+    return $robots;
+}
+add_filter( 'wp_robots', 'pvdak_preview_robots', 100 );
 function pvdak_maintenance_can_preview_site() {
     return is_user_logged_in() && current_user_can( 'manage_options' );
 }
