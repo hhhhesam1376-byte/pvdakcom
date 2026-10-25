@@ -28,7 +28,7 @@ $account_layout = is_page_template( 'page-templates/pvdak-account.php' );
     <details class="pvdak-mobile-menu">
         <summary aria-label="باز و بسته کردن فهرست سایت" aria-controls="pvdak-mobile-drawer"><span class="pvdak-mobile-menu-label">فهرست</span> <span class="pvdak-mobile-menu-icon" aria-hidden="true">☰</span></summary>
         <span class="pvdak-mobile-backdrop" aria-hidden="true"></span>
-        <nav aria-label="منوی موبایل" id="pvdak-mobile-drawer">
+        <nav aria-label="منوی موبایل" id="pvdak-mobile-drawer" tabindex="-1">
             <div class="pvdak-mobile-drawer-head">
                 <span class="pvdak-mobile-drawer-title">فهرست سایت</span>
                 <button class="pvdak-mobile-drawer-close" type="button" aria-label="بستن منوی سایت">
