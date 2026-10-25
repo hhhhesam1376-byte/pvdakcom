@@ -72,7 +72,7 @@ $checks = array(
     strpos($s['register-ui'],'name="action" value="pvdak_sms_send"')!==false &&
     strpos($s['script'],"var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];")!==false,
   'Registration uses branded controlled email verification, without native WP signup' =>
-    strpos($s['register'],"get_option('pvdak_registration_enabled', '1')")!==false &&
+    strpos($s['register'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['register'],'pvdak_public_template_page_url(')!==false &&
     strpos($s['register'],"check_admin_referer('pvdak_register'")!==false &&
     strpos($s['register'],'pvdak_email_verification_issue($user)')!==false,
@@ -147,6 +147,19 @@ $checks = array(
     strpos( $s['script'], "query.has('sms_status') && smsMode" ) !== false,
   'D07 hidden feedback never steals keyboard focus' =>
     strpos( $s['script'], "!notice.closest('[hidden]')" ) !== false,
+  'D13 newly created signup accounts are rolled back if verification metadata is missing' =>
+    strpos($s['register'],'pvdak_registration_rollback_user($user)')!==false &&
+    strpos($s['register'],"'_pvdak_email_verification_pending',true")!==false,
+  'D13 verified email requires a persisted positive marker' =>
+    strpos($s['verification'],"'_pvdak_email_verified_at'")!==false &&
+    strpos($s['verification'],"delete_user_meta($user_id, '_pvdak_email_verification_pending')")!==false,
+  'D14 SMS cannot verify with a disabled provider or claim ambiguous phone' =>
+    strpos($s['sms'],"if (!pvdak_sms_auth_ready())")!==false &&
+    strpos($s['sms'],'pvdak_sms_phone_claimed($phone)')!==false &&
+    strpos($s['sms'],'pvdak_registration_rollback_user($created)')!==false,
+  'D07 password login rejects huge submissions and bad result types' =>
+    strpos(file_get_contents($root.'/inc/pvdak-auth.php'),'strlen($pass)>1024')!==false &&
+    strpos(file_get_contents($root.'/inc/pvdak-auth.php'),'!($user instanceof WP_User)')!==false,
   'No remote JS calls or credential storage' => strpos( $s['script'], 'fetch(' ) === false && strpos( $s['script'], 'localStorage' ) === false,
   'Prevent repeated valid submissions' => strpos( $s['script'], 'form.dataset.pvdakSubmitting' ) !== false,
   'D07 support deep link resolves to the unified panel' => strpos( $s['portal'], 'id="pvdak-support" class="pvdak-account-panel' ) !== false,

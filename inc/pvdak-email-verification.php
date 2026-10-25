@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) { exit; }
 
 function pvdak_email_verification_issue($user_id) {
     $user = get_userdata(absint($user_id));
-    if (!$user || '1' !== (string)get_user_meta($user->ID, '_pvdak_email_verification_pending', true)) {
+    if (!$user || !is_email($user->user_email) || '1' !== (string)get_user_meta($user->ID, '_pvdak_email_verification_pending', true)) {
         return false;
     }
     $token = wp_generate_password(48, false, false);
@@ -22,6 +22,7 @@ function pvdak_email_verification_issue($user_id) {
     $expires = time() + DAY_IN_SECONDS;
     if (!update_user_meta($user->ID, '_pvdak_email_verification_expires', $expires) &&
         (int)get_user_meta($user->ID, '_pvdak_email_verification_expires', true) !== $expires) {
+        delete_user_meta($user->ID, '_pvdak_email_verification_token_hash');
         return false;
     }
     $url = add_query_arg(array('pvdak_verify'=>'1', 'uid'=>$user->ID, 'token'=>$token), $base);
@@ -37,7 +38,7 @@ function pvdak_email_verification_confirm() {
     nocache_headers();
     $uid_raw = wp_unslash($_GET['uid'] ?? '');
     $token_raw = wp_unslash($_GET['token'] ?? '');
-    $user_id = is_scalar($uid_raw) ? absint($uid_raw) : 0;
+    $user_id = is_string($uid_raw) && preg_match('/^[1-9][0-9]{0,18}$/D', $uid_raw) ? absint($uid_raw) : 0;
     $token = is_string($token_raw) ? $token_raw : '';
     $valid = false;
     if ($user_id && preg_match('/^[A-Za-z0-9]{48}$/D', $token)) {
@@ -48,11 +49,19 @@ function pvdak_email_verification_confirm() {
             (bool)wp_check_password($token, $hash, $user_id);
     }
     if ($valid) {
-        // A failed DB update must not claim successful verification.
-        $valid = (bool)delete_user_meta($user_id, '_pvdak_email_verification_pending');
+        // Record positive verification evidence BEFORE lifting the login gate.
+        $verified_at = time();
+        $marked = update_user_meta($user_id, '_pvdak_email_verified_at', $verified_at);
+        $valid = (bool)$marked || (int)get_user_meta($user_id, '_pvdak_email_verified_at', true) === $verified_at;
         if ($valid) {
-            delete_user_meta($user_id, '_pvdak_email_verification_token_hash');
-            delete_user_meta($user_id, '_pvdak_email_verification_expires');
+            $valid = (bool)delete_user_meta($user_id, '_pvdak_email_verification_pending');
+            if ($valid) {
+                delete_user_meta($user_id, '_pvdak_email_verification_token_hash');
+                delete_user_meta($user_id, '_pvdak_email_verification_expires');
+            } else {
+                // Never show a verified marker while the pending gate remains.
+                delete_user_meta($user_id, '_pvdak_email_verified_at');
+            }
         }
     }
     $url = pvdak_registration_result_url();
@@ -122,7 +131,7 @@ function pvdak_verification_users_value($value,$column,$user_id) {
             return 'شماره موبایل تأییدشده (ایمیل ثبت نشده)';
         }
         if($person instanceof WP_User && is_email($person->user_email) &&
-            get_user_meta($user_id,'_pvdak_self_reported_category',true))return 'ایمیل تأییدشده';
+            (int)get_user_meta($user_id,'_pvdak_email_verified_at',true)>0)return 'ایمیل تأییدشده';
         return 'کاربر موجود / نامشخص';
     }
     if('pvdak_requested_role'===$column){

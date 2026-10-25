@@ -1,6 +1,6 @@
 <?php
 /**
- * Branded registration uses the independent manager setting (default ON),
+ * Branded registration uses the independent manager setting (default OFF),
  * a published dedicated registration Page and maintenance-OFF as its gates.
  * The native WordPress registration endpoint is blocked from bypassing verification.
  * Applicant-selected profession is a self-report; NEVER grants lawyer rights.
@@ -10,7 +10,7 @@ function pvdak_registration_open() {
     // Native public registration is not needed: PVDak has a nonce-protected,
     // rate-limited wp_insert_user handler which always assigns a client role.
     return ! ( function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled() ) &&
-        '1' === (string) get_option('pvdak_registration_enabled', '1') &&
+        '1' === (string) get_option('pvdak_registration_enabled', '0') &&
         function_exists('pvdak_public_template_page_url') &&
         (bool) pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php');
 }
@@ -19,7 +19,7 @@ function pvdak_registration_open() {
  * General Settings screen, alongside WordPress's "Anyone can register" switch.
  */
 function pvdak_registration_setting_field() {
-    $checked = '1' === (string)get_option('pvdak_registration_enabled','1');
+    $checked = '1' === (string)get_option('pvdak_registration_enabled','0');
     echo '<input type="hidden" name="pvdak_registration_enabled" value="0">';
     echo '<label><input type="checkbox" name="pvdak_registration_enabled" value="1" ' .
         checked($checked,true,false) . '> فعال‌سازی ثبت‌نام عمومی PVDak (ایمیل و پیامک)</label>';
@@ -27,7 +27,7 @@ function pvdak_registration_setting_field() {
 }
 function pvdak_registration_register_general_setting() {
     register_setting('general','pvdak_registration_enabled',array(
-        'type'=>'string','default'=>'1',
+        'type'=>'string','default'=>'0',
         'sanitize_callback'=>static function($value) {
             return is_scalar($value) && '1'===(string)$value ? '1' : '0';
         }
@@ -77,6 +77,18 @@ function pvdak_registration_rate_exceeded($scope, $limit, $seconds) {
     set_transient($key, min($limit, $count + 1), $seconds);
     return false;
 }
+/** A partially initialized NEW signup must never remain login-capable. */
+function pvdak_registration_rollback_user($user_id) {
+    $user_id=absint($user_id);
+    if (!$user_id) return;
+    if (!function_exists('wp_delete_user')) {
+        require_once ABSPATH . 'wp-admin/includes/user.php';
+    }
+    // If deletion is blocked by a plugin, invalidate the just-created password.
+    if (!wp_delete_user($user_id) && get_userdata($user_id)) {
+        wp_set_password(wp_generate_password(64,true,true),$user_id);
+    }
+}
 function pvdak_register_submit() {
     if (!pvdak_registration_open()) {
         wp_safe_redirect(add_query_arg('state','unavailable',pvdak_registration_result_url()));
@@ -118,8 +130,13 @@ function pvdak_register_submit() {
     if (is_wp_error($user)) {
         wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
     }
-    update_user_meta($user,'_pvdak_self_reported_category',$claim);
-    update_user_meta($user,'_pvdak_email_verification_pending','1');
+    $claim_saved=update_user_meta($user,'_pvdak_self_reported_category',$claim);
+    $pending_saved=update_user_meta($user,'_pvdak_email_verification_pending','1');
+    if ((!$claim_saved && (string)get_user_meta($user,'_pvdak_self_reported_category',true)!==$claim) ||
+        (!$pending_saved && '1'!==(string)get_user_meta($user,'_pvdak_email_verification_pending',true))) {
+        pvdak_registration_rollback_user($user);
+        wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
+    }
     // Do not tell the applicant to look for an email if wp_mail failed.
     // Keep the pending account and offer the existing rate-limited resend form.
     $mailed=pvdak_email_verification_issue($user);
