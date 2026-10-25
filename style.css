@@ -4058,6 +4058,17 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
     touch-action:pan-y;
     animation:pvdak-drawer-enter .28s cubic-bezier(.2,.8,.2,1) both;
   }
+  /* Native <details> remains closable even if the enhancement script fails. */
+  .site-header .pvdak-mobile-menu:not(.is-enhanced)[open] > summary {
+    position:fixed;
+    top:14px;
+    left:14px;
+    right:auto;
+    z-index:111;
+    min-width:43px;
+    background:#145878;
+    color:#fff;
+  }
   .site-header .pvdak-mobile-drawer-head {
     position:sticky;
     top:0;
