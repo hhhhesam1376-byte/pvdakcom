@@ -31,7 +31,7 @@ $checks = array(
   'Profile no-op avoids writes' => strpos( $s['tools'], "'status', 'unchanged'" ) !== false,
   'Recovery minimum Unicode length' => strpos( $s['tools'], 'pvdak_public_text_length( $password ) < 12' ) !== false,
   'Legacy profile URL preserves current form state via redirect' =>
-    strpos( $s['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )" ) !== false &&
+    strpos( $s['profile'], "wp_safe_redirect( \$target . '#pvdak-profile', 302 )" ) !== false &&
     strpos( $s['portal'], 'id="pvdak-profile"' ) !== false,
   'Profile status variants' => strpos( $s['portal'], "if('unchanged'===" ) !== false,
   'Profile counter and hint' => strpos( $s['portal'], 'data-pvdak-count-for="account-display-name"' ) !== false,
@@ -44,7 +44,9 @@ $checks = array(
   'Recovery client validation marker' => strpos( $s['recovery'], 'data-pvdak-recovery-change' ) !== false,
   'Login bounded identity' => strpos( $s['login'], 'maxlength="250"' ) !== false,
   'Login error focus target' => strpos( $s['login'], 'id="pvdak-login-result"' ) !== false,
-  'Dashboard fallback avoids activation claim' => strpos( $s['portal'], 'شما وارد حساب خود شده‌اید' ) !== false,
+  'Dashboard fallback avoids activation claim' => strpos( $s['portal'], 'حساب شما وارد شده است' ) !== false &&
+    strpos( $s['portal'], 'اطلاعات پنل فعلاً در دسترس نیست' ) !== false &&
+    strpos( $s['portal'], "do_shortcode( '[pvdak_account_dashboard]' )" ) !== false,
   'Account panels offer return navigation' => substr_count( $s['portal'], 'pvdak-panel-return' ) === 2,
   'Account scripts available on profile and contact' => strpos( $s['functions'], "'account-profile', 'contact-us'" ) !== false,
   'Active navigation recognizes JS location marker' => strpos( $s['css'], '.pvdak-account-menu a[aria-current]{' ) !== false,
