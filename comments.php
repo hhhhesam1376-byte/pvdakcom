@@ -6,18 +6,12 @@ if ( ! defined( 'ABSPATH' ) || post_password_required() ) { return; }
     <header class="pvdak-comments-heading">
         <div>
             <h2 id="pvdak-comments-title">دیدگاه‌ها و گفتگو</h2>
-            <p>نظر خود را درباره این مقاله با ما در میان بگذارید.</p>
+            <p><?php echo comments_open() ? 'نظر خود را درباره این مقاله با ما در میان بگذارید.' : 'دیدگاه‌های این نوشته را در این بخش ببینید.'; ?></p>
         </div>
         <span><?php echo esc_html( get_comments_number() ); ?> دیدگاه</span>
     </header>
     <div class="pvdak-comments-compose">
         <?php if ( comments_open() ): ?>
-            <?php if ( function_exists( 'pvdak_maintenance_enabled' ) &&
-                       pvdak_maintenance_enabled() &&
-                       current_user_can( 'manage_options' ) &&
-                       '1' === (string) get_post_meta( get_the_ID(), '_pvdak_demo_blog', true ) ): ?>
-                <p class="pvdak-comments-preview-hint">فرم آزمایشی مدیر: دیدگاه‌های این مطلب نمونه برای بازدیدکنندگان عمومی بسته است.</p>
-            <?php endif; ?>
             <?php comment_form( array(
                 'class_form' => 'pvdak-comment-form',
                 'title_reply' => 'ثبت دیدگاه',
@@ -29,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) || post_password_required() ) { return; }
                 'class_submit' => 'pvdak-comment-submit',
             ) ); ?>
         <?php else: ?>
-            <p class="pvdak-comments-closed">ثبت دیدگاه برای این نوشته بسته است. مدیر می‌تواند آن را در تنظیمات گفت‌وگوی نوشته فعال کند.</p>
+            <p class="pvdak-comments-closed">ثبت دیدگاه برای این نوشته در حال حاضر فعال نیست.</p>
         <?php endif; ?>
     </div>
     <?php if ( have_comments() ): ?>
