@@ -165,4 +165,8 @@ pvdak_nav_assert(
     false !== strpos( $mobile_js, "closeMenu(!!(drawer && drawer.contains(document.activeElement)))" ) &&
     false !== strpos( $header, 'id="pvdak-mobile-drawer" tabindex="-1"' ),
     'D06: in-page anchors and viewport close preserve keyboard focus; empty drawer is focusable' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, 'function resetBranches()' ) &&
+    false !== strpos( $mobile_js, 'resetBranches();' ),
+    'D06: nested mobile menu state resets synchronously on close' );
 echo "PVDAK_MEGA_NAV_OK: checks={$checks} (static source checks only)\n";
