@@ -22,6 +22,10 @@ function pvdak_core_register_settings() {
         'type'=>'string', 'default'=>'0',
         'sanitize_callback'=>function($v){return '1'===(string)$v?'1':'0';}
     ) );
+    register_setting( 'pvdak_core_settings', 'pvdak_core_email_notifications_enabled', array(
+        'type' => 'string', 'default' => '0',
+        'sanitize_callback' => function( $v ) { return '1' === (string) $v ? '1' : '0'; },
+    ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_member_intake_enabled', array(
         'type' => 'string',
         'default' => '0',
@@ -97,6 +101,12 @@ function pvdak_core_settings_page() {
          checked( pvdak_core_subscription_gate_on(), true, false ) .
          '> فعال‌کردن محدودیت طرح/انقضا/سهمیه در ارجاع داخلی (پیش‌فرض خاموش)</label>';
     echo '<p class="description">فعال‌سازی بدون تعیین دستی طرح معتبر و تاریخ انقضا، همه ارجاع‌های جدید را متوقف می‌کند. پرداخت آنلاین وجود ندارد.</p>';
+    echo '<p>اعلان ایمیلی عمومی تغییر وضعیت (بدون اطلاعات پرونده یا متن گفتگو):</p>';
+    echo '<input type="hidden" name="pvdak_core_email_notifications_enabled" value="0">';
+    echo '<label><input type="checkbox" name="pvdak_core_email_notifications_enabled" value="1" ' .
+         checked( '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ), true, false ) .
+         '> فعال‌سازی پس از بررسی تنظیمات ایمیل و حریم خصوصی (پیش‌فرض خاموش)</label>';
+    echo '<p class="description">فقط ایمیل مالک فعلی رکورد خصوصی، به‌جز حساب در انتظار تأیید ایمیل؛ wp_mail تحویل واقعی را تضمین نمی‌کند.</p>';
     submit_button( 'ذخیره تنظیمات' );
     echo '</form>';
     echo '<h2>ساخت برگه‌های خدمات (بدون انتشار عمومی)</h2>';

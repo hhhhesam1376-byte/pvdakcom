@@ -414,12 +414,14 @@ function pvdak_core_save_request_state( $post_id, $post ) {
         if ( ! in_array( $next, pvdak_core_allowed_request_transitions( $previous ), true ) ) { return; }
         // Compare the previous stored value when available to avoid overwriting a concurrent transition.
         if ( ! update_post_meta( $post_id, '_pvdak_request_state', $next, $raw_previous ) ) { return; }
-        add_post_meta( $post_id, '_pvdak_state_audit', array(
+        if ( add_post_meta( $post_id, '_pvdak_state_audit', array(
             'from' => $previous,
             'to' => $next,
             'at' => current_time( 'mysql', true ),
             'by' => get_current_user_id(),
-        ), false );
+        ), false ) ) {
+            pvdak_core_notify_owner( $post_id, 'pvdak_request' );
+        }
     }
 
     if ( isset( $_POST['pvdak_internal_note'] ) && is_string( $_POST['pvdak_internal_note'] ) ) {

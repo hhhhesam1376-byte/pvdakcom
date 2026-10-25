@@ -230,7 +230,9 @@ function pvdak_core_save_member_review( $id ) {
         'from' => $old, 'to' => $new, 'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
     ), false ) ) {
         update_post_meta( $id, '_pvdak_member_state', $old, $new );
+        return;
     }
+    pvdak_core_notify_owner( $id, 'pvdak_professional' );
 }
 add_action( 'save_post_pvdak_professional', 'pvdak_core_save_member_review' );
 

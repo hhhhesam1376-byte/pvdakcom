@@ -392,6 +392,7 @@ function pvdak_support_save_reply($post_id,$post){
         !in_array($expected_state,array('open','answered','closed'),true))return;
     $lock=pvdak_support_ticket_lock($post_id);
     if ($lock===false)return;
+    $notify=false;
     try {
         // Reject a stale admin tab and never resurrect a trashed ticket.
         if ('private'!==get_post_status($post_id))return;
@@ -406,15 +407,19 @@ function pvdak_support_save_reply($post_id,$post){
         if($reply!=='' && 'open'===$state)$state='answered';
         if($reply!=='')update_post_meta($post_id,'_pvdak_support_reply',$reply);
         if ($state!==$previous) {
-            if (update_post_meta($post_id,'_pvdak_support_status',$state)) {
-                add_post_meta($post_id,'_pvdak_support_status_event',array(
-                    'from'=>$previous,'to'=>$state,'at'=>current_time('mysql',true),
-                    'actor'=>get_current_user_id()
-                ),false);
-            }
+            if (!update_post_meta($post_id,'_pvdak_support_status',$state))return;
+            if (!add_post_meta($post_id,'_pvdak_support_status_event',array(
+                'from'=>$previous,'to'=>$state,'at'=>current_time('mysql',true),
+                'actor'=>get_current_user_id()
+            ),false))return;
         }
+        $notify=$reply!=='' || $state!==$previous;
     } finally {
         pvdak_support_ticket_unlock($lock);
+    }
+    // Sending outside the DB lock avoids holding it during mail transport.
+    if($notify && function_exists('pvdak_core_notify_owner')) {
+        pvdak_core_notify_owner($post_id,'pvdak_support_ticket');
     }
 }
 add_action('save_post_pvdak_support_ticket','pvdak_support_save_reply',10,2);

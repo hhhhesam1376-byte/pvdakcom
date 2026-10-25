@@ -12,7 +12,10 @@ function add_filter() {}
 function add_shortcode() {}
 function register_activation_hook() {}
 function register_deactivation_hook() {}
-function get_option( $name, $default = false ) { return $default; }
+function get_option( $name, $default = false ) {
+    return 'pvdak_core_email_notifications_enabled' === $name ?
+        ( $GLOBALS['pvdak_mock_notify_enabled'] ?? '0' ) : $default;
+}
 
 // Synthetic records — no connection to a real WordPress installation.
 class WP_Post {
@@ -58,7 +61,23 @@ function get_post_field( $field, $id ) {
 }
 function get_userdata( $id ) {
     if ( 10 === (int) $id && $GLOBALS['pvdak_mock_reviewer_exists'] ) { return (object) array( 'ID' => 10 ); }
-    return in_array( (int) $id, array( 21, 22, 23 ), true ) ? (object) array( 'ID' => (int) $id ) : false;
+    return in_array( (int) $id, array( 21, 22, 23 ), true ) ?
+        (object) array( 'ID' => (int) $id, 'user_email' => 'owner@example.test' ) : false;
+}
+function get_post( $id ) {
+    if ( 901 === (int) $id ) {
+        return (object) array( 'ID' => 901, 'post_type' => 'pvdak_request',
+            'post_status' => $GLOBALS['pvdak_mock_notify_status'] ?? 'private', 'post_author' => 21 );
+    }
+    return null;
+}
+function get_user_meta( $id, $key, $single = true ) {
+    return '_pvdak_email_verification_pending' === $key ? ( $GLOBALS['pvdak_mock_notify_pending'] ?? '0' ) : '';
+}
+function is_email( $value ) { return (bool) filter_var( $value, FILTER_VALIDATE_EMAIL ); }
+function wp_mail( $email, $subject, $body ) {
+    $GLOBALS['pvdak_mock_sent_mail'][] = array( $email, $subject, $body );
+    return true;
 }
 $GLOBALS['pvdak_mock_cleared'] = '1';
 $GLOBALS['pvdak_mock_state'] = 'approved';
@@ -396,4 +415,20 @@ pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'student', 'approved
     'D21 portal does not grant lawyer access to students' );
 pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'pending' )['ready'],
     'D21 portal does not grant lawyer access before approval' );
+$GLOBALS['pvdak_mock_sent_mail'] = array();
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) && ! $GLOBALS['pvdak_mock_sent_mail'],
+    'D24 email is off by default' );
+$GLOBALS['pvdak_mock_notify_enabled'] = '1';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'unknown' ), 'D24 rejects unknown record types' );
+$GLOBALS['pvdak_mock_notify_status'] = 'draft';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 rejects draft legal requests' );
+$GLOBALS['pvdak_mock_notify_status'] = 'private';
+$GLOBALS['pvdak_mock_notify_pending'] = '1';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 excludes unverified email' );
+$GLOBALS['pvdak_mock_notify_pending'] = '0';
+pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
+    'D24 sends a generic email to the current private record owner after opt-in' );
+$mail = $GLOBALS['pvdak_mock_sent_mail'][0];
+pvdak_expect( false === strpos( $mail[2], '901' ) && false === strpos( $mail[2], 'حقوق خانواده' ) &&
+    false === strpos( $mail[2], 'owner@example.test' ), 'D24 body excludes case ID, topic and email' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";
