@@ -70,7 +70,13 @@
             }
             menu.open = false;
             document.body.classList.remove('pvdak-mobile-drawer-open');
-            if (restoreFocus && trigger) { trigger.focus(); }
+            if (restoreFocus && trigger) {
+                // At desktop width the mobile trigger is hidden. Focus the
+                // visible primary menu instead of stranding focus off-screen.
+                var desktopLink = window.innerWidth > 1030 ?
+                    document.querySelector('.primary-navigation a[href]') : null;
+                (desktopLink || trigger).focus();
+            }
         }
 
         // A native details trigger stays functional if JavaScript is blocked.
