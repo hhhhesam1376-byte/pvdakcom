@@ -25,6 +25,7 @@
         var prev = document.querySelector('[data-pvdak-topic-prev]');
         var next = document.querySelector('[data-pvdak-topic-next]');
         var clear = document.querySelector('[data-pvdak-clear-search]');
+        var visibleCount = document.querySelector('[data-pvdak-topic-count]');
         if (!container || !track || !slides.length) { return; }
 
         var swiper = null;
@@ -58,7 +59,13 @@
             if (controls) { controls.hidden = true; }
         }
         function initSwiper() {
-            if (swiper || typeof window.Swiper !== 'function' || hasQuery() || !canSlide()) {
+            // filterTopics() already initializes the slider on first load.
+            // A second call must NEVER hide controls of that valid instance.
+            if (swiper) {
+                if (controls) { controls.hidden = false; }
+                return;
+            }
+            if (typeof window.Swiper !== 'function' || hasQuery() || !canSlide()) {
                 if (controls) { controls.hidden = true; }
                 return;
             }
@@ -88,11 +95,11 @@
                     disableOnInteraction: false,
                     pauseOnMouseEnter: true
                 },
-                a11y: {
-                    enabled: true,
-                    prevSlideMessage: 'موضوع قبلی',
-                    nextSlideMessage: 'موضوع بعدی'
-                },
+                // Swiper's a11y module turns real <a> links into
+                // role=group with numeric labels ("1 / 17"). Preserve
+                // native link semantics/names from their visible headings.
+                // The region, arrows and keyboard navigation remain labelled.
+                a11y: { enabled: false },
                 breakpoints: {
                     0: { slidesPerView: 1.15, spaceBetween: 9 },
                     401: { slidesPerView: 2, spaceBetween: 9 },
@@ -135,6 +142,9 @@
                 if (okay) { found++; }
             });
             if (empty) { empty.hidden = found !== 0; }
+            if (visibleCount) {
+                visibleCount.textContent = found.toLocaleString('fa-IR') + ' موضوع حقوقی قابل مشاهده است.';
+            }
             if (clear) { clear.hidden = !term; }
             if (!term) { syncSwiper(); }
         }
@@ -190,16 +200,19 @@
             });
         }
         filterTopics();
-        if (typeof window.Swiper === 'function') {
-            initSwiper();
-            updateAutoplay();
-        } else {
-            // Fail transparently, not by pretending that scroll = Swiper.
-            // The real bundle is installed once via the private host installer.
+        // WordPress declares Swiper as a script dependency, but a deferred
+        // optimizer may still make the vendor arrive after DOMContentLoaded.
+        // Retry once when all page resources have loaded; no polling loop.
+        if (typeof window.Swiper !== 'function') {
             container.classList.add('pvdak-swiper-unavailable');
-            if (window.console && typeof window.console.warn === 'function') {
-                window.console.warn('PVDAK_SWIPER_MISSING: local Swiper vendor bundle was not loaded.');
-            }
+            window.addEventListener('load', function () {
+                if (typeof window.Swiper === 'function') {
+                    container.classList.remove('pvdak-swiper-unavailable');
+                    syncSwiper();
+                } else if (window.console && typeof window.console.warn === 'function') {
+                    window.console.warn('PVDAK_SWIPER_MISSING: local Swiper vendor bundle was not loaded.');
+                }
+            }, { once: true });
         }
     }
 
