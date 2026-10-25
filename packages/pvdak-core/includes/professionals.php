@@ -259,3 +259,179 @@ function pvdak_core_member_admin_column( $column, $id ) {
     }
 }
 add_action( 'manage_pvdak_professional_posts_custom_column', 'pvdak_core_member_admin_column', 10, 2 );
+
+
+/**
+ * D27: explicit owner consent for a minimal public directory. This is NOT
+ * a public post type or a license certificate. Every read rechecks current
+ * administrative eligibility; changing profile fields invalidates consent.
+ */
+function pvdak_core_directory_enabled() {
+    return !( defined( 'PVDAK_CORE_DISABLE_PUBLIC_DIRECTORY' ) && PVDAK_CORE_DISABLE_PUBLIC_DIRECTORY ) &&
+        '1' === (string) get_option( 'pvdak_core_directory_enabled', '0' );
+}
+
+function pvdak_core_directory_consent_fingerprint( $profile_id ) {
+    $id = absint( $profile_id );
+    if ( ! $id || 'pvdak_professional' !== get_post_type( $id ) ||
+         'private' !== get_post_status( $id ) || ! pvdak_core_profile_has_owner( $id ) ||
+         'lawyer' !== get_post_meta( $id, '_pvdak_member_type', true ) ||
+         'approved' !== get_post_meta( $id, '_pvdak_member_state', true ) ||
+         '1' !== (string) get_post_meta( $id, '_pvdak_referral_cleared', true ) ||
+         ! pvdak_core_license_review_current( $id ) ) { return ''; }
+    $owner = absint( get_post_field( 'post_author', $id ) );
+    if ( '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ) { return ''; }
+    $name = trim( (string) get_post_field( 'post_title', $id ) );
+    $city = trim( (string) get_post_meta( $id, '_pvdak_member_city', true ) );
+    $specialties = pvdak_core_specialty_ids( $id );
+    if ( '' === $name || '' === $city || ! $specialties ) { return ''; }
+    sort( $specialties, SORT_NUMERIC );
+    return hash( 'sha256', wp_json_encode( array(
+        pvdak_core_license_review_identity_signature( $id ),
+        (string) get_post_field( 'post_modified_gmt', $id ),
+        $specialties,
+    ) ) );
+}
+
+function pvdak_core_directory_consent_valid( $profile_id ) {
+    $fingerprint = pvdak_core_directory_consent_fingerprint( $profile_id );
+    $consent = get_post_meta( absint( $profile_id ), '_pvdak_directory_consent', true );
+    return '' !== $fingerprint && is_array( $consent ) &&
+        isset( $consent['fingerprint'], $consent['at'] ) &&
+        is_string( $consent['fingerprint'] ) && is_string( $consent['at'] ) &&
+        (bool) preg_match( '/^\\d{4}-\\d{2}-\\d{2} /', $consent['at'] ) &&
+        hash_equals( $fingerprint, $consent['fingerprint'] );
+}
+
+function pvdak_core_directory_eligible( $profile_id ) {
+    return pvdak_core_directory_enabled() && pvdak_core_directory_consent_valid( $profile_id );
+}
+
+/** The applicant may revoke consent even if clearance has since expired. */
+function pvdak_core_directory_consent_panel( $profile_id ) {
+    $id = absint( $profile_id );
+    if ( ! is_user_logged_in() || ! $id ||
+         (int) get_post_field( 'post_author', $id ) !== get_current_user_id() ||
+         'pvdak_professional' !== get_post_type( $id ) ||
+         ! in_array( get_post_status( $id ), array( 'private', 'draft' ), true ) ) { return ''; }
+    $valid = pvdak_core_directory_consent_valid( $id );
+    $possible = '' !== pvdak_core_directory_consent_fingerprint( $id );
+    $saved = get_post_meta( $id, '_pvdak_directory_consent', true );
+    $html = '<section class="pvdak-core-prof-section" aria-labelledby="pvdak-directory-consent"><h3 id="pvdak-directory-consent">رضایت نمایش در فهرست عمومی</h3>';
+    $html .= '<p>فقط نام نمایشی درخواست، شهر فعالیت و عنوان حوزه‌های حقوقی منتشرشده نمایش داده می‌شوند؛ هیچ تلفن، ایمیل، مدارک، شناسه پروفایل، شرح درخواست یا اطلاعات پرونده منتشر نمی‌شود. این فهرست گواهی رسمی پروانه نیست.</p>';
+    if ( $valid ) {
+        $html .= '<p role="status">' . ( pvdak_core_directory_enabled() ?
+            'رضایت معتبر است و پروفایل امکان نمایش عمومی دارد.' :
+            'رضایت ثبت شده، اما انتشار فهرست هنوز توسط مدیر غیرفعال است.' ) . '</p>';
+    } elseif ( $saved ) {
+        $html .= '<p role="status">رضایت قبلی دیگر معتبر نیست؛ برای نمایش دوباره باید شرایط و اطلاعات فعلی تأیید و رضایت جدید ثبت شود.</p>';
+    } else {
+        $html .= '<p>هیچ رضایتی برای نمایش عمومی ثبت نشده است.</p>';
+    }
+    $html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+    $html .= wp_nonce_field( 'pvdak_directory_consent_' . $id, '_pvdak_directory_nonce', true, false );
+    $html .= '<input type="hidden" name="action" value="pvdak_core_directory_consent">';
+    $html .= '<input type="hidden" name="pvdak_profile_id" value="' . esc_attr( $id ) . '">';
+    if ( $possible && ! $valid ) {
+        $html .= '<button type="submit" name="pvdak_directory_choice" value="yes">با نمایش این سه مورد در فهرست عمومی موافقم</button> ';
+    } elseif ( ! $possible ) {
+        $html .= '<p>تا تأیید اداری، بررسی معتبر صلاحیت و ثبت تخصص، امکان ثبت رضایت انتشار وجود ندارد.</p>';
+    }
+    if ( $saved ) {
+        $html .= '<button type="submit" name="pvdak_directory_choice" value="no">لغو رضایت نمایش عمومی</button>';
+    }
+    return $html . '</form></section>';
+}
+
+function pvdak_core_directory_consent_submit() {
+    if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! is_user_logged_in() ) {
+        wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
+    }
+    $id = isset( $_POST['pvdak_profile_id'] ) && is_scalar( $_POST['pvdak_profile_id'] ) ?
+        absint( wp_unslash( $_POST['pvdak_profile_id'] ) ) : 0;
+    if ( ! $id || $id !== pvdak_core_existing_application( get_current_user_id() ) ||
+         (int) get_post_field( 'post_author', $id ) !== get_current_user_id() ||
+         'pvdak_professional' !== get_post_type( $id ) ) {
+        wp_die( 'مالکیت پروفایل تأیید نشد.', '', array( 'response' => 403 ) );
+    }
+    check_admin_referer( 'pvdak_directory_consent_' . $id, '_pvdak_directory_nonce' );
+    $choice = isset( $_POST['pvdak_directory_choice'] ) && is_string( $_POST['pvdak_directory_choice'] ) ?
+        sanitize_key( wp_unslash( $_POST['pvdak_directory_choice'] ) ) : '';
+    if ( 'no' === $choice ) {
+        delete_post_meta( $id, '_pvdak_directory_consent' );
+    } elseif ( 'yes' === $choice ) {
+        $fingerprint = pvdak_core_directory_consent_fingerprint( $id );
+        if ( '' === $fingerprint ) {
+            wp_die( 'شرایط انتشار معتبر نیست.', '', array( 'response' => 403 ) );
+        }
+        update_post_meta( $id, '_pvdak_directory_consent', array(
+            'fingerprint' => $fingerprint, 'at' => current_time( 'mysql', true ),
+        ) );
+    } else {
+        wp_die( 'انتخاب نامعتبر است.', '', array( 'response' => 400 ) );
+    }
+    wp_safe_redirect( wp_validate_redirect( wp_get_referer() ?: home_url( '/' ), home_url( '/' ) ) );
+    exit;
+}
+add_action( 'admin_post_pvdak_core_directory_consent', 'pvdak_core_directory_consent_submit' );
+
+/**
+ * Public directory exposes only three consented fields. Private CPT status,
+ * notes, member ID, contact details and profile permalinks are never output.
+ * No automatic Page creation or public REST route is introduced.
+ */
+function pvdak_core_professional_directory() {
+    if ( ! pvdak_core_directory_enabled() ) {
+        return '<p class="pvdak-core-notice">فهرست متخصصان در حال آماده‌سازی است.</p>';
+    }
+    $raw_page = isset( $_GET['pvdak_dir_page'] ) && is_scalar( $_GET['pvdak_dir_page'] ) ?
+        absint( wp_unslash( $_GET['pvdak_dir_page'] ) ) : 1;
+    $page = max( 1, min( 50, $raw_page ) );
+    $ids = get_posts( array(
+        'post_type' => 'pvdak_professional',
+        'post_status' => 'private',
+        'fields' => 'ids',
+        'posts_per_page' => 1000,
+        'orderby' => 'ID',
+        'order' => 'DESC',
+        'no_found_rows' => true,
+        'cache_results' => false,
+        'update_post_meta_cache' => false,
+        'meta_query' => array( array( 'key' => '_pvdak_directory_consent', 'compare' => 'EXISTS' ) ),
+    ) );
+    $visible = array();
+    foreach ( $ids as $id ) {
+        if ( pvdak_core_directory_eligible( absint( $id ) ) ) { $visible[] = absint( $id ); }
+    }
+    $per_page = 12;
+    $total = count( $visible );
+    $html = '<section class="pvdak-core-panel pvdak-core-directory"><h2>فهرست اعضای حرفه‌ای دارای رضایت انتشار</h2>';
+    $html .= '<p>نمایش در این فهرست به معنی تضمین خدمات یا استعلام برخط پروانه نیست. هیچ اطلاعات تماس یا پرونده‌ای در این بخش منتشر نمی‌شود.</p>';
+    $page_ids = array_slice( $visible, ( $page - 1 ) * $per_page, $per_page );
+    if ( ! $page_ids ) { return $html . '<p>موردی برای نمایش وجود ندارد.</p></section>'; }
+    $html .= '<ul class="pvdak-core-directory-list">';
+    foreach ( $page_ids as $id ) {
+        // Revalidate immediately before rendering, including consent revocation.
+        if ( ! pvdak_core_directory_eligible( $id ) ) { continue; }
+        $name = trim( (string) get_post_field( 'post_title', $id ) );
+        $city = trim( (string) get_post_meta( $id, '_pvdak_member_city', true ) );
+        $topics = array();
+        foreach ( pvdak_core_specialty_ids( $id ) as $topic_id ) {
+            $topic = pvdak_core_topic_resolution( $topic_id );
+            if ( 'ready' === $topic['status'] ) { $topics[] = $topic['title']; }
+        }
+        if ( ! $topics || '' === $name || '' === $city ) { continue; }
+        $html .= '<li><strong>' . esc_html( $name ) . '</strong><span> — ' .
+            esc_html( $city ) . '</span><p>' . esc_html( implode( '، ', $topics ) ) . '</p></li>';
+    }
+    $html .= '</ul>';
+    $base = get_permalink( get_queried_object_id() );
+    if ( $page > 1 ) {
+        $html .= '<a href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page - 1, $base ) ) . '">صفحه قبل</a> ';
+    }
+    if ( $page * $per_page < $total ) {
+        $html .= '<a href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page + 1, $base ) ) . '">صفحه بعد</a>';
+    }
+    return $html . '</section>';
+}
+add_shortcode( 'pvdak_professional_directory', 'pvdak_core_professional_directory' );
