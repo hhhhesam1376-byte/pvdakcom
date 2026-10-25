@@ -38,6 +38,25 @@ function pvdak_support_status_key($status) {
     return in_array($status, array('open','answered','closed'), true) ? $status : 'open';
 }
 
+/**
+ * Serialize ticket replies and status transitions on the same DB connection.
+ * A missing/contended DB advisory lock fails closed; no transient is a mutex.
+ */
+function pvdak_support_ticket_lock($ticket_id) {
+    global $wpdb;
+    $ticket_id=absint($ticket_id);
+    if (!$ticket_id || !isset($wpdb) || !is_object($wpdb))return false;
+    $name='pvdak_support_ticket_'.$ticket_id;
+    $held=$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 3)', $name));
+    return (string)$held==='1' ? $name : false;
+}
+function pvdak_support_ticket_unlock($lock_name) {
+    global $wpdb;
+    if ($lock_name && isset($wpdb) && is_object($wpdb)) {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock_name));
+    }
+}
+
 function pvdak_support_ticket_form(){
     if(!is_user_logged_in()){return '<p>برای پشتیبانی ابتدا وارد حساب شوید.</p>';}
     $user=get_current_user_id();
@@ -221,7 +240,12 @@ function pvdak_support_new(){
         'post_author'=>$user,'post_title'=>$subject,'post_content'=>$body,
         'comment_status'=>'closed'),true);
     if(is_wp_error($id)||!$id){delete_transient($key);}
-    else{update_post_meta($id,'_pvdak_support_status','open');}
+    elseif(!add_post_meta($id,'_pvdak_support_status','open',true)) {
+        // Do not expose a ticket with an uninitialized workflow state.
+        wp_delete_post($id,true);
+        delete_transient($key);
+        $id=0;
+    }
     $success=!is_wp_error($id)&&$id;
     $destination=add_query_arg('support',$success?'new_sent':'failed',$base);
     if($success)$destination=add_query_arg('ticket_open',absint($id),$destination);
@@ -257,16 +281,39 @@ function pvdak_support_followup() {
     $text=is_string($raw)?trim(sanitize_textarea_field($raw)):'';
     $key='pvdak_followup_'.get_current_user_id().'_'.$id;
     $ok=false;
-    if (pvdak_support_length($text)>=2 && pvdak_support_length($text)<=2500 && !get_transient($key)) {
-        set_transient($key,'1',45);
-        $ok=pvdak_support_append_message($id,'user',$text);
-        if($ok) {
-            $previous=pvdak_support_status_key(get_post_meta($id,'_pvdak_support_status',true));
-            update_post_meta($id,'_pvdak_support_status','open');
-            if($previous!=='open')add_post_meta($id,'_pvdak_support_status_event',array(
-                'from'=>$previous,'to'=>'open','at'=>current_time('mysql',true),'actor'=>get_current_user_id()
-            ),false);
-        } else delete_transient($key);
+    if (pvdak_support_length($text)>=2 && pvdak_support_length($text)<=2500) {
+        $lock=pvdak_support_ticket_lock($id);
+        if ($lock!==false) {
+            try {
+                // Recheck ownership and closure under the same lock as staff updates.
+                $current=get_post($id);
+                if ($current && 'pvdak_support_ticket'===$current->post_type &&
+                    'private'===$current->post_status &&
+                    (int)$current->post_author===get_current_user_id() &&
+                    'closed'!==get_post_meta($id,'_pvdak_support_status',true) &&
+                    !get_transient($key)) {
+                    set_transient($key,'1',45);
+                    $ok=pvdak_support_append_message($id,'user',$text);
+                    if ($ok) {
+                        $previous=pvdak_support_status_key(get_post_meta($id,'_pvdak_support_status',true));
+                        if ($previous!=='open') {
+                            $changed=update_post_meta($id,'_pvdak_support_status','open');
+                            if (!$changed) {
+                                $ok=false;
+                            } else {
+                                add_post_meta($id,'_pvdak_support_status_event',array(
+                                    'from'=>$previous,'to'=>'open','at'=>current_time('mysql',true),
+                                    'actor'=>get_current_user_id()
+                                ),false);
+                            }
+                        }
+                    }
+                    if (!$ok)delete_transient($key);
+                }
+            } finally {
+                pvdak_support_ticket_unlock($lock);
+            }
+        }
     }
     // Rebuild return URL from allowlisted controls, never accept a client-supplied URL.
     $return=array('support'=>$ok?'followup_sent':'failed');
@@ -316,7 +363,8 @@ function pvdak_support_reply_box_html($post){
         }
         echo '</ol></details>';
     }
-    $state=get_post_meta($post->ID,'_pvdak_support_status',true);
+    $state=pvdak_support_status_key(get_post_meta($post->ID,'_pvdak_support_status',true));
+    echo '<input type="hidden" name="pvdak_support_previous_state" value="'.esc_attr($state).'">';
     echo '<p><label for="pvdak_support_state">وضعیت گفتگو</label><select id="pvdak_support_state" name="pvdak_support_state">';
     foreach(array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده شده','closed'=>'بسته شده') as $key=>$label){
         echo '<option value="'.esc_attr($key).'" '.selected($state,$key,false).'>'.esc_html($label).'</option>';
@@ -326,30 +374,48 @@ function pvdak_support_reply_box_html($post){
 function pvdak_support_save_reply($post_id,$post){
     static $processed=array();
     if(isset($processed[$post_id]))return;
-    if(!current_user_can('manage_options')||wp_is_post_revision($post_id)||wp_is_post_autosave($post_id)||
-        !isset($_POST['_pvdak_reply_nonce']) || !is_string($_POST['_pvdak_reply_nonce'])||
+    if(!current_user_can('manage_options') || !current_user_can('edit_post',$post_id) ||
+        'pvdak_support_ticket'!==get_post_type($post_id) ||
+        'private'!==get_post_status($post_id) ||
+        wp_is_post_revision($post_id) || wp_is_post_autosave($post_id) ||
+        !isset($_POST['_pvdak_reply_nonce']) || !is_string($_POST['_pvdak_reply_nonce']) ||
         !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_pvdak_reply_nonce'])),'pvdak_support_reply_'.$post_id))return;
     $raw=wp_unslash($_POST['pvdak_support_answer']??'');
-    if(!is_string($raw))return;
-    $reply=sanitize_textarea_field($raw);
-    if (pvdak_support_length($reply)>2500)return;
-    $processed[$post_id]=true;
-    // Composer starts empty. Only explicitly submitted non-empty text appends a new response.
-    if ($reply !== '') {
-        if (!pvdak_support_append_message($post_id,'staff',$reply))return;
-    }
     $raw_state=wp_unslash($_POST['pvdak_support_state']??'');
-    $requested_state=is_string($raw_state)?sanitize_key($raw_state):'';
-    $state=in_array($requested_state,array('open','answered','closed'),true)?
-        $requested_state:($reply?'answered':'open');
-    // Sending a staff reply resolves the waiting state unless the operator closes it.
-    if($reply!=='' && 'open'===$state)$state='answered';
-    $previous=pvdak_support_status_key(get_post_meta($post_id,'_pvdak_support_status',true));
-    if($reply!=='')update_post_meta($post_id,'_pvdak_support_reply',$reply);
-    update_post_meta($post_id,'_pvdak_support_status',$state);
-    if($state!==$previous)add_post_meta($post_id,'_pvdak_support_status_event',array(
-        'from'=>$previous,'to'=>$state,'at'=>current_time('mysql',true),'actor'=>get_current_user_id()
-    ),false);
+    $raw_previous=wp_unslash($_POST['pvdak_support_previous_state']??'');
+    if(!is_string($raw) || !is_string($raw_state) || !is_string($raw_previous))return;
+    $reply=trim(sanitize_textarea_field($raw));
+    if (pvdak_support_length($reply)>2500)return;
+    $requested_state=sanitize_key($raw_state);
+    $expected_state=sanitize_key($raw_previous);
+    if (!in_array($requested_state,array('open','answered','closed'),true) ||
+        !in_array($expected_state,array('open','answered','closed'),true))return;
+    $lock=pvdak_support_ticket_lock($post_id);
+    if ($lock===false)return;
+    try {
+        // Reject a stale admin tab and never resurrect a trashed ticket.
+        if ('private'!==get_post_status($post_id))return;
+        $previous=pvdak_support_status_key(get_post_meta($post_id,'_pvdak_support_status',true));
+        if ($previous!==$expected_state)return;
+        $processed[$post_id]=true;
+        if ($reply!=='') {
+            if (!pvdak_support_append_message($post_id,'staff',$reply))return;
+        }
+        $state=$requested_state;
+        // Sending a staff reply resolves the waiting state unless the operator closes it.
+        if($reply!=='' && 'open'===$state)$state='answered';
+        if($reply!=='')update_post_meta($post_id,'_pvdak_support_reply',$reply);
+        if ($state!==$previous) {
+            if (update_post_meta($post_id,'_pvdak_support_status',$state)) {
+                add_post_meta($post_id,'_pvdak_support_status_event',array(
+                    'from'=>$previous,'to'=>$state,'at'=>current_time('mysql',true),
+                    'actor'=>get_current_user_id()
+                ),false);
+            }
+        }
+    } finally {
+        pvdak_support_ticket_unlock($lock);
+    }
 }
 add_action('save_post_pvdak_support_ticket','pvdak_support_save_reply',10,2);
 
