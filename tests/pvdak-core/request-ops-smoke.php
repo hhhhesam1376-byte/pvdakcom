@@ -11,6 +11,8 @@ function current_user_can( $cap ) { return $GLOBALS['case_allowed']; }
 function is_admin() { return $GLOBALS['case_admin']; }
 function sanitize_key( $v ) { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $v ) ); }
 function wp_unslash( $v ) { return stripslashes( $v ); }
+// Match WordPress absint() for isolated admin-filter tests; no WP bootstrap.
+function absint( $value ) { return abs( (int) $value ); }
 function current_datetime() { return new DateTimeImmutable( '2026-10-24 12:00:00', new DateTimeZone( 'Asia/Tehran' ) ); }
 function pvdak_core_triage_cutoff( $days, $now = null ) {
     if ( null === $now ) { $now = current_datetime(); }
@@ -33,6 +35,7 @@ function check_ops( $condition, $label ) {
 }
 $_GET = array( 'pvdak_case_assignment' => 'assigned', 'pvdak_case_consistency' => 'matched_missing', 'pvdak_case_modified' => 'older30' );
 $f = pvdak_core_case_ops_filters();
+check_ops( 42 === absint( '42' ) && 0 === absint( 0 ), 'WordPress absint mock handles owner IDs' );
 check_ops( 'assigned' === $f['pvdak_case_assignment'], 'assigned allowlist' );
 check_ops( 'matched_missing' === $f['pvdak_case_consistency'], 'consistency allowlist' );
 check_ops( 'older30' === $f['pvdak_case_modified'], 'modified allowlist' );
@@ -129,6 +132,8 @@ foreach ( array(
     check_ops( 'private' === $q->get( 'post_status' ), $age . ' private default' );
 }
 $_GET = array( 'pvdak_case_owner' => '42' );
+check_ops( 42 === pvdak_core_case_admin_filters()['pvdak_case_owner'],
+    'Authorized owner filter parses valid numeric id in isolated fixture' );
 $q = new PvdakOpsQuery( array( 'post_type' => 'pvdak_request', 'author' => 41 ) );
 pvdak_core_case_admin_query( $q );
 check_ops( array( 0 ) === $q->get( 'post__in' ), 'author intersection prevents widening' );
