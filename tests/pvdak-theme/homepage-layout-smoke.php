@@ -309,7 +309,7 @@ $template_guards = array(
 );
 foreach ( $template_guards as $name => $passed ) {
     if ( ! $passed ) {
-        fwrite( STDERR, 'D05_TEMPLATE_MISSING: ' . $name . "\\n" );
+        fwrite( STDERR, 'D05_TEMPLATE_MISSING: ' . $name . "\n" );
     }
 }
 pvdak_layout_expect(
