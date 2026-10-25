@@ -575,4 +575,11 @@ pvdak_layout_expect(
     false !== strpos( $readiness_public_source, 'else { $topic_placeholders++; }' ) &&
     false !== strpos( $readiness_public_source, 'else { $magazine_sample_count++; }' ),
     'D09: zero items and short published placeholders cannot falsely pass editorial readiness' );
+pvdak_layout_expect(
+    false !== strpos( $collection_source, "'posts_per_page' => -1" ) &&
+    false !== strpos( $collection_source, "stripos( \$body, 'lorem ipsum' )" ) &&
+    false !== strpos( $collection_source, "preg_replace( '/[\\\\x{00A0}" ) &&
+    false !== strpos( $readiness_public_source, '$privacy_length >= 200' ) &&
+    false !== strpos( $readiness_public_source, '$terms_length >= 200' ),
+    'D08/D09: all FAQ children considered, sample/blank answers and short policies not ready' );
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
