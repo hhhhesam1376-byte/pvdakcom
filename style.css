@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.51
+Version: 0.8.52
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -3770,4 +3770,241 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
     inset-inline-start:13px;
     padding:5px 11px;
   }
+}
+
+
+/* 0.8.52 — D06: employer-approved mobile header and three-level navigation.
+   RTL row: menu | centered brand | account. Site search remains underneath.
+   The existing primary WordPress Menu controls all published levels. */
+@media (max-width: 1030px) {
+  .site-header .header-inner {
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    grid-template-areas:"mobile-menu mobile-brand mobile-account"
+                        "mobile-search mobile-search mobile-search";
+    align-items:center;
+    gap:8px 10px;
+    direction:rtl;
+    width:calc(100% - 24px);
+    padding-block:11px 9px;
+    min-height:0;
+  }
+  .site-header .primary-navigation {display:none}
+  .site-header .pvdak-mobile-menu {
+    grid-area:mobile-menu;
+    display:block;
+    position:static;
+    margin:0;
+    justify-self:start;
+    min-width:0;
+  }
+  .site-header .site-branding,
+  body.pvdak-profile-screen .site-header .site-branding {
+    grid-area:mobile-brand;
+    justify-self:center;
+    justify-content:center;
+    max-width:min(100%,35vw);
+    min-width:0;
+    margin:0;
+    padding:0;
+    flex:none;
+  }
+  .site-header .site-branding .custom-logo {max-width:100%;height:auto}
+  .site-header .pvdak-site-brand {white-space:nowrap}
+  .site-header .pvdak-header-actions,
+  body.pvdak-profile-screen .site-header .pvdak-header-actions {
+    grid-area:mobile-account;
+    justify-self:end;
+    justify-content:flex-end;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+    gap:0;
+    flex:none;
+  }
+  .site-header .pvdak-header-actions .pvdak-profile-header-messages {
+    display:none;
+  }
+  .site-header .pvdak-login-button {
+    min-height:43px;
+    max-width:100%;
+    padding:8px 12px;
+    font-size:11px;
+    line-height:1.6;
+    white-space:nowrap;
+  }
+  .site-header .pvdak-site-search,
+  body.pvdak-profile-screen .site-header .pvdak-profile-header-search {
+    grid-area:mobile-search;
+    justify-self:stretch;
+    width:100%;
+    min-width:0;
+    max-width:none;
+    margin:0 0 3px;
+    flex:none;
+    order:initial;
+  }
+  .site-header .pvdak-mobile-menu > summary {
+    display:inline-flex;
+    min-height:43px;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:8px 12px;
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .site-header .pvdak-mobile-menu > summary:focus-visible,
+  .site-header .pvdak-mobile-branch-toggle:focus-visible,
+  .site-header .pvdak-mobile-links a:focus-visible {
+    outline:3px solid #f4c05c;
+    outline-offset:2px;
+  }
+  /* The grid container is the positioning context, so the drawer opens on
+     the RIGHT side of the viewport even though the account action is left. */
+  .site-header .pvdak-mobile-menu[open] > nav {
+    position:absolute;
+    top:calc(100% + 3px);
+    inset-inline-start:0;
+    inset-inline-end:auto;
+    right:0;
+    left:auto;
+    width:min(390px,calc(100vw - 24px));
+    max-height:min(75vh,650px);
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    padding:14px;
+    background:#fff;
+    color:#163d60;
+    border:1px solid #d1e2f3;
+    border-radius:15px;
+    box-shadow:0 20px 52px rgba(6,28,51,.27);
+    z-index:110;
+  }
+  .site-header .pvdak-mobile-links {
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    margin:0;
+    padding:0;
+    width:100%;
+    list-style:none;
+    text-align:right;
+  }
+  .site-header .pvdak-mobile-links li {
+    position:relative;
+    min-width:0;
+    list-style:none;
+  }
+  .site-header .pvdak-mobile-links li > a {
+    display:block;
+    width:100%;
+    min-height:43px;
+    padding:11px 12px;
+    border-radius:9px;
+    color:#183f63;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.7;
+    text-decoration:none;
+    overflow-wrap:anywhere;
+  }
+  .site-header .pvdak-mobile-links .pvdak-mobile-has-branch > a {
+    padding-inline-end:51px;
+  }
+  .site-header .pvdak-mobile-links .sub-menu {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:3px;
+    position:static;
+    margin:3px 12px 8px 0;
+    padding:7px 10px;
+    width:auto;
+    min-width:0;
+    background:#f0f7ff;
+    border:0;
+    border-inline-start:3px solid #75b2d3;
+    border-radius:10px;
+    box-shadow:none;
+    transform:none;
+  }
+  .site-header .pvdak-mobile-links .sub-menu .sub-menu {
+    margin:3px 8px 8px 0;
+    background:#eaf7f6;
+    border-inline-start-color:#27a2a8;
+  }
+  .site-header .pvdak-mobile-links .sub-menu li > a {
+    font-size:12px;
+    font-weight:650;
+    color:#245571;
+  }
+  .site-header .pvdak-mobile-links .sub-menu .sub-menu li > a {
+    font-size:11.5px;
+    color:#285f60;
+  }
+  .site-header .pvdak-mobile-links .sub-menu a::before {content:none}
+  .site-header .pvdak-mobile-menu.is-enhanced .pvdak-mobile-links .sub-menu[hidden] {
+    display:none !important;
+  }
+  .site-header .pvdak-mobile-branch-toggle {
+    position:absolute;
+    top:4px;
+    inset-inline-end:5px;
+    width:36px;
+    height:36px;
+    display:grid;
+    place-items:center;
+    margin:0;
+    padding:0;
+    color:#165784;
+    background:#e8f3fc;
+    border:1px solid #cce1f2;
+    border-radius:9px;
+    cursor:pointer;
+    z-index:1;
+  }
+  .site-header .pvdak-mobile-branch-toggle:hover,
+  .site-header .pvdak-mobile-branch-toggle[aria-expanded="true"] {
+    color:#fff;
+    background:#176b96;
+    border-color:#176b96;
+  }
+  .site-header .pvdak-mobile-branch-toggle span {
+    display:inline-block;
+    font-size:23px;
+    line-height:1;
+    transform-origin:center;
+    transition:transform .17s ease;
+  }
+  .site-header .pvdak-mobile-branch-toggle[aria-expanded="true"] span {
+    transform:rotate(180deg);
+  }
+  .site-header .pvdak-mobile-support-link {
+    display:block;
+    margin-top:13px;
+    padding:11px 13px;
+    background:#eaf6fd;
+    border:1px solid #c9e3f2;
+    border-radius:10px;
+    color:#175f91;
+    font-size:12px;
+    font-weight:800;
+    text-decoration:none;
+  }
+}
+@media (max-width: 370px) {
+  .site-header .pvdak-mobile-menu-label {display:none}
+  .site-header .pvdak-mobile-menu > summary {min-width:43px;padding:8px}
+  .site-header .site-branding .site-title,
+  body.pvdak-profile-screen .site-header .site-branding .site-title {
+    font-size:17px;
+  }
+  .site-header .pvdak-site-brand {padding-inline-start:26px}
+  .site-header .site-branding .pvdak-profile-brand-scale {width:22px;height:22px}
+  .site-header .pvdak-login-button {padding:8px 9px;font-size:10px}
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header .pvdak-mobile-branch-toggle span {transition:none}
 }
