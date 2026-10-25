@@ -312,6 +312,9 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
             // as a successful revocation. Rollback is best-effort (no DB tx).
             if ( false === update_post_meta( $request_id, '_pvdak_request_state', 'review', 'matched' ) ||
                  'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ) {
+                if ( 'review' === get_post_meta( $request_id, '_pvdak_request_state', true ) ) {
+                    update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' );
+                }
                 return 'state_write_failed';
             }
             if ( ! delete_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id ) ||
@@ -336,9 +339,14 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
                 if ( $assignment_logged ) {
                     delete_post_meta( $request_id, '_pvdak_assignment_audit', $assignment_event );
                 }
-                add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true );
-                update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' );
-                return 'audit_write_failed';
+                $restored = add_post_meta( $request_id, '_pvdak_assigned_profile_id', $profile_id, true );
+                if ( $restored &&
+                     (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) === (int) $profile_id ) {
+                    update_post_meta( $request_id, '_pvdak_request_state', 'matched', 'review' );
+                    return 'audit_write_failed';
+                }
+                // Never restore "matched" if the assignee link could not be restored.
+                return 'rollback_failed';
             }
             return 'revoked';
         } );
