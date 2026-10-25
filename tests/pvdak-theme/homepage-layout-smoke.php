@@ -196,6 +196,12 @@ pvdak_layout_expect( false !== strpos( $comments_file, 'have_comments()' ) &&
     'Comments use WordPress-native pagination and permission-aware form' );
 $favicon = file_get_contents( $root . '/assets/icons/pvdak-pv.svg' );
 $maintenance = file_get_contents( $root . '/pvdak-maintenance.php' );
+pvdak_layout_expect(
+    false !== strpos( $maintenance, "return defined( 'PVDAK_MAINTENANCE_MODE' ) && (bool) PVDAK_MAINTENANCE_MODE;" ) &&
+    false !== strpos( $maintenance, "add_filter( 'wp_robots', 'pvdak_preview_robots', 100 );" ) &&
+    false !== strpos( $maintenance, "\$robots['noindex'] = true;" ) &&
+    false !== strpos( $maintenance, "add_action( 'template_redirect', 'pvdak_maintenance_render', 0 );" ),
+    'Employer preview defaults to normal frontend with noindex and emergency maintenance override' );
 pvdak_layout_expect( false !== strpos( $favicon, '<svg' ) &&
     false !== strpos( $favicon, 'aria-label="PV"' ) &&
     false !== strpos( $favicon, 'fill="url(#pvdak-pv-bg)"' ),
