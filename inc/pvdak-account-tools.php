@@ -49,7 +49,13 @@ function pvdak_profile_save() {
     // user ID, email, role, capability or verification status from POST.
     $profile = array();
     foreach ( array( 'first_name', 'last_name' ) as $field ) {
-        $raw_field = wp_unslash( $_POST[ $field ] ?? '' );
+        // Existing browser tabs with the older form omit these fields.
+        // Preserve stored names instead of silently clearing them.
+        if ( ! array_key_exists( $field, $_POST ) ) {
+            $profile[ $field ] = (string) get_user_meta( get_current_user_id(), $field, true );
+            continue;
+        }
+        $raw_field = wp_unslash( $_POST[ $field ] );
         $profile[ $field ] = is_string( $raw_field )
             ? trim( sanitize_text_field( $raw_field ) ) : '';
     }
