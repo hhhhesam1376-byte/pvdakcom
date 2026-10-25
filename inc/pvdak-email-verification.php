@@ -60,7 +60,8 @@ add_filter('wp_authenticate_user', 'pvdak_email_verification_auth_gate', 20, 2);
 
 /** Anonymous resend endpoint has a generic reply to prevent email enumeration. */
 function pvdak_email_verification_resend() {
-    if (!pvdak_registration_open()) { wp_die('ثبت‌نام هنوز فعال نیست.', '', array('response'=>403)); }
+    // Previously created pending accounts must be able to receive a fresh
+    // verification link even after new registrations were temporarily closed.
     if ('POST' !== ($_SERVER['REQUEST_METHOD'] ?? '')) {
         wp_die('Method not allowed', '', array('response'=>405));
     }
