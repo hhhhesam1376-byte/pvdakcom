@@ -3596,3 +3596,30 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 .pvdak-login-page [data-pvdak-auth-pane] select{max-width:100%}
 .pvdak-sms-bind-card{margin-block:14px}
 .pvdak-sms-bind-card .pvdak-forms{margin-top:12px}
+
+/* Registration is a separate two-tab page; the original login form stays intact. */
+.pvdak-login-signup{margin:19px 0 5px;padding:16px 18px;border-radius:12px;background:#eef7fe;
+  font-size:13px;font-weight:700;color:#295576;text-align:center}
+.pvdak-login-signup a{color:#075e9b;font-weight:900;text-decoration:underline;text-underline-offset:3px}
+.pvdak-login-sms-panel{margin-top:14px;border:1px solid #d2e4ee;border-radius:12px;background:#f8fbfe}
+.pvdak-login-sms-panel summary{padding:13px 16px;cursor:pointer;color:#12678c;font-size:13px;font-weight:800}
+.pvdak-login-sms-panel summary:focus-visible{outline:3px solid #eac079;outline-offset:2px}
+.pvdak-login-sms-content{padding:0 17px 17px}
+.pvdak-login-sms-content .pvdak-forms+.pvdak-forms{margin-top:22px;padding-top:16px;border-top:1px solid #d4e5ef}
+.pvdak-register-page [data-pvdak-auth-pane][hidden]{display:none!important}
+.pvdak-register-page .pvdak-register-tabs{margin:0 0 25px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.pvdak-register-page [data-pvdak-auth-pane]{min-width:0}
+.pvdak-register-page .pvdak-auth-feedback{border:1px solid #cee2ee;background:#f4faff;
+  border-radius:12px;padding:12px 15px;color:#2b5571;font-size:12px;line-height:1.9;margin:0 0 20px}
+.pvdak-register-page .pvdak-register-back{margin:23px 0 0;text-align:center;font-size:13px;font-weight:750}
+.pvdak-register-page .pvdak-register-back a{color:#0a719d}
+.pvdak-register-resend{border-top:1px solid #d7e6ef;margin-top:23px;padding-top:16px}
+.pvdak-register-resend summary{color:#0c7295;font-weight:800;font-size:13px;cursor:pointer}
+.pvdak-register-resend .pvdak-forms{margin-top:15px}
+.pvdak-register-page .pvdak-auth-mode-picker button{white-space:normal;line-height:1.8}
+.pvdak-register-page .pvdak-password-field,.pvdak-register-page .pvdak-forms{min-width:0}
+@media(max-width:480px){
+  .pvdak-login-signup{padding:13px 10px}
+  .pvdak-register-page .pvdak-register-tabs{gap:7px}
+  .pvdak-register-page .pvdak-register-tabs button{padding:11px 6px;font-size:12px}
+}
