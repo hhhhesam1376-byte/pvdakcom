@@ -72,7 +72,9 @@ function pvdak_core_topic_resolution( $page_id ) {
 function pvdak_core_specialty_ids( $profile_id ) {
     $ids = get_post_meta( (int) $profile_id, '_pvdak_specialty_page_ids', true );
     if ( ! is_array( $ids ) ) { return array(); }
-    return array_values( array_unique( array_filter( array_map( 'absint', $ids ), 'pvdak_core_valid_specialty' ) ) );
+    return array_values( array_unique( array_filter( array_map( 'absint', $ids ), function ( $id ) {
+        return 'ready' === pvdak_core_topic_resolution( $id )['status'];
+    } ) ) );
 }
 
 /**
@@ -122,7 +124,9 @@ function pvdak_core_specialty_metabox_html( $post ) {
     wp_nonce_field( 'pvdak_core_specialties_' . $post->ID, '_pvdak_specialties_nonce' );
     $selected = pvdak_core_specialty_ids( $post->ID );
     echo '<p>موضوعات حقوقی مستقیماً از برگه‌های فرزند «موضوعات حقوقی» خوانده می‌شوند. فقط مدیر می‌تواند حوزه‌های قابل ارجاع را تعیین کند.</p>';
-    $pages = pvdak_core_specialty_pages();
+    $pages = array_values( array_filter( pvdak_core_specialty_pages(), function ( $page ) {
+        return $page instanceof WP_Post && 'ready' === pvdak_core_topic_resolution( $page->ID )['status'];
+    } ) );
     if ( ! $pages ) {
         echo '<p>ابتدا برگه مادر موضوعات حقوقی و لندینگ‌های زیرمجموعه را منتشر کنید و در تنظیمات PVDak Core برگه مادر را انتخاب کنید.</p>';
     } else {
@@ -152,7 +156,7 @@ function pvdak_core_save_specialties( $post_id ) {
     foreach ( array_slice( $raw, 0, 200 ) as $raw_id ) {
         if ( ! is_scalar( $raw_id ) ) { continue; }
         $id = absint( $raw_id );
-        if ( pvdak_core_valid_specialty( $id ) ) { $ids[ $id ] = $id; }
+        if ( 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $ids[ $id ] = $id; }
     }
     update_post_meta( $post_id, '_pvdak_specialty_page_ids', array_values( $ids ) );
     $cleared = isset( $_POST['pvdak_referral_cleared'] ) &&
