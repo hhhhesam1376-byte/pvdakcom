@@ -509,4 +509,21 @@ pvdak_layout_expect(
     false !== strpos( $comments_file, 'ثبت دیدگاه برای این نوشته در حال حاضر فعال نیست.' ),
     'D10: closed comments do not solicit replies or reveal WordPress admin guidance'
 );
+
+pvdak_layout_expect(
+    false !== strpos( $js, "next.addEventListener('click'" ) &&
+    false !== strpos( $js, "prev.addEventListener('click'" ) &&
+    false !== strpos( $js, "swiper.slideNext()" ) &&
+    false !== strpos( $js, "swiper.slidePrev()" ) &&
+    false !== strpos( $js, "swiper.slideToLoop(" ) &&
+    false === strpos( $js, "nextEl: next" ) &&
+    false === strpos( $js, "prevEl: prev" ),
+    'D05-001 retest: independent arrow listeners move the live Swiper, without optional module binding'
+);
+pvdak_layout_expect(
+    false === strpos( $css, 'transform: translateX(0);' ) &&
+    false === strpos( $css, "transform: none; /* Swiper's inline transform wins when moving. */" ) &&
+    false !== strpos( $css, 'Avoid competing stylesheet transform/transition declarations entirely:' ),
+    'D05-001 retest: old topic-track stylesheet transforms cannot reset Swiper live translation'
+);
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
