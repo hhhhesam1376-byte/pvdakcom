@@ -172,18 +172,24 @@
     if (notice) notice.focus({ preventScroll: feedback !== 'pvdak-profile-result' });
   }
   var profileForm = document.querySelector('form[data-pvdak-profile-form]');
-  var profileField = profileForm ? profileForm.querySelector('#account-display-name') : null;
-  var originalProfile = profileField ? profileField.value : '';
+  var profileFields = profileForm ?
+    Array.prototype.slice.call(profileForm.querySelectorAll(
+      '#account-display-name, #pvdak-first-name, #pvdak-last-name')) : [];
+  var profileOriginals = profileFields.map(function (field) { return field.value.trim(); });
   function refreshProfile() {
-    if (!profileForm || !profileField) return;
-    var changed = profileField.value.trim() !== originalProfile;
+    if (!profileForm || !profileFields.length) return;
+    var changed = profileFields.some(function (field, index) {
+      return field.value.trim() !== profileOriginals[index];
+    });
     var status = profileForm.querySelector('[data-pvdak-profile-status]');
     var button = profileForm.querySelector('[data-pvdak-profile-save]');
     if (status) status.textContent = changed ? 'تغییرات هنوز ذخیره نشده‌اند.' : 'تغییری برای ذخیره وجود ندارد.';
     if (button) button.disabled = !changed;
   }
-  if (profileForm && profileField) {
-    profileField.addEventListener('input', refreshProfile);
+  if (profileForm && profileFields.length) {
+    profileFields.forEach(function (field) {
+      field.addEventListener('input', refreshProfile);
+    });
     profileForm.addEventListener('reset', function () { window.setTimeout(refreshProfile, 0); });
     refreshProfile();
   }
