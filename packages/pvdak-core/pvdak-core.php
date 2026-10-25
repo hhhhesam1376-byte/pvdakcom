@@ -21,7 +21,8 @@ function pvdak_core_notify_owner( $post_id, $kind ) {
     $allowed = array( 'pvdak_request', 'pvdak_professional', 'pvdak_support_ticket' );
     if ( ! in_array( $kind, $allowed, true ) ) { return false; }
     $post = get_post( absint( $post_id ) );
-    if ( ! $post || $post->post_type !== $kind || 'private' !== $post->post_status ) { return false; }
+    if ( ! $post || $post->post_type !== $kind ||
+         ! in_array( $post->post_status, 'pvdak_professional' === $kind ? array( 'private', 'draft' ) : array( 'private' ), true ) ) { return false; }
     $owner = absint( $post->post_author );
     $user = $owner ? get_userdata( $owner ) : false;
     if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
