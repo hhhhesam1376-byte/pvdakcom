@@ -37,6 +37,11 @@ $checks = array(
     strpos($s['register'],"get_option('users_can_register', false)")!==false &&
     strpos($s['register'],"check_admin_referer('pvdak_register'")!==false &&
     strpos($s['register'],'pvdak_email_verification_issue($user)')!==false,
+  'Native WordPress public registration cannot bypass PVDak email verification' =>
+    strpos($s['register'],"add_action('login_form_register','pvdak_native_register_redirect')")!==false &&
+    strpos($s['register'],"add_filter('registration_errors','pvdak_native_registration_guard'")!==false &&
+    strpos($s['register'],"'pvdak_branded_signup_required'")!==false &&
+    strpos($s['register'],"pvdak_registration_result_url()")!==false,
   'SMS provider must explicitly opt in before OTP form works' =>
     strpos($s['sms'],"apply_filters('pvdak_sms_auth_enabled', false)")!==false &&
     strpos($s['sms'],"has_filter('pvdak_sms_otp_deliver')")!==false &&
