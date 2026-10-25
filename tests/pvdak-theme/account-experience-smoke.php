@@ -3,6 +3,7 @@
 $root = dirname( __DIR__, 2 );
 $paths = array(
   'portal'=>'page-templates/pvdak-account.php',
+  'tools'=>'inc/pvdak-account-tools.php',
   'front'=>'front-page.php',
   'login'=>'page-templates/pvdak-login.php',
   'profile'=>'page-templates/pvdak-profile.php',
@@ -32,6 +33,20 @@ $checks = array(
     strpos($v['front'], 'if ( $all_legal_pages ): ?><a href="#topics"')!==false &&
     strpos($v['front'], 'if ( $all_legal_pages ): ?>' . "\n" . '  <section id="topics"')!==false &&
     strpos($v['front'], "add_query_arg( 's', 'حقوق', home_url( '/' ) )")!==false,
+  'D11/D15 request status timeline is restricted to the current private owner' =>
+    strpos($v['tools'], 'function pvdak_account_request_timelines()')!==false &&
+    strpos($v['tools'], 'get_current_user_id()')!==false &&
+    strpos($v['tools'], "'post_status' => 'private'")!==false &&
+    strpos($v['tools'], "'author' => \$owner")!==false &&
+    strpos($v['tools'], '(int) \$request->post_author !== \$owner')!==false &&
+    strpos($v['tools'], "'_pvdak_state_audit'")!==false &&
+    strpos($v['tools'], "'state' => \$event['to']")!==false &&
+    strpos($v['tools'], "'posts_per_page' => 5")!==false &&
+    strpos($v['tools'], 'array_slice( $public_events, -8 )')!==false &&
+    strpos($v['assets'], "require_once get_template_directory() . '/inc/pvdak-account-tools.php'")!==false &&
+    strpos($v['portal'], 'pvdak_account_request_timelines()')!==false &&
+    strpos($v['portal'], 'pvdak-request-status-guide')!==false &&
+    strpos($v['css'], '.pvdak-request-progress-item')!==false,
   'D07/D11 request filter and pagination return to the owner dashboard section' =>
     strpos($v['javascript'],"params.has('pvdak_page')")!==false &&
     strpos($v['javascript'],"params.has('request_type')")!==false &&
