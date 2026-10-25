@@ -91,6 +91,27 @@ $bundle_manifest = $manifest($bundled_core);
 $installed_manifest = $manifest($installed_core);
 $release_current = $deployed !== null && $fetched !== null ? $deployed === $fetched : null;
 
+// The existing 15-minute deploy job already runs the read-only source suite
+// before accepting a new release. Read only a bounded tail of its private log:
+// expose the pass signal, never the log text, paths or case-related data.
+$preflight_confirmed = null;
+$deploy_log = $state . '/deploy.log';
+if ($deployed !== null && is_file($deploy_log) && is_readable($deploy_log)) {
+    $handle = @fopen($deploy_log, 'rb');
+    if ($handle) {
+        $size = @filesize($deploy_log);
+        if (is_int($size) && $size > 0) {
+            @fseek($handle, max(0, $size - 262144), SEEK_SET);
+            $tail = (string) @stream_get_contents($handle, 262144);
+            $preflight_confirmed = (bool) preg_match(
+                '/^\\[[0-9TZ:-]+\\] SOURCE_PREFLIGHT_OK ' . preg_quote($deployed, '/') . '$/m',
+                $tail
+            );
+        }
+        fclose($handle);
+    }
+}
+
 $data = array(
     'project' => 'PVDak',
     'schema_version' => 1,
@@ -110,6 +131,7 @@ $data = array(
     ),
     'checks' => array(
         'core_installed' => is_file($installed_core . '/pvdak-core.php'),
+        'source_preflight_confirmed_in_recent_deploy_log' => $preflight_confirmed,
         'core_file_tree_matches_bundled' => $bundle_manifest !== null &&
             $installed_manifest !== null && $bundle_manifest === $installed_manifest,
         'rtl_stylesheet_present' => is_file(__DIR__ . '/rtl.css'),
