@@ -17,7 +17,7 @@ while ( have_posts() ) : the_post();
     </nav>
     <header class="pvdak-legal-hero">
         <div class="pvdak-legal-hero-content">
-            <span class="pvdak-legal-label">پویش وکلای دادگستری کشور</span>
+            <span class="pvdak-legal-label">PVDak</span>
             <h1><?php the_title(); ?></h1>
             <?php if ( has_excerpt() ) : ?><p><?php echo esc_html( get_the_excerpt() ); ?></p><?php endif; ?>
         </div>
