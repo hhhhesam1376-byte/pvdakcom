@@ -160,4 +160,9 @@ pvdak_nav_assert(
     false !== strpos( $mobile_js, "window.addEventListener('pageshow'" ) &&
     false !== strpos( $mobile_js, "drawer.contains(document.activeElement)" ),
     'Navigating links, native close and bfcache restores clear the drawer state' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "destination.focus({ preventScroll: true })" ) &&
+    false !== strpos( $mobile_js, "closeMenu(!!(drawer && drawer.contains(document.activeElement)))" ) &&
+    false !== strpos( $header, 'id="pvdak-mobile-drawer" tabindex="-1"' ),
+    'D06: in-page anchors and viewport close preserve keyboard focus; empty drawer is focusable' );
 echo "PVDAK_MEGA_NAV_OK: checks={$checks} (static source checks only)\n";
