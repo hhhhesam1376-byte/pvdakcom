@@ -34,6 +34,17 @@ pvdak_public_smoke_require( false !== strpos( $code['auth'], 'wp_signon(' ) &&
  false !== strpos( $code['auth'], 'check_admin_referer(' ) &&
  false !== strpos( $code['auth'], "add_filter('login_url'" ) &&
  false !== strpos( $code['auth'], 'is_admin()' ), 'Native authenticated login preserves admin access' );
+// D05/D07: no guessed 404 routes if admin has not published account Pages.
+$tools_source = file_get_contents( $root . '/inc/pvdak-account-tools.php' );
+pvdak_public_smoke_require(
+ false !== strpos( $code['auth'], "site_url('wp-login.php', 'login')" ) &&
+ false !== strpos( $code['auth'], "admin_url('profile.php')" ) &&
+ false === strpos( $code['auth'], "home_url('/account-login/')" ) &&
+ false === strpos( $code['auth'], "home_url('/my-pvdak-account/')" ) &&
+ false !== strpos( $tools_source, "site_url( 'wp-login.php?action=lostpassword', 'login' )" ) &&
+ false !== strpos( $tools_source, "'action' => 'rp'" ),
+ 'D05/D07: missing branded login, dashboard and recovery Pages use valid native WordPress routes' );
+
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
 }
