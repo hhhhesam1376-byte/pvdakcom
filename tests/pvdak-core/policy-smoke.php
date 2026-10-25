@@ -13,6 +13,9 @@ function add_shortcode() {}
 function register_activation_hook() {}
 function register_deactivation_hook() {}
 function get_option( $name, $default = false ) {
+    if ( 'pvdak_core_directory_enabled' === $name ) {
+        return $GLOBALS['pvdak_mock_directory_enabled'] ?? '0';
+    }
     if ( 'pvdak_core_email_notifications_enabled' === $name ) {
         return $GLOBALS['pvdak_mock_notify_enabled'] ?? '0';
     }
@@ -34,6 +37,11 @@ class WP_Post {
         $this->post_author = $author;
     }
 }
+function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
+function esc_url( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
+function get_queried_object_id() { return 900; }
+function get_permalink( $id = 0 ) { return 'https://example.test/directory/'; }
+function add_query_arg( $key, $value, $base ) { return $base . '?' . urlencode( $key ) . '=' . urlencode( (string) $value ); }
 function absint( $value ) { return abs( (int) $value ); }
 function get_page_by_path( $slug, $output = null, $type = null ) {
     return 'legal-topics' === $slug ? new WP_Post( 10 ) : null;
@@ -97,6 +105,7 @@ $GLOBALS['pvdak_mock_active_count'] = 1;
 $GLOBALS['pvdak_mock_assignment_audits'] = array();
 $GLOBALS['pvdak_mock_audit_request_ids'] = array();
 function get_post_meta( $id, $key, $single = true ) {
+    if ( '_pvdak_directory_consent' === $key ) { return $GLOBALS['pvdak_mock_directory_consent'] ?? ''; }
     if ( '_pvdak_specialty_page_ids' === $key ) { return array( 11 ); }
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
@@ -126,6 +135,9 @@ function wp_checkdate( $month, $day, $year, $source_date ) {
     return checkdate( $month, $day, $year );
 }
 function get_posts( $query ) {
+    if ( ( $query['post_type'] ?? '' ) === 'pvdak_professional' && ( $query['fields'] ?? '' ) === 'ids' ) {
+        return array( 501, 502 );
+    }
     if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
         if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
         return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
@@ -530,4 +542,46 @@ pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS
 $mail = $GLOBALS['pvdak_mock_sent_mail'][0];
 pvdak_expect( false === strpos( $mail[2], '901' ) && false === strpos( $mail[2], 'حقوق خانواده' ) &&
     false === strpos( $mail[2], 'owner@example.test' ), 'D24 body excludes case ID, topic and email' );
+
+$GLOBALS['pvdak_mock_directory_enabled'] = '0';
+$GLOBALS['pvdak_mock_directory_consent'] = '';
+pvdak_expect( ! pvdak_core_directory_enabled(), 'D27 directory stays off by default' );
+pvdak_expect( false === strpos( pvdak_core_professional_directory(), 'وکیل نمونه' ),
+    'D27 disabled directory never exposes private profiles' );
+$fingerprint = pvdak_core_directory_consent_fingerprint( 501 );
+pvdak_expect( (bool) preg_match( '/^[a-f0-9]{64}$/D', $fingerprint ),
+    'D27 eligible reviewed lawyer has a consent snapshot' );
+pvdak_expect( '' === pvdak_core_directory_consent_fingerprint( 502 ),
+    'D27 student cannot be published as a verified lawyer' );
+$GLOBALS['pvdak_mock_directory_enabled'] = '1';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 administrator switch alone does not publish without owner consent' );
+$GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => '2026-10-25 08:00:00' );
+pvdak_expect( pvdak_core_directory_eligible( 501 ),
+    'D27 explicit current consent and verification allow minimal listing' );
+$directory_html = pvdak_core_professional_directory();
+pvdak_expect( false !== strpos( $directory_html, 'وکیل نمونه' ) &&
+    false !== strpos( $directory_html, 'تهران' ) &&
+    false === strpos( $directory_html, 'owner@example.test' ) &&
+    false === strpos( $directory_html, '501' ),
+    'D27 public output contains only opted-in name, city, topics (not ID/email)' );
+$GLOBALS['pvdak_mock_profile_city'] = 'شیراز';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 identity change invalidates previous public consent' );
+$GLOBALS['pvdak_mock_profile_city'] = 'تهران';
+$GLOBALS['pvdak_mock_license_expiry'] = '2020-01-01';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 expired independent review removes public listing' );
+$GLOBALS['pvdak_mock_license_expiry'] = '2099-12-31';
+$GLOBALS['pvdak_mock_cleared'] = '0';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 revoked internal clearance removes public listing' );
+$GLOBALS['pvdak_mock_cleared'] = '1';
+$GLOBALS['pvdak_mock_notify_pending'] = '1';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 pending email verification blocks public listing' );
+$GLOBALS['pvdak_mock_notify_pending'] = '0';
+$GLOBALS['pvdak_mock_directory_consent'] = '';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
+    'D27 revoked consent removes listing even when verification is current' );
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";
