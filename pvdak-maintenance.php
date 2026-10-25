@@ -1,16 +1,55 @@
 <?php
 /**
  * PVDak temporary launch screen.
- * Ordinary-user preview is now the default. Administrators can restore
- * maintenance by defining PVDAK_MAINTENANCE_MODE as true in wp-config.php.
- * This does NOT enable registration, legal intakes or professional intakes.
+ *
+ * The ordinary-user preview remains the default (maintenance OFF). Site
+ * managers may switch maintenance on/off under Settings > General. An explicit
+ * true PVDAK_MAINTENANCE_MODE constant is an emergency host override;
+ * false (possibly left in wp-config from the previous release) does not
+ * prevent using the General Settings checkbox.
+ *
+ * This only controls visibility, NOT registration, intake or subscriptions.
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 function pvdak_maintenance_enabled() {
-    return defined( 'PVDAK_MAINTENANCE_MODE' ) && (bool) PVDAK_MAINTENANCE_MODE;
+    if ( defined( 'PVDAK_MAINTENANCE_MODE' ) && PVDAK_MAINTENANCE_MODE ) {
+        return true;
+    }
+    return '1' === (string) get_option( 'pvdak_maintenance_enabled', '0' );
 }
+
+/** Settings > General uses WordPress's existing options.php capability/nonce. */
+function pvdak_maintenance_sanitize_setting( $value ) {
+    return is_scalar( $value ) && '1' === (string) $value ? '1' : '0';
+}
+function pvdak_maintenance_setting_field() {
+    $enabled = '1' === (string) get_option( 'pvdak_maintenance_enabled', '0' );
+    echo '<input type="hidden" name="pvdak_maintenance_enabled" value="0">';
+    echo '<label for="pvdak-maintenance-enabled"><input type="checkbox" id="pvdak-maintenance-enabled" name="pvdak_maintenance_enabled" value="1" ' .
+        checked( $enabled, true, false ) . '> فعال کردن صفحه تعمیرات برای بازدیدکنندگان عادی</label>';
+    echo '<p class="description">با فعال‌کردن این گزینه، بازدیدکنندگان صفحه در حال توسعه را می‌بینند؛ مدیران واردشده همچنان سایت واقعی را مشاهده می‌کنند. این گزینه ثبت‌نام و پذیرش پرونده را فعال نمی‌کند.</p>';
+    if ( defined( 'PVDAK_MAINTENANCE_MODE' ) && PVDAK_MAINTENANCE_MODE ) {
+        echo '<p class="description" role="alert"><strong>توجه:</strong> حالت تعمیرات در تنظیمات سرور اجباری شده است. تا زمانی که مقدار PVDAK_MAINTENANCE_MODE فعال باشد، خاموش کردن این گزینه در پیشخوان اثری نخواهد داشت.</p>';
+    }
+}
+function pvdak_maintenance_register_general_setting() {
+    register_setting( 'general', 'pvdak_maintenance_enabled', array(
+        'type' => 'string',
+        'sanitize_callback' => 'pvdak_maintenance_sanitize_setting',
+        'default' => '0',
+    ) );
+    add_settings_field(
+        'pvdak_maintenance_enabled',
+        'حالت تعمیرات PVDak',
+        'pvdak_maintenance_setting_field',
+        'general',
+        'default',
+        array( 'label_for' => 'pvdak-maintenance-enabled' )
+    );
+}
+add_action( 'admin_init', 'pvdak_maintenance_register_general_setting' );
 
 /**
  * The employer preview is publicly viewable but is NOT the final launch.
