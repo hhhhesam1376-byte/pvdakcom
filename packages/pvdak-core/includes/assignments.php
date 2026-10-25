@@ -22,7 +22,7 @@ function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
 }
 
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
-    if ( ! pvdak_core_valid_specialty( $landing_id ) ) { return array(); }
+    if ( 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ) { return array(); }
     $profiles = get_posts( array(
         'post_type' => 'pvdak_professional',
         'post_status' => 'private',
@@ -88,7 +88,17 @@ function pvdak_core_assignment_admin_page() {
     $landing_id = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
     $assigned = absint( get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) );
     echo '<p><strong>درخواست:</strong> ' . esc_html( get_the_title( $request_id ) ) . '</p>';
-    echo '<p><strong>موضوع لندینگ:</strong> ' . ( pvdak_core_valid_specialty( $landing_id ) ? esc_html( get_the_title( $landing_id ) ) : 'تنظیم نشده' ) . '</p>';
+    $topic = pvdak_core_topic_resolution( $landing_id );
+    echo '<p><strong>موضوع حقوقی:</strong> ' . ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : 'نیازمند اصلاح' ) . '</p>';
+    if ( 'ready' !== $topic['status'] ) {
+        echo '<div class="notice notice-warning inline"><p>' . esc_html( $topic['message'] ) .
+            ' تا اصلاح موضوع، فهرست متخصصان و ثبت انتساب غیرفعال است؛ موضوع دیگری به‌صورت حدسی انتخاب نمی‌شود.</p></div></div>';
+        return;
+    }
+    if ( ! isset( pvdak_core_request_types()[ $request_type ] ) ) {
+        echo '<div class="notice notice-warning inline"><p>نوع خدمت این پرونده نامعتبر یا قدیمی است؛ پیش از ارجاع باید توسط مدیر بررسی شود.</p></div></div>';
+        return;
+    }
     if ( $assigned ) {
         echo '<div class="notice notice-info inline"><p>این درخواست قبلاً به پرونده حرفه‌ای شماره ' . esc_html( $assigned ) . ' در سیستم داخلی اختصاص داده شده است.</p></div>';
     }
@@ -224,8 +234,9 @@ function pvdak_core_assignment_link_html( $post ) {
         echo '<p>پروفایل اختصاص‌داده‌شده: <strong>#' . esc_html( $profile_id ) . '</strong></p>';
     }
     $landing = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
-    echo '<p>موضوع حقوقی: ' . ( pvdak_core_valid_specialty( $landing ) ?
-        esc_html( get_the_title( $landing ) ) : 'نامشخص/لندینگ قدیمی' ) . '</p>';
+    $topic = pvdak_core_topic_resolution( $landing );
+    echo '<p>موضوع حقوقی: ' . ( 'ready' === $topic['status'] ?
+        esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
     $url = admin_url( 'admin.php?page=pvdak-assign-request&request_id=' . $post->ID );
     echo '<p><a class="button button-secondary" href="' . esc_url( $url ) . '">مدیریت ارجاع داخلی</a></p>';
 }
