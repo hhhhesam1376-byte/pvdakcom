@@ -149,6 +149,9 @@ $checks = array(
     strpos( $s['script'], "!notice.closest('[hidden]')" ) !== false,
   'No remote JS calls or credential storage' => strpos( $s['script'], 'fetch(' ) === false && strpos( $s['script'], 'localStorage' ) === false,
   'Prevent repeated valid submissions' => strpos( $s['script'], 'form.dataset.pvdakSubmitting' ) !== false,
+  'D07 support deep link resolves to the unified panel' => strpos( $s['portal'], 'id="pvdak-support" class="pvdak-account-panel' ) !== false,
+  'D07 provider-disabled buttons remain disabled on pageshow' => strpos( $s['script'], 'button.dataset.pvdakDisabledBySubmit' ) !== false && strpos( $s['script'], "button.dataset.pvdakDisabledBySubmit === '1'" ) !== false,
+  'D07 auth tabs follow restored URL on BFCache' => strpos( $s['script'], "if (!event.persisted) return;" ) !== false && strpos( $s['script'], 'showAuthMode(mode, false, false)' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
 );
 foreach ( $checks as $label => $pass ) {
