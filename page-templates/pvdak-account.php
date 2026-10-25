@@ -10,6 +10,14 @@ $user = wp_get_current_user();
 $has_dashboard = shortcode_exists( 'pvdak_account_dashboard' );
 $has_requests = shortcode_exists( 'pvdak_my_requests' );
 $has_support = shortcode_exists( 'pvdak_support_tickets' );
+$self_reported_category=(string)get_user_meta($user->ID,'_pvdak_self_reported_category',true);
+$professional_interest=in_array($self_reported_category,array('lawyer','trainee','student'),true);
+$professional_join_url='';
+if ($professional_interest && function_exists('pvdak_core_member_intake_open') &&
+    pvdak_core_member_intake_open() && function_exists('pvdak_core_published_page_link')) {
+    $professional_join_url=pvdak_core_published_page_link(
+        'join-legal-community','pvdak_professional_application');
+}
 $has_professional = shortcode_exists( 'pvdak_professional_dashboard' ) &&
     function_exists( 'pvdak_core_existing_application' ) &&
     (bool) pvdak_core_existing_application( get_current_user_id() );
@@ -58,6 +66,7 @@ get_header(); ?>
         <a href="#pvdak-dashboard" aria-current="location"><span aria-hidden="true">▦</span> داشبورد <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a>
         <a href="#pvdak-profile"><span aria-hidden="true">◉</span> اطلاعات حساب <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a>
         <?php if ( $has_requests ): ?><a href="#pvdak-requests"><span aria-hidden="true">⚖</span> درخواست‌های حقوقی <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a><?php endif; ?>
+        <?php if ( $professional_interest && ! $has_professional ): ?><a href="#pvdak-professional-interest"><span aria-hidden="true">♧</span> درخواست همکاری <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a><?php endif; ?>
         <?php if ( $has_professional ): ?><a href="#pvdak-professional"><span aria-hidden="true">♧</span> وضعیت همکاری <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a><?php endif; ?>
         <?php if ( $has_support ): ?><a href="#pvdak-support"><span aria-hidden="true">✉</span> پشتیبانی و تیکت‌ها <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a><?php endif; ?>
         <a href="#pvdak-security"><span aria-hidden="true">◇</span> امنیت حساب <span class="pvdak-account-menu-arrow" aria-hidden="true">←</span></a>
@@ -75,6 +84,24 @@ get_header(); ?>
           <div class="pvdak-static-body pvdak-unified-empty-dashboard" role="status"><span class="pvdak-dashboard-empty-icon" aria-hidden="true">⚖</span><h2>اطلاعات پنل فعلاً در دسترس نیست</h2><p>حساب شما وارد شده است؛ با فعال شدن بخش خلاصه، اطلاعات واقعی درخواست‌ها در همین قسمت نمایش داده خواهد شد.</p><a href="#pvdak-profile">مشاهده اطلاعات حساب ←</a></div>
         <?php endif; ?>
       </section>
+
+      <?php if ($professional_interest && !$has_professional): ?>
+        <div class="pvdak-account-panel pvdak-unified-section pvdak-professional-next-step"
+          data-pvdak-panel id="pvdak-professional-interest" tabindex="-1">
+          <header class="pvdak-unified-section-header">
+            <span>همکاری حرفه‌ای</span>
+            <h2>درخواست همکاری</h2>
+            <p>انتخاب نوع حساب در ثبت‌نام، به معنی تأیید صلاحیت یا ارسال درخواست همکاری نیست.</p>
+          </header>
+          <?php if ($professional_join_url): ?>
+            <p><a class="pvdak-secondary-button" href="<?php echo esc_url($professional_join_url); ?>">
+              تکمیل درخواست بررسی همکاری
+            </a></p>
+          <?php else: ?>
+            <p class="pvdak-static-note" role="status">زمان ثبت درخواست همکاری، فرم تکمیل اطلاعات از همین حساب در دسترس خواهد بود.</p>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
 
       <?php if ( $has_requests ): ?>
         <section id="pvdak-requests" class="pvdak-account-panel pvdak-unified-section" data-pvdak-panel aria-labelledby="pvdak-requests-title" tabindex="-1">
