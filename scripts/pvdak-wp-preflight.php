@@ -56,8 +56,10 @@ if ( function_exists( 'pvdak_legal_topic_pages' ) ) {
 }
 
 // Read-only launch gates and conditional feature checks (no user IDs or case data).
-pvdak_preflight_check( 'Registration remains closed until administrator approves',
-    ! function_exists('pvdak_registration_open') || ! pvdak_registration_open() );
+pvdak_preflight_check( 'Branded registration uses verification and native signup guard',
+    function_exists('pvdak_registration_open') &&
+    function_exists('pvdak_email_verification_auth_gate') &&
+    function_exists('pvdak_native_registration_guard') );
 pvdak_preflight_check( 'New-account verification hooks loaded',
     function_exists('pvdak_email_verification_issue') &&
     function_exists('pvdak_email_verification_auth_gate') );
