@@ -123,7 +123,7 @@ $checks = array(
   '097-05 Four configured quick pages retain published links' =>
     strpos($v['front'],'pvdak_home_quick_pages()')!==false &&
     strpos($v['front'],'pvdak-home-quick-icon')!==false &&
-    strpos($v['front'],"esc_url( $quick_page['url'] )")!==false,
+    strpos($v['front'], 'esc_url( $quick_page[\'url\'] )')!==false,
   '097-06 Swiper controls actually label their track' =>
     strpos($v['front'],'aria-controls="pvdak-topics-track"')!==false &&
     strpos($v['front'],'id="pvdak-topics-track"')!==false &&
