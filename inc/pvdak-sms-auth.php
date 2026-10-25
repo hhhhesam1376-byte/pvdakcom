@@ -58,6 +58,11 @@ function pvdak_sms_send() {
         get_transient(pvdak_sms_key('cooldown',$phone))) {
         pvdak_sms_redirect($intent,'slow');
     }
+    // The phone-wide ceiling applies across IPs to prevent SMS bombing.
+    $phone_rate_key=pvdak_sms_key('phone-hourly',$phone);
+    $phone_count=(int)get_transient($phone_rate_key);
+    if ($phone_count>=5) { pvdak_sms_redirect($intent,'slow'); }
+    set_transient($phone_rate_key,min(5,$phone_count+1),HOUR_IN_SECONDS);
     $role='client';
     if ($intent==='register') {
         $role=isset($_POST['sms_role']) && is_string($_POST['sms_role']) ?
