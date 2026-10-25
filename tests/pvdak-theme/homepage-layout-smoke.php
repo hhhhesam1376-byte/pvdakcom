@@ -526,4 +526,34 @@ pvdak_layout_expect(
     false !== strpos( $css, 'Avoid competing stylesheet transform/transition declarations entirely:' ),
     'D05-001 retest: old topic-track stylesheet transforms cannot reset Swiper live translation'
 );
+
+$readiness_public_source = file_get_contents( $root . '/inc/pvdak-home-readiness.php' );
+$public_pages_source = file_get_contents( $root . '/inc/pvdak-public-pages.php' );
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, 'موضوع نمونه برای تکمیل ساختار سایت' ) &&
+    false !== strpos( $readiness_public_source, '$topic_placeholders' ) &&
+    false !== strpos( $readiness_public_source, '$topics_with_text >= 3' ),
+    'D09: admin demo readiness must not accept 17 sample legal-topic messages as approved content'
+);
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, "'_pvdak_demo_blog'" ) &&
+    false !== strpos( $readiness_public_source, '$magazine_editorial_count' ) &&
+    false !== strpos( $readiness_public_source, '$magazine_sample_count' ),
+    'D09: sample magazine posts are not counted as editorial-ready posts'
+);
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, "Suggested text" ) &&
+    false !== strpos( $readiness_public_source, '$privacy_ready' ) &&
+    false !== strpos( $readiness_public_source, '$terms_ready' ) &&
+    false !== strpos( $readiness_public_source, '$hello_sample_published' ) &&
+    false !== strpos( $readiness_public_source, 'عنوان سایت به جای نام پیش‌فرض وردپرس' ),
+    'D09/D10: readiness identifies incomplete policies, default Hello world post, and wrong site title'
+);
+pvdak_layout_expect(
+    false !== strpos( $public_pages_source, 'pvdak_public_document_title_brand_fallback' ) &&
+    false !== strpos( $public_pages_source, "'Bloggers Unite'" ) &&
+    false !== strpos( $public_pages_source, "add_filter( 'document_title_parts'" ) &&
+    false === strpos( $public_pages_source, "update_option( 'blogname', 'Bloggers Unite'" ),
+    'D10: stock browser title is corrected only on display, preserving stored site options'
+);
 echo "PVDAK_HOMEPAGE_LAYOUT_OK: {$checks} checks (synthetic + source; no WP data)\n";
