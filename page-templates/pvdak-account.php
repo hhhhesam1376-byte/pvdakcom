@@ -183,6 +183,48 @@ get_header(); ?>
             <?php if ( $recovery_url ): ?><a href="<?php echo esc_url( $recovery_url ); ?>">ورود به بخش بازیابی رمز ←</a><?php else: ?><span>بازیابی رمز عبور فعلاً در دسترس نیست.</span><?php endif; ?>
           </div>
         </div>
+        <div class="pvdak-unified-security-card pvdak-sms-bind-card">
+          <div>
+            <h3>اتصال شماره موبایل برای ورود پیامکی</h3>
+            <?php
+              $bound_mobile=(string)get_user_meta($user->ID,'_pvdak_phone_verified',true);
+              $sms_status=isset($_GET['sms_status']) && is_string($_GET['sms_status']) ?
+                  sanitize_key(wp_unslash($_GET['sms_status'])) : '';
+              $sms_status_text=array('bound'=>'شماره موبایل شما تأیید و به این حساب متصل شد.',
+                  'sent'=>'اگر شماره قابل استفاده باشد، کد ارسال شده است.',
+                  'invalid'=>'کد یا شماره معتبر نیست یا منقضی شده است.',
+                  'slow'=>'لطفاً کمی بعد تلاش کنید.',
+                  'unavailable'=>'سرویس پیامکی آماده ارسال نیست.');
+            ?>
+            <p><?php echo $bound_mobile ? esc_html('شماره تأییدشده: *******'.substr($bound_mobile,-4)) :
+                'هنوز شماره موبایل تأییدشده‌ای برای این حساب ثبت نشده است.'; ?></p>
+            <?php if ($sms_status && isset($sms_status_text[$sms_status])): ?>
+              <p class="pvdak-static-note" role="status"><?php echo esc_html($sms_status_text[$sms_status]); ?></p>
+            <?php endif; ?>
+            <?php if (current_user_can('manage_options')): ?>
+              <p>ورود پیامکی برای حساب‌های مدیر غیرفعال است؛ از ورود امن اصلی استفاده کنید.</p>
+            <?php elseif (!function_exists('pvdak_sms_auth_ready') || !pvdak_sms_auth_ready()): ?>
+              <p>اتصال پیامک هنوز فعال نشده است. پس از اتصال سرویس ارسال، شماره را در همین قسمت تأیید کنید.</p>
+            <?php else: ?>
+              <form method="post" class="pvdak-forms" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="pvdak_sms_send"><input type="hidden" name="sms_intent" value="bind">
+                <?php wp_nonce_field('pvdak_sms_send','_pvdak_sms_nonce'); ?>
+                <label for="pvdak-bind-phone">شماره موبایل</label>
+                <input id="pvdak-bind-phone" name="sms_phone" type="tel" inputmode="tel" dir="ltr" maxlength="20" placeholder="09123456789" required>
+                <button type="submit">ارسال کد اتصال شماره</button>
+              </form>
+              <form method="post" class="pvdak-forms" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="pvdak_sms_verify"><input type="hidden" name="sms_intent" value="bind">
+                <?php wp_nonce_field('pvdak_sms_verify','_pvdak_sms_verify_nonce'); ?>
+                <label for="pvdak-bind-verify-phone">همان شماره موبایل</label>
+                <input id="pvdak-bind-verify-phone" name="sms_phone" type="tel" dir="ltr" maxlength="20" placeholder="09123456789" required>
+                <label for="pvdak-bind-code">کد ۶ رقمی پیامک</label>
+                <input id="pvdak-bind-code" name="sms_code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9۰-۹]{6}" required>
+                <button type="submit">تأیید و اتصال شماره</button>
+              </form>
+            <?php endif; ?>
+          </div>
+        </div>
         <p class="pvdak-profile-privacy-hint">اطلاعات این پنل فقط برای حساب واردشده نمایش داده می‌شود.</p>
       </section>
     </div>
