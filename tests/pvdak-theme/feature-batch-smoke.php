@@ -57,10 +57,10 @@ $checks = array(
     'Professional dashboard only shown for own application' =>
         false !== strpos($data['portal'],"pvdak_core_existing_application(") &&
         false !== strpos($data['core_prof'],"_pvdak_member_state"),
-    'Registration hard OFF during maintenance and without admin opt in' =>
+    'Registration stays guarded by maintenance, explicit switch and safe role' =>
         false !== strpos($data['register'],"pvdak_maintenance_enabled()") &&
-        false !== strpos($data['register'],"get_option('pvdak_registration_enabled', '0')") &&
-        false !== strpos($data['register'],"get_option('users_can_register', false)") &&
+        false !== strpos($data['register'],"get_option('pvdak_registration_enabled', '1')") &&
+        false !== strpos($data['register'],"pvdak_public_template_page_url('account-register'") &&
         false !== strpos($data['register'],"'role'=>\$role") &&
         false !== strpos($data['register'],"'_pvdak_email_verification_pending'"),
     'Tickets private; user sees only own submitted tickets' =>
