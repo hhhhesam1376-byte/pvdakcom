@@ -9,7 +9,11 @@ function pvdak_account_tool_url( $slug ) {
     if ( 'account-profile' === $slug ) {
         return pvdak_auth_account_url() . '#pvdak-profile';
     }
-    $page = pvdak_public_page_url( $slug );
+    $page = 'account-recovery' === $slug
+        ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-recovery.php' )
+        : ( 'account-register' === $slug
+            ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-register.php' )
+            : pvdak_public_page_url( $slug ) );
     if ( $page ) { return $page; }
     // The branded recovery Page might be missing before admin page bootstrap.
     // Use the native WordPress recovery route instead of sending reset requests to 404.
@@ -54,7 +58,7 @@ add_action( 'admin_post_pvdak_profile_save', 'pvdak_profile_save' );
 
 /** Send one generic response for existent and non-existent identities. */
 function pvdak_recovery_email_message( $message, $key, $login, $user ) {
-    $custom = pvdak_public_page_url( 'account-recovery' );
+    $custom = pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' );
     $url = $custom
         ? add_query_arg( array(
             'reset' => '1', 'key' => $key, 'login' => rawurlencode( $login )
