@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.48
+Version: 0.8.49
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -3670,4 +3670,44 @@ body.home{background:linear-gradient(180deg,#f4faff,#fff 640px)}
 }
 @media(max-width:560px){
   .pvdak-unified-account .pvdak-profile-editable-details{grid-template-columns:minmax(0,1fr)}
+}
+
+/* 0.8.49 - private request-tracking guide and actual support/triage routes. */
+.pvdak-unified-account .pvdak-request-status-guide{
+  border:1px solid #d6e6ef;background:#f6fbff;border-radius:13px;
+  margin:16px 0;padding:0 15px
+}
+.pvdak-unified-account .pvdak-request-status-guide>summary{
+  padding:13px 2px;font-weight:800;font-size:13px;line-height:1.9;
+  color:#176889;cursor:pointer
+}
+.pvdak-unified-account .pvdak-request-status-guide>summary:focus-visible{
+  outline:3px solid #eabf74;outline-offset:3px
+}
+.pvdak-unified-account .pvdak-request-status-guide dl{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+  margin:0 0 10px
+}
+.pvdak-unified-account .pvdak-request-status-guide dl>div{
+  min-width:0;padding:12px;border:1px solid #d9eaf3;border-radius:10px;background:#fff
+}
+.pvdak-unified-account .pvdak-request-status-guide dt{font-weight:800;font-size:12px;color:#174d6e}
+.pvdak-unified-account .pvdak-request-status-guide dd,
+.pvdak-unified-account .pvdak-request-status-guide p{
+  font-size:12px;line-height:1.9;color:#4f697d
+}
+.pvdak-unified-account .pvdak-request-status-guide dd{margin:4px 0 0}
+.pvdak-unified-account .pvdak-request-status-guide p{margin:0 0 13px}
+.pvdak-unified-account .pvdak-request-help-link{
+  margin:18px 0;padding:14px 16px;border:1px solid #cfe5ee;
+  border-radius:12px;background:#f5fbfe;font-size:13px;line-height:2
+}
+.pvdak-unified-account .pvdak-request-help-link a,
+.pvdak-unified-account .pvdak-request-manager-link a{
+  color:#08749c;font-weight:800;text-decoration:underline;text-underline-offset:3px
+}
+.pvdak-unified-account .pvdak-request-help-link small{display:block;color:#546e83}
+.pvdak-unified-account .pvdak-request-manager-link{margin:14px 0}
+@media(max-width:600px){
+  .pvdak-unified-account .pvdak-request-status-guide dl{grid-template-columns:minmax(0,1fr)}
 }
