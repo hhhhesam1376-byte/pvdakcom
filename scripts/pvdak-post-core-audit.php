@@ -21,8 +21,12 @@ WP_CLI::line('MAINTENANCE_MODE_RUNTIME: ' .
     (function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled() ? 'ON' : 'OFF') .
     ' (Settings > General; server override may apply)');
 pvdak_audit_check('WordPress registration OFF',!(bool)get_option('users_can_register',false));
-pvdak_audit_check('PVDak registration OFF',function_exists('pvdak_registration_open') &&
-    !pvdak_registration_open());
+pvdak_audit_check('Branded PVDak registration safeguards loaded',
+    function_exists('pvdak_registration_open') &&
+    function_exists('pvdak_native_registration_guard') &&
+    function_exists('pvdak_email_verification_auth_gate'));
+WP_CLI::line('PVDAK_REGISTRATION_RUNTIME: ' .
+    (function_exists('pvdak_registration_open') && pvdak_registration_open() ? 'ON' : 'OFF'));
 pvdak_audit_check('Legal case intake OFF',function_exists('pvdak_core_intake_open') &&
     !pvdak_core_intake_open());
 pvdak_audit_check('Professional intake OFF',function_exists('pvdak_core_member_intake_open') &&
