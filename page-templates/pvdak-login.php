@@ -14,9 +14,16 @@ get_header(); ?>
 <section class="pvdak-static-body">
 <span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری PVDak</span><h1>ورود به پنل</h1>
 <p class="pvdak-auth-subheading">با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
-
-
-
+<?php
+  $sms_selected=isset($_GET['auth']) && is_string($_GET['auth']) &&
+    'sms-login'===sanitize_key(wp_unslash($_GET['auth']));
+  $sms_ready=function_exists('pvdak_sms_auth_ready') && pvdak_sms_auth_ready();
+?>
+<div class="pvdak-auth-mode-picker pvdak-login-tabs" data-pvdak-auth-picker role="tablist" aria-label="روش ورود">
+  <button type="button" id="pvdak-login-password-tab" data-pvdak-auth-tab="password" role="tab" aria-controls="pvdak-auth-password" aria-selected="<?php echo $sms_selected?'false':'true'; ?>" tabindex="<?php echo $sms_selected?'-1':'0'; ?>">ورود</button>
+  <button type="button" id="pvdak-login-sms-tab" data-pvdak-auth-tab="sms-login" role="tab" aria-controls="pvdak-auth-sms-login" aria-selected="<?php echo $sms_selected?'true':'false'; ?>" tabindex="<?php echo $sms_selected?'0':'-1'; ?>">ورود با پیامک</button>
+</div>
+<section id="pvdak-auth-password" data-pvdak-auth-pane="password" role="tabpanel" aria-labelledby="pvdak-login-password-tab" <?php echo $sms_selected?'hidden':''; ?>>
 <?php if(isset($_GET['error'])): ?>
 <p id="pvdak-login-result" tabindex="-1" class="pvdak-static-error" role="alert"><?php echo isset($_GET['error']) && is_string($_GET['error']) && 'slow' === sanitize_key(wp_unslash($_GET['error'])) ? 'تلاش‌های ورود بیش از حد بوده است. چند دقیقه بعد دوباره امتحان کنید.' : 'اطلاعات ورود تأیید نشد. نام کاربری و رمز عبور را بررسی کنید.'; ?></p>
 <?php endif; ?>
@@ -27,23 +34,23 @@ get_header(); ?>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit"><span aria-hidden="true">←</span> ورود به حساب</button></form>
 <?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
-<?php $sms_ready = function_exists('pvdak_sms_auth_ready') && pvdak_sms_auth_ready(); ?>
 <p class="pvdak-login-help pvdak-auth-help"><a href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a></p>
-<details class="pvdak-login-sms-panel" <?php echo isset($_GET['auth']) && 'sms-login'===sanitize_key(wp_unslash($_GET['auth'])) ? 'open' : ''; ?>>
-  <summary>ورود با کد پیامکی</summary>
+</section>
+<section id="pvdak-auth-sms-login" data-pvdak-auth-pane="sms-login" role="tabpanel" aria-labelledby="pvdak-login-sms-tab" <?php echo $sms_selected?'':'hidden'; ?>>
   <div class="pvdak-login-sms-content">
     <?php
     $sms_status=isset($_GET['sms_status'])&&is_string($_GET['sms_status'])?sanitize_key(wp_unslash($_GET['sms_status'])):'';
     $messages=array('sent'=>'اگر شماره ثبت شده باشد، کد ورود ارسال شده است.','invalid'=>'شماره یا کد معتبر نیست. دوباره امتحان کنید.','slow'=>'لطفاً کمی بعد دوباره تلاش کنید.','unavailable'=>'ورود پیامکی در حال حاضر در دسترس نیست.');
     if($sms_status&&isset($messages[$sms_status])): ?><p class="pvdak-static-note" role="status"><?php echo esc_html($messages[$sms_status]); ?></p><?php endif; ?>
-    <?php if($sms_ready): ?>
+    <?php if(!$sms_ready): ?><p class="pvdak-auth-method-description" role="status">ورود پیامکی به‌زودی در دسترس قرار می‌گیرد.</p><?php endif; ?>
     <form class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_sms_send"><input type="hidden" name="sms_intent" value="login">
       <?php wp_nonce_field('pvdak_sms_send','_pvdak_sms_nonce'); ?>
       <label for="pvdak-login-sms-phone">شماره موبایل</label>
       <input id="pvdak-login-sms-phone" name="sms_phone" type="tel" dir="ltr" inputmode="tel" autocomplete="tel-national" placeholder="09123456789" required>
-      <button type="submit">دریافت کد</button>
+      <button type="submit" <?php disabled(!$sms_ready,true); ?>>دریافت کد</button>
     </form>
+    <?php if($sms_ready && $sms_status==='sent'): ?>
     <form class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_sms_verify"><input type="hidden" name="sms_intent" value="login">
       <?php wp_nonce_field('pvdak_sms_verify','_pvdak_sms_verify_nonce'); ?>
@@ -53,9 +60,9 @@ get_header(); ?>
       <input id="pvdak-login-sms-code" name="sms_code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9۰-۹]{6}" maxlength="6" required>
       <button type="submit">ورود با کد</button>
     </form>
-    <?php else: ?><p class="pvdak-auth-method-description">ورود پیامکی به‌زودی در دسترس قرار می‌گیرد.</p><?php endif; ?>
+    <?php endif; ?>
   </div>
-</details>
+</section>
 <?php $register_url=pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php'); ?>
 <?php if($register_url): ?>
 <p class="pvdak-login-signup">حساب کاربری ندارید؟ <a href="<?php echo esc_url($register_url); ?>">ثبت‌نام در PVDak</a></p>
