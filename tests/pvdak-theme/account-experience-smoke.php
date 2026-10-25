@@ -48,8 +48,9 @@ $checks = array(
   'D07/D16 request follow-up guides users without leaking specialist case data' =>
     strpos($v['portal'],'class="pvdak-request-status-guide"')!==false &&
     strpos($v['portal'],'ارتباط با پشتیبانی')!==false &&
-    strpos($v['portal'],"current_user_can( 'manage_options' )")!==false &&
+    strpos($v['portal'],"current_user_can( 'edit_pvdak_requests' )")!==false &&
     strpos($v['portal'],"admin_url( 'edit.php?post_type=pvdak_request' )")!==false &&
+    strpos($v['portal'],"admin_url( 'edit.php?post_type=pvdak_request&page=pvdak-request-triage' )")!==false &&
     strpos($v['portal'],'مدارک یا اطلاعات محرمانه پرونده را در تیکت')!==false,
   'D07 Private request notice is readable on narrow screens' =>
     strpos($v['portal'], "do_shortcode( '[pvdak_my_requests]' )")!==false &&
