@@ -77,6 +77,8 @@ function pvdak_home_readiness_items() {
     // redirect or silently "fix" Pages edited by the client.
     $public_templates = array(
         'account-login' => 'page-templates/pvdak-login.php',
+        'account-register' => 'page-templates/pvdak-register.php',
+        'account-recovery' => 'page-templates/pvdak-recovery.php',
         'my-pvdak-account' => 'page-templates/pvdak-account.php',
         'contact-us' => 'page-templates/pvdak-contact.php',
         'privacy-policy' => 'page-templates/pvdak-information.php',
@@ -93,7 +95,7 @@ function pvdak_home_readiness_items() {
 
     return array(
         array( 'صفحه اصلی وردپرس', $has_front, $has_front ? 'برگه اصلی انتخاب شده' : 'برگه اصلی ثابت را تنظیم کنید', admin_url( 'options-reading.php' ) ),
-        array( 'زبان فارسی پیشخوان وردپرس', 'fa_IR' === (string) get_option( 'WPLANG', '' ),
+        array( 'زبان فارسی سایت وردپرس', 'fa_IR' === get_locale(),
             'زبان سایت را در تنظیمات عمومی روی فارسی قرار دهید؛ زبان شخصی هر مدیر نیز بررسی شود', admin_url( 'options-general.php' ) ),
         array( 'قالب راست‌چین', is_readable( get_template_directory() . '/rtl.css' ),
             'فایل راست‌چین و نسخه قالب را بررسی کنید', admin_url( 'themes.php' ) ),
@@ -113,7 +115,7 @@ function pvdak_home_readiness_items() {
         array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,
             $faq_written . ' از ' . $faq_count . ' پاسخ منتشرشده دارای متن است؛ تأیید تخصصی محتوا جداگانه لازم است', admin_url( 'edit.php?post_type=page' ) ),
         array( 'مسیرهای اصلی و قالب برگه‌ها', count( $public_templates ) === $public_ready,
-            $public_ready . ' از ' . count( $public_templates ) . ' برگه ورود، پنل، تماس، حریم خصوصی و قوانین با قالب صحیح منتشر شده‌اند', admin_url( 'edit.php?post_type=page' ) ),
+            $public_ready . ' از ' . count( $public_templates ) . ' برگه ورود، ثبت‌نام، بازیابی رمز، پنل، تماس، حریم خصوصی و قوانین با قالب صحیح منتشر شده‌اند', admin_url( 'edit.php?post_type=page' ) ),
         array( 'فهرست اصلی', has_nav_menu( 'primary' ), has_nav_menu( 'primary' ) ? 'فهرست اختصاص داده شده' : 'فهرست سایت را اختصاص دهید', admin_url( 'nav-menus.php' ) ),
         array( 'نصب مستقل PVDak Core', $core_installed,
             $core_installed ? 'نسخه افزونه روی وردپرس شناسایی شد' : 'Cron فقط قالب را منتشر می‌کند؛ نصب افزونه مستقل هنوز انجام نشده', admin_url( 'plugins.php' ) ),
@@ -123,8 +125,10 @@ function pvdak_home_readiness_items() {
             $core_active ? 'افزونه Core فعال است' : 'هسته هنوز در وردپرس فعال نشده', admin_url( 'plugins.php' ) ),
         array( 'نقش‌های پایه کاربران', $roles_ready,
             $roles_ready ? 'چهار نقش پایه حاضرند؛ آزمون چندحسابی همچنان لازم است' : 'نقش‌های مراجعه‌کننده یا متخصص نیازمند بازبینی هستند', admin_url( 'users.php' ) ),
-        array( 'صفحه تعمیرات عمومی', $maintenance_on,
-            $maintenance_on ? 'بازدیدکنندگان عمومی هنوز صفحه تعمیرات را می‌بینند' : 'تا پایان آزمون‌ها صفحه تعمیرات را فعال نگه دارید', admin_url( 'themes.php' ) ),
+        array( 'دسترسی نمایشی بازدیدکننده بدون تعمیرات', ! $maintenance_on,
+            $maintenance_on ? 'بازدیدکنندگان هنوز صفحه تعمیرات را می‌بینند؛ برای بازبینی خاموش کنید'
+                : 'بازدیدکنندگان عادی نسخه نمایشی سایت را می‌بینند؛ فعال بودن ثبت‌نام و پذیرش پرونده جداست',
+            admin_url( 'options-general.php' ) ),
         array( 'پذیرش داده‌های حقوقی خاموش', $core_safe,
             $core_safe ? 'هر دو فرم درخواست و همکاری غیرفعال‌اند' : 'قبل از تست واقعی، پذیرش اطلاعات باید خاموش بماند', $core_active ? admin_url( 'options-general.php?page=pvdak-core' ) : admin_url( 'plugins.php' ) ),
     );
