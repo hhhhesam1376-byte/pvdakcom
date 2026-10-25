@@ -299,7 +299,7 @@ function pvdak_core_directory_consent_valid( $profile_id ) {
     return '' !== $fingerprint && is_array( $consent ) &&
         isset( $consent['fingerprint'], $consent['at'] ) &&
         is_string( $consent['fingerprint'] ) && is_string( $consent['at'] ) &&
-        (bool) preg_match( '/^\\d{4}-\\d{2}-\\d{2} /', $consent['at'] ) &&
+        '' !== trim( $consent['at'] ) &&
         hash_equals( $fingerprint, $consent['fingerprint'] );
 }
 
