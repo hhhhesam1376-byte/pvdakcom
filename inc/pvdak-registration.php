@@ -35,6 +35,26 @@ function pvdak_registration_register_general_setting() {
 }
 add_action('admin_init','pvdak_registration_register_general_setting');
 
+/**
+ * "Anyone can register" is needed for PVDak's existing opt-in gate, but
+ * the native wp-login.php?action=register handler does not run our email
+ * verification/role policy. Redirect it and fail closed if the handler runs.
+ * Manager-created WordPress accounts and our wp_insert_user path are unaffected.
+ */
+function pvdak_native_register_redirect() {
+    if (is_user_logged_in()) { return; }
+    wp_safe_redirect(add_query_arg('auth','register-email',pvdak_auth_login_url()));
+    exit;
+}
+add_action('login_form_register','pvdak_native_register_redirect');
+function pvdak_native_registration_guard($errors,$login,$email) {
+    if (is_wp_error($errors)) {
+        $errors->add('pvdak_branded_signup_required','برای ثبت‌نام از فرم تأیید ایمیل PVDak استفاده کنید.');
+    }
+    return $errors;
+}
+add_filter('registration_errors','pvdak_native_registration_guard',10,3);
+
 function pvdak_registration_result_url() {
     $source=isset($_POST['register_source']) && is_string($_POST['register_source']) ?
         sanitize_key(wp_unslash($_POST['register_source'])) : '';
