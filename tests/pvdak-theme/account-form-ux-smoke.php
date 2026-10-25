@@ -129,6 +129,18 @@ $checks = array(
   'Account panels offer return navigation' => substr_count( $s['portal'], 'pvdak-panel-return' ) === 2,
   'Account scripts available on profile and contact' => strpos( $s['functions'], "'account-profile', 'contact-us'" ) !== false,
   'Active navigation recognizes JS location marker' => strpos( $s['css'], '.pvdak-account-menu a[aria-current]{' ) !== false,
+  'SMS registration redirect is visible without JavaScript' =>
+    strpos( $s['register-ui'], "'sms-register'===sanitize_key" ) !== false &&
+    strpos( $s['register-ui'], 'data-pvdak-auth-pane="sms-register" <?php echo $sms_selected' ) !== false,
+  'Both signup methods link to the published legal policies' =>
+    substr_count( $s['register-ui'], 'esc_url($terms)' ) === 2 &&
+    substr_count( $s['register-ui'], 'esc_url($privacy)' ) === 2,
+  'Server feedback is focusable and distinguishes SMS from email errors' =>
+    strpos( $s['register-ui'], 'id="pvdak-register-email-result" tabindex="-1"' ) !== false &&
+    strpos( $s['register-ui'], 'id="pvdak-register-sms-result" tabindex="-1"' ) !== false &&
+    strpos( $s['login'], 'id="pvdak-sms-login-result" tabindex="-1"' ) !== false &&
+    strpos( $s['recovery'], 'id="pvdak-recovery-result" tabindex="-1"' ) !== false &&
+    strpos( $s['script'], "params.has('sms_status')" ) !== false,
   'No remote JS calls or credential storage' => strpos( $s['script'], 'fetch(' ) === false && strpos( $s['script'], 'localStorage' ) === false,
   'Prevent repeated valid submissions' => strpos( $s['script'], 'form.dataset.pvdakSubmitting' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,

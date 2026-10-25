@@ -42,6 +42,8 @@
 
             button.addEventListener('click', function () {
                 var willOpen = submenu.hidden;
+                // Keep keyboard focus on a visible control when closing a branch.
+                if (!willOpen && submenu.contains(document.activeElement)) { button.focus(); }
                 submenu.hidden = !willOpen;
                 button.setAttribute('aria-expanded', String(willOpen));
                 button.setAttribute('aria-label', (willOpen ? 'بستن' : 'باز کردن') + ' زیرمنوی ' + name);
@@ -77,6 +79,8 @@
                 if (closeButton) { closeButton.focus(); }
                 return;
             }
+            // Native summary close may leave focus inside a now-hidden drawer.
+            if (drawer && drawer.contains(document.activeElement) && trigger) { trigger.focus(); }
             toggles.forEach(function (entry) {
                 entry.submenu.hidden = true;
                 entry.button.setAttribute('aria-expanded', 'false');
@@ -97,9 +101,13 @@
                 return;
             }
             if (event.key !== 'Tab' || !drawer) { return; }
-            var focusable = drawer.querySelectorAll(
+            var focusable = Array.prototype.filter.call(drawer.querySelectorAll(
                 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-            );
+            ), function (element) {
+                // Collapsed nested menus must never enter the Tab trap.
+                return !element.closest('[hidden]') && element.getClientRects().length > 0 &&
+                    window.getComputedStyle(element).visibility !== 'hidden';
+            });
             if (!focusable.length) { return; }
             var first = focusable[0];
             var last = focusable[focusable.length - 1];
@@ -112,11 +120,21 @@
                 first.focus();
             }
         });
+        list.addEventListener('click', function (event) {
+            var link = event.target.closest('a[href]');
+            // An in-page link must not leave the overlay and body scroll locked.
+            if (link && list.contains(link) && link.getAttribute('href') !== '#') { closeMenu(false); }
+        });
         document.addEventListener('click', function (event) {
             if (menu.open && !menu.contains(event.target)) { closeMenu(false); }
         });
         window.addEventListener('resize', function () {
             if (window.innerWidth > 1030) { closeMenu(false); }
+        });
+        window.addEventListener('pageshow', function (event) {
+            // A browser back/forward cache restore must not resurrect a locked drawer.
+            if (event.persisted) { closeMenu(false); }
+            if (!menu.open) { document.body.classList.remove('pvdak-mobile-drawer-open'); }
         });
     }
 

@@ -150,4 +150,14 @@ pvdak_nav_assert(
     false !== strpos( $mobile_js, "first.focus()" ) &&
     false !== strpos( $mobile_js, "closeMenu(true)" ),
     'Drawer traps keyboard focus and restores focus after Escape/close' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "submenu.contains(document.activeElement)" ) &&
+    false !== strpos( $mobile_js, "element.closest('[hidden]')" ) &&
+    false !== strpos( $mobile_js, "element.getClientRects().length > 0" ),
+    'Collapsed branches cannot strand focus or leak hidden links into the Tab trap' );
+pvdak_nav_assert(
+    false !== strpos( $mobile_js, "list.addEventListener('click'" ) &&
+    false !== strpos( $mobile_js, "window.addEventListener('pageshow'" ) &&
+    false !== strpos( $mobile_js, "drawer.contains(document.activeElement)" ),
+    'Navigating links, native close and bfcache restores clear the drawer state' );
 echo "PVDAK_MEGA_NAV_OK: checks={$checks} (static source checks only)\n";

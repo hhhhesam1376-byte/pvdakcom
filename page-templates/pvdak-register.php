@@ -8,7 +8,12 @@ if(is_user_logged_in()){wp_safe_redirect(pvdak_auth_account_url());exit;}
 $state=isset($_GET['state'])&&is_string($_GET['state'])?sanitize_key(wp_unslash($_GET['state'])):'';
 $sms_status=isset($_GET['sms_status'])&&is_string($_GET['sms_status'])?sanitize_key(wp_unslash($_GET['sms_status'])):'';
 $sms_ready=function_exists('pvdak_sms_auth_ready')&&pvdak_sms_auth_ready();
+// Match the SMS handler's ?auth=sms-register redirect even without JavaScript.
+$sms_selected=isset($_GET['auth'])&&is_string($_GET['auth'])&&
+    'sms-register'===sanitize_key(wp_unslash($_GET['auth']));
 $registration_open=pvdak_registration_open();
+$terms=pvdak_public_page_url('terms-of-use');
+$privacy=pvdak_public_page_url('privacy-policy');
 $email_states=array(
     'received'=>'حساب شما ساخته شد. برای تکمیل ثبت‌نام، ایمیل خود را تأیید کنید.',
     'email_issue'=>'حساب ایجاد شد، ولی ارسال ایمیل تأیید انجام نشد؛ از گزینه ارسال دوباره لینک تأیید استفاده کنید.',
@@ -36,13 +41,13 @@ get_header();
   </header>
   <div class="pvdak-static-body pvdak-recovery-panel pvdak-register-surface">
     <div class="pvdak-auth-mode-picker pvdak-register-tabs" data-pvdak-auth-picker role="tablist" aria-label="روش ثبت‌نام">
-      <button type="button" data-pvdak-auth-tab="register-email" role="tab" id="pvdak-register-email-tab" aria-controls="pvdak-auth-register-email" aria-selected="true">ثبت‌نام با ایمیل</button>
-      <button type="button" data-pvdak-auth-tab="sms-register" role="tab" id="pvdak-register-sms-tab" aria-controls="pvdak-auth-sms-register" aria-selected="false">ثبت‌نام با پیامک</button>
+      <button type="button" data-pvdak-auth-tab="register-email" role="tab" id="pvdak-register-email-tab" aria-controls="pvdak-auth-register-email" aria-selected="<?php echo $sms_selected ? 'false' : 'true'; ?>" tabindex="<?php echo $sms_selected ? '-1' : '0'; ?>">ثبت‌نام با ایمیل</button>
+      <button type="button" data-pvdak-auth-tab="sms-register" role="tab" id="pvdak-register-sms-tab" aria-controls="pvdak-auth-sms-register" aria-selected="<?php echo $sms_selected ? 'true' : 'false'; ?>" tabindex="<?php echo $sms_selected ? '0' : '-1'; ?>">ثبت‌نام با پیامک</button>
     </div>
 
-    <section id="pvdak-auth-register-email" role="tabpanel" aria-labelledby="pvdak-register-email-tab" data-pvdak-auth-pane="register-email">
+    <section id="pvdak-auth-register-email" role="tabpanel" aria-labelledby="pvdak-register-email-tab" data-pvdak-auth-pane="register-email" <?php echo $sms_selected ? 'hidden' : ''; ?>>
       <?php if($state&&isset($email_states[$state])): ?>
-        <p class="pvdak-auth-feedback" role="status"><?php echo esc_html($email_states[$state]); ?></p>
+        <p id="pvdak-register-email-result" tabindex="-1" class="pvdak-auth-feedback" role="<?php echo in_array($state,array('received','verified','resent'),true) ? 'status' : 'alert'; ?>"><?php echo esc_html($email_states[$state]); ?></p>
       <?php endif; ?>
       <?php if($registration_open): ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit>
@@ -63,7 +68,7 @@ get_header();
             <option value="student">دانشجوی حقوق</option>
           </select>
           <label class="pvdak-check"><input type="checkbox" name="register_consent" required><span>با <?php
-            $terms=pvdak_public_page_url('terms-of-use'); $privacy=pvdak_public_page_url('privacy-policy');
+            // The same published policies are linked from both registration methods.
             if($terms): ?><a href="<?php echo esc_url($terms); ?>">شرایط استفاده</a><?php else: ?>شرایط استفاده<?php endif; ?>
             و <?php if($privacy): ?><a href="<?php echo esc_url($privacy); ?>">حریم خصوصی</a><?php else: ?>حریم خصوصی<?php endif; ?> موافقم.</span></label>
           <button type="submit">ایجاد حساب</button>
@@ -83,9 +88,9 @@ get_header();
         </details>
     </section>
 
-    <section id="pvdak-auth-sms-register" role="tabpanel" aria-labelledby="pvdak-register-sms-tab" data-pvdak-auth-pane="sms-register">
+    <section id="pvdak-auth-sms-register" role="tabpanel" aria-labelledby="pvdak-register-sms-tab" data-pvdak-auth-pane="sms-register" <?php echo $sms_selected ? '' : 'hidden'; ?>>
       <?php if($sms_status&&isset($sms_states[$sms_status])): ?>
-        <p class="pvdak-auth-feedback" role="status"><?php echo esc_html($sms_states[$sms_status]); ?></p>
+        <p id="pvdak-register-sms-result" tabindex="-1" class="pvdak-auth-feedback" role="<?php echo 'sent' === $sms_status ? 'status' : 'alert'; ?>"><?php echo esc_html($sms_states[$sms_status]); ?></p>
       <?php endif; ?>
       <?php if($sms_ready&&$registration_open): ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit>
@@ -101,7 +106,7 @@ get_header();
             <option value="trainee">متقاضی همکاری کارآموز</option>
             <option value="student">دانشجوی حقوق</option>
           </select>
-          <label class="pvdak-check"><input type="checkbox" name="sms_consent" required><span>با شرایط استفاده و حریم خصوصی موافقم.</span></label>
+          <label class="pvdak-check"><input type="checkbox" name="sms_consent" required><span>با <?php if($terms): ?><a href="<?php echo esc_url($terms); ?>">شرایط استفاده</a><?php else: ?>شرایط استفاده<?php endif; ?> و <?php if($privacy): ?><a href="<?php echo esc_url($privacy); ?>">حریم خصوصی</a><?php else: ?>حریم خصوصی<?php endif; ?> موافقم.</span></label>
           <button type="submit">دریافت کد تأیید</button>
         </form>
         <details class="pvdak-register-resend" <?php echo 'sent'===$sms_status ? 'open' : ''; ?>>

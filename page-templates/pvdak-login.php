@@ -33,7 +33,7 @@ get_header(); ?>
 <label for="pvdak-password"><span aria-hidden="true">♢</span> رمز عبور</label><div class="pvdak-password-field"><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" <?php if(isset($_GET['error']) && is_string($_GET['error']) && 'slow' !== sanitize_key(wp_unslash($_GET['error']))): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="pvdak-password" aria-controls="pvdak-password" aria-pressed="false">نمایش</button></div>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit"><span aria-hidden="true">←</span> ورود به حساب</button></form>
-<?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
+<?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p id="pvdak-login-reset-result" tabindex="-1" class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
 <p class="pvdak-login-help pvdak-auth-help"><a href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a></p>
 </section>
 <section id="pvdak-auth-sms-login" data-pvdak-auth-pane="sms-login" role="tabpanel" aria-labelledby="pvdak-login-sms-tab" <?php echo $sms_selected?'':'hidden'; ?>>
@@ -41,7 +41,7 @@ get_header(); ?>
     <?php
     $sms_status=isset($_GET['sms_status'])&&is_string($_GET['sms_status'])?sanitize_key(wp_unslash($_GET['sms_status'])):'';
     $messages=array('sent'=>'اگر شماره ثبت شده باشد، کد ورود ارسال شده است.','invalid'=>'شماره یا کد معتبر نیست. دوباره امتحان کنید.','slow'=>'لطفاً کمی بعد دوباره تلاش کنید.','unavailable'=>'ورود پیامکی در حال حاضر در دسترس نیست.');
-    if($sms_status&&isset($messages[$sms_status])): ?><p class="pvdak-static-note" role="status"><?php echo esc_html($messages[$sms_status]); ?></p><?php endif; ?>
+    if($sms_status&&isset($messages[$sms_status])): ?><p id="pvdak-sms-login-result" tabindex="-1" class="pvdak-static-note" role="<?php echo 'sent' === $sms_status ? 'status' : 'alert'; ?>"><?php echo esc_html($messages[$sms_status]); ?></p><?php endif; ?>
     <?php if(!$sms_ready): ?><p class="pvdak-auth-method-description" role="status">ورود پیامکی به‌زودی در دسترس قرار می‌گیرد.</p><?php endif; ?>
     <form class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
       <input type="hidden" name="action" value="pvdak_sms_send"><input type="hidden" name="sms_intent" value="login">

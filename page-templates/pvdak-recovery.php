@@ -22,8 +22,8 @@ get_header(); ?>
     <li class="<?php echo $valid ? 'is-active' : ''; ?>">انتخاب رمز جدید</li>
     <li>ورود دوباره</li>
   </ol>
-  <?php if($status==='sent'):?><p role="status" class="pvdak-static-note">اگر این حساب موجود باشد، راهنمای بازیابی رمز به ایمیل ثبت‌شده ارسال خواهد شد.</p><?php endif; ?>
-  <?php if($status==='invalid'):?><p role="alert" class="pvdak-static-error">پیوند بازیابی نامعتبر یا منقضی شده است؛ درخواست تازه‌ای ثبت کنید.</p><?php endif; ?>
+  <?php if($status==='sent'):?><p id="pvdak-recovery-result" tabindex="-1" role="status" class="pvdak-static-note">اگر این حساب موجود باشد، راهنمای بازیابی رمز به ایمیل ثبت‌شده ارسال خواهد شد.</p><?php endif; ?>
+  <?php if($status==='invalid'):?><p id="pvdak-recovery-result" tabindex="-1" role="alert" class="pvdak-static-error">پیوند بازیابی نامعتبر یا منقضی شده است؛ درخواست تازه‌ای ثبت کنید.</p><?php endif; ?>
   <?php if($valid): ?>
     <p class="pvdak-recovery-instruction">برای حساب خود رمز جدیدی انتخاب کنید. از رمز تکراری یا قابل حدس استفاده نکنید.</p>
     <form method="post" class="pvdak-forms" data-pvdak-single-submit data-pvdak-recovery-change action="<?php echo esc_url(admin_url('admin-post.php')); ?>">

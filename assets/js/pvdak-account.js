@@ -170,6 +170,11 @@
   var feedback = params.has('support') ? 'pvdak-support-notice' :
     params.has('sent') ? 'pvdak-contact-result' :
     params.has('error') ? 'pvdak-login-result' :
+    params.has('sms_status') && document.getElementById('pvdak-sms-login-result') ? 'pvdak-sms-login-result' :
+    params.has('sms_status') && document.getElementById('pvdak-register-sms-result') ? 'pvdak-register-sms-result' :
+    params.has('state') && document.getElementById('pvdak-register-email-result') ? 'pvdak-register-email-result' :
+    params.has('status') && document.getElementById('pvdak-recovery-result') ? 'pvdak-recovery-result' :
+    params.has('status') && document.getElementById('pvdak-login-reset-result') ? 'pvdak-login-reset-result' :
     params.has('status') && document.querySelector('[data-pvdak-profile-form]') ? 'pvdak-profile-result' : '';
   if (feedback) {
     var notice = document.getElementById(feedback);
