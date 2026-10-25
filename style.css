@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.52
+Version: 0.8.53
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -4007,4 +4007,123 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
 }
 @media (prefers-reduced-motion: reduce) {
   .site-header .pvdak-mobile-branch-toggle span {transition:none}
+}
+
+
+/* PVDak 0.8.53 — D06: mobile navigation uses a viewport-height off-canvas,
+   rather than an absolute popover constrained to the header.
+   A dimmed backdrop covers the rest of the PAGE; the real WordPress
+   parent/child/grandchild navigation is unchanged. */
+@media (max-width: 1030px) {
+  body.pvdak-mobile-drawer-open { overflow:hidden }
+  .site-header .pvdak-mobile-menu > .pvdak-mobile-backdrop {
+    display:none;
+  }
+  .site-header .pvdak-mobile-menu[open] > .pvdak-mobile-backdrop {
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:109;
+    background:rgba(3,20,37,.68);
+    cursor:pointer;
+    animation:pvdak-drawer-backdrop-in .23s ease-out both;
+  }
+  .site-header .pvdak-mobile-menu[open] > nav#pvdak-mobile-drawer {
+    position:fixed;
+    top:0;
+    bottom:0;
+    right:0;
+    left:auto;
+    inset-inline-start:0;
+    inset-inline-end:auto;
+    display:block;
+    box-sizing:border-box;
+    width:min(430px,90vw);
+    height:100vh;
+    height:100dvh;
+    min-height:0;
+    max-height:none;
+    max-width:none;
+    padding:0 17px 28px;
+    margin:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    background:#fff;
+    border:0;
+    border-radius:18px 0 0 18px;
+    box-shadow:-16px 0 48px rgba(4,24,43,.27);
+    z-index:110;
+    text-align:right;
+    touch-action:pan-y;
+    animation:pvdak-drawer-enter .28s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .site-header .pvdak-mobile-drawer-head {
+    position:sticky;
+    top:0;
+    z-index:3;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 -17px 13px;
+    padding:18px 18px 15px;
+    min-height:75px;
+    background:linear-gradient(115deg,#092f50,#135778);
+    border-bottom:3px solid #22a7b4;
+    color:#fff;
+  }
+  .site-header .pvdak-mobile-drawer-title {
+    font-size:16px;
+    font-weight:900;
+    letter-spacing:0;
+    color:#fff;
+  }
+  .site-header .pvdak-mobile-drawer-close {
+    flex:0 0 43px;
+    display:grid;
+    place-items:center;
+    width:43px;
+    height:43px;
+    margin:0;
+    padding:0;
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:11px;
+    color:#fff;
+    font:inherit;
+    cursor:pointer;
+  }
+  .site-header .pvdak-mobile-drawer-close span {
+    font-size:31px;
+    line-height:1;
+  }
+  .site-header .pvdak-mobile-drawer-close:hover {
+    background:rgba(255,255,255,.26);
+  }
+  .site-header .pvdak-mobile-drawer-close:focus-visible {
+    outline:3px solid #f9c765;
+    outline-offset:3px;
+  }
+  .site-header .pvdak-mobile-links {
+    padding-bottom:24px;
+    margin-bottom:0;
+  }
+  .site-header .pvdak-mobile-support-link {
+    margin-bottom:8px;
+  }
+}
+@keyframes pvdak-drawer-enter {
+  from { transform:translateX(105%);opacity:.86 }
+  to   { transform:translateX(0);opacity:1 }
+}
+@keyframes pvdak-drawer-backdrop-in {
+  from { opacity:0 }
+  to   { opacity:1 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header .pvdak-mobile-menu[open] > nav#pvdak-mobile-drawer,
+  .site-header .pvdak-mobile-menu[open] > .pvdak-mobile-backdrop {
+    animation:none !important;
+  }
 }
