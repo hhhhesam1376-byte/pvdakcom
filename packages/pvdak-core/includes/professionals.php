@@ -68,7 +68,7 @@ function pvdak_core_member_application_form() {
         $current = get_post_meta( $existing_id, '_pvdak_member_state', true );
         $states = pvdak_core_member_states();
         $html = '<p class="pvdak-core-notice" role="status">درخواست عضویت شما با شماره پیگیری #' . esc_html( $existing_id ) . ': ' .
-            esc_html( isset( $states[ $current ] ) ? $states[ $current ] : $states['pending'] ) . '. برای اصلاح مشخصات با پشتیبانی تماس بگیرید.</p>';
+            esc_html( is_string( $current ) && isset( $states[ $current ] ) ? $states[ $current ] : 'نیازمند بررسی' ) . '. برای اصلاح مشخصات با پشتیبانی تماس بگیرید.</p>';
         $dashboard = pvdak_core_published_page_link( 'my-professional-account', 'pvdak_professional_dashboard' );
         if ( $dashboard ) { $html .= '<p><a href="' . esc_url( $dashboard ) . '">پیگیری در پنل همکاری</a></p>'; }
         return $html;

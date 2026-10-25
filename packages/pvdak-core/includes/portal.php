@@ -102,8 +102,8 @@ function pvdak_core_dashboard( $atts = array() ) {
             $status = get_post_meta( $item->ID, '_pvdak_request_state', true );
             $html .= '<li><strong>' . esc_html( get_the_title( $item->ID ) ) . '</strong>';
             $html .= '<time datetime="' . esc_attr( get_the_date( 'Y-m-d', $item->ID ) ) . '">' . esc_html( get_the_date( 'Y/m/d', $item->ID ) ) . '</time>';
-            $html .= '<span>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'درخواست حقوقی' );
-            $html .= ' · ' . esc_html( isset( $statuses[ $status ] ) ? $statuses[ $status ] : 'ثبت‌شده' ) . '</span></li>';
+            $html .= '<span>' . esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'درخواست حقوقی' );
+            $html .= ' · ' . esc_html( is_string( $status ) && isset( $statuses[ $status ] ) ? $statuses[ $status ] : 'نیازمند بررسی' ) . '</span></li>';
         }
         $html .= '</ul>';
     }

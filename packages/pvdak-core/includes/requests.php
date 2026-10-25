@@ -291,15 +291,15 @@ function pvdak_core_my_requests() {
         foreach ( $items as $item ) {
             $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
             $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
-            $state_key = isset( $statuses[$state] ) ? $state : 'submitted';
+            $state_key = is_string( $state ) && isset( $statuses[$state] ) ? $state : 'submitted';
             $topic_id = absint( get_post_meta( $item->ID, '_pvdak_legal_landing_id', true ) );
             $topic = $topic_id && 'page' === get_post_type( $topic_id ) && 'publish' === get_post_status( $topic_id ) ?
                 get_the_title( $topic_id ) : '';
             $html .= '<li class="pvdak-core-request-card"><div class="pvdak-core-request-card-head"><strong>' .
                 esc_html( get_the_title( $item->ID ) ) . '</strong><span class="pvdak-core-request-state pvdak-core-request-state--' .
-                esc_attr( $state_key ) . '">' . esc_html( isset( $statuses[$state] ) ? $statuses[$state] : 'ثبت‌شده' ) . '</span></div>';
+                esc_attr( $state_key ) . '">' . esc_html( is_string( $state ) && isset( $statuses[$state] ) ? $statuses[$state] : 'نیازمند بررسی' ) . '</span></div>';
             $html .= '<dl><div><dt>شماره پیگیری</dt><dd>' . esc_html( number_format_i18n( $item->ID ) ) . '</dd></div>';
-            $html .= '<div><dt>نوع درخواست</dt><dd>' . esc_html( isset( $types[$type] ) ? $types[$type] : 'درخواست حقوقی' ) . '</dd></div>';
+            $html .= '<div><dt>نوع درخواست</dt><dd>' . esc_html( is_string( $type ) && isset( $types[$type] ) ? $types[$type] : 'درخواست حقوقی' ) . '</dd></div>';
             $html .= '<div><dt>تاریخ ثبت</dt><dd><time datetime="' . esc_attr( get_the_date( 'Y-m-d', $item->ID ) ) .
                 '">' . esc_html( get_the_date( 'j F Y', $item->ID ) ) . '</time></dd></div>';
             if ( '' !== $topic ) { $html .= '<div><dt>موضوع حقوقی</dt><dd>' . esc_html( $topic ) . '</dd></div>'; }
@@ -379,13 +379,15 @@ function pvdak_core_request_metabox_html( $post ) {
     echo '<p><strong>موضوع حقوقی:</strong> ' .
         ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
     $current = get_post_meta( $post->ID, '_pvdak_request_state', true );
-    if ( ! is_string( $current ) || ! isset( $statuses[ $current ] ) ) {
+    if ( ! is_string( $current ) || ( '' !== $current && ! isset( $statuses[ $current ] ) ) ) {
         echo '<p class="notice notice-warning">وضعیت ذخیره‌شده نامعتبر است؛ ویرایش گردش کار و یادداشت تا بررسی داده توسط مدیر مسدود است.</p>';
         return;
     }
+    // Keep the pre-existing legacy empty-state recovery path usable.
+    if ( '' === $current ) { $current = 'submitted'; }
     echo '<input type="hidden" name="_pvdak_expected_state" value="' . esc_attr( $current ) . '">';
     echo '<input type="hidden" name="_pvdak_note_token" value="' . esc_attr( wp_generate_uuid4() ) . '">';
-    echo '<p><strong>نوع:</strong> ' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
+    echo '<p><strong>نوع:</strong> ' . esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
     echo '<p><strong>وضعیت کنونی:</strong> ' . esc_html( $statuses[ $current ] ) . '</p>';
     echo '<label for="pvdak_state">تغییر وضعیت رسیدگی</label><select name="pvdak_state" id="pvdak_state" class="widefat">';
     echo '<option value="' . esc_attr( $current ) . '">بدون تغییر (' . esc_html( $statuses[ $current ] ) . ')</option>';
