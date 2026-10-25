@@ -32,13 +32,17 @@ function pvdak_sms_user($phone) {
     return $user instanceof WP_User ? $user : false;
 }
 function pvdak_sms_redirect($intent,$status) {
-    $url='bind'===$intent ? pvdak_auth_account_url() : pvdak_auth_login_url();
     if ('bind'===$intent) {
-        wp_safe_redirect(add_query_arg('sms_status',$status,$url).'#pvdak-security');
+        wp_safe_redirect(add_query_arg('sms_status',$status,pvdak_auth_account_url()).'#pvdak-security');
         exit;
     }
-    wp_safe_redirect(add_query_arg(array('auth'=> 'register'===$intent ? 'sms-register' : 'sms-login',
-        'sms_status'=>$status),$url));
+    if ('register'===$intent) {
+        wp_safe_redirect(add_query_arg(array('auth'=>'sms-register','sms_status'=>$status),
+            pvdak_registration_result_url()));
+        exit;
+    }
+    wp_safe_redirect(add_query_arg(array('auth'=>'sms-login','sms_status'=>$status),
+        pvdak_auth_login_url()));
     exit;
 }
 /** Send and verify are explicitly gated, rate-limited and require WordPress nonces. */
