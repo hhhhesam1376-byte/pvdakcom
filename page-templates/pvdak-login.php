@@ -12,7 +12,7 @@ get_header(); ?>
 <nav class="pvdak-account-breadcrumbs" aria-label="مسیر صفحه"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">خانه</a><span aria-hidden="true"> / </span><span aria-current="page">ورود به حساب</span></nav>
 <div class="pvdak-login-grid">
 <section class="pvdak-static-body">
-<span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری پویش</span><h1>ورود به پنل</h1>
+<span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری PVDak</span><h1>ورود به پنل</h1>
 <p class="pvdak-auth-subheading">با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
 <p>با نام کاربری یا ایمیل و رمز عبور حساب خود وارد شوید.</p>
 <p class="pvdak-login-trust-note"><span aria-hidden="true">✓</span> ورود امن با حساب وردپرس؛ بدون نیاز به شماره موبایل.</p>
@@ -30,5 +30,5 @@ get_header(); ?>
 <p class="pvdak-login-help pvdak-auth-help" aria-label="راه‌های دسترسی به حساب"><a href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a> · ورود پیامکی فعلاً فعال نیست. <?php $register_url = pvdak_public_template_page_url( 'account-register', 'page-templates/pvdak-register.php' ); ?>
 <?php if ( $register_url ): ?><a href="<?php echo esc_url( $register_url ); ?>">وضعیت ثبت‌نام</a><?php else: ?>ثبت‌نام فعلاً در دسترس نیست<?php endif; ?>. برای مشکل دسترسی از <a href="<?php echo esc_url(pvdak_public_page_url('contact-us')?:home_url('/contact-us/')); ?>">تماس با ما</a> استفاده کنید.</p>
 </section>
-<aside class="pvdak-login-art pvdak-auth-visual"><span class="pvdak-auth-scale" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 7v47M11 18h42M18 19 7 43h22L18 19Zm28 0L35 43h22L46 19ZM18 55h28"/></svg></span><span class="pvdak-auth-art-label">PVDAK • پویش وکلای دادگستری</span><h2>مسیر روشن پیگیری</h2><p>پروفایل شخصی، سوابق درخواست و گفت‌وگوهای پشتیبانی در یک فضای منسجم.</p><ul class="pvdak-login-benefits"><li>دسترسی به اطلاعات حساب</li><li>پیگیری پیام‌های خصوصی</li><li>مدیریت وضعیت همکاری</li></ul></aside>
+<aside class="pvdak-login-art pvdak-auth-visual"><span class="pvdak-auth-scale" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 7v47M11 18h42M18 19 7 43h22L18 19Zm28 0L35 43h22L46 19ZM18 55h28"/></svg></span><span class="pvdak-auth-art-label">PVDAK • PVDak وکلای دادگستری</span><h2>مسیر روشن پیگیری</h2><p>پروفایل شخصی، سوابق درخواست و گفت‌وگوهای پشتیبانی در یک فضای منسجم.</p><ul class="pvdak-login-benefits"><li>دسترسی به اطلاعات حساب</li><li>پیگیری پیام‌های خصوصی</li><li>مدیریت وضعیت همکاری</li></ul></aside>
 </div></main><?php get_footer(); ?>
