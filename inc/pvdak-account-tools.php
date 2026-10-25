@@ -45,13 +45,27 @@ function pvdak_profile_save() {
     $value = is_string( $raw ) ? sanitize_text_field( $raw ) : '';
     $url = pvdak_auth_account_url();
     $value = trim( $value );
-    if ( '' === $value || pvdak_public_text_length( $value ) > 120 ) {
+    // Only non-privileged profile fields are editable here. Do not take
+    // user ID, email, role, capability or verification status from POST.
+    $profile = array();
+    foreach ( array( 'first_name', 'last_name' ) as $field ) {
+        $raw_field = wp_unslash( $_POST[ $field ] ?? '' );
+        $profile[ $field ] = is_string( $raw_field )
+            ? trim( sanitize_text_field( $raw_field ) ) : '';
+    }
+    if ( '' === $value || pvdak_public_text_length( $value ) > 120 ||
+         pvdak_public_text_length( $profile['first_name'] ) > 80 ||
+         pvdak_public_text_length( $profile['last_name'] ) > 80 ) {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) . '#pvdak-profile' ); exit;
     }
-    if ( $value === (string) wp_get_current_user()->display_name ) {
+    $id = get_current_user_id();
+    if ( $value === (string) wp_get_current_user()->display_name &&
+         $profile['first_name'] === (string) get_user_meta( $id, 'first_name', true ) &&
+         $profile['last_name'] === (string) get_user_meta( $id, 'last_name', true ) ) {
         wp_safe_redirect( add_query_arg( 'status', 'unchanged', $url ) . '#pvdak-profile' ); exit;
     }
-    $result = wp_update_user( array( 'ID' => get_current_user_id(), 'display_name' => $value ) );
+    $result = wp_update_user( array( 'ID' => $id, 'display_name' => $value,
+        'first_name' => $profile['first_name'], 'last_name' => $profile['last_name'] ) );
     wp_safe_redirect( add_query_arg( 'status', is_wp_error( $result ) ? 'failed' : 'saved', $url ) . '#pvdak-profile' ); exit;
 }
 add_action( 'admin_post_pvdak_profile_save', 'pvdak_profile_save' );
