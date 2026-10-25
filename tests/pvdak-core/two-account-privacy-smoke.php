@@ -206,6 +206,6 @@ pvdak_privacy_assert( $GLOBALS['write_attempts'] === 0, 'Read-only simulated vie
 pvdak_privacy_assert( '2026-10-23' === get_the_date( 'Y-m-d', 1101 ) &&
     '2026/10/23' === get_the_date( 'Y/m/d', 2202 ),
     'Date formatting mock covers both dashboard date formats' );
-$expected = 23; // 4 anonymous + 8 per user + 3 forged/write/date checks.
-pvdak_privacy_assert( $checks === $expected, 'Exact synthetic assertion count executed' );
+$expected = 24; // 4 anonymous + 8 per user + 3 forged/write/date + 1 exact-count check.
+pvdak_privacy_assert( $checks + 1 === $expected, 'Exact synthetic assertion count executed' );
 echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=24 (synthetic; no real accounts, data or writes)\n";
