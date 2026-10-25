@@ -86,10 +86,10 @@
                 grabCursor: true,
                 allowTouchMove: true,
                 keyboard: { enabled: true, onlyInViewport: true },
-                navigation: {
-                    nextEl: next,
-                    prevEl: prev
-                },
+                // Arrow buttons are wired directly below to the live instance.
+                // Keeping them outside the Navigation module avoids a silent
+                // no-op when a cache/optimizer alters optional module binding.
+                loopPreventsSliding: false,
                 autoplay: reduceMotion ? false : {
                     delay: 4700,
                     disableOnInteraction: false,
@@ -117,6 +117,33 @@
             }
             if (controls) { controls.hidden = false; }
             updateAutoplay();
+        }
+
+        function moveTopics(direction) {
+            // Buttons must command the ACTIVE Swiper instance. Search mode
+            // deliberately destroys it and hides the controls.
+            if (hasQuery()) { return; }
+            if (!swiper || swiper.destroyed) { initSwiper(); }
+            if (!swiper || swiper.destroyed) { return; }
+            if (typeof swiper.update === 'function') { swiper.update(); }
+            if (swiper.isLocked) { return; }
+            var before = swiper.realIndex;
+            var changed = direction > 0 ? swiper.slideNext() : swiper.slidePrev();
+            // In loop mode one failed navigation command can occur near the
+            // clone boundary. slideToLoop targets a REAL original Page instead.
+            if (changed === false && !swiper.animating &&
+                typeof swiper.slideToLoop === 'function') {
+                var total = slides.length;
+                swiper.slideToLoop((before + direction + total) % total);
+            }
+        }
+
+        // Register ONCE, not on every Swiper destroy/recreate during search.
+        if (next) {
+            next.addEventListener('click', function () { moveTopics(1); });
+        }
+        if (prev) {
+            prev.addEventListener('click', function () { moveTopics(-1); });
         }
 
         function syncSwiper() {
