@@ -32,6 +32,25 @@ $checks = array(
     strpos($v['front'], 'if ( $all_legal_pages ): ?><a href="#topics"')!==false &&
     strpos($v['front'], 'if ( $all_legal_pages ): ?>' . "\n" . '  <section id="topics"')!==false &&
     strpos($v['front'], "add_query_arg( 's', 'حقوق', home_url( '/' ) )")!==false,
+  'D07/D11 request filter and pagination return to the owner dashboard section' =>
+    strpos($v['javascript'],"params.has('pvdak_page')")!==false &&
+    strpos($v['javascript'],"params.has('request_type')")!==false &&
+    strpos($v['javascript'],"params.has('request_status')")!==false &&
+    strpos($v['javascript'],"params.has('request_search')")!==false &&
+    strpos($v['javascript'],"params.has('request_order')")!==false &&
+    strpos($v['javascript'],"'pvdak-requests'")!==false,
+  'D07/D11 legacy Core shortcode cannot duplicate the account request anchor' =>
+    strpos($v['assets'],'function pvdak_core_request_history_unique_anchor(')!==false &&
+    strpos($v['assets'],"'pvdak_my_requests' !== \$tag")!==false &&
+    strpos($v['assets'],"is_page_template( 'page-templates/pvdak-account.php' )")!==false &&
+    strpos($v['assets'],'<section id="pvdak-requests" class="pvdak-core-panel pvdak-core-request-history"')!==false &&
+    strpos($v['portal'],'<section id="pvdak-requests"')!==false,
+  'D07/D16 request follow-up guides users without leaking specialist case data' =>
+    strpos($v['portal'],'class="pvdak-request-status-guide"')!==false &&
+    strpos($v['portal'],'ارتباط با پشتیبانی')!==false &&
+    strpos($v['portal'],"current_user_can( 'manage_options' )")!==false &&
+    strpos($v['portal'],"admin_url( 'edit.php?post_type=pvdak_request' )")!==false &&
+    strpos($v['portal'],'مدارک یا اطلاعات محرمانه پرونده را در تیکت')!==false,
   'D07 Private request notice is readable on narrow screens' =>
     strpos($v['portal'], "do_shortcode( '[pvdak_my_requests]' )")!==false &&
     strpos($v['css'], 'PVDak 0.8.43 — private request notice')!==false &&
