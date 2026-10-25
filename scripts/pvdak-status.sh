@@ -216,6 +216,13 @@ if [[ "$MODE" == "--test" ]]; then
     else
       rc=$?
     fi
+    # D03 must not report PASS for an early-success shell script that never
+    # reached the final marker after all 21 PHP source tests.
+    if [[ $rc -eq 0 && "$title" == "D03 full source regression" ]] &&
+       ! grep -Fq 'PVDAK_BATCH_PREFLIGHT_OK:' "$log"; then
+      echo "FAIL: missing end-of-suite marker (some source checks may have been skipped)" >>"$log"
+      rc=1
+    fi
     if [[ $rc -eq 0 ]]; then
       value "$title" "PASS"
       grep -E '(^WARN[[:space:]]|PHP_LINT_OK|CORE_POLICY_SMOKE_OK|PVDAK_TWO_ACCOUNT_PRIVACY_OK|STAGING_MULTIUSER_SCRIPT_LINT_OK|PVDAK_EDITOR_BOOTSTRAP_OK|PVDAK_LEGAL_SEARCH_SMOKE_OK|PVDAK_HOMEPAGE_LAYOUT_OK|PVDAK_MEGA_NAV_OK|PREFLIGHT_SUMMARY|PVDAK_CORE_ACCEPTANCE:|CORE_WORDPRESS_ACCEPTANCE_OK)' "$log" | tail -n 8 || true
