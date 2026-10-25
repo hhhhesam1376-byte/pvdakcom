@@ -46,6 +46,29 @@ function pvdak_core_valid_specialty( $page_id ) {
         $parent_id === (int) wp_get_post_parent_id( $page_id );
 }
 
+/**
+ * Resolve a request's legal subject against the CURRENT published Page tree.
+ * IDs, not titles or slugs, are the sole matching key. Never expose private
+ * request text or the titles of unpublished Pages in a diagnostic.
+ */
+function pvdak_core_topic_resolution( $page_id ) {
+    $page_id = absint( $page_id );
+    if ( ! $page_id ) {
+        return array( 'status' => 'missing', 'message' => 'موضوع حقوقی برای این درخواست ثبت نشده است؛ مدیر باید داده پرونده را بررسی کند.', 'title' => '' );
+    }
+    if ( ! pvdak_core_landing_parent_id() ) {
+        return array( 'status' => 'parent_missing', 'message' => 'برگه مادر موضوعات حقوقی منتشر یا تنظیم نشده است؛ ابتدا تنظیمات موضوعات را اصلاح کنید.', 'title' => '' );
+    }
+    if ( ! pvdak_core_valid_specialty( $page_id ) ) {
+        return array( 'status' => 'invalid', 'message' => 'برگه موضوع این درخواست حذف، پیش‌نویس یا از زیرمجموعه موضوعات حقوقی خارج شده است؛ نیازمند بررسی دستی است.', 'title' => '' );
+    }
+    $title = trim( (string) get_post_field( 'post_title', $page_id ) );
+    if ( '' === $title ) {
+        return array( 'status' => 'untitled', 'message' => 'برگه موضوع حقوقی عنوان ندارد؛ پیش از ارجاع باید عنوان برگه تکمیل شود.', 'title' => '' );
+    }
+    return array( 'status' => 'ready', 'message' => '', 'title' => $title );
+}
+
 function pvdak_core_specialty_ids( $profile_id ) {
     $ids = get_post_meta( (int) $profile_id, '_pvdak_specialty_page_ids', true );
     if ( ! is_array( $ids ) ) { return array(); }
@@ -71,7 +94,7 @@ function pvdak_core_profile_has_owner( $profile_id ) {
 function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $request_type = 'lawyer' ) {
     if ( 'pvdak_professional' !== get_post_type( $profile_id ) ||
          'private' !== get_post_status( $profile_id ) ||
-         ! pvdak_core_valid_specialty( $specialty_id ) ||
+         'ready' !== pvdak_core_topic_resolution( $specialty_id )['status'] ||
          ! pvdak_core_profile_has_owner( $profile_id ) ) { return false; }
     if ( 'approved' !== get_post_meta( $profile_id, '_pvdak_member_state', true ) ||
          '1' !== (string) get_post_meta( $profile_id, '_pvdak_referral_cleared', true ) ||
