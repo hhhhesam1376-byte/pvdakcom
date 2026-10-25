@@ -129,7 +129,7 @@ $checks = array(
     strpos($v['front'],'id="pvdak-topics-track"')!==false &&
     strpos($v['homejs'],'delay: 4700')!==false,
   '097-07 Owner-only requests panel remains gated' =>
-    strpos($v['portal'],"if ( $has_requests )")!==false &&
+    strpos($v['portal'],"if ( \$has_requests )")!==false &&
     strpos($v['portal'],"do_shortcode( '[pvdak_my_requests]' )")!==false,
   '097-08 Membership panel remains conditional with status cards' =>
     strpos($v['portal'],'if ( $has_professional )')!==false &&
@@ -288,8 +288,8 @@ $checks = array(
     strpos( $v['profile'], 'data-pvdak-profile-form' ) === false &&
     strpos( $v['portal'], "wp_nonce_field( 'pvdak_profile_save'") !== false,
   'Profile legacy route and save feedback end in same profile tab' =>
-    strpos( $v['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )" ) !== false &&
-    strpos( file_get_contents( $root . '/inc/pvdak-account-tools.php' ), "add_query_arg( 'status', 'unchanged', $url ) . '#pvdak-profile'" ) !== false,
+    strpos( $v['profile'], "wp_safe_redirect( \$target . '#pvdak-profile', 302 )" ) !== false &&
+    strpos( file_get_contents( $root . '/inc/pvdak-account-tools.php' ), "add_query_arg( 'status', 'unchanged', \$url ) . '#pvdak-profile'" ) !== false,
   'All panels are hash navigated without backend changes' =>
     strpos( $v['javascript'], "target.closest('[data-pvdak-panel]')" ) !== false &&
     strpos( $v['javascript'], 'panels.forEach(' ) !== false &&
@@ -299,7 +299,7 @@ $checks = array(
     substr_count( $v['portal'], 'id="pvdak-support"' ) === 0 &&
     strpos( $v['portal'], "do_shortcode( '[pvdak_support_tickets]' )" ) !== false,
   'Legacy profile transparently redirects to the unified panel' =>
-    strpos($v['profile'], "wp_safe_redirect( $target . '#pvdak-profile', 302 )")!==false &&
+    strpos($v['profile'], "wp_safe_redirect( \$target . '#pvdak-profile', 302 )")!==false &&
     strpos($v['profile'], 'pvdak_auth_account_url()')!==false &&
     strpos($v['profile'], 'get_header()')===false,
   'One dashboard includes accessible tabs for all current features' =>
