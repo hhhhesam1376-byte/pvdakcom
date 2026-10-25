@@ -55,7 +55,7 @@ function pvdak_core_active_assignment_count( $profile_id ) {
         $state = get_post_meta( $request_id, '_pvdak_request_state', true );
         // Only explicitly completed states release capacity. Unknown legacy
         // states must never be treated as free slots.
-        if ( ! in_array( $state, array( 'closed', 'rejected' ), true ) ) { $total++; }
+        if ( 'closed' !== $state ) { $total++; }
     }
     return $total;
 }
