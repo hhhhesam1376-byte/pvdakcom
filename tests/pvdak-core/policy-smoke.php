@@ -31,10 +31,13 @@ class WP_Post {
     public $ID;
     public $post_status;
     public $post_author;
+    public $post_type;
     public function __construct( $id, $status = 'publish', $author = 1 ) {
         $this->ID = $id;
         $this->post_status = $status;
         $this->post_author = $author;
+        $this->post_type = in_array( (int) $id, array( 501, 502 ), true )
+            ? 'pvdak_professional' : ( (int) $id >= 700 ? 'pvdak_request' : 'page' );
     }
 }
 function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
@@ -48,13 +51,14 @@ function get_page_by_path( $slug, $output = null, $type = null ) {
 }
 function get_post_type( $id ) {
     return in_array( (int) $id, array( 10, 11, 12 ), true ) ? 'page' :
-        ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' : '' );
+        ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' :
+        ( in_array( (int) $id, array( 701, 702, 703, 704 ), true ) ? 'pvdak_request' : '' ) );
 }
 $GLOBALS['pvdak_mock_topic_draft'] = false;
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 function get_post_status( $id ) {
     if ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) { return 'draft'; }
-    return in_array( (int) $id, array( 501, 502 ), true ) ? 'private' : 'publish';
+    return in_array( (int) $id, array( 501, 502, 701, 702, 703, 704 ), true ) ? 'private' : 'publish';
 }
 function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
 $GLOBALS['pvdak_mock_profile_author'] = 21;
@@ -125,7 +129,10 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_subscription_receipt' === $key ) { return $GLOBALS['pvdak_mock_subscription_receipt'] ?? ''; }
     if ( '_pvdak_payment_event' === $key ) { return $GLOBALS['pvdak_mock_payment_events'] ?? array(); }
     if ( '_pvdak_accepting_assignments' === $key ) { return $GLOBALS['pvdak_mock_accepting']; }
-    if ( '_pvdak_request_state' === $key ) { return (int) $id === 701 ? 'matched' : 'closed'; }
+    if ( '_pvdak_assigned_profile_id' === $key ) { return in_array( (int) $id, array( 701, 702 ), true ) ? '501' : ''; }
+    if ( '_pvdak_request_state' === $key ) {
+        return (int) $id === 701 ? ( $GLOBALS['pvdak_mock_request_state'] ?? 'matched' ) : 'closed';
+    }
     if ( '_pvdak_assignment_audit' === $key ) { return $GLOBALS['pvdak_mock_assignment_audits'][ (int) $id ] ?? array(); }
     return '';
 }
@@ -328,6 +335,11 @@ pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Pend
 $GLOBALS['pvdak_mock_state'] = 'approved';
 pvdak_expect( pvdak_core_capacity_limit( 501 ) === 2, 'Lawyer capacity cap stored as bounded integer' );
 pvdak_expect( pvdak_core_active_assignment_count( 501 ) === 1, 'Only active internally assigned case records count toward capacity' );
+$GLOBALS['pvdak_mock_request_state'] = 'legacy_unknown';
+pvdak_expect( pvdak_core_active_assignment_count( 501 ) === 1, 'Unknown assigned state consumes capacity instead of silently freeing a slot' );
+$GLOBALS['pvdak_mock_request_state'] = 'closed';
+pvdak_expect( pvdak_core_active_assignment_count( 501 ) === 0, 'Explicitly closed assigned case frees its slot' );
+unset( $GLOBALS['pvdak_mock_request_state'] );
 pvdak_expect( pvdak_core_capacity_available( 501 ), 'Eligible capacity leaves one new slot' );
 $GLOBALS['pvdak_mock_active_count'] = 2;
 pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Full capacity excludes candidate for new assignments' );
