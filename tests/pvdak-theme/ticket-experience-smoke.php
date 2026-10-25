@@ -75,7 +75,8 @@ $checks=array(
   strpos($s['support'],'set_transient($hourly_key,min(6,$count+1),HOUR_IN_SECONDS)')!==false,
  'user feedback distinguishes validation and throttling failures'=>
   strpos($s['support'],"'support','invalid'")!==false &&
-  strpos($s['support'],"'support','slow'")!==false &&
+  strpos($s['support'],"\$result_state='slow'")!==false &&
+  strpos($s['support'],"add_query_arg('support',\$result_state,\$base)")!==false &&
   strpos($s['support'],"'support','failed'")!==false,
  'owned focused ticket'=>strpos($s['support'],"(int)\$focused->post_author===\$user")!==false,
  'followup audit'=>strpos($s['support'],"'to'=>'open'")!==false,
