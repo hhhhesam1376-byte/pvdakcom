@@ -297,6 +297,9 @@ get_header(); ?>
             <?php endif; ?>
           </div>
         </div>
+        <?php if ( function_exists( 'pvdak_core_notification_consent_panel' ) ): ?>
+          <?php echo pvdak_core_notification_consent_panel(); // Escaped, current-account-only Core form. ?>
+        <?php endif; ?>
         <p class="pvdak-profile-privacy-hint">اطلاعات این پنل فقط برای حساب واردشده نمایش داده می‌شود.</p>
       </section>
     </div>
