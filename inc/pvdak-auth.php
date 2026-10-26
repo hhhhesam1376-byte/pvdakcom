@@ -62,17 +62,17 @@ function pvdak_login_handle(){
   $pass=is_string($raw_pass)?$raw_pass:'';
   $key=pvdak_auth_attempt_key($identity);
   if((int)get_transient($key)>=6 || (int)get_transient(pvdak_auth_ip_attempt_key())>=30){
-    wp_safe_redirect(add_query_arg('error','slow',pvdak_auth_login_url()));exit;
+    wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'slow','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   if(!$identity||!$pass||strlen($identity)>250||strlen($pass)>1024){
     pvdak_auth_record_failure($key);
-    wp_safe_redirect(add_query_arg('error','1',pvdak_auth_login_url()));exit;
+    wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'invalid','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   $user=wp_signon(array('user_login'=>$identity,'user_password'=>$pass,
      'remember'=>in_array($_POST['login_remember']??null,array('on','1'),true)),is_ssl());
   if(is_wp_error($user) || !($user instanceof WP_User)){
     pvdak_auth_record_failure($key);
-    wp_safe_redirect(add_query_arg('error','1',pvdak_auth_login_url()));exit;
+    wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'invalid','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   delete_transient($key);
   wp_set_current_user($user->ID);
