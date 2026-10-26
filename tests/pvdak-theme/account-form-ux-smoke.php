@@ -20,6 +20,8 @@ $paths = array(
   'register-ui' => 'page-templates/pvdak-register.php',
   'verification' => 'inc/pvdak-email-verification.php',
   'readiness' => 'inc/pvdak-home-readiness.php',
+  'admin-management' => 'inc/pvdak-readiness-admin.php',
+  'home-editor' => 'inc/pvdak-home-acf.php',
 
 );
 $s = array();
@@ -250,6 +252,23 @@ $checks = array(
     strpos($s['register'],'pvdak_public_text_length($password)<12')!==false &&
     strpos($s['register'],"!in_array(\$_POST['register_consent']??null")!==false &&
     strpos($s['public'],"!in_array(\$_POST['contact_consent']??null")!==false,
+  'D31 employer admin hub preserves editor capabilities and existing readiness URL' =>
+    strpos($s['admin-management'],"add_menu_page(")!==false &&
+    strpos($s['admin-management'],"'pvdak-management'")!==false &&
+    strpos($s['admin-management'],"'edit_pages'")!==false &&
+    strpos($s['admin-management'],"add_management_page('آمادگی راه‌اندازی PVDak'")!==false &&
+    strpos($s['admin-management'],"current_user_can('manage_options')")!==false,
+  'D31 comments are hidden from primary menu but still available for moderators' =>
+    strpos($s['admin-management'],"remove_menu_page('edit-comments.php')")!==false &&
+    strpos($s['admin-management'],"'moderate_comments', 'edit-comments.php'")!==false &&
+    strpos($s['admin-management'],"current_user_can('moderate_comments')")!==false &&
+    strpos($s['admin-management'],"remove_meta_box('dashboard_activity'")!==false,
+  'D31 homepage editor is grouped and technical setup remains administrator-only' =>
+    strpos($s['home-editor'],"add_submenu_page(")!==false &&
+    strpos($s['home-editor'],"'pvdak-management'")!==false &&
+    strpos($s['home-editor'],"current_user_can( 'manage_options' )")!==false &&
+    strpos($s['home-editor'],"<details style=")!==false &&
+    strpos($s['home-editor'],"pvdak_editor_bootstrap_card()")!==false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
