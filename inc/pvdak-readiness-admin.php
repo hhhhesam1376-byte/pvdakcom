@@ -61,6 +61,15 @@ function pvdak_management_links() {
  */
 function pvdak_management_link_available( $link ) {
     if ( ! current_user_can( $link[2] ) ) { return false; }
+    // The homepage editor must not advertise an edit route for a page this
+    // staff member cannot edit, even if their role can edit other pages.
+    if ( 'admin.php?page=pvdak-home-content' === $link[3] ) {
+        if ( ! function_exists( 'pvdak_home_admin_landing' ) ) { return false; }
+        if ( function_exists( 'pvdak_home_page_id' ) ) {
+            $home_id = pvdak_home_page_id();
+            if ( $home_id && ! current_user_can( 'edit_post', $home_id ) ) { return false; }
+        }
+    }
     if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
         $type = substr( $link[3], strlen( 'edit.php?post_type=' ) );
         if ( ! post_type_exists( $type ) ) { return false; }
@@ -69,6 +78,16 @@ function pvdak_management_link_available( $link ) {
              ! current_user_can( $object->cap->edit_posts ) ) { return false; }
     }
     return true;
+}
+
+/**
+ * A count-only moderation reminder: never fetch comment bodies, authors,
+ * email addresses or case data into the employer dashboard.
+ */
+function pvdak_management_pending_comments() {
+    if ( ! current_user_can( 'moderate_comments' ) ) { return 0; }
+    $counts = wp_count_comments();
+    return is_object( $counts ) && isset( $counts->moderated ) ? absint( $counts->moderated ) : 0;
 }
 
 function pvdak_management_render_links() {
@@ -91,9 +110,14 @@ function pvdak_management_render_links() {
         foreach ( $links as $link ) {
             if ( ! in_array( $link[0], $names, true ) ||
                  ! pvdak_management_link_available( $link ) ) { continue; }
+            $label = $link[0];
+            if ( 'صف انتظار تأیید' === $label ) {
+                $pending = pvdak_management_pending_comments();
+                if ( $pending > 0 ) { $label .= ' (' . number_format_i18n( $pending ) . ')'; }
+            }
             $cards[] = '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
                 esc_url( admin_url( $link[3] ) ) . '"><strong style="display:block;font-size:15px;margin-bottom:8px">' .
-                esc_html( $link[0] ) . '</strong><span style="color:#50575e">' . esc_html( $link[1] ) . '</span></a>';
+                esc_html( $label ) . '</strong><span style="color:#50575e">' . esc_html( $link[1] ) . '</span></a>';
         }
         if ( ! $cards ) { continue; }
         echo '<section aria-label="' . esc_attr( $heading ) . '"><h2 style="margin-top:26px">' .
@@ -149,10 +173,16 @@ add_action('wp_dashboard_setup','pvdak_management_dashboard_setup',50);
 
 function pvdak_management_dashboard_widget() {
     echo '<p>برای مدیریت سایت از مسیرهای اصلی زیر استفاده کنید. امکانات حقوقی تا دریافت مجوز، خودکار فعال نمی‌شوند.</p>';
-    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=pvdak-management')) . '">ورود به مدیریت PVDak</a> ';
-    echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">ویرایش صفحه اصلی</a></p>';
+    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=pvdak-management')) . '">ورود به مدیریت PVDak</a>';
+    $links = pvdak_management_links();
+    if ( pvdak_management_link_available( $links[0] ) ) {
+        echo ' <a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">ویرایش صفحه اصلی</a>';
+    }
+    echo '</p>';
     if (current_user_can('moderate_comments')) {
-        echo '<p><a href="' . esc_url(admin_url('edit-comments.php?comment_status=moderated')) . '">بررسی پیام‌های منتظر تأیید</a></p>';
+        $pending = pvdak_management_pending_comments();
+        $queue_label = $pending > 0 ? 'بررسی ' . number_format_i18n( $pending ) . ' پیام منتظر تأیید' : 'بررسی پیام‌های منتظر تأیید';
+        echo '<p><a href="' . esc_url(admin_url('edit-comments.php?comment_status=moderated')) . '">' . esc_html( $queue_label ) . '</a></p>';
     }
     if (current_user_can('manage_options')) {
         echo '<p><a href="' . esc_url(admin_url('tools.php?page=pvdak-readiness')) . '">بررسی وضعیت راه‌اندازی</a></p>';
