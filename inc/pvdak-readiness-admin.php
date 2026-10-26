@@ -166,11 +166,17 @@ function pvdak_management_daily_steps() {
     );
     $items = array();
     foreach ( $steps as $step ) {
+        $destinations = array();
         foreach ( $step[1] as $route ) {
             if ( ! isset( $available[ $route ] ) ) { continue; }
-            $items[] = '<li><span>' . esc_html( $step[0] ) . '</span> — <a href="' .
-                esc_url( admin_url( $route ) ) . '">' . esc_html( $available[ $route ][0] ) . '</a></li>';
-            break;
+            $destinations[] = '<a href="' . esc_url( admin_url( $route ) ) . '">' .
+                esc_html( $available[ $route ][0] ) . '</a>';
+        }
+        // Both legal requests and support (and both moderation routes) must
+        // remain visible when permitted; the first link must not hide the second.
+        if ( $destinations ) {
+            $items[] = '<li><span>' . esc_html( $step[0] ) . '</span> — ' .
+                implode( '، ', $destinations ) . '</li>';
         }
     }
     if ( $items ) {
