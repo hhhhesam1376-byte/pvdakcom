@@ -208,14 +208,20 @@ function pvdak_core_my_requests() {
     $statuses = pvdak_core_request_statuses();
 
     $raw_page = isset( $_GET['pvdak_page'] ) && is_scalar( $_GET['pvdak_page'] ) ? wp_unslash( $_GET['pvdak_page'] ) : 1;
-    $page = max( 1, min( 1000, absint( $raw_page ) ) );
+    $page = is_scalar( $raw_page ) && ctype_digit( (string) $raw_page ) &&
+        strlen( (string) $raw_page ) <= 4 && (int) $raw_page > 0 ?
+        min( 1000, (int) $raw_page ) : 1;
     $raw_type = isset( $_GET['request_type'] ) && is_string( $_GET['request_type'] ) ? sanitize_key( wp_unslash( $_GET['request_type'] ) ) : '';
     $type_filter = isset( $types[$raw_type] ) ? $raw_type : '';
     $raw_status = isset( $_GET['request_status'] ) && is_string( $_GET['request_status'] ) ? sanitize_key( wp_unslash( $_GET['request_status'] ) ) : '';
     $status_filter = isset( $statuses[$raw_status] ) ? $raw_status : '';
     $raw_order = isset( $_GET['request_order'] ) && is_string( $_GET['request_order'] ) ? sanitize_key( wp_unslash( $_GET['request_order'] ) ) : '';
     $order = 'asc' === $raw_order ? 'ASC' : 'DESC';
-    $raw_search = isset( $_GET['request_search'] ) && is_string( $_GET['request_search'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['request_search'] ) ) ) : '';
+    $search_input = isset( $_GET['request_search'] ) && is_string( $_GET['request_search'] ) ?
+        wp_unslash( $_GET['request_search'] ) : '';
+    // Bound untrusted bytes before sanitization, not only the resulting Unicode length.
+    $raw_search = strlen( $search_input ) <= 500 ?
+        trim( sanitize_text_field( $search_input ) ) : '';
     $search_length = preg_match_all( '/./us', $raw_search );
     $search = false !== $search_length && $search_length <= 80 ? $raw_search : '';
 
@@ -238,12 +244,21 @@ function pvdak_core_my_requests() {
     if ( '' !== $search ) { $args['s'] = $search; }
     $query = new WP_Query( $args );
     $items = array();
+    $unexpected_rows = false;
     foreach ( (array) $query->posts as $item ) {
         // Defense in depth against third-party query filters or stale records.
         if ( $item instanceof WP_Post && 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
             (int) $item->post_author === $user_id ) {
             $items[] = $item;
+        } else {
+            $unexpected_rows = true;
         }
+    }
+    // Never show potentially foreign rows or an untrustworthy total when a
+    // third-party query filter has changed the owner/private-only result.
+    if ( $unexpected_rows ) {
+        return '<section id="pvdak-requests" class="pvdak-core-panel"><h2>درخواست‌های من</h2>' .
+            '<p class="pvdak-core-notice" role="status">نمایش سوابق موقتاً در دسترس نیست. لطفاً بعداً دوباره تلاش کنید.</p></section>';
     }
     $total = max( 0, (int) $query->found_posts );
     $pages = max( 1, (int) $query->max_num_pages );
@@ -296,7 +311,7 @@ function pvdak_core_my_requests() {
         foreach ( $items as $item ) {
             $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
             $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
-            $state_key = is_string( $state ) && isset( $statuses[$state] ) ? $state : 'submitted';
+            $state_key = is_string( $state ) && isset( $statuses[$state] ) ? $state : 'unknown';
             $topic_id = absint( get_post_meta( $item->ID, '_pvdak_legal_landing_id', true ) );
             $topic = $topic_id && 'page' === get_post_type( $topic_id ) && 'publish' === get_post_status( $topic_id ) ?
                 get_the_title( $topic_id ) : '';
