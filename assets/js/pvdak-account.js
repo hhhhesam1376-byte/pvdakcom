@@ -63,6 +63,13 @@
         link.searchParams.delete('sms_status');
         link.searchParams.delete('error');
         link.searchParams.delete('state');
+        // A prior "account created" notice must not reappear merely because
+        // someone switched tabs after a completed request.
+        ['pvdak-register-email-result', 'pvdak-register-sms-result',
+         'pvdak-login-result', 'pvdak-sms-login-result'].forEach(function (id) {
+          var oldNotice = document.getElementById(id);
+          if (oldNotice) oldNotice.remove();
+        });
         window.history.replaceState({}, '', link.pathname + link.search + link.hash);
       }
     }
