@@ -20,11 +20,6 @@ function pvdak_account_tool_url( $slug ) {
         ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-register.php' )
         : pvdak_public_page_url( $slug );
     if ( $page ) { return $page; }
-    // The branded recovery Page might be missing before admin page bootstrap.
-    // Use the native WordPress recovery route instead of sending reset requests to 404.
-    if ( 'account-recovery' === $slug ) {
-        return site_url( 'wp-login.php?action=lostpassword', 'login' );
-    }
     return home_url( '/' . $slug . '/' );
 }
 function pvdak_account_noindex( $robots ) {
