@@ -4,6 +4,19 @@
  * Passwords/tokens never stored as theme options or sent to administrators.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+/**
+ * D13: Limit unspent WordPress password-reset links to two hours.
+ *
+ * Core already makes these links one-use: wp_set_password() clears the
+ * user's activation key when the new password is successfully saved.
+ * This filter only shortens the time before an UNUSED key expires; it
+ * also applies to WordPress's native password-recovery route.
+ */
+function pvdak_recovery_reset_key_lifetime( $seconds ) {
+    return min( (int) $seconds, 2 * HOUR_IN_SECONDS );
+}
+add_filter( 'password_reset_expiration', 'pvdak_recovery_reset_key_lifetime', 20 );
 function pvdak_account_tool_url( $slug ) {
     // The legacy account-profile Page remains compatible, but never offers a second UI.
     if ( 'account-profile' === $slug ) {
