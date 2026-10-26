@@ -230,7 +230,8 @@ function pvdak_forum_shortcode() {
   $entries = get_comments(array(
     'post_id' => $page_id, 'status' => 'approve', 'type' => 'comment',
     'meta_key' => '_pvdak_forum_entry', 'meta_value' => '1',
-    'number' => 10, 'orderby' => 'comment_date_gmt', 'order' => 'DESC',
+    // Scan past invalid/legacy entries so the ten visible slots are not lost.
+    'number' => 60, 'orderby' => 'comment_date_gmt', 'order' => 'DESC',
   ));
   $items = array();
   foreach (is_array($entries) ? $entries : array() as $entry) {
@@ -241,10 +242,20 @@ function pvdak_forum_shortcode() {
         '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
         !ctype_digit((string) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true)) ||
         (int) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true) < 1 ||
-        !is_string($entry->comment_content) || '' === trim($entry->comment_content)) continue;
+        'عضو جامعه' !== (string) $entry->comment_author ||
+        '' !== (string) $entry->comment_author_email ||
+        '' !== (string) $entry->comment_author_url ||
+        '' !== (string) $entry->comment_author_IP ||
+        '' !== (string) $entry->comment_agent ||
+        !is_string(get_comment_meta($entry->comment_ID, '_pvdak_forum_consent_at', true)) ||
+        1 !== preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D',
+          get_comment_meta($entry->comment_ID, '_pvdak_forum_consent_at', true)) ||
+        !is_string($entry->comment_content) || '' === trim($entry->comment_content) ||
+        pvdak_forum_contains_link_or_email($entry->comment_content)) continue;
     $items[] = '<li class="pvdak-forum-entry"><p>' .
       nl2br(esc_html($entry->comment_content)) . '</p><small>عضو جامعه · ' .
       esc_html(get_comment_date('Y/m/d', $entry)) . '</small></li>';
+    if (count($items) >= 10) break;
   }
   $html .= $items ? '<ol class="pvdak-forum-entries">' . implode('', $items) . '</ol>' :
     '<p class="pvdak-forum-alert">هنوز گفت‌وگوی تأییدشده‌ای برای نمایش وجود ندارد.</p>';
@@ -330,6 +341,8 @@ function pvdak_forum_submit() {
             'comment_agent' => '', 'user_id' => 0, 'comment_parent' => 0,
           ));
           $stored = $comment_id && !is_wp_error($comment_id) ? get_comment($comment_id) : null;
+          // Persist a private, per-message proof of the explicit publication acknowledgement.
+          $consent_at = current_time('mysql', true);
           $marked = $stored instanceof WP_Comment &&
             (int) $stored->comment_post_ID === $page_id &&
             'comment' === (string) $stored->comment_type &&
@@ -343,8 +356,12 @@ function pvdak_forum_submit() {
             $payload === (string) $stored->comment_content &&
             add_comment_meta($comment_id, '_pvdak_forum_entry', '1', true) &&
             add_comment_meta($comment_id, '_pvdak_forum_submitter', (string) $user_id, true) &&
+            is_string($consent_at) &&
+            1 === preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $consent_at) &&
+            add_comment_meta($comment_id, '_pvdak_forum_consent_at', $consent_at, true) &&
             '1' === (string) get_comment_meta($comment_id, '_pvdak_forum_entry', true) &&
-            (string) $user_id === (string) get_comment_meta($comment_id, '_pvdak_forum_submitter', true);
+            (string) $user_id === (string) get_comment_meta($comment_id, '_pvdak_forum_submitter', true) &&
+            $consent_at === get_comment_meta($comment_id, '_pvdak_forum_consent_at', true);
           if ($marked && set_transient($hour_key, $count + 1, HOUR_IN_SECONDS) &&
               set_transient($cool_key, 1, 90) &&
               (int) get_transient($hour_key) === $count + 1 &&
@@ -353,6 +370,7 @@ function pvdak_forum_submit() {
           } else {
             if ($comment_id && !is_wp_error($comment_id)) {
               delete_comment_meta($comment_id, '_pvdak_forum_entry');
+              delete_comment_meta($comment_id, '_pvdak_forum_consent_at');
               wp_delete_comment($comment_id, true);
             }
             delete_transient($cool_key);
