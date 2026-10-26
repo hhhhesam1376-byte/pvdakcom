@@ -182,6 +182,20 @@ $checks = array(
   'D07 auth tabs follow restored URL on BFCache' => strpos( $s['script'], "if (!event.persisted) return;" ) !== false && strpos( $s['script'], 'showAuthMode(mode, false, false)' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
 
+  'D13 recovery URLs are not cached or sent as third-party referrers' =>
+    strpos($s['tools'], "if ( ! defined( 'DONOTCACHEPAGE' ) )") !== false &&
+    strpos($s['tools'], "header( 'Referrer-Policy: no-referrer', true );") !== false &&
+    strpos($s['tools'], "if ( is_page( 'account-recovery' ) )") !== false,
+  'D13 reset cannot falsely claim success without persisted hash and spent key' =>
+    strpos($s['tools'],'reset_password( $user, $password );')!==false &&
+    strpos($s['tools'],'$fresh = get_userdata( $user->ID );')!==false &&
+    strpos($s['tools'],'wp_check_password( $password, $fresh->user_pass, $fresh->ID )')!==false &&
+    strpos($s['tools'],'is_wp_error( check_password_reset_key( $key, $login ) )')!==false &&
+    strpos($s['tools'],"'status', 'failed'")!==false &&
+    strpos($s['recovery'],"if($status==='failed')")!==false,
+  'D13 reset refuses all-whitespace passwords' =>
+    strpos($s['tools'],"'' === trim( $password )")!==false,
+
   'D07 recovery token and password bounded on GET, POST and in the form' =>
     strpos($s['recovery'],'strlen($key)<=64')!==false &&
     strpos($s['recovery'],'name="new_password" minlength="12" maxlength="256"')!==false &&
