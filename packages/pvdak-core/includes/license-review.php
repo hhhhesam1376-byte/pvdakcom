@@ -155,9 +155,12 @@ function pvdak_core_save_license_review( $post_id ) {
         '_pvdak_license_review_identity' => $approved ? $signature : '',
     );
     foreach ( $changes as $key => $value ) {
-        if ( get_post_meta( $post_id, $key, true ) !== $value &&
-             false === update_post_meta( $post_id, $key, $value ) ) { return; }
-        if ( (string) get_post_meta( $post_id, $key, true ) !== (string) $value ) { return; }
+        $before = get_post_meta( $post_id, $key, true );
+        if ( ! is_scalar( $before ) || (string) $before !== (string) $value ) {
+            if ( false === update_post_meta( $post_id, $key, $value ) ) { return; }
+        }
+        $stored = get_post_meta( $post_id, $key, true );
+        if ( ! is_scalar( $stored ) || (string) $stored !== (string) $value ) { return; }
     }
     $note = isset( $_POST['pvdak_review_note'] ) && is_string( $_POST['pvdak_review_note'] ) ?
         sanitize_text_field( wp_unslash( $_POST['pvdak_review_note'] ) ) : '';
