@@ -20,7 +20,7 @@ function pvdak_core_account_url() {
 
 function pvdak_core_dashboard( $atts = array() ) {
     if ( ! is_user_logged_in() ) {
-        return '<section class="pvdak-core-panel"><h2>پنل کاربری پویش</h2><p>برای مشاهده درخواست‌ها و وضعیت همکاری ابتدا <a href="' .
+        return '<section class="pvdak-core-panel"><h2>پنل کاربری PVDak</h2><p>برای مشاهده درخواست‌ها و وضعیت همکاری ابتدا <a href="' .
             esc_url( wp_login_url( get_permalink() ) ) . '">وارد حساب خود شوید</a>.</p></section>';
     }
 
@@ -58,14 +58,16 @@ function pvdak_core_dashboard( $atts = array() ) {
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
     $html = '<section class="pvdak-core-panel pvdak-core-dashboard" aria-labelledby="pvdak-account-title">';
-    $html .= '<p class="pvdak-core-eyebrow">پویش وکلای دادگستری کشور</p>';
+    $html .= '<p class="pvdak-core-eyebrow">PVDak</p>';
     $html .= '<h2 id="pvdak-account-title">پنل من</h2>';
     $html .= '<p>خوش آمدید، ' . esc_html( $user->display_name ) . '. وضعیت درخواست‌ها و عضویت شما در این صفحه نمایش داده می‌شود.</p>';
 
     $html .= '<div class="pvdak-core-stats" aria-label="خلاصه حساب">';
     $html .= '<div><strong>' . esc_html( count( $mine ) ) . '</strong><span>درخواست‌های اخیر</span></div>';
     $html .= '<div><strong>' . esc_html( count( array_filter( $mine, function( $post ) {
-        return 'closed' !== get_post_meta( $post->ID, '_pvdak_request_state', true );
+        // Unknown or corrupted workflow states must not appear as active.
+        return in_array( get_post_meta( $post->ID, '_pvdak_request_state', true ),
+            array( 'submitted', 'review', 'matched', 'answered' ), true );
     } ) ) ) . '</strong><span>درخواست‌های در جریان</span></div>';
     $html .= '<div><strong>' . ( $application_id ? '۱' : '۰' ) . '</strong><span>درخواست همکاری</span></div>';
     $html .= '</div>';
@@ -76,7 +78,7 @@ function pvdak_core_dashboard( $atts = array() ) {
         array( 'request-consultation', 'pvdak_request_form', 'مشاوره حقوقی' ),
         array( 'request-question', 'pvdak_request_form', 'پرسش حقوقی' ),
         array( 'my-legal-requests', 'pvdak_my_requests', 'همه درخواست‌های من' ),
-        array( 'join-legal-community', 'pvdak_professional_application', 'همکاری با پویش' ),
+        array( 'join-legal-community', 'pvdak_professional_application', 'همکاری با PVDak' ),
         array( 'my-professional-account', 'pvdak_professional_dashboard', 'پنل همکاری من' ),
     );
     foreach ( $services as $service ) {
