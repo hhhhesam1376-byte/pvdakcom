@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.19
+ * Version: 0.8.20
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.19' );
+define( 'PVDAK_CORE_VERSION', '0.8.20' );
 
 /**
  * D24: private, opt-in status notifications. Both administrator enablement
@@ -136,9 +136,9 @@ function pvdak_core_notify_owner( $post_id, $kind ) {
     $mailbox = pvdak_core_notification_verified_mailbox( $owner );
     if ( '' === $mailbox || ! pvdak_core_notification_consent_valid( $owner, $mailbox ) ) { return false; }
     $subject = 'اعلان تغییر در حساب PVDak';
-    $body = "یک تغییر در بخش خصوصی حساب شما ثبت شده است.\\n" .
-        "برای مشاهده وضعیت، مستقیماً وارد وب‌سایت PVDak و حساب کاربری خود شوید.\\n" .
-        "این ایمیل شامل جزئیات پرونده، عضویت یا گفتگو نیست.\\n" .
+    $body = "یک تغییر در بخش خصوصی حساب شما ثبت شده است.\n" .
+        "برای مشاهده وضعیت، مستقیماً وارد وب‌سایت PVDak و حساب کاربری خود شوید.\n" .
+        "این ایمیل شامل جزئیات پرونده، عضویت یا گفتگو نیست.\n" .
         "اگر این پیام را انتظار نداشتید، از طریق سایت با پشتیبانی تماس بگیرید.";
     return (bool) wp_mail( $mailbox, $subject, $body );
 }
