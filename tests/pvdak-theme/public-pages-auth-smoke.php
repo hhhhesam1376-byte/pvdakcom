@@ -53,9 +53,10 @@ pvdak_public_smoke_require(
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')" ) &&
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php')" ) &&
  false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' )" ) &&
- false !== strpos( $code['login'], "pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php')" ) &&
+ false !== strpos( $code['login'], 'data-pvdak-auth-go="register-email"' ) &&
+ false !== strpos( $code['login'], 'name="action" value="pvdak_register"' ) &&
  false !== strpos( $code['login'], 'ثبت‌نام در PVDak' ),
- 'D05/D07: account login links to the separate published registration Page'
+ 'D05/D07: signup reuses the published login Page'
 );
 // D07: failed password attempts must surface the existing generic server error,
 // and GET filters must retain the support panel after reloading the dashboard.
@@ -121,12 +122,13 @@ pvdak_public_smoke_require(
  strpos( $code['login'], "wp_nonce_field('pvdak_login'" ) !== false,
  '096-01 Branded login retains native nonce/action' );
 pvdak_public_smoke_require(
- strpos( $ui['register'], 'data-pvdak-auth-tab="register-email"' ) !== false &&
- strpos( $ui['register'], 'data-pvdak-auth-tab="sms-register"' ) !== false &&
- strpos( $ui['register'], "wp_nonce_field('pvdak_register'" ) !== false &&
- strpos( $ui['register'], "wp_nonce_field('pvdak_sms_send'" ) !== false &&
- strpos( $ui['register'], 'ثبت‌نام هنوز آغاز نشده است' ) === false,
- '096-02 Registration is a separate two-tab form, no public admin instructions' );
+  strpos( $code['login'], 'data-pvdak-auth-tab="register-email"' ) !== false &&
+  strpos( $code['login'], 'data-pvdak-auth-tab="sms-register"' ) !== false &&
+  strpos( $code['login'], "wp_nonce_field('pvdak_register'" ) !== false &&
+  strpos( $code['login'], "wp_nonce_field('pvdak_sms_send'" ) !== false &&
+  strpos( $ui['register'], 'pvdak_registration_result_url()' ) !== false &&
+  strpos( $ui['register'], 'wp_safe_redirect(' ) !== false,
+  '096-02 Embedded signup modes preserve nonce and legacy redirects' );
 pvdak_public_smoke_require(
  strpos( $ui['recovery'], 'pvdak-recovery-steps' ) !== false &&
  strpos( $ui['recovery'], 'check_password_reset_key(' ) !== false &&
@@ -251,7 +253,7 @@ pvdak_public_smoke_require(
 // short-lived existing hashed token. These are source checks, not mailbox tests.
 $registration_source = file_get_contents($root . '/inc/pvdak-registration.php');
 $verification_source = file_get_contents($root . '/inc/pvdak-email-verification.php');
-$signup_page_source = file_get_contents($root . '/page-templates/pvdak-register.php');
+$signup_page_source = file_get_contents($root . '/page-templates/pvdak-login.php');
 pvdak_public_smoke_require(
     strpos($registration_source, 'username_exists($username)') !== false &&
     strpos($registration_source, 'email_exists($email)') !== false &&
