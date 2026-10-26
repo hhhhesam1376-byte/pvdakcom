@@ -82,7 +82,7 @@ function pvdak_email_verification_issue($user_id) {
     }
     $token = wp_generate_password(48, false, false);
     // Do not email a broken link or a token that could not be persisted.
-    $base = pvdak_public_template_page_url('account-register', 'page-templates/pvdak-register.php');
+    $base = pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php');
     if (!$base) { return false; }
     if (!update_user_meta($user->ID, '_pvdak_email_verification_token_hash', wp_hash_password($token))) {
         return false;
@@ -125,8 +125,11 @@ function pvdak_email_verification_issue($user_id) {
 
 /** Verify a token without showing its value in rendered pages or analytics links. */
 function pvdak_email_verification_confirm() {
-    if (!is_page('account-register') || !is_page_template('page-templates/pvdak-register.php') ||
-        !isset($_GET['pvdak_verify'])) { return; }
+    // New links verify directly from the unified login Page. Old links from
+    // the former register Page remain valid until their 24-hour expiry.
+    $unified = is_page('account-login') && is_page_template('page-templates/pvdak-login.php');
+    $legacy = is_page('account-register') && is_page_template('page-templates/pvdak-register.php');
+    if ((!$unified && !$legacy) || !isset($_GET['pvdak_verify'])) { return; }
     nocache_headers();
     $uid_raw = wp_unslash($_GET['uid'] ?? '');
     $token_raw = wp_unslash($_GET['token'] ?? '');
