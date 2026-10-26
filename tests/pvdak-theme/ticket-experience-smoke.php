@@ -104,7 +104,7 @@ $checks=array(
  'admin filter and scoped assets'=>strpos($s['support'],"add_action('restrict_manage_posts'")!==false &&
   strpos($s['support'],"add_action('pre_get_posts'")!==false &&
   strpos($s['assets'],"'pvdak-support-tickets'")!==false &&
-  strpos($s['css'],'.pvdak-ticket-pagination')!==false
+  strpos($s['css'],'.pvdak-ticket-pagination')!==false,
 
  'D22 one filtered message list drives client, staff and admin counts'=>
    strpos($s['support'],'function pvdak_support_visible_messages($ticket_id)')!==false &&
