@@ -177,4 +177,40 @@ pvdak_public_smoke_require(
  false !== strpos( $code['functions'], "add_filter( 'do_shortcode_tag', 'pvdak_core_shortcode_brand_labels', 10, 2 );" ),
  'PVDak branding replaces the legacy name on frontend, existing ACF values and installed Core shortcode labels' );
 
+
+// D28/D31: read-only source regressions; no live comments or WP options changed.
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "add_filter('comments_open', 'pvdak_forum_disable_native_comments'" ) !== false &&
+ strpos( $code['pages'], "add_filter('pings_open', 'pvdak_forum_disable_native_comments'" ) !== false &&
+ strpos( $code['pages'], "add_filter('preprocess_comment', 'pvdak_forum_reject_native_submission'" ) !== false,
+ 'D28 native comments, pingbacks and REST comment submission cannot bypass forum moderation' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "name=\"forum_public_consent\" value=\"1\" required" ) !== false &&
+ strpos( $code['pages'], "is_string(\$consent) && '1' === \$consent" ) !== false,
+ 'D28 requires explicit public visibility acknowledgement on client and server' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], 'function pvdak_forum_raw_text_valid(' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_raw_text_valid($subject_raw, 480)' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_raw_text_valid($message_raw, 6000)' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_contains_link_or_email($subject' ) !== false,
+ 'D28 validates raw UTF-8, byte bounds, controls and direct links before persistence' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], '(int) $stored->comment_post_ID === $page_id' ) !== false &&
+ strpos( $code['pages'], '0 === (int) $stored->user_id' ) !== false &&
+ strpos( $code['pages'], '$payload === (string) $stored->comment_content' ) !== false &&
+ strpos( $code['pages'], "'0' === (string) \$stored->comment_approved" ) !== false,
+ 'D28 checks persisted page, anonymous identity, exact payload and moderation state' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], '(int) get_transient($hour_key) === $count + 1' ) !== false &&
+ strpos( $code['pages'], "'1' === (string) get_transient(\$cool_key)" ) !== false &&
+ strpos( $code['pages'], '0 !== (int) $entry->comment_parent' ) !== false &&
+ strpos( $code['pages'], "'_pvdak_forum_submitter'" ) !== false,
+ 'D28 validates quota persistence and filters malformed approved entries' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "add_action('wp', 'pvdak_forum_send_headers', 0)" ) !== false &&
+ strpos( $code['pages'], "define('DONOTCACHEPAGE', true)" ) !== false &&
+ strpos( $code['pages'], 'X-Robots-Tag: noindex, noarchive, nosnippet' ) !== false &&
+ strpos( $code['theme'], '.pvdak-forum-consent' ) !== false,
+ 'D31 forum nonce page is non-cacheable, noindex and RTL consent is visible' );
+
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
