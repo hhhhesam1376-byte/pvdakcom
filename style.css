@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.71
+Version: 0.8.72
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -4189,3 +4189,16 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
 .pvdak-forum-form :focus-visible{outline:3px solid #d9a83b;outline-offset:3px}
 .pvdak-forum-honeypot{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
 @media(max-width:600px){.pvdak-forum-board{margin:12px;padding:16px}.pvdak-forum-board h2{font-size:20px}}
+
+/* 0.8.72: one accessible login/signup screen, two tabs per selected mode. */
+.pvdak-login-page [hidden]{display:none!important}
+.pvdak-login-page .pvdak-register-tabs{margin:0 0 25px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.pvdak-login-page .pvdak-register-tabs button{white-space:normal;line-height:1.8;min-height:45px}
+.pvdak-login-page .pvdak-register-tabs button[aria-selected="true"]{background:#123d54;color:#fff;border-color:#123d54}
+.pvdak-login-page .pvdak-register-back{margin:20px 0 3px;text-align:center;font-size:14px;font-weight:750}
+.pvdak-login-page .pvdak-register-back a{color:#0a719d;font-weight:900}
+.pvdak-login-page .pvdak-auth-feedback{border:1px solid #cee2ee;background:#f4faff;color:#123d54;border-radius:12px;padding:12px 14px;margin:12px 0;line-height:1.9}
+.pvdak-login-page .pvdak-register-resend{border-top:1px solid #d7e6ef;margin-top:23px;padding-top:16px}
+.pvdak-login-page .pvdak-register-resend summary{color:#0c7295;font-weight:800;font-size:13px;cursor:pointer}
+.pvdak-login-page .pvdak-register-resend .pvdak-forms{margin-top:15px}
+@media(max-width:560px){.pvdak-login-page .pvdak-register-tabs{gap:7px}.pvdak-login-page .pvdak-register-tabs button{font-size:12px;padding:11px 6px}}
