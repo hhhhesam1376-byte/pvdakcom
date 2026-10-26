@@ -110,7 +110,7 @@ $GLOBALS['pvdak_mock_assignment_audits'] = array();
 $GLOBALS['pvdak_mock_audit_request_ids'] = array();
 function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_directory_consent' === $key ) { return $GLOBALS['pvdak_mock_directory_consent'] ?? ''; }
-    if ( '_pvdak_specialty_page_ids' === $key ) { return array( 11 ); }
+    if ( '_pvdak_specialty_page_ids' === $key ) { return $GLOBALS['pvdak_mock_specialty_ids'] ?? array( 11 ); }
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
     if ( '_pvdak_member_type' === $key ) { return (int) $id === 501 ? 'lawyer' : 'student'; }
@@ -300,6 +300,10 @@ pvdak_expect(
 );
 pvdak_expect( pvdak_core_landing_parent_id() === 10, 'Real published landing Page is a valid parent' );
 pvdak_expect( pvdak_core_valid_specialty( 11 ), 'Published child landing Page is a valid specialty' );
+$GLOBALS['pvdak_mock_specialty_ids'] = array( array( 11 ), -11, '11', 'bad', 12 );
+pvdak_expect( pvdak_core_specialty_ids( 501 ) === array( 11, 12 ),
+    'D23 malformed specialty metadata is ignored without casting arrays or negative IDs' );
+unset( $GLOBALS['pvdak_mock_specialty_ids'] );
 pvdak_expect( ! pvdak_core_valid_specialty( 999 ), 'Unrelated nonexistent Page cannot be selected' );
 pvdak_expect( 'ready' === pvdak_core_topic_resolution( 11 )['status'], 'Published child topic maps by Page ID' );
 pvdak_expect( 'missing' === pvdak_core_topic_resolution( 0 )['status'], 'Missing topic has explicit repair state' );
@@ -369,8 +373,11 @@ $GLOBALS['pvdak_mock_assignment_audits'] = array(
         array( 'profile_id' => 501, 'at' => $pvdak_this_month, 'scope' => 'internal_only', 'action' => 'assigned' ),
     ),
 );
+pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
+    'Malformed own assignment timestamp fails closed rather than restoring quota' );
+array_pop( $GLOBALS['pvdak_mock_assignment_audits'][701] );
 pvdak_expect( 3 === pvdak_core_subscription_month_assignments( 501 ),
-    'Quota counts successful events but not revocations, old events, foreign scope or malformed dates' );
+    'Quota counts successful events but not revocations, old events or foreign scope' );
 pvdak_expect( 1 === pvdak_core_subscription_month_assignments( 502 ),
     'Monthly quota counts only the selected professional' );
 $GLOBALS['wpdb']->last_error = 'synthetic query failure';
@@ -439,6 +446,18 @@ pvdak_expect( pvdak_core_payment_fold( array( $payment_created, $payment_verifie
     'D26 refund supersedes earlier verified receipt' );
 pvdak_expect( array() === pvdak_core_payment_fold( array( $payment_created, $payment_verified, $payment_verified ) ),
     'D26 repeated verification fails closed' );
+$duplicate_reference = $payment_created;
+$duplicate_reference['receipt_id'] = '22222222-2222-4222-8222-222222222222';
+pvdak_expect( array() === pvdak_core_payment_fold( array( $payment_created, $duplicate_reference ) ),
+    'D26 duplicate provider reference in one ledger fails closed' );
+$reversed_time = $payment_verified;
+$reversed_time['at'] = '2026-10-25 03:59:00';
+pvdak_expect( array() === pvdak_core_payment_fold( array( $payment_created, $reversed_time ) ),
+    'D26 out-of-order receipt transition fails closed' );
+$invalid_time = $payment_created;
+$invalid_time['at'] = '2026-13-25 04:00:00';
+pvdak_expect( array() === pvdak_core_payment_fold( array( $invalid_time ) ),
+    'D26 impossible receipt timestamp fails closed' );
 $bad_payment = $payment_created;
 $bad_payment['reference'] = '4111111111111111';
 $bad_payment['amount_irr'] = 0;
