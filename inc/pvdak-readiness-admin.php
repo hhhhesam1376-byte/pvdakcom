@@ -67,7 +67,9 @@ function pvdak_management_link_available( $link ) {
         if ( ! function_exists( 'pvdak_home_admin_landing' ) ) { return false; }
         if ( function_exists( 'pvdak_home_page_id' ) ) {
             $home_id = pvdak_home_page_id();
-            if ( $home_id && ! current_user_can( 'edit_post', $home_id ) ) { return false; }
+            // Only an administrator can initialize a missing front page.
+            if ( ! $home_id ) { return current_user_can( 'manage_options' ); }
+            if ( ! current_user_can( 'edit_post', $home_id ) ) { return false; }
         }
     }
     if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
@@ -111,13 +113,19 @@ function pvdak_management_render_links() {
             if ( ! in_array( $link[0], $names, true ) ||
                  ! pvdak_management_link_available( $link ) ) { continue; }
             $label = $link[0];
+            $description = $link[1];
+            if ( 'ویرایش صفحه اصلی' === $label && function_exists( 'pvdak_home_page_id' ) &&
+                 ! pvdak_home_page_id() ) {
+                $label = 'راه‌اندازی صفحه اصلی';
+                $description = 'اتصال برگه اصلی به وردپرس؛ فقط برای مدیر سایت';
+            }
             if ( 'صف انتظار تأیید' === $label ) {
                 $pending = pvdak_management_pending_comments();
                 if ( $pending > 0 ) { $label .= ' (' . number_format_i18n( $pending ) . ')'; }
             }
             $cards[] = '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
                 esc_url( admin_url( $link[3] ) ) . '"><strong style="display:block;font-size:15px;margin-bottom:8px">' .
-                esc_html( $label ) . '</strong><span style="color:#50575e">' . esc_html( $link[1] ) . '</span></a>';
+                esc_html( $label ) . '</strong><span style="color:#50575e">' . esc_html( $description ) . '</span></a>';
         }
         if ( ! $cards ) { continue; }
         echo '<section aria-label="' . esc_attr( $heading ) . '"><h2 style="margin-top:26px">' .
@@ -140,12 +148,13 @@ function pvdak_management_render() {
     if (current_user_can('manage_options')) {
         $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();
         $signup = function_exists('pvdak_registration_open') && pvdak_registration_open();
-        $requests = function_exists('pvdak_core_intake_open') && pvdak_core_intake_open();
+        $core_available = defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' );
+        $requests = $core_available && pvdak_core_intake_open();
         echo '<h2 style="margin-top:30px">وضعیت دسترسی‌های عمومی</h2>';
         echo '<p>این بخش فقط وضعیت فعلی را نشان می‌دهد؛ هیچ خدمتی را به‌صورت خودکار فعال نمی‌کند.</p><ul style="list-style:disc;padding-right:20px">';
         echo '<li>حالت تعمیرات: <strong>' . ($maintenance ? 'فعال' : 'غیرفعال') . '</strong></li>';
         echo '<li>ثبت‌نام عمومی: <strong>' . ($signup ? 'فعال' : 'بسته') . '</strong></li>';
-        echo '<li>پذیرش درخواست حقوقی: <strong>' . ($requests ? 'فعال' : 'بسته') . '</strong></li>';
+        echo '<li>پذیرش درخواست حقوقی: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $requests ? 'فعال' : 'بسته' ) ) . '</strong></li>';
         echo '</ul><p>پیش از فعال‌سازی خدمات جدید، مقررات و تأییدهای لازم را بررسی کنید.</p>';
     }
     echo '</div>';
@@ -176,7 +185,9 @@ function pvdak_management_dashboard_widget() {
     echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=pvdak-management')) . '">ورود به مدیریت PVDak</a>';
     $links = pvdak_management_links();
     if ( pvdak_management_link_available( $links[0] ) ) {
-        echo ' <a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">ویرایش صفحه اصلی</a>';
+        $home_label = function_exists( 'pvdak_home_page_id' ) && ! pvdak_home_page_id() ?
+            'راه‌اندازی صفحه اصلی' : 'ویرایش صفحه اصلی';
+        echo ' <a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">' . esc_html( $home_label ) . '</a>';
     }
     echo '</p>';
     if (current_user_can('moderate_comments')) {
