@@ -44,6 +44,13 @@ $checks = array(
  'intake requires a positive decimal topic id rather than absint of forged input' =>
     strpos($requests, 'ctype_digit( $raw_landing )') !== false &&
     strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'history rejects malformed page numbers and oversized search inputs' =>
+    strpos($requests, 'ctype_digit( (string) $raw_page )') !== false &&
+    strpos($requests, 'strlen( $search_input ) <= 500') !== false,
+ 'history fails closed when filters return foreign or invalid case rows' =>
+    strpos($requests, '$unexpected_rows = true;') !== false &&
+    strpos($requests, 'if ( $unexpected_rows )') !== false &&
+    strpos($requests, "'unknown'") !== false,
  'dashboard active case count excludes unknown or corrupted states' =>
     strpos($portal, "array( 'submitted', 'review', 'matched', 'answered' )") !== false,
  'private portal uses current PVDak branding' =>
