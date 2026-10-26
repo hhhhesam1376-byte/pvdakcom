@@ -287,6 +287,11 @@ $checks = array(
     strpos($s['admin-management'], 'wp_count_comments()')!==false &&
     strpos($s['admin-management'], 'moderate_comments')!==false &&
     strpos($s['admin-management'], 'edit-comments.php?comment_status=moderated')!==false,
+  'D31 missing homepage setup stays admin-only and Core absence is visible' =>
+    strpos($s['admin-management'], "if ( ! \$home_id ) { return current_user_can( 'manage_options' ); }") !== false &&
+    strpos($s['admin-management'], "'راه‌اندازی صفحه اصلی'") !== false &&
+    strpos($s['admin-management'], "defined( 'PVDAK_CORE_VERSION' )") !== false &&
+    strpos($s['admin-management'], "'افزونه Core فعال نیست'") !== false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
