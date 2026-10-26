@@ -16,7 +16,8 @@ function pvdak_core_landing_parent_id() {
     if ( function_exists( 'get_field' ) ) {
         $front_id = absint( get_option( 'page_on_front' ) );
         $acf_page = $front_id ? get_field( 'legal_topics_parent_page', $front_id ) : 0;
-        $acf_id = $acf_page instanceof WP_Post ? (int) $acf_page->ID : absint( $acf_page );
+        $acf_id = $acf_page instanceof WP_Post ? (int) $acf_page->ID :
+            ( ( is_int( $acf_page ) || ( is_string( $acf_page ) && ctype_digit( $acf_page ) ) ) ? absint( $acf_page ) : 0 );
         if ( $acf_id && 'page' === get_post_type( $acf_id ) && 'publish' === get_post_status( $acf_id ) ) {
             return $acf_id;
         }
@@ -70,11 +71,15 @@ function pvdak_core_topic_resolution( $page_id ) {
 }
 
 function pvdak_core_specialty_ids( $profile_id ) {
-    $ids = get_post_meta( (int) $profile_id, '_pvdak_specialty_page_ids', true );
+    $ids = get_post_meta( absint( $profile_id ), '_pvdak_specialty_page_ids', true );
     if ( ! is_array( $ids ) ) { return array(); }
-    return array_values( array_unique( array_filter( array_map( 'absint', $ids ), function ( $id ) {
-        return 'ready' === pvdak_core_topic_resolution( $id )['status'];
-    } ) ) );
+    $valid = array();
+    foreach ( array_slice( $ids, 0, 200 ) as $raw ) {
+        if ( ! ( is_int( $raw ) || ( is_string( $raw ) && ctype_digit( $raw ) ) ) ) { continue; }
+        $id = absint( $raw );
+        if ( $id && 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $valid[ $id ] = $id; }
+    }
+    return array_values( $valid );
 }
 
 /**
@@ -120,7 +125,7 @@ function pvdak_core_specialty_metabox() {
 add_action( 'add_meta_boxes', 'pvdak_core_specialty_metabox' );
 
 function pvdak_core_specialty_metabox_html( $post ) {
-    if ( ! current_user_can( 'edit_post', $post->ID ) ) { return; }
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post->ID ) ) { return; }
     wp_nonce_field( 'pvdak_core_specialties_' . $post->ID, '_pvdak_specialties_nonce' );
     $selected = pvdak_core_specialty_ids( $post->ID );
     echo '<p>موضوعات حقوقی مستقیماً از برگه‌های فرزند «موضوعات حقوقی» خوانده می‌شوند. فقط مدیر می‌تواند حوزه‌های قابل ارجاع را تعیین کند.</p>';
@@ -147,30 +152,44 @@ function pvdak_core_specialty_metabox_html( $post ) {
 
 function pvdak_core_save_specialties( $post_id ) {
     if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
-         ! current_user_can( 'edit_post', $post_id ) ) { return; }
+         ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
+         'pvdak_professional' !== get_post_type( $post_id ) ||
+         'private' !== get_post_status( $post_id ) || ! pvdak_core_profile_has_owner( $post_id ) ) { return; }
     if ( ! isset( $_POST['_pvdak_specialties_nonce'] ) || ! is_string( $_POST['_pvdak_specialties_nonce'] ) ||
          ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_pvdak_specialties_nonce'] ) ), 'pvdak_core_specialties_' . $post_id ) ) { return; }
-    $raw = isset( $_POST['pvdak_specialty_page_ids'] ) && is_array( $_POST['pvdak_specialty_page_ids'] ) ?
+    if ( isset( $_POST['pvdak_specialty_page_ids'] ) && ! is_array( $_POST['pvdak_specialty_page_ids'] ) ) { return; }
+    $raw = isset( $_POST['pvdak_specialty_page_ids'] ) ?
         wp_unslash( $_POST['pvdak_specialty_page_ids'] ) : array();
     $ids = array();
     foreach ( array_slice( $raw, 0, 200 ) as $raw_id ) {
-        if ( ! is_scalar( $raw_id ) ) { continue; }
+        if ( ! ( is_int( $raw_id ) || ( is_string( $raw_id ) && ctype_digit( $raw_id ) ) ) ) { continue; }
         $id = absint( $raw_id );
-        if ( 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $ids[ $id ] = $id; }
+        if ( $id && 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $ids[ $id ] = $id; }
     }
-    update_post_meta( $post_id, '_pvdak_specialty_page_ids', array_values( $ids ) );
+    $next_ids = array_values( $ids );
+    $old_ids = get_post_meta( $post_id, '_pvdak_specialty_page_ids', true );
+    if ( $old_ids !== $next_ids &&
+         false === update_post_meta( $post_id, '_pvdak_specialty_page_ids', $next_ids ) ) { return; }
+    if ( get_post_meta( $post_id, '_pvdak_specialty_page_ids', true ) !== $next_ids ) { return; }
     $cleared = isset( $_POST['pvdak_referral_cleared'] ) &&
         is_string( $_POST['pvdak_referral_cleared'] ) &&
         '1' === wp_unslash( $_POST['pvdak_referral_cleared'] ) ? '1' : '0';
     $old = (string) get_post_meta( $post_id, '_pvdak_referral_cleared', true );
     if ( $old !== $cleared ) {
-        update_post_meta( $post_id, '_pvdak_referral_cleared', $cleared );
-        add_post_meta( $post_id, '_pvdak_referral_clearance_audit', array(
+        if ( false === update_post_meta( $post_id, '_pvdak_referral_cleared', $cleared ) ||
+             $cleared !== (string) get_post_meta( $post_id, '_pvdak_referral_cleared', true ) ) {
+            update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
+            return;
+        }
+        if ( false === add_post_meta( $post_id, '_pvdak_referral_clearance_audit', array(
             'from' => $old,
             'to' => $cleared,
             'by' => get_current_user_id(),
             'at' => current_time( 'mysql', true ),
-        ), false );
+        ), false ) ) {
+            // Missing audit cannot leave a newly granted clearance active.
+            update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
+        }
     }
 }
 add_action( 'save_post_pvdak_professional', 'pvdak_core_save_specialties' );
