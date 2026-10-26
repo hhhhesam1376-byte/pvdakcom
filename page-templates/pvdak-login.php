@@ -14,10 +14,23 @@ $state=isset($_GET['state']) && is_string($_GET['state']) ?
     sanitize_key(wp_unslash($_GET['state'])) : '';
 $sms_status=isset($_GET['sms_status']) && is_string($_GET['sms_status']) ?
     sanitize_key(wp_unslash($_GET['sms_status'])) : '';
-$register_selected=in_array($auth_value,array('register-email','sms-register'),true) ||
-    (''===$auth_value && ''!==$state);
-$sms_selected='sms-login'===$auth_value ||
-    (''===$auth_value && !$register_selected && ''!==$sms_status);
+// D13: reset request and new-password steps share this exact login template.
+$recovery_status = isset($_GET['status']) && is_string($_GET['status']) ?
+    sanitize_key(wp_unslash($_GET['status'])) : '';
+$reset_request = isset($_GET['reset']) && '1' === (string) $_GET['reset'];
+$reset_login = isset($_GET['login']) && is_string($_GET['login']) ?
+    sanitize_text_field(wp_unslash($_GET['login'])) : '';
+$reset_key = isset($_GET['key']) && is_string($_GET['key']) ?
+    sanitize_text_field(wp_unslash($_GET['key'])) : '';
+$reset_valid = $reset_request && '' !== $reset_login && '' !== $reset_key &&
+    strlen($reset_login) <= 250 && strlen($reset_key) <= 64 &&
+    !is_wp_error(check_password_reset_key($reset_key, $reset_login));
+$recovery_selected = $reset_request || in_array($auth_value, array('recover','recover-change'), true);
+$recovery_change_selected = $reset_valid;
+$register_selected=!$recovery_selected && (in_array($auth_value,array('register-email','sms-register'),true) ||
+    (''===$auth_value && ''!==$state));
+$sms_selected=!$recovery_selected && ('sms-login'===$auth_value ||
+    (''===$auth_value && !$register_selected && ''!==$sms_status));
 $sms_register_selected='sms-register'===$auth_value ||
     (''===$auth_value && $register_selected && ''!==$sms_status);
 $login_error=isset($_GET['pvdak_login_error']) && is_string($_GET['pvdak_login_error']) ?
@@ -54,13 +67,15 @@ get_header(); ?>
 <div class="pvdak-login-grid">
 <section class="pvdak-static-body">
 <span class="pvdak-static-label pvdak-auth-eyebrow">حساب کاربری PVDak</span>
-<h1 data-pvdak-auth-copy="login" <?php echo $register_selected?'hidden':''; ?>>ورود به پنل</h1>
+<h1 data-pvdak-auth-copy="login" <?php echo ($register_selected||$recovery_selected)?'hidden':''; ?>>ورود به پنل</h1>
 <h1 data-pvdak-auth-copy="register" <?php echo $register_selected?'':'hidden'; ?>>ایجاد حساب کاربری</h1>
-<p class="pvdak-auth-subheading" data-pvdak-auth-copy="login" <?php echo $register_selected?'hidden':''; ?>>با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
+<h1 data-pvdak-auth-copy="recovery" <?php echo $recovery_selected?'':'hidden'; ?>>بازیابی رمز عبور</h1>
+<p class="pvdak-auth-subheading" data-pvdak-auth-copy="login" <?php echo ($register_selected||$recovery_selected)?'hidden':''; ?>>با حساب خود وارد فضای یکپارچه مدیریت درخواست‌ها و ارتباط با پشتیبانی شوید.</p>
 <p class="pvdak-auth-subheading" data-pvdak-auth-copy="register" <?php echo $register_selected?'':'hidden'; ?>>روش ثبت‌نام خود را انتخاب کنید. پس از ثبت‌نام ایمیلی، تأیید نشانی ایمیل برای ورود لازم است.</p>
+<p class="pvdak-auth-subheading" data-pvdak-auth-copy="recovery" <?php echo $recovery_selected?'':'hidden'; ?>>برای انتخاب رمز تازه، این مراحل ساده و امن را در همین صفحه دنبال کنید.</p>
 
 <div data-pvdak-auth-picker>
-  <div class="pvdak-auth-mode-picker pvdak-login-tabs" data-pvdak-auth-group="login" role="tablist" aria-label="روش ورود" <?php echo $register_selected?'hidden':''; ?>>
+  <div class="pvdak-auth-mode-picker pvdak-login-tabs" data-pvdak-auth-group="login" role="tablist" aria-label="روش ورود" <?php echo ($register_selected||$recovery_selected)?'hidden':''; ?>>
     <button type="button" id="pvdak-login-password-tab" data-pvdak-auth-tab="password" role="tab" aria-controls="pvdak-auth-password" aria-selected="<?php echo $sms_selected?'false':'true'; ?>" tabindex="<?php echo $sms_selected?'-1':'0'; ?>">ورود</button>
     <button type="button" id="pvdak-login-sms-tab" data-pvdak-auth-tab="sms-login" role="tab" aria-controls="pvdak-auth-sms-login" aria-selected="<?php echo $sms_selected?'true':'false'; ?>" tabindex="<?php echo $sms_selected?'0':'-1'; ?>">ورود با پیامک</button>
   </div>
@@ -69,7 +84,7 @@ get_header(); ?>
     <button type="button" id="pvdak-register-sms-tab" data-pvdak-auth-tab="sms-register" role="tab" aria-controls="pvdak-auth-sms-register" aria-selected="<?php echo $sms_register_selected?'true':'false'; ?>" tabindex="<?php echo $sms_register_selected?'0':'-1'; ?>">ثبت‌نام با پیامک</button>
   </div>
 </div>
-<section id="pvdak-auth-password" data-pvdak-auth-pane="password" role="tabpanel" aria-labelledby="pvdak-login-password-tab" <?php echo ($register_selected || $sms_selected)?'hidden':''; ?>>
+<section id="pvdak-auth-password" data-pvdak-auth-pane="password" role="tabpanel" aria-labelledby="pvdak-login-password-tab" <?php echo ($register_selected || $sms_selected || $recovery_selected)?'hidden':''; ?>>
 <?php if($login_error): ?>
 <div id="pvdak-login-result" tabindex="-1" class="pvdak-static-error pvdak-login-error-notice" role="alert" aria-live="assertive">
   <strong>ورود ناموفق بود</strong>
@@ -82,10 +97,10 @@ get_header(); ?>
 <label for="pvdak-password"><span aria-hidden="true">♢</span> رمز عبور</label><div class="pvdak-password-field"><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" <?php if('invalid'===$login_error): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="pvdak-password" aria-controls="pvdak-password" aria-pressed="false">نمایش</button></div>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit"><span aria-hidden="true">←</span> ورود به حساب</button></form>
-<?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p id="pvdak-login-reset-result" tabindex="-1" class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
-<p class="pvdak-login-help pvdak-auth-help"><a href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a></p>
+<?php if('reset' === $recovery_status):?><div id="pvdak-login-reset-result" tabindex="-1" class="pvdak-recovery-success" role="status"><strong>رمز عبور با موفقیت تغییر کرد</strong><p>بازیابی حساب کامل شد. حالا با رمز جدیدتان وارد PVDak شوید.</p></div><?php endif; ?>
+<p class="pvdak-login-help pvdak-auth-help"><a data-pvdak-auth-go="recover" href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a></p>
 </section>
-<section id="pvdak-auth-sms-login" data-pvdak-auth-pane="sms-login" role="tabpanel" aria-labelledby="pvdak-login-sms-tab" <?php echo (!$register_selected && $sms_selected)?'':'hidden'; ?>>
+<section id="pvdak-auth-sms-login" data-pvdak-auth-pane="sms-login" role="tabpanel" aria-labelledby="pvdak-login-sms-tab" <?php echo (!$register_selected && !$recovery_selected && $sms_selected)?'':'hidden'; ?>>
   <div class="pvdak-login-sms-content">
     <?php
     $sms_status=isset($_GET['sms_status'])&&is_string($_GET['sms_status'])?sanitize_key(wp_unslash($_GET['sms_status'])):'';
@@ -194,7 +209,56 @@ get_header(); ?>
       <?php endif; ?>
     </section>
 
-<p class="pvdak-login-signup" data-pvdak-auth-switch="register" <?php echo $register_selected?'hidden':''; ?>>حساب کاربری ندارید؟ <a data-pvdak-auth-go="register-email" href="<?php echo esc_url(pvdak_registration_result_url()); ?>">ثبت‌نام در PVDak</a></p>
+<section id="pvdak-auth-recover" class="pvdak-recovery-in-login" data-pvdak-auth-pane="recover" aria-label="درخواست بازیابی رمز" <?php echo ($recovery_selected && !$recovery_change_selected)?'':'hidden'; ?>>
+  <ol class="pvdak-recovery-steps" aria-label="مراحل بازیابی">
+    <li class="<?php echo 'sent' === $recovery_status ? 'is-complete' : 'is-active'; ?>">۱. دریافت لینک</li>
+    <li>۲. رمز تازه</li>
+    <li>۳. ورود دوباره</li>
+  </ol>
+  <?php if ('sent' === $recovery_status): ?>
+    <div id="pvdak-recovery-result" tabindex="-1" role="status" class="pvdak-recovery-success">
+      <strong>مرحله اول انجام شد!</strong>
+      <p>اگر این نشانی به حسابی در PVDak متصل باشد، پیامی با دکمه «انتخاب رمز جدید» برای آن ارسال می‌شود. صندوق ورودی و پوشه هرزنامه را بررسی کنید و از لینک داخل ایمیل به مرحله بعد بروید.</p>
+    </div>
+  <?php elseif (in_array($recovery_status, array('invalid','failed'), true) || $reset_request): ?>
+    <p id="pvdak-recovery-result" tabindex="-1" role="alert" class="pvdak-static-error"><?php echo 'failed' === $recovery_status ? 'ثبت رمز جدید کامل نشد. از این بخش یک لینک تازه درخواست کنید.' : 'این لینک بازیابی معتبر نیست یا زمان استفاده از آن به پایان رسیده است. برای ادامه، لینک جدید بگیرید.'; ?></p>
+  <?php else: ?>
+    <p class="pvdak-auth-method-description">ابتدا ایمیل متصل به حساب خود را وارد کنید. ادامه مسیر در یک ایمیل امن برایتان ارسال می‌شود.</p>
+  <?php endif; ?>
+  <form class="pvdak-forms pvdak-auth-form" method="post" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+    <input type="hidden" name="action" value="pvdak_recovery_request">
+    <?php wp_nonce_field('pvdak_recovery_request','_pvdak_recovery_nonce'); ?>
+    <label for="recovery-email">ایمیل یا نام کاربری حساب</label>
+    <input id="recovery-email" name="identity" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="250" required>
+    <button type="submit">ارسال لینک بازیابی به ایمیل</button>
+  </form>
+  <p class="pvdak-recovery-return"><a data-pvdak-auth-go="password" href="<?php echo esc_url(pvdak_auth_login_url()); ?>">بازگشت به ورود</a></p>
+</section>
+<?php if($reset_valid): ?>
+<section id="pvdak-auth-recover-change" class="pvdak-recovery-in-login" data-pvdak-auth-pane="recover-change" aria-label="تعیین رمز عبور جدید" <?php echo $recovery_change_selected?'':'hidden'; ?>>
+  <ol class="pvdak-recovery-steps" aria-label="مراحل بازیابی">
+    <li class="is-complete">۱. دریافت لینک</li>
+    <li class="is-active">۲. رمز تازه</li>
+    <li>۳. ورود دوباره</li>
+  </ol>
+  <p class="pvdak-auth-method-description">لینک شما معتبر است. رمز تازه‌ای با حداقل ۱۲ نویسه انتخاب کنید و سپس با آن وارد حساب شوید.</p>
+  <form class="pvdak-forms pvdak-auth-form" method="post" data-pvdak-single-submit data-pvdak-recovery-change action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+    <input type="hidden" name="action" value="pvdak_recovery_change">
+    <?php wp_nonce_field('pvdak_recovery_change','_pvdak_reset_nonce'); ?>
+    <input type="hidden" name="login" value="<?php echo esc_attr($reset_login); ?>">
+    <input type="hidden" name="key" value="<?php echo esc_attr($reset_key); ?>">
+    <label for="new-password">رمز عبور جدید (حداقل ۱۲ نویسه)</label>
+    <div class="pvdak-password-field"><input id="new-password" name="new_password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="new-password" aria-controls="new-password" aria-pressed="false">نمایش</button></div>
+    <label for="confirm-password">تکرار رمز عبور جدید</label>
+    <div class="pvdak-password-field"><input id="confirm-password" name="confirm_password" type="password" minlength="12" maxlength="256" autocomplete="new-password" aria-describedby="pvdak-password-match" required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="confirm-password" aria-controls="confirm-password" aria-pressed="false">نمایش</button></div>
+    <p id="pvdak-password-match" class="pvdak-field-help" role="status" aria-live="polite">رمز عبور و تکرار آن باید یکسان باشند.</p>
+    <button type="submit">ذخیره رمز جدید و ادامه به ورود</button>
+  </form>
+  <p class="pvdak-recovery-return"><a data-pvdak-auth-go="password" href="<?php echo esc_url(pvdak_auth_login_url()); ?>">بازگشت به ورود</a></p>
+</section>
+<?php endif; ?>
+
+<p class="pvdak-login-signup" data-pvdak-auth-switch="register" <?php echo ($register_selected||$recovery_selected)?'hidden':''; ?>>حساب کاربری ندارید؟ <a data-pvdak-auth-go="register-email" href="<?php echo esc_url(pvdak_registration_result_url()); ?>">ثبت‌نام در PVDak</a></p>
 <p class="pvdak-register-back" data-pvdak-auth-switch="login" <?php echo $register_selected?'':'hidden'; ?>>قبلاً حساب ساخته‌اید؟ <a data-pvdak-auth-go="password" href="<?php echo esc_url(pvdak_auth_login_url()); ?>">ورود به حساب</a></p>
 </section>
 <aside class="pvdak-login-art pvdak-auth-visual"><span class="pvdak-auth-scale" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M32 7v47M11 18h42M18 19 7 43h22L18 19Zm28 0L35 43h22L46 19ZM18 55h28"/></svg></span><span class="pvdak-auth-art-label">PVDAK • خدمات حقوقی</span><h2>مسیر روشن پیگیری</h2><p>پروفایل شخصی، سوابق درخواست و گفت‌وگوهای پشتیبانی در یک فضای منسجم.</p><ul class="pvdak-login-benefits"><li>دسترسی به اطلاعات حساب</li><li>پیگیری پیام‌های خصوصی</li><li>مدیریت وضعیت همکاری</li></ul></aside>
