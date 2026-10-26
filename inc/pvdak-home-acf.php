@@ -271,6 +271,9 @@ function pvdak_home_add_admin_menu() {
     // A role may edit pages in general but lack access to the selected
     // homepage. Keep that editor out of a dead-end submenu.
     $home_id = pvdak_home_page_id();
+    // A missing front-page assignment needs administrator setup; do not
+    // expose an unusable editor submenu to staff without that permission.
+    if ( ! $home_id && ! current_user_can( 'manage_options' ) ) { return; }
     if ( $home_id && ! current_user_can( 'edit_post', $home_id ) ) { return; }
     $hook = add_submenu_page(
         'pvdak-management',
