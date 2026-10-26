@@ -27,13 +27,19 @@
     var switches = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-switch]'));
     var copies = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-copy]'));
     var modes = tabs.map(function (tab) { return tab.getAttribute('data-pvdak-auth-tab'); });
+    // Recovery is a standalone state of the same screen, never another
+    // login/register tab. Only offer the password step for a verified key.
+    if (document.querySelector('[data-pvdak-auth-pane="recover"]')) modes.push('recover');
+    if (document.querySelector('[data-pvdak-auth-pane="recover-change"]')) modes.push('recover-change');
     var query = new URLSearchParams(window.location.search);
     var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];
     var smsMode = modes.indexOf('sms-login') >= 0 ? 'sms-login' :
       (modes.indexOf('sms-register') >= 0 ? 'sms-register' : '');
-    var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') :
-      (query.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
-       (query.has('sms_status') && smsMode ? smsMode : defaultMode));
+    var activeMode = query.has('reset') && modes.indexOf('recover-change') >= 0 ? 'recover-change' :
+      (query.has('reset') && modes.indexOf('recover') >= 0 ? 'recover' :
+       (modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') :
+        (query.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
+         (query.has('sms_status') && smsMode ? smsMode : defaultMode))));
     function showAuthMode(mode, focus, remember) {
       if (modes.indexOf(mode) === -1) mode = defaultMode;
       activeMode = mode;
@@ -47,15 +53,23 @@
         pane.hidden = pane.getAttribute('data-pvdak-auth-pane') !== mode;
       });
       var isRegister = mode === 'register-email' || mode === 'sms-register';
+      var isRecovery = mode === 'recover' || mode === 'recover-change';
       groups.forEach(function (group) {
-        group.hidden = group.getAttribute('data-pvdak-auth-group') !== (isRegister ? 'register' : 'login');
+        group.hidden = isRecovery ||
+          group.getAttribute('data-pvdak-auth-group') !== (isRegister ? 'register' : 'login');
       });
       switches.forEach(function (block) {
-        block.hidden = block.getAttribute('data-pvdak-auth-switch') !== (isRegister ? 'login' : 'register');
+        block.hidden = isRecovery ||
+          block.getAttribute('data-pvdak-auth-switch') !== (isRegister ? 'login' : 'register');
       });
       copies.forEach(function (node) {
-        node.hidden = node.getAttribute('data-pvdak-auth-copy') !== (isRegister ? 'register' : 'login');
+        node.hidden = node.getAttribute('data-pvdak-auth-copy') !==
+          (isRecovery ? 'recovery' : (isRegister ? 'register' : 'login'));
       });
+      if (focus && isRecovery) {
+        var recoveryField = document.querySelector('[data-pvdak-auth-pane="' + mode + '"] input:not([type=hidden])');
+        if (recoveryField) recoveryField.focus();
+      }
       if (remember && window.history && window.history.replaceState) {
         var link = new URL(window.location.href);
         if (mode === defaultMode) link.searchParams.delete('auth');
@@ -64,10 +78,16 @@
         link.searchParams.delete('error');
         link.searchParams.delete('pvdak_login_error');
         link.searchParams.delete('state');
+        link.searchParams.delete('status');
+        // Never keep a reset secret in the address after leaving the key step.
+        if (mode !== 'recover-change') {
+          ['reset', 'key', 'login'].forEach(function (key) { link.searchParams.delete(key); });
+        }
         // A prior "account created" notice must not reappear merely because
         // someone switched tabs after a completed request.
         ['pvdak-register-email-result', 'pvdak-register-sms-result',
-         'pvdak-login-result', 'pvdak-sms-login-result'].forEach(function (id) {
+         'pvdak-login-result', 'pvdak-sms-login-result',
+         'pvdak-recovery-result', 'pvdak-login-reset-result'].forEach(function (id) {
           var oldNotice = document.getElementById(id);
           if (oldNotice) oldNotice.remove();
         });
@@ -108,9 +128,11 @@
     window.addEventListener('pageshow', function (event) {
       if (!event.persisted) return;
       var restored = new URLSearchParams(window.location.search);
-      var mode = modes.indexOf(restored.get('auth')) >= 0 ? restored.get('auth') :
-        (restored.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
-         (restored.has('sms_status') && smsMode ? smsMode : defaultMode));
+      var mode = restored.has('reset') && modes.indexOf('recover-change') >= 0 ? 'recover-change' :
+        (restored.has('reset') && modes.indexOf('recover') >= 0 ? 'recover' :
+         (modes.indexOf(restored.get('auth')) >= 0 ? restored.get('auth') :
+          (restored.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
+           (restored.has('sms_status') && smsMode ? smsMode : defaultMode))));
       showAuthMode(mode, false, false);
     });
   }
