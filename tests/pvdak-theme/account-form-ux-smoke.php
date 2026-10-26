@@ -183,8 +183,8 @@ $checks = array(
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
 
   'D13 reset request is a state of the canonical login Page' =>
-    strpos($s['tools'], "if ( 'account-recovery' === $slug )")!==false &&
-    strpos($s['tools'], "add_query_arg( 'auth', 'recover', $login )")!==false &&
+    strpos($s['tools'], "if ( 'account-recovery' === \$slug )")!==false &&
+    strpos($s['tools'], "add_query_arg( 'auth', 'recover', \$login )")!==false &&
     strpos($s['login'], 'data-pvdak-auth-pane="recover"')!==false &&
     strpos($s['login'], 'data-pvdak-auth-pane="recover-change"')!==false &&
     strpos($s['login'], 'name="action" value="pvdak_recovery_request"')!==false &&
@@ -198,8 +198,8 @@ $checks = array(
     strpos($s['tools'], 'lang="fa" dir="rtl"')!==false &&
     strpos($s['tools'], 'بازیابی رمز عبور PVDak')!==false &&
     strpos($s['tools'], 'pvdak_recovery_email_plain_text')!==false &&
-    strpos($s['tools'], "'wp_mail_content_type', $type_filter")!==false &&
-    strpos($s['tools'], "remove_action( 'phpmailer_init', $mail_alt, 30 )")!==false,
+    strpos($s['tools'], "'wp_mail_content_type', \$type_filter")!==false &&
+    strpos($s['tools'], "remove_action( 'phpmailer_init', \$mail_alt, 30 )")!==false,
   'D13 recovery JavaScript keeps 2 login methods and strips reset secrets' =>
     strpos($s['script'], "modes.push('recover')")!==false &&
     strpos($s['script'], "modes.push('recover-change')")!==false &&
