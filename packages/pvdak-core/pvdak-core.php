@@ -13,9 +13,118 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 define( 'PVDAK_CORE_VERSION', '0.8.19' );
 
 /**
- * D24: owner-only generic status email, explicitly OFF until approved.
- * Never include a legal case title, tracking number, status, notes or links.
+ * D24: private, opt-in status notifications. Both administrator enablement
+ * AND current-mailbox owner consent are required; neither is enabled on deploy.
  */
+function pvdak_core_notification_verified_mailbox( $owner ) {
+    $user = $owner ? get_userdata( absint( $owner ) ) : false;
+    if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
+         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ||
+         (int) get_user_meta( $owner, '_pvdak_email_verified_at', true ) < 1 ) { return ''; }
+    $mailbox = strtolower( trim( $user->user_email ) );
+    $verified = get_user_meta( $owner, '_pvdak_email_verified_address', true );
+    return is_string( $verified ) && hash_equals( $mailbox, $verified ) ? $mailbox : '';
+}
+
+function pvdak_core_notification_consent_valid( $owner, $mailbox ) {
+    if ( ! $owner || ! is_string( $mailbox ) || '' === $mailbox ) { return false; }
+    $record = get_user_meta( absint( $owner ), '_pvdak_notification_consent', true );
+    if ( ! is_array( $record ) || ! isset( $record['address'], $record['at'] ) ||
+         ! is_string( $record['address'] ) || ! is_string( $record['at'] ) ||
+         ! hash_equals( $mailbox, $record['address'] ) ||
+         1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/D', $record['at'] ) ) {
+        return false;
+    }
+    $date = DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $record['at'], new DateTimeZone( 'UTC' ) );
+    return $date instanceof DateTimeImmutable &&
+        $date->format( 'Y-m-d H:i:s' ) === $record['at'] &&
+        $date->getTimestamp() >= 1577836800 && $date->getTimestamp() <= time() + 300;
+}
+
+/** The owner can revoke consent even after changing their email address. */
+function pvdak_core_notification_consent_panel() {
+    if ( ! is_user_logged_in() ) { return ''; }
+    $owner = get_current_user_id();
+    $mailbox = pvdak_core_notification_verified_mailbox( $owner );
+    $record = get_user_meta( $owner, '_pvdak_notification_consent', true );
+    $valid = pvdak_core_notification_consent_valid( $owner, $mailbox );
+    $enabled = '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' );
+    $html = '<div class="pvdak-unified-security-card"><div><h3>اعلان ایمیلی تغییر وضعیت</h3>';
+    $html .= '<p>فقط یک پیام عمومی درباره تغییر در بخش خصوصی حساب ارسال می‌شود؛ جزئیات پرونده، تیکت و عضویت در ایمیل درج نمی‌شود. این قابلیت پیش‌فرض خاموش است.</p>';
+    if ( $valid ) {
+        $html .= '<p role="status">' . ( $enabled ?
+            'رضایت شما ثبت است و اعلان‌های عمومی حساب می‌توانند ارسال شوند.' :
+            'رضایت ثبت شده اما ارسال اعلان توسط مدیر هنوز غیرفعال است.' ) . '</p>';
+    } elseif ( $record ) {
+        $html .= '<p role="status">رضایت قبلی دیگر معتبر نیست؛ تا ثبت رضایت جدید هیچ اعلانی ارسال نمی‌شود.</p>';
+    } else {
+        $html .= '<p>در حال حاضر برای این حساب رضایت دریافت اعلان ثبت نشده است.</p>';
+    }
+    $html .= '<form method="post" class="pvdak-forms" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+    $html .= wp_nonce_field( 'pvdak_core_notification_consent', '_pvdak_notification_nonce', true, false );
+    $html .= '<input type="hidden" name="action" value="pvdak_core_notification_consent">';
+    if ( '' !== $mailbox && ! $valid ) {
+        $html .= '<button type="submit" name="pvdak_notification_choice" value="yes">موافق دریافت اعلان عمومی ایمیلی هستم</button>';
+    } elseif ( '' === $mailbox ) {
+        $html .= '<p>برای فعال‌کردن اعلان، ابتدا نشانی ایمیل فعلی حساب باید تأیید شود.</p>';
+    }
+    if ( $record ) {
+        $html .= '<button type="submit" name="pvdak_notification_choice" value="no">لغو رضایت اعلان ایمیلی</button>';
+    }
+    return $html . '</form></div></div>';
+}
+
+function pvdak_core_notification_consent_submit() {
+    if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! is_user_logged_in() ) {
+        wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
+    }
+    check_admin_referer( 'pvdak_core_notification_consent', '_pvdak_notification_nonce' );
+    $owner = get_current_user_id();
+    $choice = isset( $_POST['pvdak_notification_choice'] ) && is_string( $_POST['pvdak_notification_choice'] ) ?
+        wp_unslash( $_POST['pvdak_notification_choice'] ) : '';
+    if ( 'no' === $choice ) {
+        delete_user_meta( $owner, '_pvdak_notification_consent' );
+        if ( metadata_exists( 'user', $owner, '_pvdak_notification_consent' ) ) {
+            wp_die( 'لغو رضایت ذخیره نشد.', '', array( 'response' => 503 ) );
+        }
+    } elseif ( 'yes' === $choice ) {
+        $mailbox = pvdak_core_notification_verified_mailbox( $owner );
+        if ( '' === $mailbox ) { wp_die( 'ایمیل فعلی تأیید نشده است.', '', array( 'response' => 403 ) ); }
+        $record = array( 'address' => $mailbox, 'at' => current_time( 'mysql', true ) );
+        $written = update_user_meta( $owner, '_pvdak_notification_consent', $record );
+        if ( ( ! $written && $record !== get_user_meta( $owner, '_pvdak_notification_consent', true ) ) ||
+             ! pvdak_core_notification_consent_valid( $owner, pvdak_core_notification_verified_mailbox( $owner ) ) ) {
+            delete_user_meta( $owner, '_pvdak_notification_consent' );
+            wp_die( 'ثبت رضایت تأیید نشد.', '', array( 'response' => 503 ) );
+        }
+    } else {
+        wp_die( 'انتخاب نامعتبر است.', '', array( 'response' => 400 ) );
+    }
+    $url = function_exists( 'pvdak_core_account_url' ) ? pvdak_core_account_url() : '';
+    wp_safe_redirect( ( $url ? $url : home_url( '/' ) ) . '#pvdak-security' );
+    exit;
+}
+add_action( 'admin_post_pvdak_core_notification_consent', 'pvdak_core_notification_consent_submit' );
+
+/** Administrator approval is a separate OFF-by-default switch. */
+function pvdak_core_notification_settings_field() {
+    echo '<input type="hidden" name="pvdak_core_email_notifications_enabled" value="0">';
+    echo '<label><input type="checkbox" name="pvdak_core_email_notifications_enabled" value="1" ' .
+        checked( '1', get_option( 'pvdak_core_email_notifications_enabled', '0' ), false ) .
+        '> مجوز ارسال اعلان عمومی فقط به حساب‌های دارای رضایت معتبر</label>';
+    echo '<p class="description">پیش از فعال‌سازی، سیاست ارسال، آزمون ایمیل و حریم خصوصی باید تأیید شوند؛ این گزینه هیچ رضایتی برای کاربران ایجاد نمی‌کند.</p>';
+}
+function pvdak_core_notification_register_setting() {
+    register_setting( 'general', 'pvdak_core_email_notifications_enabled', array(
+        'type' => 'string', 'default' => '0',
+        'sanitize_callback' => function( $value ) { return '1' === (string) $value ? '1' : '0'; },
+    ) );
+    add_settings_field( 'pvdak_core_email_notifications_enabled', 'اعلان‌های PVDak',
+        'pvdak_core_notification_settings_field', 'general' );
+}
+add_action( 'admin_init', 'pvdak_core_notification_register_setting' );
+
+/** Only a generic message; no case title, tracking number, status or link. */
 function pvdak_core_notify_owner( $post_id, $kind ) {
     if ( '1' !== (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ) ) { return false; }
     $allowed = array( 'pvdak_request', 'pvdak_professional', 'pvdak_support_ticket' );
@@ -24,20 +133,14 @@ function pvdak_core_notify_owner( $post_id, $kind ) {
     if ( ! $post || $post->post_type !== $kind ||
          ! in_array( $post->post_status, 'pvdak_professional' === $kind ? array( 'private', 'draft' ) : array( 'private' ), true ) ) { return false; }
     $owner = absint( $post->post_author );
-    $user = $owner ? get_userdata( $owner ) : false;
-    if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
-         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ||
-         (int) get_user_meta( $owner, '_pvdak_email_verified_at', true ) < 1 ) { return false; }
-    // The positive verification must belong to the CURRENT mailbox, not a prior address.
-    $recipient = strtolower( trim( $user->user_email ) );
-    $verified = get_user_meta( $owner, '_pvdak_email_verified_address', true );
-    if ( ! is_string( $verified ) || '' === $verified || ! hash_equals( $verified, $recipient ) ) { return false; }
+    $mailbox = pvdak_core_notification_verified_mailbox( $owner );
+    if ( '' === $mailbox || ! pvdak_core_notification_consent_valid( $owner, $mailbox ) ) { return false; }
     $subject = 'اعلان تغییر در حساب PVDak';
-    $body = "یک تغییر در بخش خصوصی حساب شما ثبت شده است.\n" .
-        "برای مشاهده وضعیت، مستقیماً وارد وب‌سایت PVDak و حساب کاربری خود شوید.\n" .
-        "این ایمیل شامل جزئیات پرونده، عضویت یا گفتگو نیست.\n" .
+    $body = "یک تغییر در بخش خصوصی حساب شما ثبت شده است.\\n" .
+        "برای مشاهده وضعیت، مستقیماً وارد وب‌سایت PVDak و حساب کاربری خود شوید.\\n" .
+        "این ایمیل شامل جزئیات پرونده، عضویت یا گفتگو نیست.\\n" .
         "اگر این پیام را انتظار نداشتید، از طریق سایت با پشتیبانی تماس بگیرید.";
-    return (bool) wp_mail( $recipient, $subject, $body );
+    return (bool) wp_mail( $mailbox, $subject, $body );
 }
 
 define( 'PVDAK_CORE_PLUGIN_FILE', __FILE__ );
