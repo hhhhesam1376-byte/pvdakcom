@@ -1,6 +1,38 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * D07: Authenticate PVDak's outgoing WordPress mail with its cPanel mailbox.
+ * All credentials live ONLY in wp-config.php; never in the theme or Git.
+ * Other WordPress installations on the VPS remain unaffected.
+ * Disable SMTP plugins that configure PHPMailer before enabling this hook.
+ */
+function pvdak_configure_authenticated_smtp( $mailer ) {
+    foreach ( array( 'PVDAK_SMTP_HOST', 'PVDAK_SMTP_PORT', 'PVDAK_SMTP_USER', 'PVDAK_SMTP_PASS' ) as $key ) {
+        if ( ! defined( $key ) || ! is_scalar( constant( $key ) ) ||
+             '' === trim( (string) constant( $key ) ) ) {
+            return;
+        }
+    }
+    $port = (int) PVDAK_SMTP_PORT;
+    if ( ! in_array( $port, array( 465, 587 ), true ) ||
+         ! is_email( PVDAK_SMTP_USER ) ) {
+        return;
+    }
+
+    $mailer->isSMTP();
+    $mailer->Host       = (string) PVDAK_SMTP_HOST;
+    $mailer->Port       = $port;
+    $mailer->SMTPAuth   = true;
+    $mailer->Username   = (string) PVDAK_SMTP_USER;
+    $mailer->Password   = (string) PVDAK_SMTP_PASS;
+    $mailer->SMTPSecure = ( 465 === $port ) ? 'ssl' : 'tls';
+    // Never turn off SSL certificate verification on the production site.
+    $mailer->setFrom( PVDAK_SMTP_USER, 'PVDak', false );
+}
+add_action( 'phpmailer_init', 'pvdak_configure_authenticated_smtp', 20 );
+
+
 function pvdak_setup() {
 	load_theme_textdomain( 'pvdak', get_template_directory() . '/languages' );
 	add_theme_support( 'title-tag' );
