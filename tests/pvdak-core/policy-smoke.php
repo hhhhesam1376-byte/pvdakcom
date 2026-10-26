@@ -103,6 +103,7 @@ function get_user_meta( $id, $key, $single = true ) {
     if ( '_pvdak_email_verification_pending' === $key ) { return $GLOBALS['pvdak_mock_notify_pending'] ?? '0'; }
     if ( '_pvdak_email_verified_at' === $key ) { return $GLOBALS['pvdak_mock_notify_verified_at'] ?? 0; }
     if ( '_pvdak_email_verified_address' === $key ) { return $GLOBALS['pvdak_mock_notify_verified_address'] ?? ''; }
+    if ( '_pvdak_notification_consent' === $key ) { return $GLOBALS['pvdak_mock_notify_consent'] ?? ''; }
     return '';
 }
 function is_email( $value ) { return (bool) filter_var( $value, FILTER_VALIDATE_EMAIL ); }
@@ -586,8 +587,21 @@ $GLOBALS['pvdak_mock_notify_verified_at'] = 1770000000;
 $GLOBALS['pvdak_mock_notify_verified_address'] = 'other@example.test';
 pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 changed mailbox blocks notifications' );
 $GLOBALS['pvdak_mock_notify_verified_address'] = 'owner@example.test';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) && ! $GLOBALS['pvdak_mock_sent_mail'],
+    'D24 administrator enablement alone never grants owner consent' );
+$GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'old@example.test', 'at' => gmdate( 'Y-m-d H:i:s' ) );
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 consent for a previous mailbox is invalid' );
+$GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => '2026-02-30 12:00:00' );
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 malformed consent date fails closed' );
+$GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s', time() + 3600 ) );
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 future consent date fails closed' );
+$GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s' ) );
 pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
-    'D24 sends a generic email to the current private record owner after opt-in' );
+    'D24 sends a generic email only with explicit current-mailbox consent' );
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'other@example.test';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
+    'D24 mailbox changes invalidate previously granted consent' );
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'owner@example.test';
 $mail = $GLOBALS['pvdak_mock_sent_mail'][0];
 pvdak_expect( false === strpos( $mail[2], '901' ) && false === strpos( $mail[2], 'حقوق خانواده' ) &&
     false === strpos( $mail[2], 'owner@example.test' ), 'D24 body excludes case ID, topic and email' );
