@@ -171,18 +171,25 @@ function pvdak_core_professional_dashboard() {
 
         $limit = pvdak_core_capacity_limit( $profile_id );
         $active = pvdak_core_active_assignment_count( $profile_id );
-        $remaining = max( 0, $limit - $active );
+        $capacity_error = PHP_INT_MAX === $active;
+        $remaining = $capacity_error ? 0 : max( 0, $limit - $active );
         $accepting = pvdak_core_capacity_accepting( $profile_id );
         $html .= '<section class="pvdak-core-prof-section" aria-labelledby="pvdak-prof-capacity"><h3 id="pvdak-prof-capacity">ظرفیت انتساب داخلی</h3>';
-        $html .= '<div class="pvdak-core-prof-numbers"><div><strong>' . esc_html( $limit ) . '</strong><span>سقف هم‌زمان</span></div>';
-        $html .= '<div><strong>' . esc_html( $active ) . '</strong><span>انتساب فعال</span></div>';
-        $html .= '<div><strong>' . esc_html( $remaining ) . '</strong><span>ظرفیت باقی‌مانده</span></div></div>';
-        if ( $limit > 0 ) {
+        if ( $capacity_error ) {
+            $html .= '<p class="pvdak-core-notice" role="status">شمارش ظرفیت فعلاً قابل اتکا نیست؛ ارجاع جدید تا بررسی مدیر متوقف می‌ماند.</p>';
+        } else {
+            $html .= '<div class="pvdak-core-prof-numbers"><div><strong>' . esc_html( $limit ) . '</strong><span>سقف هم‌زمان</span></div>';
+            $html .= '<div><strong>' . esc_html( $active ) . '</strong><span>انتساب فعال</span></div>';
+            $html .= '<div><strong>' . esc_html( $remaining ) . '</strong><span>ظرفیت باقی‌مانده</span></div></div>';
+        }
+        if ( ! $capacity_error && $limit > 0 ) {
             $html .= '<label class="pvdak-core-prof-meter">استفاده از ظرفیت <progress max="' . esc_attr( $limit ) .
                 '" value="' . esc_attr( min( $active, $limit ) ) . '">' .
                 esc_html( min( $active, $limit ) ) . '</progress></label>';
         }
-        if ( ! $accepting ) {
+        if ( $capacity_error ) {
+            $capacity_message = 'برای بررسی خطای شمارش ظرفیت با پشتیبانی تماس بگیرید.';
+        } elseif ( ! $accepting ) {
             $capacity_message = 'انتساب داخلی جدید توسط مدیر متوقف شده است.';
         } elseif ( 0 === $limit ) {
             $capacity_message = 'سقف ظرفیت هنوز توسط مدیر تنظیم نشده است.';
@@ -205,7 +212,8 @@ function pvdak_core_professional_dashboard() {
             $quota = pvdak_core_subscription_monthly_quota( $profile_id );
             $gate = pvdak_core_subscription_gate_on();
             $used = $gate ? pvdak_core_subscription_month_assignments( $profile_id ) : 0;
-            $left = max( 0, $quota - $used );
+            $quota_error = PHP_INT_MAX === $used;
+            $left = $quota_error ? 0 : max( 0, $quota - $used );
 
             $html .= '<section class="pvdak-core-prof-section" aria-labelledby="pvdak-prof-plan"><h3 id="pvdak-prof-plan">طرح و سهمیه ثبت‌شده</h3>';
             $html .= '<dl class="pvdak-core-prof-facts"><div><dt>طرح</dt><dd>' . esc_html( $plan_label ) . '</dd></div>';
@@ -215,9 +223,13 @@ function pvdak_core_professional_dashboard() {
                 ( $expiry ? '<time datetime="' . esc_attr( $expiry ) . '">' . esc_html( $expiry ) . '</time>' : 'تنظیم نشده' ) .
                 '</dd></div></dl>';
             if ( $gate ) {
-                $html .= '<p>انتساب‌های ثبت‌شده در ماه جاری: <strong>' . esc_html( $used ) .
-                    '</strong> · سهمیه باقی‌مانده: <strong>' . esc_html( $left ) . '</strong></p>';
-                if ( $quota > 0 ) {
+                if ( $quota_error ) {
+                    $html .= '<p class="pvdak-core-notice" role="status">سهمیه ماهانه فعلاً قابل محاسبه نیست؛ انتساب تازه تا رفع خطا مجاز نیست.</p>';
+                } else {
+                    $html .= '<p>انتساب‌های ثبت‌شده در ماه جاری: <strong>' . esc_html( $used ) .
+                        '</strong> · سهمیه باقی‌مانده: <strong>' . esc_html( $left ) . '</strong></p>';
+                }
+                if ( ! $quota_error && $quota > 0 ) {
                     $html .= '<label class="pvdak-core-prof-meter">مصرف سهمیه ماهانه <progress max="' .
                         esc_attr( $quota ) . '" value="' . esc_attr( min( $used, $quota ) ) . '">' .
                         esc_html( min( $used, $quota ) ) . '</progress></label>';
