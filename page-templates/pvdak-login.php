@@ -228,8 +228,8 @@ get_header(); ?>
   <form class="pvdak-forms pvdak-auth-form" method="post" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
     <input type="hidden" name="action" value="pvdak_recovery_request">
     <?php wp_nonce_field('pvdak_recovery_request','_pvdak_recovery_nonce'); ?>
-    <label for="recovery-email">ایمیل یا نام کاربری حساب</label>
-    <input id="recovery-email" name="identity" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="250" required>
+    <label for="recovery-email">آدرس ایمیل ثبت‌شده در حساب</label>
+    <input id="recovery-email" name="identity" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254" placeholder="name@example.com" required>
     <button type="submit">ارسال لینک بازیابی به ایمیل</button>
   </form>
   <p class="pvdak-recovery-return"><a data-pvdak-auth-go="password" href="<?php echo esc_url(pvdak_auth_login_url()); ?>">بازگشت به ورود</a></p>
