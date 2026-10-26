@@ -56,7 +56,7 @@ function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( $owner_id && ( 'pvdak_request' !== get_post_type( $id ) ||
          'private' !== get_post_status( $id ) ||
          (int) get_post_field( 'post_author', $id ) !== absint( $owner_id ) ||
-         $type !== get_post_meta( $id, '_pvdak_request_type', true ) ) { return 0; }
+         $type !== get_post_meta( $id, '_pvdak_request_type', true ) ) ) { return 0; }
     return $id;
 }
 
