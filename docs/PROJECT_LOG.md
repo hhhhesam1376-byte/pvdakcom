@@ -1882,3 +1882,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - تأیید اطلاعات Connect Devices در cPanel توسط صاحب پروژه: `noreply@pvdak.com`, `mail.pvdak.com`, TCP 465/SSL؛ هیچ گذرواژه‌ای دریافت یا در ریپازیتوری ذخیره نشد.
 - در `functions.php` هوک اختیاری `phpmailer_init` با شرط چهار ثابت خصوصی `PVDAK_SMTP_HOST`, `PVDAK_SMTP_PORT`, `PVDAK_SMTP_USER`, `PVDAK_SMTP_PASS` افزوده شد؛ نسخه قالب 0.8.70. تنظیمات Exim، PTR و سایر سایت‌ها دست‌نخورده است.
 - اقدام هاست: ایجاد چهار ثابت فقط در wp-config، غیرفعال‌کردن افزونه WP Mail SMTP برای جلوگیری از دو پیکربندی، انتشار main و اجرای یک تست wp_mail/تحویل واقعی. تا انجام تست، D07 باز است؛ SMTP محلی مشکل PTR عمومی سرور را الزاماً رفع نمی‌کند.
+
+### 2026-10-26 — رفع مانع انتشار سورس SMTP / Core lint
+- صاحب پروژه هنگام اجرای `$HOME/.pvdak-deploy/deploy.sh` روی هاست با `ERROR: PHP syntax error: packages/pvdak-core/includes/requests.php` مواجه شد؛ انتشار قبل از تغییر فایل زنده متوقف شد و تست SMTP به‌دلیل `&&` اجرا نشد.
+- علت سورس: پرانتز بستهٔ جاافتاده در شرط کنترل مالکیت `pvdak_core_request_receipt_id` در `packages/pvdak-core/includes/requests.php`؛ در `main` با کامیت `504fddda759d181cacfc0b1353e3c5162ff44c33` اصلاح شد.
+- بررسی تعادل ساختاری پرانتزها/آکولادها در نسخه جدید این فایل و `functions.php` بدون مغایرت بود، اما **این بررسی جای PHP lint واقعی نیست**؛ اجرای مجدد اسکریپت انتشار روی هاست لازم است. نصب افزونه SMTP تا این لحظه فعال است زیرا دستور غیرفعال‌سازی به‌علت شکست deploy نرسید؛ وضعیت مقادیر wp-config نیز مستقل تأیید نشده. D07 و تحویل واقعی ایمیل هنوز باز هستند.
