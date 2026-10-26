@@ -90,3 +90,34 @@
   .pvdak-unified-account .pvdak-ticket-filters :where(input,select,button){min-height:42px}
   .pvdak-unified-account .pvdak-ticket-summary{padding:13px 12px}
 }
+
+/* 0.8.73: support list is a proper RTL table, conversations on demand. */
+.pvdak-ticket-create-panel{margin:12px 0 24px;border:1px solid #cbdfe6;border-radius:14px;overflow:hidden;background:#f5fafc}
+.pvdak-ticket-create-panel>summary{padding:14px 17px;font-size:14px;font-weight:850;cursor:pointer;color:#104b6c;list-style-position:inside}
+.pvdak-ticket-create-panel[open]>summary{border-bottom:1px solid #dcecf2}
+.pvdak-ticket-create-panel .pvdak-ticket-new{padding:16px;margin:0;background:#fff}
+.pvdak-ticket-table-scroll{max-width:100%;overflow-x:auto;border:1px solid #dbe7ef;border-radius:14px}
+.pvdak-unified-account .pvdak-ticket-table{width:100%;border-collapse:collapse;table-layout:auto;min-width:540px;text-align:right;background:#fff;font-size:13px}
+.pvdak-unified-account .pvdak-ticket-table th{padding:13px 14px;color:#20465c;background:#edf5fa;font-size:12px;font-weight:850;white-space:nowrap;text-align:right;border-bottom:1px solid #d5e2ea}
+.pvdak-unified-account .pvdak-ticket-table td{padding:13px 14px;vertical-align:middle;border-bottom:1px solid #e2ebef}
+.pvdak-ticket-table tbody tr.pvdak-ticket-table-row{cursor:pointer;transition:background .16s}
+.pvdak-ticket-table tbody tr.pvdak-ticket-table-row:hover,.pvdak-ticket-table tbody tr.pvdak-ticket-table-row:focus-within,.pvdak-ticket-table tbody tr.pvdak-ticket-table-row.is-open{background:#f2f8fc}
+.pvdak-ticket-table :where(.pvdak-ticket-title,.pvdak-ticket-number){font-weight:850;color:#164b70;text-decoration:none}
+.pvdak-ticket-table .pvdak-ticket-number{white-space:nowrap;direction:ltr;display:inline-block}
+.pvdak-ticket-table .pvdak-ticket-count{display:block;margin-top:5px}
+.pvdak-ticket-table .pvdak-ticket-date{display:inline-block;direction:ltr;white-space:nowrap}
+.pvdak-ticket-table .pvdak-ticket-detail-row td{padding:0 16px 16px;background:#fbfdfe;border-bottom:2px solid #cbdfe9}
+.pvdak-ticket-table .pvdak-ticket-body{padding:14px 0 0;border:0;max-width:100%}
+.pvdak-ticket-table .pvdak-ticket-original{background:#f1f6f9}
+.pvdak-ticket-table .pvdak-ticket-followup{max-width:700px}
+.pvdak-ticket-table :where(a,summary):focus-visible,.pvdak-ticket-create-panel>summary:focus-visible{outline:3px solid #147e9e;outline-offset:2px}
+.pvdak-support-overview{margin-top:22px;padding:18px;border:1px solid #d7e7f1;border-radius:17px;background:#f9fcff}
+.pvdak-support-overview-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.pvdak-support-overview-head h3{font-size:16px;margin:0;color:#18455e}
+.pvdak-support-overview-head a{font-weight:800;color:#12628e;font-size:12px}
+.pvdak-support-overview ul{padding:0;margin:0;list-style:none;display:grid;gap:8px}
+.pvdak-support-overview li a{padding:12px 14px;border-radius:10px;border:1px solid #e2ebf0;background:white;display:flex;align-items:center;flex-wrap:wrap;gap:8px 15px;text-decoration:none;color:#254258}
+.pvdak-support-overview li a:hover,.pvdak-support-overview li a:focus-visible{background:#edf7fc}
+.pvdak-support-overview-title{font-weight:800;flex:1 1 170px;overflow-wrap:anywhere}
+.pvdak-support-overview time{color:#6b7a86;direction:ltr;white-space:nowrap;font-size:12px}
+@media(max-width:560px){.pvdak-ticket-table .pvdak-ticket-detail-row td{padding-inline:10px}.pvdak-ticket-create-panel .pvdak-ticket-new{padding:12px}}
