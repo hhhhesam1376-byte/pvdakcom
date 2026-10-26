@@ -19,10 +19,18 @@ function pvdak_email_verification_issue($user_id) {
     if (!update_user_meta($user->ID, '_pvdak_email_verification_token_hash', wp_hash_password($token))) {
         return false;
     }
+    // Bind the issued token to the exact mailbox; a later address change must invalidate it.
+    $issued_to = strtolower(trim($user->user_email));
+    if (!update_user_meta($user->ID, '_pvdak_email_verification_issued_to', $issued_to) &&
+        $issued_to !== get_user_meta($user->ID, '_pvdak_email_verification_issued_to', true)) {
+        delete_user_meta($user->ID, '_pvdak_email_verification_token_hash');
+        return false;
+    }
     $expires = time() + DAY_IN_SECONDS;
     if (!update_user_meta($user->ID, '_pvdak_email_verification_expires', $expires) &&
         (int)get_user_meta($user->ID, '_pvdak_email_verification_expires', true) !== $expires) {
         delete_user_meta($user->ID, '_pvdak_email_verification_token_hash');
+        delete_user_meta($user->ID, '_pvdak_email_verification_issued_to');
         return false;
     }
     $url = add_query_arg(array('pvdak_verify'=>'1', 'uid'=>$user->ID, 'token'=>$token), $base);
@@ -44,24 +52,35 @@ function pvdak_email_verification_confirm() {
     if ($user_id && preg_match('/^[A-Za-z0-9]{48}$/D', $token)) {
         $hash = get_user_meta($user_id, '_pvdak_email_verification_token_hash', true);
         $expiry = absint(get_user_meta($user_id, '_pvdak_email_verification_expires', true));
+        $account = get_userdata($user_id);
+        $issued_to = get_user_meta($user_id, '_pvdak_email_verification_issued_to', true);
         $valid = '1' === (string)get_user_meta($user_id, '_pvdak_email_verification_pending', true) &&
+            $account && is_email($account->user_email) && is_string($issued_to) && '' !== $issued_to &&
+            hash_equals($issued_to, strtolower(trim($account->user_email))) &&
             is_string($hash) && $hash !== '' && $expiry >= time() &&
             (bool)wp_check_password($token, $hash, $user_id);
     }
     if ($valid) {
-        // Record positive verification evidence BEFORE lifting the login gate.
-        $verified_at = time();
-        $marked = update_user_meta($user_id, '_pvdak_email_verified_at', $verified_at);
-        $valid = (bool)$marked || (int)get_user_meta($user_id, '_pvdak_email_verified_at', true) === $verified_at;
+        // Store the verified mailbox BEFORE lifting the login gate; fail closed on any write error.
+        $marked_address = update_user_meta($user_id, '_pvdak_email_verified_address', $issued_to);
+        $valid = (bool)$marked_address || $issued_to === get_user_meta($user_id, '_pvdak_email_verified_address', true);
+        if ($valid) {
+            $verified_at = time();
+            $marked = update_user_meta($user_id, '_pvdak_email_verified_at', $verified_at);
+            $valid = (bool)$marked || (int)get_user_meta($user_id, '_pvdak_email_verified_at', true) === $verified_at;
+        }
         if ($valid) {
             $valid = (bool)delete_user_meta($user_id, '_pvdak_email_verification_pending');
             if ($valid) {
                 delete_user_meta($user_id, '_pvdak_email_verification_token_hash');
                 delete_user_meta($user_id, '_pvdak_email_verification_expires');
-            } else {
-                // Never show a verified marker while the pending gate remains.
-                delete_user_meta($user_id, '_pvdak_email_verified_at');
+                delete_user_meta($user_id, '_pvdak_email_verification_issued_to');
             }
+        }
+        if (!$valid) {
+            // Do not retain a positive verification marker after a failed finalization.
+            delete_user_meta($user_id, '_pvdak_email_verified_at');
+            delete_user_meta($user_id, '_pvdak_email_verified_address');
         }
     }
     $url = pvdak_registration_result_url();

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.17
+ * Version: 0.8.18
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.17' );
+define( 'PVDAK_CORE_VERSION', '0.8.18' );
 
 /**
  * D24: owner-only generic status email, explicitly OFF until approved.
@@ -26,13 +26,18 @@ function pvdak_core_notify_owner( $post_id, $kind ) {
     $owner = absint( $post->post_author );
     $user = $owner ? get_userdata( $owner ) : false;
     if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
-         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ) { return false; }
+         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ||
+         (int) get_user_meta( $owner, '_pvdak_email_verified_at', true ) < 1 ) { return false; }
+    // The positive verification must belong to the CURRENT mailbox, not a prior address.
+    $recipient = strtolower( trim( $user->user_email ) );
+    $verified = get_user_meta( $owner, '_pvdak_email_verified_address', true );
+    if ( ! is_string( $verified ) || '' === $verified || ! hash_equals( $verified, $recipient ) ) { return false; }
     $subject = 'اعلان تغییر در حساب PVDak';
     $body = "یک تغییر در بخش خصوصی حساب شما ثبت شده است.\n" .
         "برای مشاهده وضعیت، مستقیماً وارد وب‌سایت PVDak و حساب کاربری خود شوید.\n" .
         "این ایمیل شامل جزئیات پرونده، عضویت یا گفتگو نیست.\n" .
         "اگر این پیام را انتظار نداشتید، از طریق سایت با پشتیبانی تماس بگیرید.";
-    return (bool) wp_mail( $user->user_email, $subject, $body );
+    return (bool) wp_mail( $recipient, $subject, $body );
 }
 
 define( 'PVDAK_CORE_PLUGIN_FILE', __FILE__ );

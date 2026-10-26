@@ -90,7 +90,10 @@ function get_post( $id ) {
     return null;
 }
 function get_user_meta( $id, $key, $single = true ) {
-    return '_pvdak_email_verification_pending' === $key ? ( $GLOBALS['pvdak_mock_notify_pending'] ?? '0' ) : '';
+    if ( '_pvdak_email_verification_pending' === $key ) { return $GLOBALS['pvdak_mock_notify_pending'] ?? '0'; }
+    if ( '_pvdak_email_verified_at' === $key ) { return $GLOBALS['pvdak_mock_notify_verified_at'] ?? 0; }
+    if ( '_pvdak_email_verified_address' === $key ) { return $GLOBALS['pvdak_mock_notify_verified_address'] ?? ''; }
+    return '';
 }
 function is_email( $value ) { return (bool) filter_var( $value, FILTER_VALIDATE_EMAIL ); }
 function wp_mail( $email, $subject, $body ) {
@@ -568,6 +571,11 @@ $GLOBALS['pvdak_mock_notify_status'] = 'private';
 $GLOBALS['pvdak_mock_notify_pending'] = '1';
 pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 excludes unverified email' );
 $GLOBALS['pvdak_mock_notify_pending'] = '0';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 missing positive email verification blocks notifications' );
+$GLOBALS['pvdak_mock_notify_verified_at'] = 1770000000;
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'other@example.test';
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 changed mailbox blocks notifications' );
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'owner@example.test';
 pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
     'D24 sends a generic email to the current private record owner after opt-in' );
 $mail = $GLOBALS['pvdak_mock_sent_mail'][0];

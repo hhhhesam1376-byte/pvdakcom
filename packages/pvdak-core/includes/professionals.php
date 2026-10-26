@@ -212,6 +212,7 @@ function pvdak_core_member_allowed_transitions( $state ) {
 }
 
 function pvdak_core_member_meta_box_html( $post ) {
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post->ID ) ) { return; }
     wp_nonce_field( 'pvdak_core_member_review_' . $post->ID, '_pvdak_member_review_nonce' );
     $type = get_post_meta( $post->ID, '_pvdak_member_type', true );
     $types = pvdak_core_member_types();
@@ -234,6 +235,7 @@ function pvdak_core_member_meta_box_html( $post ) {
 }
 
 function pvdak_core_save_member_review( $id ) {
+    if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! current_user_can( 'manage_options' ) ) { return; }
     if ( wp_is_post_revision( $id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
          ! current_user_can( 'edit_post', $id ) || 'pvdak_professional' !== get_post_type( $id ) ||
          ! in_array( get_post_status( $id ), array( 'private', 'draft' ), true ) ) { return; }
@@ -251,8 +253,14 @@ function pvdak_core_save_member_review( $id ) {
     if ( ! is_string( $old ) || ! isset( pvdak_core_member_states()[ $old ] ) ||
          $expected !== $old || $new === $old ||
          ! in_array( $new, pvdak_core_member_allowed_transitions( $old ), true ) ) { return; }
+    // An unpublished draft is never an approved member, even for staff.
+    if ( 'approved' === $new && 'private' !== get_post_status( $id ) ) { return; }
     // Compare-and-set blocks stale editor tabs; audit failures attempt rollback.
     if ( ! update_post_meta( $id, '_pvdak_member_state', $new, $old ) ) { return; }
+    if ( $new !== get_post_meta( $id, '_pvdak_member_state', true ) ) {
+        update_post_meta( $id, '_pvdak_member_state', $old, $new ); // Best-effort rollback.
+        return;
+    }
     if ( ! add_post_meta( $id, '_pvdak_member_audit', array(
         'from' => $old, 'to' => $new, 'by' => get_current_user_id(), 'at' => current_time( 'mysql', true ),
     ), false ) ) {
