@@ -45,31 +45,32 @@ $checks = array(
     strpos($s['portal'],'انتخاب نوع حساب در ثبت‌نام، به معنی تأیید صلاحیت')!==false,
   'Email send failures and closed-signup resend are handled separately' =>
     strpos($s['register'],'$mailed=pvdak_email_verification_issue($user)')!==false &&
-    strpos($s['register-ui'],"'email_issue'=>'")!==false &&
-    strpos($s['register-ui'],'<details class="pvdak-register-resend">')!==false &&
+    strpos($s['login'],"'email_issue'=>'")!==false &&
+    strpos($s['login'],'<details class="pvdak-register-resend">')!==false &&
     strpos($s['verification'],"if (!pvdak_registration_open())")===false,
   'Homepage readiness checks live preview and complete account routes' =>
-    strpos($s['readiness'],"'account-register' => 'page-templates/pvdak-register.php'")!==false &&
+    strpos($s['readiness'],"'account-register' => 'page-templates/pvdak-register.php'")===false &&
     strpos($s['readiness'],"'account-recovery' => 'page-templates/pvdak-recovery.php'")!==false &&
     strpos($s['readiness'],"'دسترسی نمایشی بازدیدکننده بدون تعمیرات', ! $maintenance_on")!==false,
-  'Login has only password/SMS tabs; signup keeps its separate email/SMS tabs' =>
+  'Login screen owns both sign-in and sign-up with email and SMS modes' =>
     strpos($s['login'],'name="action" value="pvdak_login"')!==false &&
     strpos($s['login'],'data-pvdak-auth-tab="password"')!==false &&
     strpos($s['login'],'data-pvdak-auth-tab="sms-login"')!==false &&
-    substr_count($s['login'],'data-pvdak-auth-tab=')===2 &&
-    strpos($s['login'],'data-pvdak-auth-pane="password"')!==false &&
-    strpos($s['login'],'data-pvdak-auth-pane="sms-login"')!==false &&
-    strpos($s['login'],'role="tabpanel"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-tab="register-email"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-tab="sms-register"')!==false &&
+    substr_count($s['login'],'data-pvdak-auth-tab=')===4 &&
+    strpos($s['login'],'data-pvdak-auth-group="register"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-group="login"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-pane="register-email"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-pane="sms-register"')!==false &&
+    strpos($s['login'],'name="action" value="pvdak_register"')!==false &&
     strpos($s['login'],'name="action" value="pvdak_sms_send"')!==false &&
     strpos($s['login'],'name="action" value="pvdak_sms_verify"')!==false &&
     strpos($s['login'],'ثبت‌نام در PVDak')!==false &&
-    strpos($s['login'],'<details class="pvdak-login-sms-panel"')===false &&
-    strpos($s['login'],'data-pvdak-auth-tab="register-email"')===false &&
-    strpos($s['login'],'چهار مسیر در یک حساب کاربری وردپرس')===false &&
-    strpos($s['register-ui'],'data-pvdak-auth-tab="register-email"')!==false &&
-    strpos($s['register-ui'],'data-pvdak-auth-tab="sms-register"')!==false &&
-    strpos($s['register-ui'],'name="action" value="pvdak_register"')!==false &&
-    strpos($s['register-ui'],'name="action" value="pvdak_sms_send"')!==false &&
+    strpos($s['login'],'data-pvdak-auth-go="register-email"')!==false &&
+    strpos($s['script'],"link.getAttribute('data-pvdak-auth-go')")!==false &&
+    strpos($s['register-ui'],'pvdak_registration_result_url()')!==false &&
+    strpos($s['register-ui'],'wp_safe_redirect(add_query_arg($fields, $target), 302)')!==false &&
     strpos($s['script'],"var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];")!==false,
   'Registration uses branded controlled email verification, without native WP signup' =>
     strpos($s['register'],"get_option('pvdak_registration_enabled', '0')")!==false &&
@@ -85,7 +86,7 @@ $checks = array(
     strpos($s['sms'],"apply_filters('pvdak_sms_auth_enabled', false)")!==false &&
     strpos($s['sms'],"has_filter('pvdak_sms_otp_deliver')")!==false &&
     strpos($s['sms'],'true!==$delivered')!==false &&
-    strpos($s['register-ui'],'if($sms_ready&&$registration_open)')!==false,
+    strpos($s['login'],'if($sms_ready&&$registration_open)')!==false,
   'SMS OTP uses expiry, attempt ceiling, nonces and one-time deletion' =>
     strpos($s['sms'],"check_admin_referer('pvdak_sms_send'")!==false &&
     strpos($s['sms'],"check_admin_referer('pvdak_sms_verify'")!==false &&
@@ -130,14 +131,14 @@ $checks = array(
   'Account scripts available on profile and contact' => strpos( $s['functions'], "'account-profile', 'contact-us'" ) !== false,
   'Active navigation recognizes JS location marker' => strpos( $s['css'], '.pvdak-account-menu a[aria-current]{' ) !== false,
   'SMS registration redirect is visible without JavaScript' =>
-    strpos( $s['register-ui'], "'sms-register'===sanitize_key" ) !== false &&
-    strpos( $s['register-ui'], 'data-pvdak-auth-pane="sms-register" <?php echo $sms_selected' ) !== false,
+    strpos( $s['login'], "'sms-register'===$auth_value" ) !== false &&
+    strpos( $s['login'], 'data-pvdak-auth-pane="sms-register" <?php echo ($register_selected' ) !== false,
   'Both signup methods link to the published legal policies' =>
-    substr_count( $s['register-ui'], 'esc_url($terms)' ) === 2 &&
-    substr_count( $s['register-ui'], 'esc_url($privacy)' ) === 2,
+    substr_count( $s['login'], 'esc_url($terms)' ) === 2 &&
+    substr_count( $s['login'], 'esc_url($privacy)' ) === 2,
   'Server feedback is focusable and distinguishes SMS from email errors' =>
-    strpos( $s['register-ui'], 'id="pvdak-register-email-result" tabindex="-1"' ) !== false &&
-    strpos( $s['register-ui'], 'id="pvdak-register-sms-result" tabindex="-1"' ) !== false &&
+    strpos( $s['login'], 'id="pvdak-register-email-result" tabindex="-1"' ) !== false &&
+    strpos( $s['login'], 'id="pvdak-register-sms-result" tabindex="-1"' ) !== false &&
     strpos( $s['login'], 'id="pvdak-sms-login-result" tabindex="-1"' ) !== false &&
     strpos( $s['recovery'], 'id="pvdak-recovery-result" tabindex="-1"' ) !== false &&
     strpos( $s['script'], "params.has('sms_status')" ) !== false,
@@ -173,8 +174,8 @@ $checks = array(
     strpos($s['tools'],'strlen( $key ) > 64')!==false &&
     strpos($s['tools'],'pvdak_public_text_length( $password ) > 256')!==false,
   'D13 verification requires a published template and real persistence' =>
-    strpos($s['verification'],"pvdak_public_template_page_url('account-register', 'page-templates/pvdak-register.php')")!==false &&
-    strpos($s['verification'],"is_page_template('page-templates/pvdak-register.php')")!==false &&
+    strpos($s['verification'],"pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')")!==false &&
+    strpos($s['verification'],"is_page_template('page-templates/pvdak-login.php')")!==false &&
     strpos($s['verification'],'(bool)delete_user_meta($user_id')!==false &&
     strpos($s['verification'],'pvdak_registration_result_url()')!==false,
   'D14 signup/contact explicit consent and Unicode password length' =>
