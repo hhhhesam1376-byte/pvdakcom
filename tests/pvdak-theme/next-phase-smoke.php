@@ -22,6 +22,7 @@ class WP_Error {
 $GLOBALS['mock_user'] = new WP_User(42, 'example@invalid.test');
 $GLOBALS['mock_meta'] = array(42=>array('_pvdak_email_verification_pending'=>'1'));
 $GLOBALS['mock_mail'] = array();
+$GLOBALS['mock_registration_page']=true;
 function add_action(...$args) {}
 function add_filter(...$args) {}
 function remove_action(...$args) {}
