@@ -31,12 +31,68 @@ function pvdak_support_length($value) {
 }
 /** Keep all client-visible status labels on an explicit allowlist. */
 function pvdak_support_status_label($status) {
-    $labels = array('open'=>'نیازمند پاسخ', 'answered'=>'پاسخ داده شده', 'closed'=>'بسته شده');
+    $labels = array('open'=>'در انتظار بررسی', 'answered'=>'منتظر پاسخ مشتری', 'closed'=>'تکمیل‌شده');
     return is_string($status) && isset($labels[$status]) ? $labels[$status] : 'در انتظار بررسی';
 }
 function pvdak_support_status_key($status) {
     return in_array($status, array('open','answered','closed'), true) ? $status : 'open';
 }
+/** Convert a WordPress-local Gregorian date to Solar Hijri (Jalali). */
+function pvdak_support_jalali_date($timestamp) {
+    $timestamp=(int)$timestamp;
+    if($timestamp<=0)return '—';
+    $parts=array_map('intval',explode('-',wp_date('Y-n-j',$timestamp)));
+    if(count($parts)!==3 || $parts[0]<1600 || $parts[0]>2999)return '—';
+    list($year,$month,$day)=$parts;
+    $gy=$year-1600;
+    $gm=$month-1;
+    $gd=$day-1;
+    $days=array(31,28,31,30,31,30,31,31,30,31,30,31);
+    $gno=365*$gy+intdiv($gy+3,4)-intdiv($gy+99,100)+intdiv($gy+399,400);
+    for($i=0;$i<$gm;$i++)$gno+=$days[$i];
+    if($gm>1 && (($year%4===0 && $year%100!==0) || $year%400===0))$gno++;
+    $jno=$gno+$gd-79;
+    $cycle=intdiv($jno,12053);
+    $jno%=12053;
+    $jy=979+33*$cycle+4*intdiv($jno,1461);
+    $jno%=1461;
+    if($jno>=366){$jy+=intdiv($jno-1,365);$jno=($jno-1)%365;}
+    $jm=$jno<186?1+intdiv($jno,31):7+intdiv($jno-186,30);
+    $jd=1+($jno<186?$jno%31:($jno-186)%30);
+    return strtr(sprintf('%04d/%02d/%02d',$jy,$jm,$jd),
+        array('0'=>'۰','1'=>'۱','2'=>'۲','3'=>'۳','4'=>'۴',
+              '5'=>'۵','6'=>'۶','7'=>'۷','8'=>'۸','9'=>'۹'));
+}
+
+/** Read-only, owner-scoped support snapshot distinct from legal case requests. */
+function pvdak_support_recent_overview() {
+    if(!is_user_logged_in())return '';
+    $owner=get_current_user_id();
+    $posts=get_posts(array(
+        'post_type'=>'pvdak_support_ticket','post_status'=>'private',
+        'author'=>$owner,'posts_per_page'=>3,'orderby'=>'date',
+        'order'=>'DESC','no_found_rows'=>true,'suppress_filters'=>false
+    ));
+    $items=array_values(array_filter(is_array($posts)?$posts:array(),static function($item)use($owner){
+        return $item instanceof WP_Post && 'pvdak_support_ticket'===$item->post_type &&
+            'private'===$item->post_status && (int)$item->post_author===$owner;
+    }));
+    $html='<section class="pvdak-support-overview" aria-labelledby="pvdak-recent-support-title">';
+    $html.='<div class="pvdak-support-overview-head"><h3 id="pvdak-recent-support-title">آخرین تیکت‌های پشتیبانی</h3><a href="#pvdak-support">مشاهده همه تیکت‌ها</a></div>';
+    if(!$items)return $html.'<p>هنوز تیکت پشتیبانی ثبت نکرده‌اید.</p></section>';
+    $html.='<ul>';
+    foreach($items as $ticket){
+        $status=pvdak_support_status_key(get_post_meta($ticket->ID,'_pvdak_support_status',true));
+        $url=add_query_arg('ticket_open',$ticket->ID,pvdak_auth_account_url()).'#pvdak-support';
+        $when=get_post_time('U',true,$ticket->ID);
+        $html.='<li><a href="'.esc_url($url).'"><span class="pvdak-support-overview-title">'.esc_html(get_the_title($ticket->ID)).'</span>'.
+            '<span class="pvdak-ticket-status pvdak-ticket-status--'.esc_attr($status).'">'.esc_html(pvdak_support_status_label($status)).'</span>'.
+            '<time datetime="'.esc_attr(wp_date('Y-m-d',$when)).'">'.
+            esc_html(pvdak_support_jalali_date($when)).'</time></a></li>';
+    }
+    return $html.'</ul></section>';
+}
+
 /** One canonical visibility filter for client, staff history and list counts. */
 function pvdak_support_visible_messages($ticket_id) {
     $entries=get_post_meta(absint($ticket_id),'_pvdak_support_message',false);
@@ -137,6 +193,8 @@ function pvdak_support_ticket_form(){
       <?php elseif('slow'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">برای جلوگیری از ارسال تکراری، کمی بعد دوباره تلاش کنید.</p>
       <?php elseif('invalid'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">عنوان یا متن پیام معتبر نیست؛ طول ورودی را بررسی کنید.</p>
       <?php elseif('failed'===$notice):?><p role="alert" class="pvdak-static-error" tabindex="-1" id="pvdak-support-notice">ارسال پیام انجام نشد؛ دوباره تلاش کنید.</p><?php endif;?>
+      <details class="pvdak-ticket-create-panel">
+        <summary>+ ایجاد تیکت پشتیبانی جدید</summary>
       <form class="pvdak-forms pvdak-ticket-new" data-pvdak-support-form action="<?php echo esc_url($url); ?>" method="post">
       <input type="hidden" name="action" value="pvdak_support_new">
       <?php wp_nonce_field('pvdak_support_new','_pvdak_support_nonce'); ?>
@@ -145,6 +203,7 @@ function pvdak_support_ticket_form(){
       <p id="pvdak-ticket-privacy" class="pvdak-ticket-privacy">فقط مشکلات حساب و سایت را شرح دهید؛ نام اشخاص، مدارک و اطلاعات پرونده قضایی را ارسال نکنید.</p>
       <small id="pvdak-ticket-count" class="pvdak-ticket-counter" data-pvdak-count-for="support-message">حداکثر ۲۵۰۰ نویسه</small>
       <button type="submit">ثبت پیام پشتیبانی</button></form>
+      </details>
 
       <h3 id="pvdak-ticket-list-title">پیام‌های پشتیبانی</h3>
       <form method="get" action="<?php echo esc_url(pvdak_auth_account_url() . '#pvdak-support'); ?>" class="pvdak-ticket-filters" role="search" aria-label="جستجو و فیلتر پیام‌های خودم">
