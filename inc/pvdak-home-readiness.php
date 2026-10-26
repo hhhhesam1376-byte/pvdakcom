@@ -100,7 +100,7 @@ function pvdak_home_readiness_items() {
     // redirect or silently "fix" Pages edited by the client.
     $public_templates = array(
         'account-login' => 'page-templates/pvdak-login.php',
-        'account-register' => 'page-templates/pvdak-register.php',
+        // Registration shares the login Page; old account-register redirects.
         'account-recovery' => 'page-templates/pvdak-recovery.php',
         'my-pvdak-account' => 'page-templates/pvdak-account.php',
         'contact-us' => 'page-templates/pvdak-contact.php',
