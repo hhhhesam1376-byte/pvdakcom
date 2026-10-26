@@ -23,13 +23,17 @@
   if (authPicker) {
     var tabs = Array.prototype.slice.call(authPicker.querySelectorAll('[data-pvdak-auth-tab]'));
     var panes = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-pane]'));
+    var groups = Array.prototype.slice.call(authPicker.querySelectorAll('[data-pvdak-auth-group]'));
+    var switches = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-switch]'));
+    var copies = Array.prototype.slice.call(document.querySelectorAll('[data-pvdak-auth-copy]'));
     var modes = tabs.map(function (tab) { return tab.getAttribute('data-pvdak-auth-tab'); });
     var query = new URLSearchParams(window.location.search);
     var defaultMode = modes.indexOf('password') !== -1 ? 'password' : modes[0];
     var smsMode = modes.indexOf('sms-login') >= 0 ? 'sms-login' :
       (modes.indexOf('sms-register') >= 0 ? 'sms-register' : '');
     var activeMode = modes.indexOf(query.get('auth')) >= 0 ? query.get('auth') :
-      (query.has('sms_status') && smsMode ? smsMode : defaultMode);
+      (query.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
+       (query.has('sms_status') && smsMode ? smsMode : defaultMode));
     function showAuthMode(mode, focus, remember) {
       if (modes.indexOf(mode) === -1) mode = defaultMode;
       activeMode = mode;
@@ -41,6 +45,16 @@
       });
       panes.forEach(function (pane) {
         pane.hidden = pane.getAttribute('data-pvdak-auth-pane') !== mode;
+      });
+      var isRegister = mode === 'register-email' || mode === 'sms-register';
+      groups.forEach(function (group) {
+        group.hidden = group.getAttribute('data-pvdak-auth-group') !== (isRegister ? 'register' : 'login');
+      });
+      switches.forEach(function (block) {
+        block.hidden = block.getAttribute('data-pvdak-auth-switch') !== (isRegister ? 'login' : 'register');
+      });
+      copies.forEach(function (node) {
+        node.hidden = node.getAttribute('data-pvdak-auth-copy') !== (isRegister ? 'register' : 'login');
       });
       if (remember && window.history && window.history.replaceState) {
         var link = new URL(window.location.href);
@@ -57,14 +71,27 @@
         showAuthMode(tab.getAttribute('data-pvdak-auth-tab'), false, true);
       });
       tab.addEventListener('keydown', function (event) {
-        var next = index;
-        if (event.key === 'ArrowLeft') next = (index + 1) % tabs.length;
-        else if (event.key === 'ArrowRight') next = (index + tabs.length - 1) % tabs.length;
+        var group = tab.closest('[data-pvdak-auth-group]') || authPicker;
+        var groupTabs = Array.prototype.slice.call(group.querySelectorAll('[data-pvdak-auth-tab]'));
+        var within = groupTabs.indexOf(tab);
+        var next = within;
+        if (event.key === 'ArrowLeft') next = (within + 1) % groupTabs.length;
+        else if (event.key === 'ArrowRight') next = (within + groupTabs.length - 1) % groupTabs.length;
         else if (event.key === 'Home') next = 0;
-        else if (event.key === 'End') next = tabs.length - 1;
+        else if (event.key === 'End') next = groupTabs.length - 1;
         else return;
         event.preventDefault();
-        showAuthMode(modes[next], true, true);
+        showAuthMode(groupTabs[next].getAttribute('data-pvdak-auth-tab'), true, true);
+      });
+    });
+    document.querySelectorAll('[data-pvdak-auth-go]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        if (event.defaultPrevented || event.button !== 0 ||
+            event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        var mode = link.getAttribute('data-pvdak-auth-go');
+        if (modes.indexOf(mode) === -1) return;
+        event.preventDefault();
+        showAuthMode(mode, true, true);
       });
     });
     showAuthMode(activeMode, false, false);
@@ -74,7 +101,8 @@
       if (!event.persisted) return;
       var restored = new URLSearchParams(window.location.search);
       var mode = modes.indexOf(restored.get('auth')) >= 0 ? restored.get('auth') :
-        (restored.has('sms_status') && smsMode ? smsMode : defaultMode);
+        (restored.has('state') && modes.indexOf('register-email') >= 0 ? 'register-email' :
+         (restored.has('sms_status') && smsMode ? smsMode : defaultMode));
       showAuthMode(mode, false, false);
     });
   }
