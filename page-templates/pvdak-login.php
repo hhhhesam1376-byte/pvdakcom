@@ -20,6 +20,12 @@ $sms_selected='sms-login'===$auth_value ||
     (''===$auth_value && !$register_selected && ''!==$sms_status);
 $sms_register_selected='sms-register'===$auth_value ||
     (''===$auth_value && $register_selected && ''!==$sms_status);
+$login_error=isset($_GET['pvdak_login_error']) && is_string($_GET['pvdak_login_error']) ?
+    sanitize_key(wp_unslash($_GET['pvdak_login_error'])) : '';
+if (!$login_error && isset($_GET['error']) && is_string($_GET['error'])) {
+    $login_error='slow' === sanitize_key(wp_unslash($_GET['error'])) ? 'slow' : 'invalid';
+}
+$login_error=in_array($login_error,array('invalid','slow'),true)?$login_error:'';
 $sms_ready=function_exists('pvdak_sms_auth_ready') && pvdak_sms_auth_ready();
 $registration_open=pvdak_registration_open();
 $terms=pvdak_public_page_url('terms-of-use');
@@ -64,13 +70,16 @@ get_header(); ?>
   </div>
 </div>
 <section id="pvdak-auth-password" data-pvdak-auth-pane="password" role="tabpanel" aria-labelledby="pvdak-login-password-tab" <?php echo ($register_selected || $sms_selected)?'hidden':''; ?>>
-<?php if(isset($_GET['error'])): ?>
-<p id="pvdak-login-result" tabindex="-1" class="pvdak-static-error" role="alert"><?php echo isset($_GET['error']) && is_string($_GET['error']) && 'slow' === sanitize_key(wp_unslash($_GET['error'])) ? 'تلاش‌های ورود بیش از حد بوده است. چند دقیقه بعد دوباره امتحان کنید.' : 'اطلاعات ورود تأیید نشد. نام کاربری و رمز عبور را بررسی کنید.'; ?></p>
+<?php if($login_error): ?>
+<div id="pvdak-login-result" tabindex="-1" class="pvdak-static-error pvdak-login-error-notice" role="alert" aria-live="assertive">
+  <strong>ورود ناموفق بود</strong>
+  <p><?php echo 'slow'===$login_error ? 'تعداد تلاش‌های ورود زیاد بوده است. چند دقیقه بعد دوباره امتحان کنید.' : 'نام کاربری یا رمز عبور اشتباه است. اطلاعات را بررسی کرده و دوباره تلاش کنید.'; ?></p>
+</div>
 <?php endif; ?>
 <form method="post" class="pvdak-forms pvdak-auth-form" data-pvdak-single-submit action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 <input type="hidden" name="action" value="pvdak_login"><?php wp_nonce_field('pvdak_login','_pvdak_login_nonce'); ?>
-<label for="pvdak-identity"><span aria-hidden="true">◉</span> نام کاربری یا ایمیل</label><input id="pvdak-identity" name="login_identity" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="250" <?php if(isset($_GET['error']) && is_string($_GET['error']) && 'slow' !== sanitize_key(wp_unslash($_GET['error']))): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required>
-<label for="pvdak-password"><span aria-hidden="true">♢</span> رمز عبور</label><div class="pvdak-password-field"><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" <?php if(isset($_GET['error']) && is_string($_GET['error']) && 'slow' !== sanitize_key(wp_unslash($_GET['error']))): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="pvdak-password" aria-controls="pvdak-password" aria-pressed="false">نمایش</button></div>
+<label for="pvdak-identity"><span aria-hidden="true">◉</span> نام کاربری یا ایمیل</label><input id="pvdak-identity" name="login_identity" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="250" <?php if('invalid'===$login_error): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required>
+<label for="pvdak-password"><span aria-hidden="true">♢</span> رمز عبور</label><div class="pvdak-password-field"><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" <?php if('invalid'===$login_error): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="pvdak-password" aria-controls="pvdak-password" aria-pressed="false">نمایش</button></div>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit"><span aria-hidden="true">←</span> ورود به حساب</button></form>
 <?php if(isset($_GET['status']) && 'reset' === (string) $_GET['status']):?><p id="pvdak-login-reset-result" tabindex="-1" class="pvdak-static-note" role="status">رمز عبور تغییر کرد؛ با اطلاعات جدید وارد شوید.</p><?php endif; ?>
