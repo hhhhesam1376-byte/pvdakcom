@@ -164,6 +164,14 @@ $checks = array(
     strpos($s['sms'],"if (!pvdak_sms_auth_ready())")!==false &&
     strpos($s['sms'],'pvdak_sms_phone_claimed($phone)')!==false &&
     strpos($s['sms'],'pvdak_registration_rollback_user($created)')!==false,
+  'D07 request filters remain on the existing Core account panel' =>
+    strpos($s['functions'], "class=\"pvdak-core-request-filters\"")!==false &&
+    strpos($s['functions'], "pvdak_auth_account_url() . '#pvdak-requests'")!==false &&
+    strpos($s['script'], "form.pvdak-core-request-filters")!==false &&
+    strpos($s['script'], "url.hash = 'pvdak-requests'")!==false,
+  'D07 support overview does not mix with legal requests' =>
+    strpos($s['portal'], "function_exists( 'pvdak_support_recent_overview' )")!==false &&
+    strpos($s['portal'], "pvdak_support_recent_overview()")!==false,
   'D07 password login rejects huge submissions and bad result types' =>
     strpos(file_get_contents($root.'/inc/pvdak-auth.php'),'strlen($pass)>1024')!==false &&
     strpos(file_get_contents($root.'/inc/pvdak-auth.php'),'!($user instanceof WP_User)')!==false,
