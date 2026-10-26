@@ -32,18 +32,26 @@ class WP_Post {
     public $post_status;
     public $post_author;
     public $post_type;
+    public $post_content = '';
     public function __construct( $id, $status = 'publish', $author = 1 ) {
         $this->ID = $id;
         $this->post_status = $status;
         $this->post_author = $author;
         $this->post_type = in_array( (int) $id, array( 501, 502 ), true )
-            ? 'pvdak_professional' : ( (int) $id >= 700 ? 'pvdak_request' : 'page' );
+            ? 'pvdak_professional' : ( (int) $id >= 700 && 900 !== (int) $id ? 'pvdak_request' : 'page' );
+        if ( 900 === (int) $id ) {
+            $this->post_content = ! empty( $GLOBALS['pvdak_mock_directory_page_shortcode'] ) ?
+                '[pvdak_professional_directory]' : 'No shortcode';
+        }
     }
 }
 function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function esc_url( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function nocache_headers() { $GLOBALS['pvdak_mock_nocache_calls'] = ( $GLOBALS['pvdak_mock_nocache_calls'] ?? 0 ) + 1; }
 function get_queried_object_id() { return 900; }
+function is_singular( $type = '' ) { return 'page' === $type; }
+function has_shortcode( $content, $tag ) { return false !== strpos( $content, '[' . $tag . ']' ); }
+$GLOBALS['pvdak_mock_directory_page_shortcode'] = true;
 function get_permalink( $id = 0 ) { return 'https://example.test/directory/'; }
 function add_query_arg( $key, $value, $base ) { return $base . '?' . urlencode( $key ) . '=' . urlencode( (string) $value ); }
 function absint( $value ) { return abs( (int) $value ); }
@@ -84,6 +92,7 @@ function get_userdata( $id ) {
         (object) array( 'ID' => (int) $id, 'user_email' => 'owner@example.test' ) : false;
 }
 function get_post( $id ) {
+    if ( 900 === (int) $id ) { return new WP_Post( 900 ); }
     if ( 901 === (int) $id ) {
         return (object) array( 'ID' => 901, 'post_type' => 'pvdak_request',
             'post_status' => $GLOBALS['pvdak_mock_notify_status'] ?? 'private', 'post_author' => 21 );
@@ -600,11 +609,22 @@ $GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint,
 pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 malformed consent date cannot publish a profile' );
 $GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => 'bad', 'at' => '2026-10-25 08:00:00' );
 pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 malformed fingerprint cannot publish a profile' );
+$GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => '2026-02-30 08:00:00' );
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 impossible calendar date cannot validate consent' );
+$GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => '2099-01-01 08:00:00' );
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 future consent date cannot validate consent' );
 $GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => '2026-10-25 08:00:00' );
 pvdak_expect( pvdak_core_directory_eligible( 501 ),
     'D27 explicit current consent and verification allow minimal listing' );
 $directory_html = pvdak_core_professional_directory();
 pvdak_expect( ( $GLOBALS['pvdak_mock_nocache_calls'] ?? 0 ) >= 1, 'D27 shortcode sends no-cache headers' );
+$GLOBALS['pvdak_mock_directory_page_shortcode'] = false;
+pvdak_expect( '' === pvdak_core_professional_directory(), 'D27 shortcode cannot leak on a page without the real shortcode' );
+$GLOBALS['pvdak_mock_directory_page_shortcode'] = true;
+pvdak_expect( ! empty( pvdak_core_directory_robots( array() )['noindex'] ), 'D31 directory Page remains noindex until policy approval' );
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'old@example.test';
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 changed verified mailbox invalidates public consent' );
+$GLOBALS['pvdak_mock_notify_verified_address'] = 'owner@example.test';
 $GLOBALS['pvdak_mock_directory_query_fail'] = true;
 pvdak_expect( false === strpos( pvdak_core_professional_directory(), 'وکیل نمونه' ), 'D27 query failure hides private profiles' );
 $GLOBALS['pvdak_mock_directory_query_fail'] = false;
