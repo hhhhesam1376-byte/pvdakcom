@@ -53,6 +53,12 @@ $checks = array(
  'history fails closed on malformed query rows or impossible totals' =>
     strpos($src, '! is_array( $query->posts )') !== false &&
     strpos($src, '! is_numeric( $query->found_posts )') !== false,
+ 'history rejects impossible page totals and more than ten filtered rows' =>
+    strpos($src, 'ctype_digit( (string) $query->found_posts )') !== false &&
+    strpos($src, 'ctype_digit( (string) $query->max_num_pages )') !== false &&
+    strpos($src, 'count( $items ) > 10') !== false &&
+    strpos($src, '(int) ceil( $reported_total / 10 )') !== false &&
+    strpos($src, '( $page - 1 ) * 10 + count( $items ) > $reported_total') !== false,
  'history fails closed when filters return foreign or invalid case rows' =>
     strpos($requests, '$unexpected_rows = true;') !== false &&
     strpos($requests, 'if ( $unexpected_rows )') !== false &&
