@@ -118,9 +118,16 @@ function pvdak_register_submit() {
         !validate_username($username) || !is_email($email) || strlen($email)>254 ||
         pvdak_public_text_length($password)<12 || pvdak_public_text_length($password)>256 ||
         strlen($password)>1024 || !in_array($claim,$allowed,true) ||
-        !in_array($_POST['register_consent']??null,array('on','1'),true) ||
-        username_exists($username) || email_exists($email)) {
+        !in_array($_POST['register_consent']??null,array('on','1'),true)) {
         wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
+    }
+    // Block duplicate WordPress identities and reserve the site administrator
+    // contact mailbox even when that option is not assigned to a WP user.
+    // Do not disclose which identifier exists to anonymous visitors.
+    $admin_email = sanitize_email((string)get_option('admin_email', ''));
+    if (username_exists($username) || email_exists($email) ||
+        ($admin_email && strtolower($email) === strtolower($admin_email))) {
+        wp_safe_redirect(add_query_arg('state','duplicate',$url));exit;
     }
     set_transient($rate,1,180);
     // A professional claim does not create a verified professional account.
@@ -128,7 +135,13 @@ function pvdak_register_submit() {
     $user=wp_insert_user(array('user_login'=>$username,'user_email'=>$email,
         'user_pass'=>$password,'role'=>$role,'display_name'=>$username));
     if (is_wp_error($user)) {
-        wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
+        // WordPress enforces uniqueness again during insert, closing the
+        // validation/insert race without overwriting an existing account.
+        $duplicate = array_intersect(
+            $user->get_error_codes(),
+            array('existing_user_email', 'existing_user_login')
+        );
+        wp_safe_redirect(add_query_arg('state',$duplicate?'duplicate':'invalid',$url));exit;
     }
     $claim_saved=update_user_meta($user,'_pvdak_self_reported_category',$claim);
     $pending_saved=update_user_meta($user,'_pvdak_email_verification_pending','1');
