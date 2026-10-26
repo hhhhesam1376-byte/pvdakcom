@@ -42,6 +42,7 @@ class WP_Post {
 }
 function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function esc_url( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
+function nocache_headers() { $GLOBALS['pvdak_mock_nocache_calls'] = ( $GLOBALS['pvdak_mock_nocache_calls'] ?? 0 ) + 1; }
 function get_queried_object_id() { return 900; }
 function get_permalink( $id = 0 ) { return 'https://example.test/directory/'; }
 function add_query_arg( $key, $value, $base ) { return $base . '?' . urlencode( $key ) . '=' . urlencode( (string) $value ); }
@@ -146,7 +147,7 @@ function wp_checkdate( $month, $day, $year, $source_date ) {
 }
 function get_posts( $query ) {
     if ( ( $query['post_type'] ?? '' ) === 'pvdak_professional' && ( $query['fields'] ?? '' ) === 'ids' ) {
-        return array( 501, 502 );
+        return ! empty( $GLOBALS['pvdak_mock_directory_query_fail'] ) ? false : array( 501, 502 );
     }
     if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
         if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
@@ -595,10 +596,18 @@ pvdak_expect( '' === pvdak_core_directory_consent_fingerprint( 502 ),
 $GLOBALS['pvdak_mock_directory_enabled'] = '1';
 pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
     'D27 administrator switch alone does not publish without owner consent' );
+$GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => 'not-a-date' );
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 malformed consent date cannot publish a profile' );
+$GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => 'bad', 'at' => '2026-10-25 08:00:00' );
+pvdak_expect( ! pvdak_core_directory_eligible( 501 ), 'D27 malformed fingerprint cannot publish a profile' );
 $GLOBALS['pvdak_mock_directory_consent'] = array( 'fingerprint' => $fingerprint, 'at' => '2026-10-25 08:00:00' );
 pvdak_expect( pvdak_core_directory_eligible( 501 ),
     'D27 explicit current consent and verification allow minimal listing' );
 $directory_html = pvdak_core_professional_directory();
+pvdak_expect( ( $GLOBALS['pvdak_mock_nocache_calls'] ?? 0 ) >= 1, 'D27 shortcode sends no-cache headers' );
+$GLOBALS['pvdak_mock_directory_query_fail'] = true;
+pvdak_expect( false === strpos( pvdak_core_professional_directory(), 'وکیل نمونه' ), 'D27 query failure hides private profiles' );
+$GLOBALS['pvdak_mock_directory_query_fail'] = false;
 pvdak_expect( false !== strpos( $directory_html, 'وکیل نمونه' ) &&
     false !== strpos( $directory_html, 'تهران' ) &&
     false === strpos( $directory_html, 'owner@example.test' ) &&

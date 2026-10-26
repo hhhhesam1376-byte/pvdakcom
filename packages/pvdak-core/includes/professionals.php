@@ -335,7 +335,8 @@ function pvdak_core_directory_consent_valid( $profile_id ) {
     return '' !== $fingerprint && is_array( $consent ) &&
         isset( $consent['fingerprint'], $consent['at'] ) &&
         is_string( $consent['fingerprint'] ) && is_string( $consent['at'] ) &&
-        '' !== trim( $consent['at'] ) &&
+        1 === preg_match( '/^[a-f0-9]{64}$/D', $consent['fingerprint'] ) &&
+        1 === preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $consent['at'] ) &&
         hash_equals( $fingerprint, $consent['fingerprint'] );
 }
 
@@ -383,8 +384,9 @@ function pvdak_core_directory_consent_submit() {
     if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! is_user_logged_in() ) {
         wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
     }
-    $id = isset( $_POST['pvdak_profile_id'] ) && is_scalar( $_POST['pvdak_profile_id'] ) ?
-        absint( wp_unslash( $_POST['pvdak_profile_id'] ) ) : 0;
+    $raw_id = isset( $_POST['pvdak_profile_id'] ) && is_string( $_POST['pvdak_profile_id'] ) ?
+        wp_unslash( $_POST['pvdak_profile_id'] ) : '';
+    $id = preg_match( '/^[1-9][0-9]{0,9}$/D', $raw_id ) ? absint( $raw_id ) : 0;
     if ( ! $id || $id !== pvdak_core_existing_application( get_current_user_id() ) ||
          (int) get_post_field( 'post_author', $id ) !== get_current_user_id() ||
          'pvdak_professional' !== get_post_type( $id ) ) {
@@ -395,14 +397,23 @@ function pvdak_core_directory_consent_submit() {
         sanitize_key( wp_unslash( $_POST['pvdak_directory_choice'] ) ) : '';
     if ( 'no' === $choice ) {
         delete_post_meta( $id, '_pvdak_directory_consent' );
+        if ( metadata_exists( 'post', $id, '_pvdak_directory_consent' ) ) {
+            wp_die( 'لغو رضایت ذخیره نشد؛ لطفاً دوباره تلاش کنید.', '', array( 'response' => 503 ) );
+        }
     } elseif ( 'yes' === $choice ) {
         $fingerprint = pvdak_core_directory_consent_fingerprint( $id );
         if ( '' === $fingerprint ) {
             wp_die( 'شرایط انتشار معتبر نیست.', '', array( 'response' => 403 ) );
         }
-        update_post_meta( $id, '_pvdak_directory_consent', array(
-            'fingerprint' => $fingerprint, 'at' => current_time( 'mysql', true ),
-        ) );
+        $record = array( 'fingerprint' => $fingerprint, 'at' => current_time( 'mysql', true ) );
+        $written = update_post_meta( $id, '_pvdak_directory_consent', $record );
+        if ( ! $written && $record !== get_post_meta( $id, '_pvdak_directory_consent', true ) ) {
+            wp_die( 'ثبت رضایت موفق نبود؛ نمایش عمومی فعال نشده است.', '', array( 'response' => 503 ) );
+        }
+        if ( ! pvdak_core_directory_consent_valid( $id ) ) {
+            delete_post_meta( $id, '_pvdak_directory_consent' ); // Fail closed on stale eligibility.
+            wp_die( 'اعتبار رضایت قابل تأیید نیست.', '', array( 'response' => 409 ) );
+        }
     } else {
         wp_die( 'انتخاب نامعتبر است.', '', array( 'response' => 400 ) );
     }
@@ -417,12 +428,14 @@ add_action( 'admin_post_pvdak_core_directory_consent', 'pvdak_core_directory_con
  * No automatic Page creation or public REST route is introduced.
  */
 function pvdak_core_professional_directory() {
+    // Consent may be revoked at any time; do not serve an old rendered directory from a page cache.
+    nocache_headers();
     if ( ! pvdak_core_directory_enabled() ) {
         return '<p class="pvdak-core-notice">فهرست متخصصان در حال آماده‌سازی است.</p>';
     }
-    $raw_page = isset( $_GET['pvdak_dir_page'] ) && is_scalar( $_GET['pvdak_dir_page'] ) ?
-        absint( wp_unslash( $_GET['pvdak_dir_page'] ) ) : 1;
-    $page = max( 1, min( 50, $raw_page ) );
+    $raw_page = isset( $_GET['pvdak_dir_page'] ) && is_string( $_GET['pvdak_dir_page'] ) ?
+        wp_unslash( $_GET['pvdak_dir_page'] ) : '1';
+    $page = preg_match( '/^[1-9][0-9]{0,2}$/D', $raw_page ) ? min( 50, (int) $raw_page ) : 1;
     $ids = get_posts( array(
         'post_type' => 'pvdak_professional',
         'post_status' => 'private',
@@ -435,6 +448,10 @@ function pvdak_core_professional_directory() {
         'update_post_meta_cache' => false,
         'meta_query' => array( array( 'key' => '_pvdak_directory_consent', 'compare' => 'EXISTS' ) ),
     ) );
+    global $wpdb;
+    if ( ! is_array( $ids ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+        return '<p class="pvdak-core-notice" role="status">فهرست در حال حاضر قابل بارگذاری نیست.</p>';
+    }
     $visible = array();
     foreach ( $ids as $id ) {
         if ( pvdak_core_directory_eligible( absint( $id ) ) ) { $visible[] = absint( $id ); }
@@ -445,7 +462,7 @@ function pvdak_core_professional_directory() {
     $html .= '<p>نمایش در این فهرست به معنی تضمین خدمات یا استعلام برخط پروانه نیست. هیچ اطلاعات تماس یا پرونده‌ای در این بخش منتشر نمی‌شود.</p>';
     $page_ids = array_slice( $visible, ( $page - 1 ) * $per_page, $per_page );
     if ( ! $page_ids ) { return $html . '<p>موردی برای نمایش وجود ندارد.</p></section>'; }
-    $html .= '<ul class="pvdak-core-directory-list">';
+    $items = '';
     foreach ( $page_ids as $id ) {
         // Revalidate immediately before rendering, including consent revocation.
         if ( ! pvdak_core_directory_eligible( $id ) ) { continue; }
@@ -457,11 +474,13 @@ function pvdak_core_professional_directory() {
             if ( 'ready' === $topic['status'] ) { $topics[] = $topic['title']; }
         }
         if ( ! $topics || '' === $name || '' === $city ) { continue; }
-        $html .= '<li><strong>' . esc_html( $name ) . '</strong><span> — ' .
+        $items .= '<li><strong>' . esc_html( $name ) . '</strong><span> — ' .
             esc_html( $city ) . '</span><p>' . esc_html( implode( '، ', $topics ) ) . '</p></li>';
     }
-    $html .= '</ul>';
+    if ( '' === $items ) { return $html . '<p>مورد معتبری در این صفحه باقی نمانده است.</p></section>'; }
+    $html .= '<ul class="pvdak-core-directory-list">' . $items . '</ul>';
     $base = get_permalink( get_queried_object_id() );
+    if ( ! is_string( $base ) || '' === $base ) { return $html . '</section>'; }
     if ( $page > 1 ) {
         $html .= '<a href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page - 1, $base ) ) . '">صفحه قبل</a> ';
     }
