@@ -155,7 +155,10 @@ function pvdak_core_subscription_metabox_html( $post ) {
     echo '</select></p><p><label for="pvdak_sub_receipt">شناسه رسید تطبیق‌شده (UUID)</label>' .
         '<input id="pvdak_sub_receipt" name="pvdak_sub_receipt" class="widefat" value="'.esc_attr($snapshot['receipt']).'"></p>';
     echo '<p>ثبت پرداخت به‌تنهایی اشتراک را فعال نمی‌کند؛ فعال‌سازی نیازمند ذخیره جداگانه مدیر است.</p>';
-    echo '<p>استفاده از سهمیه در ماه جاری: '.esc_html(pvdak_core_subscription_month_assignments($post->ID)).'</p>';
+    $usage = pvdak_core_subscription_month_assignments( $post->ID );
+    echo PHP_INT_MAX === $usage ?
+        '<p><strong>خطای شمارش سهمیه؛ ارجاع تازه تا بررسی مدیر مسدود است.</strong></p>' :
+        '<p>استفاده از سهمیه در ماه جاری: ' . esc_html( $usage ) . '</p>';
     echo '<p>اجرای محدودیت: '.(pvdak_core_subscription_gate_on()?'فعال (با مجوز مدیر)':'خاموش').'</p>';
 }
 /**
@@ -337,7 +340,11 @@ function pvdak_core_payment_receipt_verified( $profile_id, $receipt_id ) {
 function pvdak_core_payment_metabox_html( $post ) {
     if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post->ID ) ) { return; }
     wp_nonce_field( 'pvdak_payment_' . $post->ID, '_pvdak_payment_nonce' );
-    $receipts = pvdak_core_payment_ledger( $post->ID );
+    $events = get_post_meta( $post->ID, '_pvdak_payment_event', false );
+    $receipts = pvdak_core_payment_fold( $events );
+    if ( ! is_array( $events ) || ( $events && ! $receipts ) ) {
+        echo '<p><strong>خطا در تاریخچه تطبیق پرداخت؛ هیچ رسیدی قابل تأیید نیست و مدیر باید سوابق را بررسی کند.</strong></p>';
+    }
     echo '<p>این دفتر صرفاً برای <strong>تطبیق دستی</strong> است؛ درگاه، callback و تأیید بانکی خودکار ندارد. شماره کارت، CVV یا اطلاعات حساس وارد نکنید.</p>';
     echo '<p><label>شناسه غیرحساس تراکنش درگاه <input name="pvdak_payment_reference" maxlength="80" class="regular-text"></label> ';
     echo '<label>مبلغ صحیح (ریال) <input name="pvdak_payment_amount" type="number" min="1" max="1000000000000"></label></p>';
