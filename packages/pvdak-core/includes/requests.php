@@ -129,8 +129,12 @@ function pvdak_core_handle_request() {
     $types = pvdak_core_request_types();
     $title = isset( $_POST['pvdak_title'] ) && is_string( $_POST['pvdak_title'] ) ? sanitize_text_field( wp_unslash( $_POST['pvdak_title'] ) ) : '';
     $description = isset( $_POST['pvdak_description'] ) && is_string( $_POST['pvdak_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pvdak_description'] ) ) : '';
-    $landing_id = isset( $_POST['pvdak_landing_id'] ) && is_scalar( $_POST['pvdak_landing_id'] ) ?
-        absint( wp_unslash( $_POST['pvdak_landing_id'] ) ) : 0;
+    // A submitted topic ID must be a positive decimal string. absint() would
+    // silently turn a forged negative ID into a different, valid topic.
+    $raw_landing = isset( $_POST['pvdak_landing_id'] ) && is_string( $_POST['pvdak_landing_id'] ) ?
+        wp_unslash( $_POST['pvdak_landing_id'] ) : '';
+    $landing_id = ctype_digit( $raw_landing ) && strlen( $raw_landing ) <= 10 ?
+        absint( $raw_landing ) : 0;
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
