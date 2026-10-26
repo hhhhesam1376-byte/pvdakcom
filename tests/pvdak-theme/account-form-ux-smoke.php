@@ -143,8 +143,8 @@ $checks = array(
     strpos( $s['recovery'], 'id="pvdak-recovery-result" tabindex="-1"' ) !== false &&
     strpos( $s['script'], "params.has('sms_status')" ) !== false,
   'D07 SMS feedback stays on correct pane even without JavaScript' =>
-    strpos( $s['login'], "!isset(\$_GET['auth']) && isset(\$_GET['sms_status'])" ) !== false &&
-    strpos( $s['register-ui'], "!isset(\$_GET['auth'])&&''!==\$sms_status" ) !== false &&
+    strpos( $s['login'], "'sms-login'===\$auth_value" ) !== false &&
+    strpos( $s['login'], "'sms-register'===\$auth_value" ) !== false &&
     strpos( $s['script'], "query.has('sms_status') && smsMode" ) !== false,
   'D07 hidden feedback never steals keyboard focus' =>
     strpos( $s['script'], "!notice.closest('[hidden]')" ) !== false,
