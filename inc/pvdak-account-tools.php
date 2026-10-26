@@ -42,7 +42,8 @@ function pvdak_account_cache_protection() {
         if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
         nocache_headers();
         header( 'X-Robots-Tag: noindex, nofollow', true );
-        if ( is_page( 'account-recovery' ) ) {
+        // The canonical login screen now receives one-time reset keys too.
+        if ( is_page( array( 'account-login', 'account-recovery' ) ) ) {
             header( 'Referrer-Policy: no-referrer', true );
         }
     }
