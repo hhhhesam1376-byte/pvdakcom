@@ -15,6 +15,12 @@ foreach($files as $key=>$path) {
 }
 $checks=array(
  'status allowlist'=>strpos($s['support'],'function pvdak_support_status_key(')!==false,
+ 'meaningful ticket status names'=>strpos($s['support'],'در انتظار بررسی')!==false &&
+  strpos($s['support'],'منتظر پاسخ مشتری')!==false &&
+  strpos($s['support'],'تکمیل‌شده')!==false,
+ 'latest tickets belong only to current user'=>strpos($s['support'],'function pvdak_support_recent_overview()')!==false &&
+  strpos($s['support'],"'author'=>\$owner")!==false &&
+  strpos($s['support'],'(int)$item->post_author===$owner')!==false,
  'D22 count only valid conversation entries'=>strpos($s['support'],'$message_count=count($messages);')!==false &&
   strpos($s['support'],'array_values(array_filter(')!==false,
  'D22 repeated followup gets rate feedback'=>strpos($s['support'],"\$result_state=\$ok?'followup_sent':(!\$valid_body?'invalid':(get_transient(\$key)?'slow':'failed'));")!==false,
@@ -22,7 +28,11 @@ $checks=array(
  'status badges'=>strpos($s['support'],'pvdak-ticket-status--')!==false,
  'creation date'=>strpos($s['support'],"get_the_date('j F Y'")!==false,
  'conversation count'=>strpos($s['support'],'number_format_i18n($message_count)')!==false,
- 'native disclosure'=>strpos($s['support'],'class="pvdak-ticket-details"')!==false,
+ 'private table with closed-by-default details'=>strpos($s['support'],'<table class="pvdak-ticket-table"')!==false &&
+  strpos($s['support'],'class="pvdak-ticket-detail-row"')!==false &&
+  strpos($s['support'],'class="pvdak-ticket-create-panel"')!==false &&
+  strpos($s['support'],'$expanded=$open_id===(int)$item->ID;')!==false &&
+  strpos($s['support'],'pvdak_support_jalali_date($when)')!==false,
  'timestamp'=>strpos($s['support'],"wp_date('j F Y، H:i'")!==false,
  'separate roles'=>strpos($s['support'],'pvdak-ticket-staff')!==false,
  'history limit notice'=>strpos($s['support'],'$message_count>30')!==false,
