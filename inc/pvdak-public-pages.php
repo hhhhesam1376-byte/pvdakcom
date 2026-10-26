@@ -182,6 +182,31 @@ function pvdak_forum_member_can_post() {
   return in_array(get_post_meta($profile_id, '_pvdak_member_type', true),
     array('lawyer', 'trainee', 'student'), true);
 }
+/** Close the native WordPress comment and pingback routes on the forum Page. */
+function pvdak_forum_disable_native_comments($open, $post_id) {
+  return pvdak_forum_page_valid($post_id) ? false : $open;
+}
+add_filter('comments_open', 'pvdak_forum_disable_native_comments', 20, 2);
+add_filter('pings_open', 'pvdak_forum_disable_native_comments', 20, 2);
+function pvdak_forum_reject_native_submission($data) {
+  if (is_array($data) && isset($data['comment_post_ID']) &&
+      pvdak_forum_page_valid($data['comment_post_ID'])) {
+    wp_die('برای ارسال پیام از فرم کنترل‌شده انجمن استفاده کنید.', '', array('response' => 403));
+  }
+  return $data;
+}
+add_filter('preprocess_comment', 'pvdak_forum_reject_native_submission');
+
+/** Reject malformed or oversized raw input before WordPress sanitization. */
+function pvdak_forum_raw_text_valid($value, $byte_limit) {
+  return is_string($value) && strlen($value) <= $byte_limit &&
+    1 === preg_match('//u', $value) &&
+    0 === preg_match('/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/', $value);
+}
+/** Reject direct links and email addresses; manual moderation remains mandatory. */
+function pvdak_forum_contains_link_or_email($text) {
+  return 1 === preg_match('~(?:https?://|ftp://|www\\.|mailto:|tel:|[\\w.%+\\-]+@[\\w.\\-]+\\.[a-z]{2,})~iu', $text);
+}
 /** Native moderation controls remain with WordPress administrators. */
 function pvdak_forum_shortcode() {
   $page_id = get_queried_object_id();
@@ -211,7 +236,11 @@ function pvdak_forum_shortcode() {
   foreach (is_array($entries) ? $entries : array() as $entry) {
     if (!$entry instanceof WP_Comment || (int) $entry->comment_post_ID !== (int) $page_id ||
         '1' !== (string) $entry->comment_approved ||
+        'comment' !== (string) $entry->comment_type ||
+        0 !== (int) $entry->comment_parent || 0 !== (int) $entry->user_id ||
         '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
+        !ctype_digit((string) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true)) ||
+        (int) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true) < 1 ||
         !is_string($entry->comment_content) || '' === trim($entry->comment_content)) continue;
     $items[] = '<li class="pvdak-forum-entry"><p>' .
       nl2br(esc_html($entry->comment_content)) . '</p><small>عضو جامعه · ' .
@@ -229,18 +258,22 @@ function pvdak_forum_shortcode() {
   $html .= '<label for="pvdak-forum-subject">موضوع گفت‌وگو</label><input id="pvdak-forum-subject" name="forum_subject" type="text" minlength="5" maxlength="120" required>';
   $html .= '<label for="pvdak-forum-message">متن عمومی</label><textarea id="pvdak-forum-message" name="forum_message" minlength="20" maxlength="1500" rows="5" required></textarea>';
   $html .= '<div class="pvdak-forum-honeypot" aria-hidden="true"><label>این فیلد را خالی بگذارید<input name="forum_website" tabindex="-1" autocomplete="off"></label></div>';
+  $html .= '<label class="pvdak-forum-consent"><input type="checkbox" name="forum_public_consent" value="1" required> می‌دانم متن پیام پس از تأیید مدیر برای همه قابل مشاهده خواهد بود و نباید اطلاعات شخصی یا پرونده محرمانه در آن باشد.</label>';
   $html .= '<p><small>حداکثر ۳ پیام در ساعت؛ بدون پیوند. انتشار تنها پس از تأیید مدیر است.</small></p>';
   $html .= '<button type="submit">ارسال برای بررسی</button></form></section>';
   return $html;
 }
 add_shortcode('pvdak_forum', 'pvdak_forum_shortcode');
 
-/** Prevent cached per-user form nonces and indexing before legal approval. */
+/** Set cache and robots protection as soon as the Page query is resolved. */
 function pvdak_forum_send_headers() {
-  if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) nocache_headers();
+  if (!is_page() || !pvdak_forum_page_valid(get_queried_object_id())) return;
+  if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+  nocache_headers();
+  if (!headers_sent()) header('X-Robots-Tag: noindex, noarchive, nosnippet', true);
 }
-// Main query is not resolved at send_headers; template_redirect runs before output.
-add_action('template_redirect', 'pvdak_forum_send_headers', 0);
+// The main query is available at wp; send_headers fires too early.
+add_action('wp', 'pvdak_forum_send_headers', 0);
 function pvdak_forum_robots($robots) {
   if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) $robots['noindex'] = true;
   return $robots;
@@ -260,12 +293,16 @@ function pvdak_forum_submit() {
   $subject_raw = isset($_POST['forum_subject']) ? wp_unslash($_POST['forum_subject']) : '';
   $message_raw = isset($_POST['forum_message']) ? wp_unslash($_POST['forum_message']) : '';
   $honeypot = isset($_POST['forum_website']) ? wp_unslash($_POST['forum_website']) : '';
-  $subject = is_string($subject_raw) ? trim(sanitize_text_field($subject_raw)) : '';
-  $message = is_string($message_raw) ? trim(sanitize_textarea_field($message_raw)) : '';
-  $valid = is_string($honeypot) && '' === trim($honeypot) &&
+  $consent = isset($_POST['forum_public_consent']) ? wp_unslash($_POST['forum_public_consent']) : '';
+  $raw_valid = pvdak_forum_raw_text_valid($subject_raw, 480) &&
+    pvdak_forum_raw_text_valid($message_raw, 6000);
+  $subject = $raw_valid ? trim(sanitize_text_field($subject_raw)) : '';
+  $message = $raw_valid ? trim(sanitize_textarea_field($message_raw)) : '';
+  $valid = $raw_valid && is_string($honeypot) && '' === trim($honeypot) &&
+    is_string($consent) && '1' === $consent &&
     pvdak_public_text_length($subject) >= 5 && pvdak_public_text_length($subject) <= 120 &&
     pvdak_public_text_length($message) >= 20 && pvdak_public_text_length($message) <= 1500 &&
-    !preg_match('~(?:https?://|www\.)~i', $subject . ' ' . $message);
+    !pvdak_forum_contains_link_or_email($subject . ' ' . $message);
   $result = 'invalid';
   if ($valid) {
     global $wpdb;
@@ -284,8 +321,9 @@ function pvdak_forum_submit() {
         } else {
           // Store no public account ID, email, URL, IP or user agent.
           // Moderators can see the private submitter ID in comment meta.
+          $payload = 'موضوع: ' . $subject . "\n\n" . $message;
           $comment_id = wp_insert_comment(array(
-            'comment_post_ID' => $page_id, 'comment_content' => 'موضوع: ' . $subject . "\n\n" . $message,
+            'comment_post_ID' => $page_id, 'comment_content' => $payload,
             'comment_approved' => '0', 'comment_type' => 'comment',
             'comment_author' => 'عضو جامعه', 'comment_author_email' => '',
             'comment_author_url' => '', 'comment_author_IP' => '',
@@ -293,13 +331,24 @@ function pvdak_forum_submit() {
           ));
           $stored = $comment_id && !is_wp_error($comment_id) ? get_comment($comment_id) : null;
           $marked = $stored instanceof WP_Comment &&
+            (int) $stored->comment_post_ID === $page_id &&
+            'comment' === (string) $stored->comment_type &&
+            0 === (int) $stored->comment_parent && 0 === (int) $stored->user_id &&
             '0' === (string) $stored->comment_approved &&
+            'عضو جامعه' === (string) $stored->comment_author &&
+            '' === (string) $stored->comment_author_email &&
+            '' === (string) $stored->comment_author_url &&
+            '' === (string) $stored->comment_author_IP &&
+            '' === (string) $stored->comment_agent &&
+            $payload === (string) $stored->comment_content &&
             add_comment_meta($comment_id, '_pvdak_forum_entry', '1', true) &&
             add_comment_meta($comment_id, '_pvdak_forum_submitter', (string) $user_id, true) &&
             '1' === (string) get_comment_meta($comment_id, '_pvdak_forum_entry', true) &&
             (string) $user_id === (string) get_comment_meta($comment_id, '_pvdak_forum_submitter', true);
           if ($marked && set_transient($hour_key, $count + 1, HOUR_IN_SECONDS) &&
-              set_transient($cool_key, 1, 90)) {
+              set_transient($cool_key, 1, 90) &&
+              (int) get_transient($hour_key) === $count + 1 &&
+              '1' === (string) get_transient($cool_key)) {
             $result = 'pending';
           } else {
             if ($comment_id && !is_wp_error($comment_id)) {
