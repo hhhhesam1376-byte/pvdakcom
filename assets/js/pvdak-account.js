@@ -62,6 +62,7 @@
         else link.searchParams.set('auth', mode);
         link.searchParams.delete('sms_status');
         link.searchParams.delete('error');
+        link.searchParams.delete('pvdak_login_error');
         link.searchParams.delete('state');
         // A prior "account created" notice must not reappear merely because
         // someone switched tabs after a completed request.
@@ -113,6 +114,38 @@
       showAuthMode(mode, false, false);
     });
   }
+
+  /* The currently installed Core's GET filter drops the dashboard hash.
+   * Preserve its existing query/ownership filtering and only fix navigation;
+   * Core plugin files or database settings are not changed. */
+  document.querySelectorAll('form.pvdak-core-request-filters').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) return;
+      event.preventDefault();
+      var url = new URL(form.action, window.location.href);
+      ['request_search', 'request_type', 'request_status', 'request_order', 'pvdak_page'].forEach(function (key) {
+        url.searchParams.delete(key);
+      });
+      new FormData(form).forEach(function (value, key) {
+        if (['request_search', 'request_type', 'request_status', 'request_order'].indexOf(key) >= 0) {
+          url.searchParams.set(key, value);
+        } else if (key === 'page_id' || key === 'pagename') {
+          url.searchParams.set(key, value);
+        }
+      });
+      url.hash = 'pvdak-requests';
+      window.location.assign(url.toString());
+    });
+  });
+
+  /* Every ticket-table row can be opened, with a normal link for keyboard and
+   * non-JavaScript visitors. The server checks ticket ownership before display. */
+  document.addEventListener('click', function (event) {
+    var row = event.target.closest('[data-pvdak-ticket-row]');
+    if (!row || event.target.closest('a,button,input,select,textarea,label')) return;
+    var url = row.getAttribute('data-pvdak-ticket-url');
+    if (url) window.location.assign(url);
+  });
 
   /* Progressive one-dashboard navigation. Without JavaScript all sections remain
    * accessible as ordinary document anchors; no account data is stored here. */
@@ -208,7 +241,7 @@
   var params = new URLSearchParams(window.location.search);
   var feedback = params.has('support') ? 'pvdak-support-notice' :
     params.has('sent') ? 'pvdak-contact-result' :
-    params.has('error') ? 'pvdak-login-result' :
+    (params.has('pvdak_login_error') || params.has('error')) ? 'pvdak-login-result' :
     params.has('sms_status') && params.get('auth') === 'sms-register' &&
       document.getElementById('pvdak-register-sms-result') ? 'pvdak-register-sms-result' :
     params.has('sms_status') && document.getElementById('pvdak-sms-login-result') ? 'pvdak-sms-login-result' :
@@ -242,7 +275,6 @@
     profileFields.forEach(function (field) {
       field.addEventListener('input', refreshProfile);
     });
-    profileForm.addEventListener('reset', function () { window.setTimeout(refreshProfile, 0); });
     refreshProfile();
   }
 
