@@ -46,6 +46,7 @@ function pvdak_management_links() {
         array('کاربران', 'مشاهده و مدیریت حساب‌های سایت', 'list_users', 'users.php'),
         array('تیکت‌های پشتیبانی', 'مشاهده و پاسخ به درخواست‌های پشتیبانی', 'manage_options', 'edit.php?post_type=pvdak_support_ticket'),
         array('درخواست‌های حقوقی', 'صف رسیدگی به درخواست‌ها؛ بدون فعال‌کردن پذیرش عمومی', 'manage_options', 'edit.php?post_type=pvdak_request'),
+        array('پرونده‌های عضویت متخصصان', 'بررسی پروفایل‌های خصوصی و مدارک در ابزار اصلی Core', 'manage_options', 'edit.php?post_type=pvdak_professional'),
         array('دیدگاه‌ها و گفت‌وگوها', 'مدیریت و تأیید دیدگاه‌ها و گفت‌وگوهای انجمن، در صورت استفاده', 'moderate_comments', 'edit-comments.php'),
         array('صف انتظار تأیید', 'بررسی پیام‌های تازه پیش از نمایش عمومی', 'moderate_comments', 'edit-comments.php?comment_status=moderated'),
         array('تنظیمات اصلی', 'تنظیم ثبت‌نام و حالت تعمیرات سایت', 'manage_options', 'options-general.php'),
@@ -77,7 +78,7 @@ function pvdak_management_render_links() {
             'تصاویر و فایل‌ها', 'فهرست‌های سایت',
         ),
         'درخواست‌ها و گفت‌وگوها' => array(
-            'درخواست‌های حقوقی', 'تیکت‌های پشتیبانی',
+            'درخواست‌های حقوقی', 'پرونده‌های عضویت متخصصان', 'تیکت‌های پشتیبانی',
             'صف انتظار تأیید', 'دیدگاه‌ها و گفت‌وگوها',
         ),
         'حساب‌ها و تنظیمات' => array(
