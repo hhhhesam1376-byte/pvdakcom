@@ -164,8 +164,10 @@ function pvdak_email_verification_confirm() {
                 delete_user_meta($user_id, '_pvdak_email_verification_issued_to');
             }
         }
-        if (!$valid) {
-            // Do not retain a positive verification marker after a failed finalization.
+        // Another request may have consumed this same link between validation
+        // and finalization. Never erase the successful request's verified markers.
+        // Clean up only while this account is still explicitly pending.
+        if (!$valid && '1' === (string)get_user_meta($user_id, '_pvdak_email_verification_pending', true)) {
             delete_user_meta($user_id, '_pvdak_email_verified_at');
             delete_user_meta($user_id, '_pvdak_email_verified_address');
         }
