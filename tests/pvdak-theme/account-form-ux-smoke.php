@@ -269,6 +269,15 @@ $checks = array(
     strpos($s['home-editor'],"current_user_can( 'manage_options' )")!==false &&
     strpos($s['home-editor'],"<details style=")!==false &&
     strpos($s['home-editor'],"pvdak_editor_bootstrap_card()")!==false,
+  'D31 client hub groups real workflows without bypassing Core or moderation permissions' =>
+    strpos($s['admin-management'], "function pvdak_management_link_available( \$link )") !== false &&
+    strpos($s['admin-management'], "post_type_exists( \$type )") !== false &&
+    strpos($s['admin-management'], "current_user_can( \$object->cap->edit_posts )") !== false &&
+    strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'") !== false &&
+    strpos($s['admin-management'], "'moderate_comments', 'edit-comments.php?comment_status=moderated'") !== false &&
+    strpos($s['admin-management'], "'محتوا و ظاهر سایت'") !== false &&
+    strpos($s['admin-management'], "'درخواست‌ها و گفت‌وگوها'") !== false &&
+    strpos($s['admin-management'], "esc_url( home_url( '/' ) )") !== false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
