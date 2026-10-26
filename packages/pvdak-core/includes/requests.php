@@ -244,15 +244,22 @@ function pvdak_core_my_requests() {
     if ( '' !== $search ) { $args['s'] = $search; }
     $query = new WP_Query( $args );
     $items = array();
-    $unexpected_rows = false;
-    foreach ( (array) $query->posts as $item ) {
+    $unexpected_rows = ! is_array( $query->posts );
+    foreach ( is_array( $query->posts ) ? $query->posts : array() as $item ) {
         // Defense in depth against third-party query filters or stale records.
         if ( $item instanceof WP_Post && 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
-            (int) $item->post_author === $user_id ) {
+            (int) $item->post_author === $user_id &&
+            ( ! $type_filter || $type_filter === get_post_meta( $item->ID, '_pvdak_request_type', true ) ) &&
+            ( ! $status_filter || $status_filter === get_post_meta( $item->ID, '_pvdak_request_state', true ) ) ) {
             $items[] = $item;
         } else {
             $unexpected_rows = true;
         }
+    }
+    // A modified query must not claim fewer total results than the rows
+    // actually returned. Do not render a partial or misleading private list.
+    if ( ! is_numeric( $query->found_posts ) || (int) $query->found_posts < count( $items ) ) {
+        $unexpected_rows = true;
     }
     // Never show potentially foreign rows or an untrustworthy total when a
     // third-party query filter has changed the owner/private-only result.

@@ -136,6 +136,47 @@ function pvdak_management_render_links() {
     }
 }
 
+/**
+ * A short, capability-aware daily route for the employer. The destinations
+ * come from the same allowlisted links as the cards below; no case contents,
+ * comment identities, or user records are loaded here.
+ */
+function pvdak_management_daily_steps() {
+    $available = array();
+    foreach ( pvdak_management_links() as $link ) {
+        if ( pvdak_management_link_available( $link ) ) {
+            $available[ $link[3] ] = $link;
+        }
+    }
+    $steps = array(
+        array( 'محتوای صفحه اصلی و برگه‌ها را بازبینی کنید', array(
+            'admin.php?page=pvdak-home-content', 'edit.php?post_type=page',
+        ) ),
+        array( 'پیام‌های منتظر بررسی و درخواست‌های جدید را پیگیری کنید', array(
+            'edit-comments.php?comment_status=moderated',
+            'edit.php?post_type=pvdak_request',
+            'edit.php?post_type=pvdak_support_ticket',
+        ) ),
+        array( 'پیش از ارائه عمومی، وضعیت خدمات را بررسی کنید', array(
+            'tools.php?page=pvdak-readiness', 'options-general.php',
+        ) ),
+    );
+    $items = array();
+    foreach ( $steps as $step ) {
+        foreach ( $step[1] as $route ) {
+            if ( ! isset( $available[ $route ] ) ) { continue; }
+            $items[] = '<li><span>' . esc_html( $step[0] ) . '</span> — <a href="' .
+                esc_url( admin_url( $route ) ) . '">' . esc_html( $available[ $route ][0] ) . '</a></li>';
+            break;
+        }
+    }
+    if ( $items ) {
+        echo '<section aria-label="راهنمای کارهای روزمره"><h2>از کجا شروع کنم؟</h2>';
+        echo '<ol style="list-style:decimal;padding-right:22px;line-height:2">' .
+            implode( '', $items ) . '</ol></section>';
+    }
+}
+
 function pvdak_management_render() {
     if (!current_user_can('edit_pages')) {
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -144,6 +185,7 @@ function pvdak_management_render() {
     echo '<p>از اینجا کارهای روزمره سایت را انجام دهید. هر بخش مستقیماً به ابزار اصلی وردپرس متصل است و اطلاعات شما را جابه‌جا نمی‌کند.</p>';
     echo '<p><a class="button" href="' . esc_url( home_url( '/' ) ) . '" target="_blank" rel="noopener noreferrer">مشاهده سایت</a></p>';
     echo '<p class="description">ابتدا محتوای سایت را ویرایش کنید، سپس درخواست‌ها و گفت‌وگوها را بررسی کنید. بخش‌هایی که نصب یا مجوز لازم ندارند در این راهنما نمایش داده نمی‌شوند؛ دسترسی مستقیم و تنظیمات امنیتی وردپرس تغییری نمی‌کنند.</p>';
+    pvdak_management_daily_steps();
     pvdak_management_render_links();
     if (current_user_can('manage_options')) {
         $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();

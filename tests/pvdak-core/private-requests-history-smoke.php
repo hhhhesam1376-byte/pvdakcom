@@ -16,7 +16,7 @@ $checks = array(
  'defense in depth owner' => strpos($src, '(int) $item->post_author === $user_id') !== false,
  'defense in depth private' => strpos($src, "'private' === \$item->post_status") !== false,
  'ten per page' => strpos($src, "'posts_per_page' => 10") !== false,
- 'bounded page' => strpos($src, 'min( 1000, absint(') !== false,
+ 'bounded page' => strpos($src, 'min( 1000, (int) $raw_page )') !== false,
  'status allowlist' => strpos($src, 'isset( $statuses[$raw_status] )') !== false,
  'type allowlist' => strpos($src, 'isset( $types[$raw_type] )') !== false,
  'search sanitized' => strpos($src, 'sanitize_text_field( wp_unslash(') !== false,
@@ -47,6 +47,12 @@ $checks = array(
  'history rejects malformed page numbers and oversized search inputs' =>
     strpos($requests, 'ctype_digit( (string) $raw_page )') !== false &&
     strpos($requests, 'strlen( $search_input ) <= 500') !== false,
+ 'history verifies requested type and status against each returned private row' =>
+    strpos($src, '$type_filter === get_post_meta( $item->ID,') !== false &&
+    strpos($src, '$status_filter === get_post_meta( $item->ID,') !== false,
+ 'history fails closed on malformed query rows or impossible totals' =>
+    strpos($src, '! is_array( $query->posts )') !== false &&
+    strpos($src, '! is_numeric( $query->found_posts )') !== false,
  'history fails closed when filters return foreign or invalid case rows' =>
     strpos($requests, '$unexpected_rows = true;') !== false &&
     strpos($requests, 'if ( $unexpected_rows )') !== false &&

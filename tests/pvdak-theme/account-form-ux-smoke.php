@@ -287,6 +287,12 @@ $checks = array(
     strpos($s['admin-management'], 'wp_count_comments()')!==false &&
     strpos($s['admin-management'], 'moderate_comments')!==false &&
     strpos($s['admin-management'], 'edit-comments.php?comment_status=moderated')!==false,
+  'D31 daily guide uses the same permission-checked allowlist without personal records' =>
+    strpos($s['admin-management'], 'function pvdak_management_daily_steps()') !== false &&
+    strpos($s['admin-management'], 'pvdak_management_link_available( $link )') !== false &&
+    strpos($s['admin-management'], 'pvdak_management_daily_steps();') !== false &&
+    strpos($s['admin-management'], 'راهنمای کارهای روزمره') !== false &&
+    strpos($s['admin-management'], 'get_comments(') === false,
   'D31 missing homepage setup stays admin-only and Core absence is visible' =>
     strpos($s['admin-management'], "if ( ! \$home_id ) { return current_user_can( 'manage_options' ); }") !== false &&
     strpos($s['admin-management'], "'راه‌اندازی صفحه اصلی'") !== false &&
