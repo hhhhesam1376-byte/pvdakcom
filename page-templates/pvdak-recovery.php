@@ -4,6 +4,30 @@
  * Template Post Type: page
  */
 if(!defined('ABSPATH'))exit;
+// Backwards compatibility for links issued before the login-only recovery.
+// No second recovery interface when the canonical PVDak login Page is ready.
+$canonical = pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php');
+if ($canonical) {
+    $args = array('auth' => 'recover');
+    if (isset($_GET['reset']) && '1' === (string) $_GET['reset']) {
+        $args['reset'] = '1';
+        $args['auth'] = 'recover-change';
+        if (isset($_GET['key']) && is_string($_GET['key'])) {
+            $args['key'] = sanitize_text_field(wp_unslash($_GET['key']));
+        }
+        if (isset($_GET['login']) && is_string($_GET['login'])) {
+            $args['login'] = sanitize_text_field(wp_unslash($_GET['login']));
+        }
+    }
+    if (isset($_GET['status']) && is_string($_GET['status'])) {
+        $status = sanitize_key(wp_unslash($_GET['status']));
+        if (in_array($status, array('sent','invalid','failed'), true)) {
+            $args['status'] = $status;
+        }
+    }
+    wp_safe_redirect(add_query_arg($args, $canonical), 302);
+    exit;
+}
 $login=isset($_GET['login'])&&is_string($_GET['login'])?sanitize_text_field(wp_unslash($_GET['login'])):'';
 $key=isset($_GET['key'])&&is_string($_GET['key'])?sanitize_text_field(wp_unslash($_GET['key'])):'';
 $reset=isset($_GET['reset'])&&'1'===(string)$_GET['reset'];
