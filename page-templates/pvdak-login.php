@@ -85,6 +85,14 @@ get_header(); ?>
   </div>
 </div>
 <section id="pvdak-auth-password" data-pvdak-auth-pane="password" role="tabpanel" aria-labelledby="pvdak-login-password-tab" <?php echo ($register_selected || $sms_selected || $recovery_selected)?'hidden':''; ?>>
+<?php if('reset' === $recovery_status): ?>
+  <ol class="pvdak-recovery-steps" aria-label="مراحل بازیابی رمز">
+    <li class="is-complete">۱. دریافت لینک</li>
+    <li class="is-complete">۲. رمز تازه</li>
+    <li class="is-active">۳. ورود دوباره</li>
+  </ol>
+  <div id="pvdak-login-reset-result" tabindex="-1" class="pvdak-recovery-success" role="status"><strong>رمز عبور با موفقیت تغییر کرد</strong><p>بازیابی حساب کامل شد. حالا با رمز جدیدتان وارد PVDak شوید.</p></div>
+<?php endif; ?>
 <?php if($login_error): ?>
 <div id="pvdak-login-result" tabindex="-1" class="pvdak-static-error pvdak-login-error-notice" role="alert" aria-live="assertive">
   <strong>ورود ناموفق بود</strong>
@@ -97,7 +105,7 @@ get_header(); ?>
 <label for="pvdak-password"><span aria-hidden="true">♢</span> رمز عبور</label><div class="pvdak-password-field"><input id="pvdak-password" type="password" name="login_password" autocomplete="current-password" <?php if('invalid'===$login_error): ?>aria-invalid="true" aria-describedby="pvdak-login-result"<?php endif; ?> required><button type="button" class="pvdak-password-toggle" data-pvdak-password-toggle="pvdak-password" aria-controls="pvdak-password" aria-pressed="false">نمایش</button></div>
 <label class="pvdak-check"><input type="checkbox" name="login_remember"><span>مرا به خاطر بسپار</span></label>
 <button type="submit"><span aria-hidden="true">←</span> ورود به حساب</button></form>
-<?php if('reset' === $recovery_status):?><div id="pvdak-login-reset-result" tabindex="-1" class="pvdak-recovery-success" role="status"><strong>رمز عبور با موفقیت تغییر کرد</strong><p>بازیابی حساب کامل شد. حالا با رمز جدیدتان وارد PVDak شوید.</p></div><?php endif; ?>
+
 <p class="pvdak-login-help pvdak-auth-help"><a data-pvdak-auth-go="recover" href="<?php echo esc_url(pvdak_account_tool_url('account-recovery')); ?>">رمز عبور را فراموش کرده‌ام</a></p>
 </section>
 <section id="pvdak-auth-sms-login" data-pvdak-auth-pane="sms-login" role="tabpanel" aria-labelledby="pvdak-login-sms-tab" <?php echo (!$register_selected && !$recovery_selected && $sms_selected)?'':'hidden'; ?>>
