@@ -41,6 +41,14 @@ $checks = array(
  'privacy notice' => strpos($src, 'pvdak-core-request-privacy') !== false,
  'safe labels' => strpos($src, 'esc_html( get_the_title( $item->ID ) )') !== false,
  'request query object guard' => strpos($src, '$item instanceof WP_Post') !== false,
+ 'intake requires a positive decimal topic id rather than absint of forged input' =>
+    strpos($requests, 'ctype_digit( $raw_landing )') !== false &&
+    strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'dashboard active case count excludes unknown or corrupted states' =>
+    strpos($portal, "array( 'submitted', 'review', 'matched', 'answered' )") !== false,
+ 'private portal uses current PVDak branding' =>
+    strpos($portal, 'پنل کاربری PVDak') !== false &&
+    strpos($portal, 'همکاری با PVDak') !== false,
  'dashboard private-only guard' => strpos($portal, "'private' === \$item->post_status") !== false,
  'member fallback verifies owner' => strpos($members, "(int) get_post_field( 'post_author', \$id ) !== \$user_id") !== false,
  'member create verifies pending meta' => strpos($members, "'pending' !== get_post_meta( \$id, '_pvdak_member_state', true )") !== false
