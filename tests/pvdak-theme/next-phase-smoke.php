@@ -11,6 +11,8 @@ define('DAY_IN_SECONDS', 86400);
 class WP_User {
     public $ID;
     public $user_email;
+    public $display_name='نمونه کاربر';
+    public $user_login='sample_user';
     public function __construct($id, $email) { $this->ID=$id; $this->user_email=$email; }
 }
 class WP_Error {
@@ -22,6 +24,10 @@ $GLOBALS['mock_meta'] = array(42=>array('_pvdak_email_verification_pending'=>'1'
 $GLOBALS['mock_mail'] = array();
 function add_action(...$args) {}
 function add_filter(...$args) {}
+function remove_action(...$args) {}
+function esc_html($v) {return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
+function esc_url($v) {return (string)$v;}
+function wp_strip_all_tags($v) {return strip_tags((string)$v);}
 function absint($value) { return abs((int)$value); }
 function get_userdata($id) { return 42===(int)$id?$GLOBALS['mock_user']:false; }
 function get_user_meta($id,$key,$single=true) { return $GLOBALS['mock_meta'][$id][$key]??''; }
@@ -42,8 +48,8 @@ function get_option($name,$default=false) {
 function pvdak_maintenance_enabled() {return !empty($GLOBALS['mock_maintenance']);}
 function pvdak_public_template_page_url($slug,$template) {
     return !empty($GLOBALS['mock_registration_page']) &&
-        $slug==='account-register' && $template==='page-templates/pvdak-register.php'
-        ? 'https://example.invalid/account-register/' : false;
+        $slug==='account-login' && $template==='page-templates/pvdak-login.php'
+        ? 'https://example.invalid/account-login/' : false;
 }
 function home_url($path) {return 'https://example.invalid'.$path;}
 function add_query_arg($args,$url) {return $url.'?'.http_build_query($args);}
@@ -81,19 +87,20 @@ test_check(false!==strpos($ticket,"add_post_meta(absint(\$ticket_id)") &&
 test_check(false!==strpos($ticket,"check_admin_referer('pvdak_support_followup_'"),
     'Follow-up requires nonce');
 $GLOBALS['mock_registration_page']=true;
+$GLOBALS['mock_registration_enabled']='1';
 require $root.'/inc/pvdak-registration.php';
 test_check(pvdak_registration_open(),
-    'Published PVDak registration Page and default manager option permit the signup flow');
+    'Published unified login Page with manager opt-in permits the signup flow');
 $GLOBALS['mock_registration_enabled']='0';
 test_check(!pvdak_registration_open(), 'Manager switch OFF blocks PVDak registration');
-unset($GLOBALS['mock_registration_enabled']);
+$GLOBALS['mock_registration_enabled']='1';
 $GLOBALS['mock_maintenance']=true;
 test_check(!pvdak_registration_open(), 'Maintenance ON blocks PVDak registration');
 $GLOBALS['mock_maintenance']=false;
 $GLOBALS['mock_registration_page']=false;
-test_check(!pvdak_registration_open(), 'Missing published registration Page blocks signup');
+test_check(!pvdak_registration_open(), 'Missing published login Page blocks signup');
 $GLOBALS['mock_registration_page']=true;
-test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '1')") &&
+test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')") &&
     false!==strpos($registration,"function pvdak_native_registration_guard(") &&
     false!==strpos($registration,"'role'=>$role"),
     'Manager signup policy retains native bypass guard and least-privilege WordPress role');
