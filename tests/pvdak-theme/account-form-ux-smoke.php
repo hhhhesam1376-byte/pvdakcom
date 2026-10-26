@@ -192,7 +192,7 @@ $checks = array(
     strpos($s['login'], 'check_password_reset_key($reset_key, $reset_login)')!==false,
   'D13 reset links now land inside login without breaking old emailed URLs' =>
     strpos($s['tools'], "'auth' => 'recover-change', 'reset' => '1'")!==false &&
-    strpos($s['recovery'], "wp_safe_redirect(add_query_arg($args, $canonical), 302)")!==false &&
+    strpos($s['recovery'], 'wp_safe_redirect(add_query_arg($args, $canonical), 302)')!==false &&
     strpos($s['tools'], "'auth' => 'password', 'status' => 'reset'")!==false,
   'D13 branded RTL HTML email retains text alternative and mail hook cleanup' =>
     strpos($s['tools'], 'lang="fa" dir="rtl"')!==false &&
