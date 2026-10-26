@@ -47,22 +47,60 @@ function pvdak_management_links() {
         array('تیکت‌های پشتیبانی', 'مشاهده و پاسخ به درخواست‌های پشتیبانی', 'manage_options', 'edit.php?post_type=pvdak_support_ticket'),
         array('درخواست‌های حقوقی', 'صف رسیدگی به درخواست‌ها؛ بدون فعال‌کردن پذیرش عمومی', 'manage_options', 'edit.php?post_type=pvdak_request'),
         array('دیدگاه‌ها و گفت‌وگوها', 'مدیریت و تأیید دیدگاه‌ها و گفت‌وگوهای انجمن، در صورت استفاده', 'moderate_comments', 'edit-comments.php'),
+        array('صف انتظار تأیید', 'بررسی پیام‌های تازه پیش از نمایش عمومی', 'moderate_comments', 'edit-comments.php?comment_status=moderated'),
         array('تنظیمات اصلی', 'تنظیم ثبت‌نام و حالت تعمیرات سایت', 'manage_options', 'options-general.php'),
         array('بررسی پیش از راه‌اندازی', 'وضعیت فنی و حقوقی فقط برای مدیر سایت', 'manage_options', 'tools.php?page=pvdak-readiness'),
     );
     return $links;
 }
 
-function pvdak_management_render_links() {
-    echo '<div class="pvdak-management-links" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;max-width:1050px;margin-top:20px">';
-    foreach (pvdak_management_links() as $link) {
-        if (!current_user_can($link[2])) { continue; }
-        // WordPress validates post-type access again on the destination page.
-        echo '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
-            esc_url(admin_url($link[3])) . '"><strong style="display:block;font-size:15px;margin-bottom:8px">' .
-            esc_html($link[0]) . '</strong><span style="color:#50575e">' . esc_html($link[1]) . '</span></a>';
+/**
+ * Only advertise routes that exist for this installation and current role.
+ * The underlying WordPress and Core permission checks remain authoritative.
+ */
+function pvdak_management_link_available( $link ) {
+    if ( ! current_user_can( $link[2] ) ) { return false; }
+    if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
+        $type = substr( $link[3], strlen( 'edit.php?post_type=' ) );
+        if ( ! post_type_exists( $type ) ) { return false; }
+        $object = get_post_type_object( $type );
+        if ( ! $object || ! isset( $object->cap->edit_posts ) ||
+             ! current_user_can( $object->cap->edit_posts ) ) { return false; }
     }
-    echo '</div>';
+    return true;
+}
+
+function pvdak_management_render_links() {
+    $sections = array(
+        'محتوا و ظاهر سایت' => array(
+            'ویرایش صفحه اصلی', 'برگه‌ها و موضوعات حقوقی', 'مقالات و اطلاعیه‌ها',
+            'تصاویر و فایل‌ها', 'فهرست‌های سایت',
+        ),
+        'درخواست‌ها و گفت‌وگوها' => array(
+            'درخواست‌های حقوقی', 'تیکت‌های پشتیبانی',
+            'صف انتظار تأیید', 'دیدگاه‌ها و گفت‌وگوها',
+        ),
+        'حساب‌ها و تنظیمات' => array(
+            'کاربران', 'تنظیمات اصلی', 'بررسی پیش از راه‌اندازی',
+        ),
+    );
+    $links = pvdak_management_links();
+    foreach ( $sections as $heading => $names ) {
+        $cards = array();
+        foreach ( $links as $link ) {
+            if ( ! in_array( $link[0], $names, true ) ||
+                 ! pvdak_management_link_available( $link ) ) { continue; }
+            $cards[] = '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
+                esc_url( admin_url( $link[3] ) ) . '"><strong style="display:block;font-size:15px;margin-bottom:8px">' .
+                esc_html( $link[0] ) . '</strong><span style="color:#50575e">' . esc_html( $link[1] ) . '</span></a>';
+        }
+        if ( ! $cards ) { continue; }
+        echo '<section aria-label="' . esc_attr( $heading ) . '"><h2 style="margin-top:26px">' .
+            esc_html( $heading ) . '</h2>';
+        echo '<div class="pvdak-management-links" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;max-width:1050px">';
+        echo implode( '', $cards ); // Every card is built from escaped, fixed admin routes.
+        echo '</div></section>';
+    }
 }
 
 function pvdak_management_render() {
@@ -71,6 +109,8 @@ function pvdak_management_render() {
     }
     echo '<div class="wrap"><h1>مدیریت سایت PVDak</h1>';
     echo '<p>از اینجا کارهای روزمره سایت را انجام دهید. هر بخش مستقیماً به ابزار اصلی وردپرس متصل است و اطلاعات شما را جابه‌جا نمی‌کند.</p>';
+    echo '<p><a class="button" href="' . esc_url( home_url( '/' ) ) . '" target="_blank" rel="noopener noreferrer">مشاهده سایت</a></p>';
+    echo '<p class="description">ابتدا محتوای سایت را ویرایش کنید، سپس درخواست‌ها و گفت‌وگوها را بررسی کنید. بخش‌هایی که نصب یا مجوز لازم ندارند در این راهنما نمایش داده نمی‌شوند؛ دسترسی مستقیم و تنظیمات امنیتی وردپرس تغییری نمی‌کنند.</p>';
     pvdak_management_render_links();
     if (current_user_can('manage_options')) {
         $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();
@@ -110,6 +150,9 @@ function pvdak_management_dashboard_widget() {
     echo '<p>برای مدیریت سایت از مسیرهای اصلی زیر استفاده کنید. امکانات حقوقی تا دریافت مجوز، خودکار فعال نمی‌شوند.</p>';
     echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=pvdak-management')) . '">ورود به مدیریت PVDak</a> ';
     echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">ویرایش صفحه اصلی</a></p>';
+    if (current_user_can('moderate_comments')) {
+        echo '<p><a href="' . esc_url(admin_url('edit-comments.php?comment_status=moderated')) . '">بررسی پیام‌های منتظر تأیید</a></p>';
+    }
     if (current_user_can('manage_options')) {
         echo '<p><a href="' . esc_url(admin_url('tools.php?page=pvdak-readiness')) . '">بررسی وضعیت راه‌اندازی</a></p>';
     }
