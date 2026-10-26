@@ -246,4 +246,40 @@ pvdak_public_smoke_require(
  strpos( $code['pages'], "'' !== (string) \$entry->comment_author_IP" ) !== false,
  'D28 public rendering skips malformed, reidentified and unsafe moderated comments' );
 
+
+// D07: email verification must be readable, branded and linked only to the
+// short-lived existing hashed token. These are source checks, not mailbox tests.
+$registration_source = file_get_contents($root . '/inc/pvdak-registration.php');
+$verification_source = file_get_contents($root . '/inc/pvdak-email-verification.php');
+$signup_page_source = file_get_contents($root . '/page-templates/pvdak-register.php');
+pvdak_public_smoke_require(
+    strpos($registration_source, 'username_exists($username)') !== false &&
+    strpos($registration_source, 'email_exists($email)') !== false &&
+    strpos($registration_source, "get_option('admin_email'") !== false &&
+    strpos($registration_source, "'state','duplicate'") !== false &&
+    strpos($registration_source, "'existing_user_email'") !== false &&
+    strpos($registration_source, "'existing_user_login'") !== false &&
+    strpos($signup_page_source, "'duplicate'=>'") !== false,
+    'D07 duplicate login/email/admin address is rejected and clearly explained'
+);
+pvdak_public_smoke_require(
+    strpos($verification_source, 'function pvdak_email_verification_html(') !== false &&
+    strpos($verification_source, 'dir="rtl"') !== false &&
+    strpos($verification_source, 'تأیید آدرس ایمیل و فعال‌سازی حساب') !== false &&
+    strpos($verification_source, '{{VERIFY_URL}}') !== false &&
+    strpos($verification_source, 'esc_html($display_name)') !== false &&
+    strpos($verification_source, 'esc_url($url)') !== false &&
+    strpos($verification_source, 'Content-Type: text/html; charset=UTF-8') !== false &&
+    strpos($verification_source, 'AltBody') !== false,
+    'D07 RTL branded HTML verification mail and text alternative are prepared'
+);
+pvdak_public_smoke_require(
+    strpos($verification_source, 'wp_hash_password($token)') !== false &&
+    strpos($verification_source, 'DAY_IN_SECONDS') !== false &&
+    strpos($verification_source, 'wp_check_password($token, $hash, $user_id)') !== false &&
+    strpos($verification_source, "delete_user_meta($user_id, '_pvdak_email_verification_token_hash')") !== false &&
+    strpos($verification_source, 'remove_action(') !== false,
+    'D07 verification token remains hashed, time-bound and one-use'
+);
+
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
