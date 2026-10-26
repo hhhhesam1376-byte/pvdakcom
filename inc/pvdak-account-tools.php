@@ -9,11 +9,16 @@ function pvdak_account_tool_url( $slug ) {
     if ( 'account-profile' === $slug ) {
         return pvdak_auth_account_url() . '#pvdak-profile';
     }
-    $page = 'account-recovery' === $slug
-        ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-recovery.php' )
-        : ( 'account-register' === $slug
-            ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-register.php' )
-            : pvdak_public_page_url( $slug ) );
+    // Recovery is a third, step-by-step state of the canonical login screen.
+    // The legacy Page only redirects previously issued reset links.
+    if ( 'account-recovery' === $slug ) {
+        $login = pvdak_public_template_page_url( 'account-login', 'page-templates/pvdak-login.php' );
+        return $login ? add_query_arg( 'auth', 'recover', $login )
+            : site_url( 'wp-login.php?action=lostpassword', 'login' );
+    }
+    $page = 'account-register' === $slug
+        ? pvdak_public_template_page_url( $slug, 'page-templates/pvdak-register.php' )
+        : pvdak_public_page_url( $slug );
     if ( $page ) { return $page; }
     // The branded recovery Page might be missing before admin page bootstrap.
     // Use the native WordPress recovery route instead of sending reset requests to 404.
@@ -160,19 +165,74 @@ function pvdak_account_request_timelines() {
     return $count ? $html . '</section>' : '';
 }
 
-/** Send one generic response for existent and non-existent identities. */
-function pvdak_recovery_email_message( $message, $key, $login, $user ) {
-    $custom = pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' );
-    $url = $custom
+/**
+ * All reset links now open the canonical login Page at its second step.
+ * Retain native WordPress reset as a fail-safe if the Page is unavailable.
+ */
+function pvdak_recovery_link( $key, $login ) {
+    $branded = pvdak_public_template_page_url( 'account-login', 'page-templates/pvdak-login.php' );
+    return $branded
         ? add_query_arg( array(
-            'reset' => '1', 'key' => $key, 'login' => rawurlencode( $login )
-        ), $custom )
+            'auth' => 'recover-change', 'reset' => '1',
+            'key' => $key, 'login' => $login,
+        ), $branded )
         : add_query_arg( array(
-            'action' => 'rp', 'key' => $key, 'login' => rawurlencode( $login )
+            'action' => 'rp', 'key' => $key, 'login' => $login,
         ), site_url( 'wp-login.php', 'login' ) );
-    return "برای انتخاب رمز جدید حساب PVDak به پیوند زیر مراجعه کنید:\n\n" . esc_url_raw( $url ) .
-        "\n\nاگر شما این درخواست را ارسال نکرده‌اید، این پیام را نادیده بگیرید.";
 }
+
+/** Branded HTML message with the same colors, structure and RTL as signup. */
+function pvdak_recovery_email_message( $message, $key, $login, $user ) {
+    $url = pvdak_recovery_link( $key, $login );
+    $name = $user instanceof WP_User
+        ? ( trim( (string) $user->display_name ) ?: (string) $user->user_login )
+        : 'کاربر PVDak';
+    // A dedicated template: the sign-up email must never inherit reset wording.
+    $template = <<<'RECOVERY_EMAIL'
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بازیابی رمز عبور PVDak</title></head>
+<body dir="rtl" style="margin:0;padding:0;background:#f2f5f8;color:#172335;font-family:Tahoma,Arial,sans-serif;direction:rtl;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f5f8;border-collapse:collapse;">
+<tr><td align="center" style="padding:32px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#fff;border-collapse:separate;border-radius:16px;overflow:hidden;">
+<tr><td align="right" dir="rtl" style="padding:26px 32px;background:#123d54;border-bottom:4px solid #e0a33b;">
+<p dir="ltr" style="margin:0;color:#fff;font-size:24px;font-weight:bold;letter-spacing:1px;">PVDak</p>
+<p style="margin:8px 0 0;color:#e6edf0;font-size:13px;line-height:1.8;">سامانه خدمات و ارتباطات حقوقی</p></td></tr>
+<tr><td align="right" dir="rtl" style="padding:34px 32px 14px;">
+<p style="margin:0 0 12px;color:#ac7731;font-size:13px;font-weight:bold;">امنیت حساب شما</p>
+<h1 style="margin:0 0 18px;color:#123d54;font-size:23px;line-height:1.7;">رمز عبورتان را بازیابی کنید</h1>
+<p style="margin:0 0 16px;font-size:15px;line-height:2;color:#263b4c;">سلام <strong>{{NAME}}</strong>،</p>
+<p style="margin:0 0 20px;font-size:15px;line-height:2;color:#34495a;">درخواستی برای بازیابی رمز عبور حساب PVDak ثبت شده است. برای ادامه، روی دکمه زیر بزنید و در همان صفحه ورود، رمز جدید خود را تعیین کنید.</p></td></tr>
+<tr><td align="center" style="padding:10px 32px 24px;">
+<a href="{{RESET_URL}}" style="display:inline-block;background:#123d54;color:#fff;text-decoration:none;padding:15px 35px;border-radius:9px;font-size:16px;font-weight:bold;line-height:1.6;" target="_blank" rel="noopener noreferrer">انتخاب رمز عبور جدید</a>
+<p style="margin:18px 0 0;color:#6b7886;font-size:13px;line-height:1.9;">این لینک زمان‌دار و یک‌بارمصرف است؛ برای امنیت حساب، آن را با دیگران به اشتراک نگذارید.</p></td></tr>
+<tr><td align="right" dir="rtl" style="padding:18px 32px 26px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f8fa;border-right:3px solid #e0a33b;"><tr><td style="padding:16px 18px;">
+<p style="margin:0 0 10px;color:#233b4c;font-size:13px;line-height:1.9;"><strong>دکمه باز نمی‌شود؟</strong> لینک زیر را در مرورگرتان وارد کنید:</p>
+<p dir="ltr" style="margin:0;text-align:left;overflow-wrap:anywhere;word-break:break-all;font-family:Arial,sans-serif;font-size:12px;line-height:1.9;"><a href="{{RESET_URL}}" style="color:#155d7c;text-decoration:underline;">{{PLAIN_URL}}</a></p>
+</td></tr></table>
+<p style="margin:20px 0 0;color:#657382;font-size:13px;line-height:1.9;">اگر شما درخواست بازیابی نداده‌اید، نیاز به اقدام نیست؛ این پیام را نادیده بگیرید و رمز فعلی‌تان را در اختیار کسی قرار ندهید.</p></td></tr>
+<tr><td align="center" dir="rtl" style="padding:20px 32px 25px;background:#f8fafc;border-top:1px solid #e5eaee;">
+<p style="margin:0 0 7px;color:#123d54;font-weight:bold;font-size:14px;">PVDak</p>
+<p style="margin:0;color:#74818e;font-size:12px;line-height:1.9;">این پیام خودکار فقط برای بازیابی امن رمز حساب شماست.</p>
+<p style="margin:8px 0 0;font-size:12px;"><a href="{{SITE_URL}}" style="color:#155d7c;text-decoration:none;">وب‌سایت PVDak</a></p>
+</td></tr></table></td></tr></table></body></html>
+RECOVERY_EMAIL;
+    return strtr( $template, array(
+        '{{NAME}}' => esc_html( $name ),
+        '{{RESET_URL}}' => esc_url( $url ),
+        '{{PLAIN_URL}}' => esc_html( esc_url_raw( $url ) ),
+        '{{SITE_URL}}' => esc_url( home_url( '/' ) ),
+    ) );
+}
+function pvdak_recovery_email_plain_text( $key, $login ) {
+    return "برای انتخاب رمز جدید حساب PVDak روی لینک زیر بزنید:\n\n" .
+        esc_url_raw( pvdak_recovery_link( $key, $login ) ) .
+        "\n\nاین لینک زمان‌دار و یک‌بارمصرف است. اگر درخواست نداده‌اید، پیام را نادیده بگیرید.\n";
+}
+
 function pvdak_recovery_request() {
     if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) { wp_die( 'Method not allowed', '', array( 'response' => 405 ) ); }
     check_admin_referer( 'pvdak_recovery_request', '_pvdak_recovery_nonce' );
@@ -190,9 +250,30 @@ function pvdak_recovery_request() {
         ( $_SERVER['REMOTE_ADDR'] ?? '' ) . '|' . strtolower( $identity ), wp_salt( 'nonce' ) ), 0, 35 );
     if ( ! get_transient( $token ) ) {
         set_transient( $token, 1, 90 );
-        add_filter( 'retrieve_password_message', 'pvdak_recovery_email_message', 10, 4 );
-        retrieve_password( $identity );
-        remove_filter( 'retrieve_password_message', 'pvdak_recovery_email_message', 10 );
+        // Scope HTML/AltBody and the subject to this one reset email only.
+        // Even mail errors must not affect unrelated WordPress messages.
+        $alternative = '';
+        $message_filter = static function( $message, $key, $login, $user ) use ( &$alternative ) {
+            $alternative = pvdak_recovery_email_plain_text( $key, $login );
+            return pvdak_recovery_email_message( $message, $key, $login, $user );
+        };
+        $type_filter = static function( $type ) { return 'text/html'; };
+        $title_filter = static function( $title ) { return 'PVDak | بازیابی رمز عبور'; };
+        $mail_alt = static function( $mailer ) use ( &$alternative ) {
+            $mailer->AltBody = $alternative;
+        };
+        add_filter( 'retrieve_password_message', $message_filter, 10, 4 );
+        add_filter( 'retrieve_password_title', $title_filter, 10, 1 );
+        add_filter( 'wp_mail_content_type', $type_filter, 10, 1 );
+        add_action( 'phpmailer_init', $mail_alt, 30 );
+        try {
+            retrieve_password( $identity );
+        } finally {
+            remove_filter( 'retrieve_password_message', $message_filter, 10 );
+            remove_filter( 'retrieve_password_title', $title_filter, 10 );
+            remove_filter( 'wp_mail_content_type', $type_filter, 10 );
+            remove_action( 'phpmailer_init', $mail_alt, 30 );
+        }
     }
     wp_safe_redirect( add_query_arg( 'status', 'sent', $url ) ); exit;
 }
@@ -232,7 +313,7 @@ function pvdak_recovery_change() {
     if ( ! $saved ) {
         wp_safe_redirect( add_query_arg( 'status', 'failed', $url ) ); exit;
     }
-    wp_safe_redirect( add_query_arg( 'status', 'reset', pvdak_auth_login_url() ) ); exit;
+    wp_safe_redirect( add_query_arg( array( 'auth' => 'password', 'status' => 'reset' ), pvdak_auth_login_url() ) ); exit;
 }
 add_action( 'admin_post_nopriv_pvdak_recovery_change', 'pvdak_recovery_change' );
 add_action( 'admin_post_pvdak_recovery_change', 'pvdak_recovery_change' );
