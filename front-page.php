@@ -308,7 +308,7 @@ $svg_icons = array(
         $forum_url = '';
         $forum_candidate = pvdak_home_value( 'forum_url', '' );
         if ( is_string( $forum_candidate ) && '' !== trim( $forum_candidate ) &&
-             shortcode_exists( 'pvdak_forum' ) ) {
+             shortcode_exists( 'pvdak_forum' ) && function_exists( 'pvdak_forum_enabled' ) && pvdak_forum_enabled() ) {
             $forum_id = url_to_postid( $forum_candidate );
             $forum_page = $forum_id ? get_post( $forum_id ) : null;
             if ( $forum_page instanceof WP_Post && 'page' === $forum_page->post_type &&

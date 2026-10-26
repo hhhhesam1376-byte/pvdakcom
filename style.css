@@ -2,7 +2,7 @@
 Theme Name: PVDak
 Author: PVDak
 Description: قالب کلاسیک و تمپلیت‌محور پی‌وی‌داک با فایل‌های PHP و پشتیبانی از فارسی.
-Version: 0.8.64
+Version: 0.8.65
 Requires at least: 6.6
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -4170,3 +4170,20 @@ a.pvdak-magazine-feature > .pvdak-magazine-feature-badge {
   border-color:#76badd;
   background:#dbf0ff;
 }
+
+
+/* D28 — private-by-default moderated general discussion; responsive RTL. */
+.pvdak-forum-board{max-width:900px;margin:24px auto;padding:25px;border:1px solid #d7e6ee;border-radius:18px;background:#fff;color:#183c50;text-align:right;line-height:1.95}
+.pvdak-forum-board h2{font-size:23px;margin:0 0 12px}
+.pvdak-forum-alert{padding:12px 15px;background:#f1f8fc;border:1px solid #d1e5ee;border-radius:11px}
+.pvdak-forum-entries{list-style:none;margin:18px 0;padding:0;display:grid;gap:13px}
+.pvdak-forum-entry{border:1px solid #dce8ef;border-radius:13px;padding:16px;overflow-wrap:anywhere}
+.pvdak-forum-entry p{margin:0 0 8px;white-space:normal}
+.pvdak-forum-entry small{color:#527184}
+.pvdak-forum-form{display:grid;gap:10px;margin-top:22px}
+.pvdak-forum-form label{font-weight:700}
+.pvdak-forum-form input[type=text],.pvdak-forum-form textarea{width:100%;max-width:100%;padding:11px;border:1px solid #a8c5d6;border-radius:9px;font:inherit}
+.pvdak-forum-form button{justify-self:start;background:#17617d;color:#fff;border:0;border-radius:9px;padding:11px 23px;font:inherit;cursor:pointer}
+.pvdak-forum-form :focus-visible{outline:3px solid #d9a83b;outline-offset:3px}
+.pvdak-forum-honeypot{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+@media(max-width:600px){.pvdak-forum-board{margin:12px;padding:16px}.pvdak-forum-board h2{font-size:20px}}

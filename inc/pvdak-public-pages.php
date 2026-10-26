@@ -145,6 +145,199 @@ function pvdak_public_policy_noindex($robots) {
   return $robots;
 }
 add_filter('wp_robots','pvdak_public_policy_noindex');
+
+/**
+ * D28: moderated community discussion built on native WordPress comments.
+ * This is a general-topic forum, NOT a legal advice or client-case channel.
+ * It is disabled until the site owner approves moderation and legal policies.
+ * No Page, option, user role, comment or database record is created on deploy.
+ */
+function pvdak_forum_enabled() {
+  return '1' === (string) get_option('pvdak_forum_enabled', '0') &&
+    (!function_exists('pvdak_maintenance_enabled') || !pvdak_maintenance_enabled());
+}
+function pvdak_forum_page_valid($page_id) {
+  $page = get_post(absint($page_id));
+  return $page instanceof WP_Post && 'page' === $page->post_type &&
+    'publish' === $page->post_status && is_string($page->post_content) &&
+    has_shortcode($page->post_content, 'pvdak_forum');
+}
+/** Never equate a WordPress role with an approved community application. */
+function pvdak_forum_member_can_post() {
+  $user_id = get_current_user_id();
+  if (!$user_id || !current_user_can('read') ||
+      !function_exists('pvdak_core_existing_application')) return false;
+  $user = get_userdata($user_id);
+  if (!$user || !isset($user->user_email) || !is_email($user->user_email) ||
+      (int) get_user_meta($user_id, '_pvdak_email_verified_at', true) < 1 ||
+      '1' === (string) get_user_meta($user_id, '_pvdak_email_verification_pending', true)) return false;
+  $verified = get_user_meta($user_id, '_pvdak_email_verified_address', true);
+  if (!is_string($verified) ||
+      !hash_equals(strtolower(trim($user->user_email)), strtolower(trim($verified)))) return false;
+  $profile_id = absint(pvdak_core_existing_application($user_id));
+  if (!$profile_id || 'pvdak_professional' !== get_post_type($profile_id) ||
+      'private' !== get_post_status($profile_id) ||
+      $user_id !== (int) get_post_field('post_author', $profile_id) ||
+      'approved' !== get_post_meta($profile_id, '_pvdak_member_state', true)) return false;
+  return in_array(get_post_meta($profile_id, '_pvdak_member_type', true),
+    array('lawyer', 'trainee', 'student'), true);
+}
+/** Native moderation controls remain with WordPress administrators. */
+function pvdak_forum_shortcode() {
+  $page_id = get_queried_object_id();
+  if (!pvdak_forum_page_valid($page_id)) return '';
+  $html = '<section id="pvdak-forum" class="pvdak-forum-board" dir="rtl" aria-labelledby="pvdak-forum-title">';
+  $html .= '<h2 id="pvdak-forum-title">گفت‌وگوی عمومی جامعه حقوقی</h2>';
+  $html .= '<p>این بخش برای موضوعات عمومی و آموزشی است؛ اطلاعات پرونده، نام اشخاص، شماره تماس یا مدارک محرمانه را ارسال نکنید. پیام‌ها پیش از انتشار بررسی می‌شوند.</p>';
+  if (!pvdak_forum_enabled()) {
+    return $html . '<p class="pvdak-forum-alert" role="status">انجمن تا تأیید سیاست انتشار و مدیریت محتوا غیرفعال است.</p></section>';
+  }
+  $notice = isset($_GET['forum']) && is_string($_GET['forum']) ? sanitize_key(wp_unslash($_GET['forum'])) : '';
+  $notices = array(
+    'pending' => 'پیام دریافت شد و فقط پس از بررسی مدیر ممکن است منتشر شود.',
+    'slow' => 'تعداد ارسال‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.',
+    'invalid' => 'موضوع یا متن پیام معتبر نیست. از درج پیوند و اطلاعات حساس خودداری کنید.',
+    'failed' => 'ثبت پیام انجام نشد. لطفاً بعداً دوباره تلاش کنید.',
+  );
+  if (isset($notices[$notice])) {
+    $html .= '<p class="pvdak-forum-alert" role="status">' . esc_html($notices[$notice]) . '</p>';
+  }
+  $entries = get_comments(array(
+    'post_id' => $page_id, 'status' => 'approve', 'type' => 'comment',
+    'meta_key' => '_pvdak_forum_entry', 'meta_value' => '1',
+    'number' => 10, 'orderby' => 'comment_date_gmt', 'order' => 'DESC',
+  ));
+  $items = array();
+  foreach (is_array($entries) ? $entries : array() as $entry) {
+    if (!$entry instanceof WP_Comment || (int) $entry->comment_post_ID !== (int) $page_id ||
+        '1' !== (string) $entry->comment_approved ||
+        '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
+        !is_string($entry->comment_content) || '' === trim($entry->comment_content)) continue;
+    $items[] = '<li class="pvdak-forum-entry"><p>' .
+      nl2br(esc_html($entry->comment_content)) . '</p><small>عضو جامعه · ' .
+      esc_html(get_comment_date('Y/m/d', $entry)) . '</small></li>';
+  }
+  $html .= $items ? '<ol class="pvdak-forum-entries">' . implode('', $items) . '</ol>' :
+    '<p class="pvdak-forum-alert">هنوز گفت‌وگوی تأییدشده‌ای برای نمایش وجود ندارد.</p>';
+  if (!pvdak_forum_member_can_post()) {
+    return $html . '<p class="pvdak-forum-alert">ارسال پیام فقط برای اعضای جامعه حقوقی با درخواست همکاری تأییدشده و ایمیل تأییدشده فعال است.</p></section>';
+  }
+  $html .= '<form class="pvdak-forum-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+  $html .= '<input type="hidden" name="action" value="pvdak_forum_submit">';
+  $html .= '<input type="hidden" name="forum_page_id" value="' . esc_attr($page_id) . '">';
+  $html .= wp_nonce_field('pvdak_forum_post_' . $page_id, '_pvdak_forum_nonce', true, false);
+  $html .= '<label for="pvdak-forum-subject">موضوع گفت‌وگو</label><input id="pvdak-forum-subject" name="forum_subject" type="text" minlength="5" maxlength="120" required>';
+  $html .= '<label for="pvdak-forum-message">متن عمومی</label><textarea id="pvdak-forum-message" name="forum_message" minlength="20" maxlength="1500" rows="5" required></textarea>';
+  $html .= '<div class="pvdak-forum-honeypot" aria-hidden="true"><label>این فیلد را خالی بگذارید<input name="forum_website" tabindex="-1" autocomplete="off"></label></div>';
+  $html .= '<p><small>حداکثر ۳ پیام در ساعت؛ بدون پیوند. انتشار تنها پس از تأیید مدیر است.</small></p>';
+  $html .= '<button type="submit">ارسال برای بررسی</button></form></section>';
+  return $html;
+}
+add_shortcode('pvdak_forum', 'pvdak_forum_shortcode');
+
+/** Prevent cached per-user form nonces and indexing before legal approval. */
+function pvdak_forum_send_headers() {
+  if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) nocache_headers();
+}
+add_action('send_headers', 'pvdak_forum_send_headers');
+function pvdak_forum_robots($robots) {
+  if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) $robots['noindex'] = true;
+  return $robots;
+}
+add_filter('wp_robots', 'pvdak_forum_robots');
+
+/** Fail closed on malformed forms, concurrency failures and untracked posts. */
+function pvdak_forum_submit() {
+  if ('POST' !== ($_SERVER['REQUEST_METHOD'] ?? '')) wp_die('روش درخواست نامعتبر است.', '', array('response' => 405));
+  $raw_id = isset($_POST['forum_page_id']) ? wp_unslash($_POST['forum_page_id']) : '';
+  if (!is_string($raw_id) || strlen($raw_id) > 10 ||
+      !ctype_digit($raw_id) || (int) $raw_id < 1) wp_die('صفحه نامعتبر است.', '', array('response' => 400));
+  $page_id = (int) $raw_id;
+  if (!pvdak_forum_enabled() || !pvdak_forum_page_valid($page_id) ||
+      !pvdak_forum_member_can_post()) wp_die('ارسال پیام مجاز نیست.', '', array('response' => 403));
+  check_admin_referer('pvdak_forum_post_' . $page_id, '_pvdak_forum_nonce');
+  $subject_raw = isset($_POST['forum_subject']) ? wp_unslash($_POST['forum_subject']) : '';
+  $message_raw = isset($_POST['forum_message']) ? wp_unslash($_POST['forum_message']) : '';
+  $honeypot = isset($_POST['forum_website']) ? wp_unslash($_POST['forum_website']) : '';
+  $subject = is_string($subject_raw) ? trim(sanitize_text_field($subject_raw)) : '';
+  $message = is_string($message_raw) ? trim(sanitize_textarea_field($message_raw)) : '';
+  $valid = is_string($honeypot) && '' === trim($honeypot) &&
+    pvdak_public_text_length($subject) >= 5 && pvdak_public_text_length($subject) <= 120 &&
+    pvdak_public_text_length($message) >= 20 && pvdak_public_text_length($message) <= 1500 &&
+    !preg_match('~(?:https?://|www\.)~i', $subject . ' ' . $message);
+  $result = 'invalid';
+  if ($valid) {
+    global $wpdb;
+    $user_id = get_current_user_id();
+    $lock_name = 'pvdak_forum_user_' . $user_id;
+    $locked = isset($wpdb) && is_object($wpdb) &&
+      '1' === (string) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 3)', $lock_name));
+    $result = 'failed';
+    if ($locked) {
+      try {
+        $hour_key = 'pvdak_forum_hour_' . $user_id;
+        $cool_key = 'pvdak_forum_cool_' . $user_id;
+        $count = (int) get_transient($hour_key);
+        if ($count >= 3 || get_transient($cool_key)) {
+          $result = 'slow';
+        } else {
+          // Store no public account ID, email, URL, IP or user agent.
+          // Moderators can see the private submitter ID in comment meta.
+          $comment_id = wp_insert_comment(array(
+            'comment_post_ID' => $page_id, 'comment_content' => 'موضوع: ' . $subject . "\n\n" . $message,
+            'comment_approved' => '0', 'comment_type' => 'comment',
+            'comment_author' => 'عضو جامعه', 'comment_author_email' => '',
+            'comment_author_url' => '', 'comment_author_IP' => '',
+            'comment_agent' => '', 'user_id' => 0, 'comment_parent' => 0,
+          ));
+          $stored = $comment_id && !is_wp_error($comment_id) ? get_comment($comment_id) : null;
+          $marked = $stored instanceof WP_Comment &&
+            '0' === (string) $stored->comment_approved &&
+            add_comment_meta($comment_id, '_pvdak_forum_entry', '1', true) &&
+            add_comment_meta($comment_id, '_pvdak_forum_submitter', (string) $user_id, true) &&
+            '1' === (string) get_comment_meta($comment_id, '_pvdak_forum_entry', true) &&
+            (string) $user_id === (string) get_comment_meta($comment_id, '_pvdak_forum_submitter', true);
+          if ($marked && set_transient($hour_key, $count + 1, HOUR_IN_SECONDS) &&
+              set_transient($cool_key, 1, 90)) {
+            $result = 'pending';
+          } else {
+            if ($comment_id && !is_wp_error($comment_id)) {
+              delete_comment_meta($comment_id, '_pvdak_forum_entry');
+              wp_delete_comment($comment_id, true);
+            }
+            delete_transient($cool_key);
+          }
+        }
+      } finally {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock_name));
+      }
+    }
+  }
+  wp_safe_redirect(add_query_arg('forum', $result, get_permalink($page_id)) . '#pvdak-forum');
+  exit;
+}
+add_action('admin_post_pvdak_forum_submit', 'pvdak_forum_submit');
+
+/** Settings > General: an explicit OFF-by-default switch, never auto-enabled. */
+function pvdak_forum_sanitize_switch($value) {
+  return '1' === (string) $value ? '1' : '0';
+}
+function pvdak_forum_settings_field() {
+  echo '<input type="hidden" name="pvdak_forum_enabled" value="0">';
+  echo '<label><input type="checkbox" name="pvdak_forum_enabled" value="1" ' .
+    checked('1', get_option('pvdak_forum_enabled', '0'), false) .
+    '> فعال‌سازی انجمن پس از تأیید سیاست محتوا و مدیریت پیام‌ها</label>';
+  echo '<p class="description">پیش‌فرض غیرفعال است. ابتدا برگه منتشرشده دارای شورت‌کد انجمن، مقررات، مسئول بررسی پیام‌ها و آزمون نقش‌ها را آماده کنید.</p>';
+}
+function pvdak_forum_register_setting() {
+  register_setting('general', 'pvdak_forum_enabled', array(
+    'type' => 'string', 'default' => '0', 'sanitize_callback' => 'pvdak_forum_sanitize_switch',
+  ));
+  add_settings_field('pvdak_forum_enabled', 'انجمن PVDak',
+    'pvdak_forum_settings_field', 'general');
+}
+add_action('admin_init', 'pvdak_forum_register_setting');
+
 function pvdak_contact_allowed() {
   // An unpublished or misconfigured Page must not leave admin-post intake open.
   return (bool)pvdak_public_template_page_url('contact-us','page-templates/pvdak-contact.php') &&
