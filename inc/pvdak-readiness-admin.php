@@ -152,10 +152,13 @@ function pvdak_management_daily_steps() {
         array( 'محتوای صفحه اصلی و برگه‌ها را بازبینی کنید', array(
             'admin.php?page=pvdak-home-content', 'edit.php?post_type=page',
         ) ),
-        array( 'پیام‌های منتظر بررسی و درخواست‌های جدید را پیگیری کنید', array(
-            'edit-comments.php?comment_status=moderated',
+        array( 'درخواست‌های حقوقی و پشتیبانی را پیگیری کنید', array(
             'edit.php?post_type=pvdak_request',
             'edit.php?post_type=pvdak_support_ticket',
+        ) ),
+        array( 'گفت‌وگوها و پیام‌های منتظر تأیید را بررسی کنید', array(
+            'edit-comments.php?comment_status=moderated',
+            'edit-comments.php',
         ) ),
         array( 'پیش از ارائه عمومی، وضعیت خدمات را بررسی کنید', array(
             'tools.php?page=pvdak-readiness', 'options-general.php',
