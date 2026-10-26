@@ -57,6 +57,21 @@ pvdak_public_smoke_require(
  false !== strpos( $code['login'], 'ثبت‌نام در PVDak' ),
  'D05/D07: account login links to the separate published registration Page'
 );
+// D07: failed password attempts must surface the existing generic server error,
+// and GET filters must retain the support panel after reloading the dashboard.
+$support_source = file_get_contents( $root . '/inc/pvdak-support-tickets.php' );
+pvdak_public_smoke_require(
+ false !== strpos( $code['login'], 'id="pvdak-login-result"' ) &&
+ false !== strpos( $code['login'], 'اطلاعات ورود تأیید نشد' ) &&
+ false !== strpos( $code['auth'], "add_query_arg('error','1',pvdak_auth_login_url())" ),
+ 'D07 password failure must return a generic visible error on the branded login page' );
+pvdak_public_smoke_require(
+ false !== strpos( $support_source, "pvdak_auth_account_url() . '#pvdak-support'" ) &&
+ false !== strpos( $support_source, 'name="ticket_status"' ) &&
+ false !== strpos( $support_source, 'name="ticket_order"' ) &&
+ false !== strpos( $support_source, 'name="ticket_search"' ),
+ 'D07 support filters must keep the support panel selected after GET submission' );
+
 foreach ( array( 'about-us', 'contact-us', 'legal-faq', 'privacy-policy', 'terms-of-use', 'account-login', 'my-pvdak-account' ) as $slug ) {
     pvdak_public_smoke_require( false !== strpos( $code['pages'], "'" . $slug . "'" ), 'Seed includes ' . $slug );
 }
