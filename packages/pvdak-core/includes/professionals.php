@@ -316,7 +316,13 @@ function pvdak_core_directory_consent_fingerprint( $profile_id ) {
          '1' !== (string) get_post_meta( $id, '_pvdak_referral_cleared', true ) ||
          ! pvdak_core_license_review_current( $id ) ) { return ''; }
     $owner = absint( get_post_field( 'post_author', $id ) );
-    if ( '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ) { return ''; }
+    $user = get_userdata( $owner );
+    if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
+         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ||
+         (int) get_user_meta( $owner, '_pvdak_email_verified_at', true ) < 1 ) { return ''; }
+    $mailbox = strtolower( trim( $user->user_email ) );
+    $verified_mailbox = get_user_meta( $owner, '_pvdak_email_verified_address', true );
+    if ( ! is_string( $verified_mailbox ) || ! hash_equals( $mailbox, $verified_mailbox ) ) { return ''; }
     $name = trim( (string) get_post_field( 'post_title', $id ) );
     $city = trim( (string) get_post_meta( $id, '_pvdak_member_city', true ) );
     $specialties = pvdak_core_specialty_ids( $id );
@@ -325,6 +331,7 @@ function pvdak_core_directory_consent_fingerprint( $profile_id ) {
     return hash( 'sha256', wp_json_encode( array(
         pvdak_core_license_review_identity_signature( $id ),
         (string) get_post_field( 'post_modified_gmt', $id ),
+        $mailbox,
         $specialties,
     ) ) );
 }
@@ -332,11 +339,17 @@ function pvdak_core_directory_consent_fingerprint( $profile_id ) {
 function pvdak_core_directory_consent_valid( $profile_id ) {
     $fingerprint = pvdak_core_directory_consent_fingerprint( $profile_id );
     $consent = get_post_meta( absint( $profile_id ), '_pvdak_directory_consent', true );
-    return '' !== $fingerprint && is_array( $consent ) &&
-        isset( $consent['fingerprint'], $consent['at'] ) &&
-        is_string( $consent['fingerprint'] ) && is_string( $consent['at'] ) &&
-        1 === preg_match( '/^[a-f0-9]{64}$/D', $consent['fingerprint'] ) &&
-        1 === preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $consent['at'] ) &&
+    if ( '' === $fingerprint || ! is_array( $consent ) ||
+         ! isset( $consent['fingerprint'], $consent['at'] ) ||
+         ! is_string( $consent['fingerprint'] ) || ! is_string( $consent['at'] ) ||
+         1 !== preg_match( '/^[a-f0-9]{64}$/D', $consent['fingerprint'] ) ||
+         1 !== preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $consent['at'] ) ) { return false; }
+    // Consent is an actual UTC instant, not merely a string shaped like a date.
+    $date = DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $consent['at'], new DateTimeZone( 'UTC' ) );
+    return $date instanceof DateTimeImmutable &&
+        $date->format( 'Y-m-d H:i:s' ) === $consent['at'] &&
+        $date->getTimestamp() >= 1577836800 &&
+        $date->getTimestamp() <= time() + 300 &&
         hash_equals( $fingerprint, $consent['fingerprint'] );
 }
 
@@ -423,12 +436,39 @@ function pvdak_core_directory_consent_submit() {
 add_action( 'admin_post_pvdak_core_directory_consent', 'pvdak_core_directory_consent_submit' );
 
 /**
+ * Directory output must originate from its actual published shortcode Page.
+ * Prevent private profile output from arbitrary shortcode/widget contexts.
+ */
+function pvdak_core_directory_page_valid( $page_id ) {
+    $page = get_post( absint( $page_id ) );
+    return $page instanceof WP_Post && 'page' === $page->post_type &&
+        'publish' === $page->post_status && is_string( $page->post_content ) &&
+        has_shortcode( $page->post_content, 'pvdak_professional_directory' );
+}
+/** Protect the Page before shortcode rendering; caches must never retain revoked consent. */
+function pvdak_core_directory_headers() {
+    if ( ! is_singular( 'page' ) || ! pvdak_core_directory_page_valid( get_queried_object_id() ) ) { return; }
+    if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
+    nocache_headers();
+    if ( ! headers_sent() ) { header( 'X-Robots-Tag: noindex, noarchive, nosnippet', true ); }
+}
+add_action( 'wp', 'pvdak_core_directory_headers', 0 );
+function pvdak_core_directory_robots( $robots ) {
+    if ( is_singular( 'page' ) && pvdak_core_directory_page_valid( get_queried_object_id() ) ) {
+        $robots['noindex'] = true;
+    }
+    return $robots;
+}
+add_filter( 'wp_robots', 'pvdak_core_directory_robots' );
+
+/**
  * Public directory exposes only three consented fields. Private CPT status,
  * notes, member ID, contact details and profile permalinks are never output.
  * No automatic Page creation or public REST route is introduced.
  */
 function pvdak_core_professional_directory() {
-    // Consent may be revoked at any time; do not serve an old rendered directory from a page cache.
+    if ( ! is_singular( 'page' ) || ! pvdak_core_directory_page_valid( get_queried_object_id() ) ) { return ''; }
+    // Also protect direct shortcode rendering, if WP had already resolved headers.
     nocache_headers();
     if ( ! pvdak_core_directory_enabled() ) {
         return '<p class="pvdak-core-notice">فهرست متخصصان در حال آماده‌سازی است.</p>';
@@ -449,7 +489,9 @@ function pvdak_core_professional_directory() {
         'meta_query' => array( array( 'key' => '_pvdak_directory_consent', 'compare' => 'EXISTS' ) ),
     ) );
     global $wpdb;
-    if ( ! is_array( $ids ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+    // A capped result is not a complete directory: never claim it is exhaustive.
+    if ( ! is_array( $ids ) || count( $ids ) >= 1000 ||
+         ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
         return '<p class="pvdak-core-notice" role="status">فهرست در حال حاضر قابل بارگذاری نیست.</p>';
     }
     $visible = array();
