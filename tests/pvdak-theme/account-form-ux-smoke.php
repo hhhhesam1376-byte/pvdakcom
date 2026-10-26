@@ -115,7 +115,9 @@ $checks = array(
     strpos( $s['portal'], 'id="pvdak-profile"' ) !== false,
   'Profile status variants' => strpos( $s['portal'], "if('unchanged'===" ) !== false,
   'Profile counter and hint' => strpos( $s['portal'], 'data-pvdak-count-for="account-display-name"' ) !== false,
-  'Profile reset control' => strpos( $s['portal'], 'type="reset"' ) !== false,
+  'Profile has a single clear save action without confusing reset' =>
+    strpos( $s['portal'], 'data-pvdak-profile-save' ) !== false &&
+    strpos( $s['portal'], 'type="reset"' ) === false,
   'Profile unsaved change status' => strpos( $s['portal'], 'data-pvdak-profile-status' ) !== false,
   'Contact result accessible focus' => strpos( $s['contact'], 'id="pvdak-contact-result" tabindex="-1"' ) !== false,
   'Contact textarea counter' => strpos( $s['contact'], 'data-pvdak-count-for="pvdak-message"' ) !== false,
@@ -123,7 +125,11 @@ $checks = array(
   'Recovery confirmation hint' => strpos( $s['recovery'], 'id="pvdak-password-match"' ) !== false,
   'Recovery client validation marker' => strpos( $s['recovery'], 'data-pvdak-recovery-change' ) !== false,
   'Login bounded identity' => strpos( $s['login'], 'maxlength="250"' ) !== false,
-  'Login error focus target' => strpos( $s['login'], 'id="pvdak-login-result"' ) !== false,
+  'Login error focus target' =>
+    strpos( $s['login'], 'id="pvdak-login-result"' ) !== false &&
+    strpos( $s['login'], 'pvdak-login-error-notice' ) !== false &&
+    strpos( file_get_contents($root.'/inc/pvdak-auth.php'), "'pvdak_login_error'=>'invalid'" ) !== false &&
+    strpos( $s['script'], "params.has('pvdak_login_error')" ) !== false,
   'Dashboard fallback avoids activation claim' => strpos( $s['portal'], 'حساب شما وارد شده است' ) !== false &&
     strpos( $s['portal'], 'اطلاعات پنل فعلاً در دسترس نیست' ) !== false &&
     strpos( $s['portal'], "do_shortcode( '[pvdak_account_dashboard]' )" ) !== false,
