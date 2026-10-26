@@ -213,4 +213,19 @@ pvdak_public_smoke_require(
  strpos( $code['theme'], '.pvdak-forum-consent' ) !== false,
  'D31 forum nonce page is non-cacheable, noindex and RTL consent is visible' );
 
+// D28: moderation must preserve an auditable consent acknowledgement and
+// recheck privacy after moderator edits, before any comment becomes public.
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "add_comment_meta(\$comment_id, '_pvdak_forum_consent_at'" ) !== false &&
+ strpos( $code['pages'], "get_comment_meta(\$entry->comment_ID, '_pvdak_forum_consent_at'" ) !== false &&
+ strpos( $code['pages'], "delete_comment_meta(\$comment_id, '_pvdak_forum_consent_at')" ) !== false,
+ 'D28 private per-message publication acknowledgement is persisted, required and cleaned on failure' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "'number' => 60" ) !== false &&
+ strpos( $code['pages'], "if (count(\$items) >= 10) break;" ) !== false &&
+ strpos( $code['pages'], "pvdak_forum_contains_link_or_email(\$entry->comment_content)" ) !== false &&
+ strpos( $code['pages'], "'عضو جامعه' !== (string) \$entry->comment_author" ) !== false &&
+ strpos( $code['pages'], "'' !== (string) \$entry->comment_author_IP" ) !== false,
+ 'D28 public rendering skips malformed, reidentified and unsafe moderated comments' );
+
 echo "PVDAK_PUBLIC_PAGES_AUTH_OK: source checks passed; live WP/HTTP still unverified.\n";
