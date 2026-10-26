@@ -1,6 +1,18 @@
 <?php
 /** WordPress-backed branded PVDak login; WP administrators retain their native access. */
 if(!defined('ABSPATH')){exit;}
+/**
+ * The shared login/signup screen contains private result messages and nonces.
+ * Never allow a public page cache to replay a previous visitor's ?state=received.
+ */
+function pvdak_auth_disable_public_form_cache() {
+  if (!((is_page('account-login') && is_page_template('page-templates/pvdak-login.php')) ||
+        (is_page('account-register') && is_page_template('page-templates/pvdak-register.php')))) return;
+  if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+  nocache_headers();
+}
+add_action('template_redirect', 'pvdak_auth_disable_public_form_cache', 1);
+
 function pvdak_auth_login_url(){
   $page = pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php');
   // If the administrator has not published the branded Page yet, use the
