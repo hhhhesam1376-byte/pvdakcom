@@ -147,7 +147,7 @@ function pvdak_support_ticket_form(){
       <button type="submit">ثبت پیام پشتیبانی</button></form>
 
       <h3 id="pvdak-ticket-list-title">پیام‌های پشتیبانی</h3>
-      <form method="get" action="<?php echo esc_url(pvdak_auth_account_url()); ?>" class="pvdak-ticket-filters" role="search" aria-label="جستجو و فیلتر پیام‌های خودم">
+      <form method="get" action="<?php echo esc_url(pvdak_auth_account_url() . '#pvdak-support'); ?>" class="pvdak-ticket-filters" role="search" aria-label="جستجو و فیلتر پیام‌های خودم">
         <?php if(isset($account_route['page_id']) && is_scalar($account_route['page_id']) && absint($account_route['page_id'])): ?>
           <input type="hidden" name="page_id" value="<?php echo esc_attr(absint($account_route['page_id'])); ?>">
         <?php elseif(isset($account_route['pagename']) && is_string($account_route['pagename']) && $account_route['pagename']!==''): ?>
