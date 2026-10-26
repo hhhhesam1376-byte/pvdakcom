@@ -1887,3 +1887,8 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - صاحب پروژه هنگام اجرای `$HOME/.pvdak-deploy/deploy.sh` روی هاست با `ERROR: PHP syntax error: packages/pvdak-core/includes/requests.php` مواجه شد؛ انتشار قبل از تغییر فایل زنده متوقف شد و تست SMTP به‌دلیل `&&` اجرا نشد.
 - علت سورس: پرانتز بستهٔ جاافتاده در شرط کنترل مالکیت `pvdak_core_request_receipt_id` در `packages/pvdak-core/includes/requests.php`؛ در `main` با کامیت `504fddda759d181cacfc0b1353e3c5162ff44c33` اصلاح شد.
 - بررسی تعادل ساختاری پرانتزها/آکولادها در نسخه جدید این فایل و `functions.php` بدون مغایرت بود، اما **این بررسی جای PHP lint واقعی نیست**؛ اجرای مجدد اسکریپت انتشار روی هاست لازم است. نصب افزونه SMTP تا این لحظه فعال است زیرا دستور غیرفعال‌سازی به‌علت شکست deploy نرسید؛ وضعیت مقادیر wp-config نیز مستقل تأیید نشده. D07 و تحویل واقعی ایمیل هنوز باز هستند.
+
+### 2026-10-26 — D07 second deploy blocker: ticket smoke PHP parse
+- دومین تلاش کاربر برای انتشار پس از `SMTP CONFIG: READY` متوقف شد: `ERROR: PHP syntax error: tests/pvdak-theme/ticket-experience-smoke.php`؛ به علت توقف اسکریپت با `set -e`، افزونه `wp-mail-smtp` غیرفعال و ایمیل آزمایشی هنوز ارسال نشده‌اند.
+- علت سورس: جداکنندهٔ `,` میان دو ورودی `$checks` در تست ایستای تیکت جاافتاده بود؛ فقط همین جداکننده در `main` با کامیت `eb019619bc0162cb6256e93535ce8a72969f6822` اصلاح شد. **تست PHP lint کامل هاست هنوز انجام نشده است.**
+- برنامه جلوگیری از خطایابی تک‌به‌تک: گرفتن آخرین `main` در پوشه موقت خصوصی هاست، اجرای `php -l` روی تمام فایل‌های PHP و جمع‌آوری همه موارد `LINT_FAIL` قبل از اجرای مجدد انتشار. تنظیمات VPS/PTR و سایر سایت‌ها بدون تغییر باقی بمانند.
