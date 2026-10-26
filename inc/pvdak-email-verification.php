@@ -7,6 +7,74 @@
  */
 if (!defined('ABSPATH')) { exit; }
 
+/**
+ * Standalone RTL HTML email: no external images, scripts or font downloads.
+ * All dynamic values are escaped before placement in HTML/attributes.
+ */
+function pvdak_email_verification_html($display_name, $url) {
+    $template = <<<'EMAIL_HTML'
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تأیید ایمیل حساب PVDak</title>
+</head>
+<body dir="rtl" style="margin:0;padding:0;background-color:#f2f5f8;color:#172335;font-family:Tahoma,Arial,sans-serif;direction:rtl;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f2f5f8;border-collapse:collapse;">
+<tr><td align="center" style="padding:32px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;background-color:#ffffff;border-collapse:separate;border-radius:16px;overflow:hidden;">
+<tr><td align="right" dir="rtl" style="padding:26px 32px;background-color:#123d54;border-bottom:4px solid #e0a33b;">
+  <p style="margin:0;color:#ffffff;font-size:24px;font-weight:bold;letter-spacing:1px;" dir="ltr">PVDak</p>
+  <p style="margin:8px 0 0;color:#e6edf0;font-size:13px;line-height:1.8;">سامانه خدمات و ارتباطات حقوقی</p>
+</td></tr>
+<tr><td dir="rtl" align="right" style="padding:34px 32px 14px;">
+  <p style="margin:0 0 12px;color:#ac7731;font-size:13px;font-weight:bold;">به جمع کاربران PVDak خوش آمدید</p>
+  <h1 style="margin:0 0 18px;color:#123d54;font-size:23px;line-height:1.7;font-weight:bold;">حساب کاربری خود را تأیید کنید</h1>
+  <p style="margin:0 0 16px;font-size:15px;line-height:2;color:#263b4c;">سلام <strong>{{NAME}}</strong>،</p>
+  <p style="margin:0 0 20px;font-size:15px;line-height:2;color:#34495a;">از ثبت‌نام شما در PVDak سپاسگزاریم. برای اطمینان از اینکه این آدرس ایمیل متعلق به شماست و برای فعال‌کردن ورود به حساب، لطفاً روی دکمه زیر کلیک کنید.</p>
+</td></tr>
+<tr><td align="center" style="padding:10px 32px 24px;">
+  <a href="{{VERIFY_URL}}" style="display:inline-block;background-color:#123d54;color:#ffffff;text-decoration:none;padding:15px 35px;border-radius:9px;font-size:16px;font-weight:bold;line-height:1.5;" target="_blank" rel="noopener">تأیید آدرس ایمیل و فعال‌سازی حساب</a>
+  <p style="margin:18px 0 0;color:#6b7886;font-size:13px;line-height:1.9;">این لینک فقط یک‌بار قابل استفاده است و تا <strong>۲۴ ساعت</strong> اعتبار دارد.</p>
+</td></tr>
+<tr><td align="right" dir="rtl" style="padding:18px 32px 26px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f8fa;border-right:3px solid #e0a33b;border-collapse:separate;">
+  <tr><td style="padding:16px 18px;">
+    <p style="margin:0 0 10px;color:#233b4c;font-size:13px;line-height:1.9;"><strong>دکمه کار نمی‌کند؟</strong> لینک زیر را کپی کنید و مستقیماً در مرورگر باز کنید:</p>
+    <p dir="ltr" style="margin:0;direction:ltr;text-align:left;overflow-wrap:anywhere;word-break:break-all;font-family:Arial,sans-serif;font-size:12px;line-height:1.9;"><a href="{{VERIFY_URL}}" style="color:#155d7c;text-decoration:underline;">{{PLAIN_URL}}</a></p>
+  </td></tr></table>
+  <p style="margin:20px 0 0;color:#657382;font-size:13px;line-height:1.9;">اگر شما در PVDak ثبت‌نام نکرده‌اید، نیازی به انجام هیچ کاری نیست؛ این پیام را نادیده بگیرید. برای امنیت حساب، این لینک را در اختیار دیگران قرار ندهید.</p>
+</td></tr>
+<tr><td align="center" dir="rtl" style="padding:20px 32px 25px;background-color:#f8fafc;border-top:1px solid #e5eaee;">
+  <p style="margin:0 0 7px;color:#123d54;font-weight:bold;font-size:14px;">PVDak</p>
+  <p style="margin:0;color:#74818e;font-size:12px;line-height:1.9;">این پیام به‌صورت خودکار و صرفاً برای تأیید آدرس ایمیل شما ارسال شده است.</p>
+  <p style="margin:8px 0 0;font-size:12px;"><a href="{{SITE_URL}}" style="color:#155d7c;text-decoration:none;">ورود به وب‌سایت PVDak</a></p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+EMAIL_HTML;
+    return strtr($template, array(
+        '{{NAME}}' => esc_html($display_name),
+        '{{VERIFY_URL}}' => esc_url($url),
+        '{{PLAIN_URL}}' => esc_html(esc_url_raw($url)),
+        '{{SITE_URL}}' => esc_url(home_url('/')),
+    ));
+}
+
+/** Match HTML mail with a readable text-only version in clients that need it. */
+function pvdak_email_verification_plain_text($display_name, $url) {
+    return "سلام " . wp_strip_all_tags($display_name) . "\n\n" .
+        "به PVDak خوش آمدید.\n" .
+        "برای تأیید آدرس ایمیل و فعال‌سازی حساب روی این لینک کلیک کنید:\n" .
+        esc_url_raw($url) . "\n\n" .
+        "این لینک یک‌بار مصرف است و تا ۲۴ ساعت اعتبار دارد.\n" .
+        "اگر شما ثبت‌نام نکرده‌اید، این پیام را نادیده بگیرید.\n";
+}
+
 function pvdak_email_verification_issue($user_id) {
     $user = get_userdata(absint($user_id));
     if (!$user || !is_email($user->user_email) || '1' !== (string)get_user_meta($user->ID, '_pvdak_email_verification_pending', true)) {
@@ -34,9 +102,25 @@ function pvdak_email_verification_issue($user_id) {
         return false;
     }
     $url = add_query_arg(array('pvdak_verify'=>'1', 'uid'=>$user->ID, 'token'=>$token), $base);
-    $body = "برای تأیید ایمیل حساب PVDak، پیوند زیر را باز کنید:\n\n" .
-        esc_url_raw($url) . "\n\nاین پیوند تا ۲۴ ساعت معتبر است. اگر ثبت‌نام نکرده‌اید، پیام را نادیده بگیرید.";
-    return wp_mail($user->user_email, 'تأیید ایمیل حساب PVDak', $body);
+    $name = trim((string)$user->display_name) ?: (string)$user->user_login;
+    $body = pvdak_email_verification_html($name, $url);
+    $alt_body = pvdak_email_verification_plain_text($name, $url);
+    // Only this message is HTML; leave other WordPress messages unchanged.
+    // PHPMailer's text fallback is installed only during this synchronous send.
+    $with_alternative = static function($mailer) use ($alt_body) {
+        $mailer->AltBody = $alt_body;
+    };
+    add_action('phpmailer_init', $with_alternative, 30);
+    try {
+        return wp_mail(
+            $user->user_email,
+            'به PVDak خوش آمدید | تأیید آدرس ایمیل',
+            $body,
+            array('Content-Type: text/html; charset=UTF-8')
+        );
+    } finally {
+        remove_action('phpmailer_init', $with_alternative, 30);
+    }
 }
 
 /** Verify a token without showing its value in rendered pages or analytics links. */
