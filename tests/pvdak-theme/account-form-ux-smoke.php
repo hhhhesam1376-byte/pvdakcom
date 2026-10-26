@@ -160,6 +160,10 @@ $checks = array(
   'D13 verified email requires a persisted positive marker' =>
     strpos($s['verification'],"'_pvdak_email_verified_at'")!==false &&
     strpos($s['verification'],"delete_user_meta($user_id, '_pvdak_email_verification_pending')")!==false,
+  'D13 concurrent verification cannot erase a successfully confirmed mailbox' =>
+    strpos($s['verification'], "if (!\$valid && '1' === (string)get_user_meta(\$user_id, '_pvdak_email_verification_pending', true))") !== false &&
+    strpos($s['verification'], "delete_user_meta(\$user_id, '_pvdak_email_verified_at')") !== false &&
+    strpos($s['verification'], "delete_user_meta(\$user_id, '_pvdak_email_verified_address')") !== false,
   'D14 SMS cannot verify with a disabled provider or claim ambiguous phone' =>
     strpos($s['sms'],"if (!pvdak_sms_auth_ready())")!==false &&
     strpos($s['sms'],'pvdak_sms_phone_claimed($phone)')!==false &&
