@@ -475,7 +475,12 @@ function pvdak_core_professional_directory() {
     }
     $raw_page = isset( $_GET['pvdak_dir_page'] ) && is_string( $_GET['pvdak_dir_page'] ) ?
         wp_unslash( $_GET['pvdak_dir_page'] ) : '1';
-    $page = preg_match( '/^[1-9][0-9]{0,2}$/D', $raw_page ) ? min( 50, (int) $raw_page ) : 1;
+    // Up to 999 candidates (1000 is deliberately fail-closed) need 84 pages at 12 per page.
+    // Do not silently turn malformed or out-of-range page requests into page one.
+    if ( ! preg_match( '/^[1-9][0-9]{0,2}$/D', $raw_page ) || (int) $raw_page > 84 ) {
+        return '<p class="pvdak-core-notice" role="status">شماره صفحه فهرست معتبر نیست.</p>';
+    }
+    $page = (int) $raw_page;
     $ids = get_posts( array(
         'post_type' => 'pvdak_professional',
         'post_status' => 'private',
@@ -524,10 +529,10 @@ function pvdak_core_professional_directory() {
     $base = get_permalink( get_queried_object_id() );
     if ( ! is_string( $base ) || '' === $base ) { return $html . '</section>'; }
     if ( $page > 1 ) {
-        $html .= '<a href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page - 1, $base ) ) . '">صفحه قبل</a> ';
+        $html .= '<a rel="prev" aria-label="صفحه قبل فهرست متخصصان" href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page - 1, $base ) ) . '">صفحه قبل</a> ';
     }
     if ( $page * $per_page < $total ) {
-        $html .= '<a href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page + 1, $base ) ) . '">صفحه بعد</a>';
+        $html .= '<a rel="next" aria-label="صفحه بعد فهرست متخصصان" href="' . esc_url( add_query_arg( 'pvdak_dir_page', $page + 1, $base ) ) . '">صفحه بعد</a>';
     }
     return $html . '</section>';
 }
