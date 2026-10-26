@@ -123,10 +123,21 @@ function pvdak_core_request_history_unique_anchor( $output, $tag ) {
          ! is_page_template( 'page-templates/pvdak-account.php' ) ) {
         return $output;
     }
-    return str_replace(
+    $output = str_replace(
         '<section id="pvdak-requests" class="pvdak-core-panel pvdak-core-request-history"',
         '<section class="pvdak-core-panel pvdak-core-request-history"',
         $output
+    );
+    // The installed Core shortcode builds its own GET form URL. Keep the
+    // canonical account Page and requests anchor, even in Plain permalink
+    // mode or when JavaScript is unavailable. Do not change query ownership.
+    return preg_replace_callback(
+        '/(<form method="get" action=")([^"]+)(" class="pvdak-core-request-filters")/',
+        static function( $match ) {
+            return $match[1] . esc_url( pvdak_auth_account_url() . '#pvdak-requests' ) . $match[3];
+        },
+        $output,
+        1
     );
 }
 add_filter( 'do_shortcode_tag', 'pvdak_core_request_history_unique_anchor', 15, 2 );
