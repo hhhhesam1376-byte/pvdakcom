@@ -297,7 +297,8 @@ function pvdak_support_ticket_form(){
                   <button type="submit">ارسال پاسخ</button>
                 </form>
               <?php endif; ?>
-            </div>        </td></tr>
+            </div>
+        </td></tr>
         <?php endif; ?>
         <?php endforeach; ?>
         </tbody>
@@ -500,7 +501,7 @@ function pvdak_support_reply_box_html($post){
     $state=pvdak_support_status_key(get_post_meta($post->ID,'_pvdak_support_status',true));
     echo '<input type="hidden" name="pvdak_support_previous_state" value="'.esc_attr($state).'">';
     echo '<p><label for="pvdak_support_state">وضعیت گفتگو</label><select id="pvdak_support_state" name="pvdak_support_state">';
-    foreach(array('open'=>'نیازمند پاسخ','answered'=>'پاسخ داده شده','closed'=>'بسته شده') as $key=>$label){
+    foreach(array('open'=>'در انتظار بررسی','answered'=>'منتظر پاسخ مشتری','closed'=>'تکمیل‌شده') as $key=>$label){
         echo '<option value="'.esc_attr($key).'" '.selected($state,$key,false).'>'.esc_html($label).'</option>';
     }
     echo '</select></p>';
