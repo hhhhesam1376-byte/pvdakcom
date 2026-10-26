@@ -207,6 +207,17 @@ function pvdak_forum_raw_text_valid($value, $byte_limit) {
 function pvdak_forum_contains_link_or_email($text) {
   return 1 === preg_match('~(?:https?://|ftp://|www\\.|mailto:|tel:|[\\w.%+\\-]+@[\\w.\\-]+\\.[a-z]{2,})~iu', $text);
 }
+/** A moderator cannot turn malformed or future-dated acknowledgement into valid consent. */
+function pvdak_forum_consent_valid($comment_id) {
+  $raw = get_comment_meta($comment_id, '_pvdak_forum_consent_at', true);
+  if (!is_string($raw) ||
+      1 !== preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $raw)) return false;
+  $date = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $raw, new DateTimeZone('UTC'));
+  return $date instanceof DateTimeImmutable &&
+    $date->format('Y-m-d H:i:s') === $raw &&
+    $date->getTimestamp() >= 1577836800 &&
+    $date->getTimestamp() <= time() + 300;
+}
 /** Native moderation controls remain with WordPress administrators. */
 function pvdak_forum_shortcode() {
   $page_id = get_queried_object_id();
@@ -247,10 +258,10 @@ function pvdak_forum_shortcode() {
         '' !== (string) $entry->comment_author_url ||
         '' !== (string) $entry->comment_author_IP ||
         '' !== (string) $entry->comment_agent ||
-        !is_string(get_comment_meta($entry->comment_ID, '_pvdak_forum_consent_at', true)) ||
-        1 !== preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D',
-          get_comment_meta($entry->comment_ID, '_pvdak_forum_consent_at', true)) ||
-        !is_string($entry->comment_content) || '' === trim($entry->comment_content) ||
+        !pvdak_forum_consent_valid($entry->comment_ID) ||
+        !pvdak_forum_raw_text_valid($entry->comment_content, 6200) ||
+        '' === trim($entry->comment_content) ||
+        pvdak_public_text_length($entry->comment_content) > 1700 ||
         pvdak_forum_contains_link_or_email($entry->comment_content)) continue;
     $items[] = '<li class="pvdak-forum-entry"><p>' .
       nl2br(esc_html($entry->comment_content)) . '</p><small>عضو جامعه · ' .
@@ -361,7 +372,8 @@ function pvdak_forum_submit() {
             add_comment_meta($comment_id, '_pvdak_forum_consent_at', $consent_at, true) &&
             '1' === (string) get_comment_meta($comment_id, '_pvdak_forum_entry', true) &&
             (string) $user_id === (string) get_comment_meta($comment_id, '_pvdak_forum_submitter', true) &&
-            $consent_at === get_comment_meta($comment_id, '_pvdak_forum_consent_at', true);
+            $consent_at === get_comment_meta($comment_id, '_pvdak_forum_consent_at', true) &&
+            pvdak_forum_consent_valid($comment_id);
           if ($marked && set_transient($hour_key, $count + 1, HOUR_IN_SECONDS) &&
               set_transient($cool_key, 1, 90) &&
               (int) get_transient($hour_key) === $count + 1 &&
