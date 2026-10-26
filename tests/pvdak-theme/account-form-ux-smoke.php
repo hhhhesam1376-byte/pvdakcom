@@ -278,6 +278,15 @@ $checks = array(
     strpos($s['admin-management'], "'محتوا و ظاهر سایت'") !== false &&
     strpos($s['admin-management'], "'درخواست‌ها و گفت‌وگوها'") !== false &&
     strpos($s['admin-management'], "esc_url( home_url( '/' ) )") !== false,
+  'D31 homepage entry respects per-post permission and previews drafts' =>
+    strpos($s['admin-management'], "current_user_can( 'edit_post', \$home_id )")!==false &&
+    strpos($s['home-editor'], "get_preview_post_link( \$page_id )")!==false &&
+    strpos($s['home-editor'], "if ( \$home_id && ! current_user_can( 'edit_post', \$home_id ) )")!==false,
+  'D31 comment queue is count-only and retains direct moderation route' =>
+    strpos($s['admin-management'], 'function pvdak_management_pending_comments()')!==false &&
+    strpos($s['admin-management'], 'wp_count_comments()')!==false &&
+    strpos($s['admin-management'], 'moderate_comments')!==false &&
+    strpos($s['admin-management'], 'edit-comments.php?comment_status=moderated')!==false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
