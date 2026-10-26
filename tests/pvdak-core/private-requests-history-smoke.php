@@ -19,7 +19,7 @@ $checks = array(
  'bounded page' => strpos($src, 'min( 1000, (int) $raw_page )') !== false,
  'status allowlist' => strpos($src, 'isset( $statuses[$raw_status] )') !== false,
  'type allowlist' => strpos($src, 'isset( $types[$raw_type] )') !== false,
- 'search sanitized' => strpos($src, 'sanitize_text_field( wp_unslash(') !== false,
+ 'search sanitized' => strpos($src, 'sanitize_text_field( $search_input )') !== false,
  'unicode search bound' => strpos($src, "preg_match_all( '/./us'") !== false,
  'sort allowlist' => strpos($src, "'asc' === \$raw_order ? 'ASC' : 'DESC'") !== false,
  'status filter' => strpos($src, "'_pvdak_request_state'") !== false,
