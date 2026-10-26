@@ -182,6 +182,12 @@ $checks = array(
   'D07 auth tabs follow restored URL on BFCache' => strpos( $s['script'], "if (!event.persisted) return;" ) !== false && strpos( $s['script'], 'showAuthMode(mode, false, false)' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
 
+  'D13 unused reset links expire after at most two hours without custom token storage' =>
+    strpos($s['tools'], "function pvdak_recovery_reset_key_lifetime( \$seconds )") !== false &&
+    strpos($s['tools'], "min( (int) \$seconds, 2 * HOUR_IN_SECONDS )") !== false &&
+    strpos($s['tools'], "add_filter( 'password_reset_expiration', 'pvdak_recovery_reset_key_lifetime', 20 )") !== false &&
+    strpos($s['tools'], 'reset_password( $user, $password );') !== false &&
+    strpos($s['tools'], 'is_wp_error( check_password_reset_key( $key, $login ) )') !== false,
   'D13 reset request is a state of the canonical login Page' =>
     strpos($s['tools'], "if ( 'account-recovery' === \$slug )")!==false &&
     strpos($s['tools'], "add_query_arg( 'auth', 'recover', \$login )")!==false &&
