@@ -83,6 +83,9 @@ get_header(); ?>
         <?php else: ?>
           <div class="pvdak-static-body pvdak-unified-empty-dashboard" role="status"><span class="pvdak-dashboard-empty-icon" aria-hidden="true">⚖</span><h2>اطلاعات پنل فعلاً در دسترس نیست</h2><p>حساب شما وارد شده است؛ با فعال شدن بخش خلاصه، اطلاعات واقعی درخواست‌ها در همین قسمت نمایش داده خواهد شد.</p><a href="#pvdak-profile">مشاهده اطلاعات حساب ←</a></div>
         <?php endif; ?>
+        <?php if ( $has_support && function_exists( 'pvdak_support_recent_overview' ) ): ?>
+          <?php echo pvdak_support_recent_overview(); // Private, owner-scoped latest support tickets. ?>
+        <?php endif; ?>
       </section>
 
       <?php if ($professional_interest && !$has_professional): ?>
