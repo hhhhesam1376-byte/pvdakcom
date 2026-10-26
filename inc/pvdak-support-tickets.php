@@ -240,24 +240,30 @@ function pvdak_support_ticket_form(){
       <?php if(!$items): ?>
         <p class="pvdak-ticket-empty"><?php echo esc_html($page>1?'در این صفحه پیامی وجود ندارد؛ به صفحه قبل بازگردید.':($filters?'پیامی با این شرایط پیدا نشد؛ فیلترها را تغییر دهید.':'هنوز پیامی ثبت نشده است؛ می‌توانید از فرم بالا اولین پیام خود را بفرستید.')); ?></p>
       <?php else: ?>
-      <ul class="pvdak-ticket-list" aria-labelledby="pvdak-ticket-list-title"><?php foreach($items as $item):
-        if(!($item instanceof WP_Post) || 'pvdak_support_ticket'!==$item->post_type ||
-           'private'!==$item->post_status || (int)$item->post_author!==$user)continue;
-        $reply=get_post_meta($item->ID,'_pvdak_support_reply',true);
-        $state=pvdak_support_status_key(get_post_meta($item->ID,'_pvdak_support_status',true));
-        $messages=pvdak_support_visible_messages($item->ID);
-        // Count and render the same displayable conversation entries.
-        $message_count=count($messages);
+      <div class="pvdak-ticket-table-scroll">
+      <table class="pvdak-ticket-table" aria-labelledby="pvdak-ticket-list-title">
+        <thead><tr><th scope="col">شماره تیکت</th><th scope="col">موضوع تیکت</th><th scope="col">وضعیت</th><th scope="col">تاریخ ثبت (شمسی)</th></tr></thead>
+        <tbody>
+        <?php foreach($items as $item):
+          if(!($item instanceof WP_Post) || 'pvdak_support_ticket'!==$item->post_type ||
+             'private'!==$item->post_status || (int)$item->post_author!==$user)continue;
+          $reply=get_post_meta($item->ID,'_pvdak_support_reply',true);
+          $state=pvdak_support_status_key(get_post_meta($item->ID,'_pvdak_support_status',true));
+          $messages=pvdak_support_visible_messages($item->ID);
+          $message_count=count($messages);
+          $expanded=$open_id===(int)$item->ID;
+          $when=get_post_time('U',true,$item->ID);
+          $ticket_link=add_query_arg(array('ticket_page'=>$page,'ticket_open'=>$item->ID),$filtered_base).'#pvdak-support';
         ?>
-        <li id="pvdak-ticket-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-item">
-          <details class="pvdak-ticket-details"<?php echo $open_id===(int)$item->ID ? ' open' : ''; ?>>
-            <summary class="pvdak-ticket-summary">
-              <span class="pvdak-ticket-title"><?php echo esc_html(get_the_title($item->ID)); ?></span>
-              <span class="pvdak-ticket-status pvdak-ticket-status--<?php echo esc_attr($state); ?>"><?php echo esc_html(pvdak_support_status_label($state)); ?></span>
-              <small class="pvdak-ticket-date"><?php echo esc_html(get_the_date('j F Y',$item->ID)); ?></small>
-              <?php if($message_count):?><small class="pvdak-ticket-count"><?php echo esc_html(number_format_i18n($message_count)); ?> پیام در گفتگو</small><?php endif;?>
-            </summary>
-            <div class="pvdak-ticket-body">
+        <tr id="pvdak-ticket-<?php echo esc_attr($item->ID); ?>" class="pvdak-ticket-table-row<?php echo $expanded?' is-open':''; ?>" data-pvdak-ticket-row data-pvdak-ticket-url="<?php echo esc_url($ticket_link); ?>">
+          <td><a href="<?php echo esc_url($ticket_link); ?>" class="pvdak-ticket-number" aria-expanded="<?php echo $expanded?'true':'false'; ?>"<?php echo $expanded?' aria-controls="pvdak-ticket-conversation-'.esc_attr($item->ID).'"':''; ?>>#<?php echo esc_html(number_format_i18n($item->ID)); ?></a></td>
+          <td><a href="<?php echo esc_url($ticket_link); ?>" class="pvdak-ticket-title"><?php echo esc_html(get_the_title($item->ID)); ?></a><?php if($message_count):?><small class="pvdak-ticket-count"><?php echo esc_html(number_format_i18n($message_count)); ?> پیام</small><?php endif;?></td>
+          <td><span class="pvdak-ticket-status pvdak-ticket-status--<?php echo esc_attr($state); ?>"><?php echo esc_html(pvdak_support_status_label($state)); ?></span></td>
+          <td><time datetime="<?php echo esc_attr(wp_date('Y-m-d',$when)); ?>" class="pvdak-ticket-date"><?php echo esc_html(pvdak_support_jalali_date($when)); ?></time></td>
+        </tr>
+        <?php if($expanded): ?>
+        <tr class="pvdak-ticket-detail-row"><td colspan="4">
+            <div class="pvdak-ticket-body" id="pvdak-ticket-conversation-<?php echo esc_attr($item->ID); ?>">
               <p class="pvdak-ticket-original"><strong>پیام اولیه شما</strong><br><?php echo esc_html(get_post_field('post_content',$item->ID)); ?></p>
               <?php if($messages): ?>
                 <?php if($message_count>30):?><p class="pvdak-ticket-history-note">۳۰ پیام آخر این گفتگو نمایش داده می‌شود.</p><?php endif;?>
@@ -291,10 +297,12 @@ function pvdak_support_ticket_form(){
                   <button type="submit">ارسال پاسخ</button>
                 </form>
               <?php endif; ?>
-            </div>
-          </details>
-        </li>
-      <?php endforeach; ?></ul>
+            </div>        </td></tr>
+        <?php endif; ?>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+      </div>
       <?php endif; ?>
       <?php if($page>1 || $has_next): ?>
       <nav class="pvdak-ticket-pagination" aria-label="صفحه‌بندی پیام‌های پشتیبانی">
