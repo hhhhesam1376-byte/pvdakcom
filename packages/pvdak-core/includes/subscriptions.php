@@ -31,7 +31,7 @@ function pvdak_core_subscription_expiry( $profile_id ) {
 function pvdak_core_subscription_month_assignments( $profile_id ) {
     global $wpdb;
     $profile_id = absint( $profile_id );
-    if ( ! $profile_id ) { return 0; }
+    if ( ! $profile_id ) { return PHP_INT_MAX; }
     $first = gmdate( 'Y-m-01 00:00:00' );
     $next = gmdate( 'Y-m-01 00:00:00', strtotime( '+1 month', strtotime( $first . ' UTC' ) ) );
     $page = 1;
@@ -59,18 +59,23 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
             return PHP_INT_MAX;
         }
         foreach ( $ids as $id ) {
+            if ( ! ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) ||
+                 ! absint( $id ) || 'pvdak_request' !== get_post_type( $id ) ||
+                 'private' !== get_post_status( $id ) ) { return PHP_INT_MAX; }
             $entries = get_post_meta( absint( $id ), '_pvdak_assignment_audit', false );
-            if ( ! is_array( $entries ) ) { continue; }
+            if ( ! is_array( $entries ) ) { return PHP_INT_MAX; }
             foreach ( $entries as $entry ) {
-                if ( ! is_array( $entry ) ||
-                     (int) ( $entry['profile_id'] ?? 0 ) !== $profile_id ||
-                     ( $entry['scope'] ?? '' ) !== 'internal_only' ||
-                     ( isset( $entry['action'] ) && 'assigned' !== $entry['action'] ) ||
-                     ! isset( $entry['at'] ) || ! is_string( $entry['at'] ) ||
-                     ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $entry['at'] ) ||
-                     $entry['at'] < $first || $entry['at'] >= $next ) {
-                    continue;
+                if ( ! is_array( $entry ) ) { return PHP_INT_MAX; }
+                $actor = $entry['profile_id'] ?? null;
+                if ( ! ( is_int( $actor ) || ( is_string( $actor ) && ctype_digit( $actor ) ) ) ||
+                     ! absint( $actor ) ) { return PHP_INT_MAX; }
+                if ( absint( $actor ) !== $profile_id || ( $entry['scope'] ?? '' ) !== 'internal_only' ||
+                     ( isset( $entry['action'] ) && 'assigned' !== $entry['action'] ) ) { continue; }
+                if ( ! isset( $entry['at'] ) || ! is_string( $entry['at'] ) ||
+                     ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $entry['at'] ) ) {
+                    return PHP_INT_MAX; // Corrupt matching assignment must not restore quota.
                 }
+                if ( $entry['at'] < $first || $entry['at'] >= $next ) { continue; }
                 // Reassignment after revocation consumes another quota event.
                 $used++;
             }
@@ -158,7 +163,10 @@ function pvdak_core_subscription_metabox_html( $post ) {
  * stale forms before any write; meta writes still are not DB transactions.
  */
 function pvdak_core_subscription_save( $post_id ) {
-    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
+    if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
+         ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
+         'pvdak_professional' !== get_post_type( $post_id ) ||
+         'private' !== get_post_status( $post_id ) || ! pvdak_core_profile_has_owner( $post_id ) ||
          ! isset( $_POST['_pvdak_subscription_nonce'], $_POST['_pvdak_subscription_revision'] ) ||
          ! is_string( $_POST['_pvdak_subscription_nonce'] ) ||
          ! is_string( $_POST['_pvdak_subscription_revision'] ) ||
@@ -234,6 +242,10 @@ function pvdak_core_subscription_save( $post_id ) {
             }
             $written[] = $key;
         }
+        if ( pvdak_core_subscription_snapshot( $post_id ) !== $next ) {
+            pvdak_core_subscription_restore( $post_id, $written, $previous );
+            return; // No audit or success claim for a partial metadata write.
+        }
         if ( false === add_post_meta( $post_id, '_pvdak_subscription_audit', array(
             'previous' => $old, 'next' => $next, 'by' => get_current_user_id(),
             'at' => current_time( 'mysql', true ),
@@ -275,12 +287,17 @@ function pvdak_core_payment_transition_allowed( $state, $action ) {
 function pvdak_core_payment_fold( $events ) {
     if ( ! is_array( $events ) ) { return array(); }
     $receipts = array();
+    $references = array();
     foreach ( $events as $event ) {
         if ( ! is_array( $event ) || ! isset( $event['receipt_id'], $event['action'], $event['by'], $event['at'] ) ||
              ! pvdak_core_payment_receipt_id_valid( $event['receipt_id'] ) ||
              ! is_string( $event['action'] ) || ! is_int( $event['by'] ) || $event['by'] < 1 ||
              ! is_string( $event['at'] ) ||
-             ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $event['at'] ) ) { return array(); }
+             ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $event['at'] ) ||
+             ! checkdate( (int) substr( $event['at'], 5, 2 ), (int) substr( $event['at'], 8, 2 ), (int) substr( $event['at'], 0, 4 ) ) ||
+             (int) substr( $event['at'], 11, 2 ) > 23 ||
+             (int) substr( $event['at'], 14, 2 ) > 59 ||
+             (int) substr( $event['at'], 17, 2 ) > 59 ) { return array(); }
         $id = $event['receipt_id'];
         $action = $event['action'];
         if ( 'created' === $action ) {
@@ -288,16 +305,19 @@ function pvdak_core_payment_fold( $events ) {
             $amount = $event['amount_irr'] ?? 0;
             if ( isset( $receipts[ $id ] ) || ! is_string( $ref ) ||
                  ! preg_match( '/^[A-Za-z0-9_-]{6,80}$/D', $ref ) ||
+                 isset( $references[ strtolower( $ref ) ] ) ||
                  ! is_int( $amount ) || $amount < 1 || $amount > 1000000000000 ) { return array(); }
+            $references[ strtolower( $ref ) ] = true;
             $receipts[ $id ] = array( 'state' => 'pending', 'reference' => $ref,
-                'amount_irr' => $amount, 'by' => (int) $event['by'] );
+                'amount_irr' => $amount, 'by' => (int) $event['by'], 'at' => $event['at'] );
         } else {
-            if ( ! isset( $receipts[ $id ] ) ||
+            if ( ! isset( $receipts[ $id ] ) || $event['at'] < $receipts[ $id ]['at'] ||
                  ! pvdak_core_payment_transition_allowed( $receipts[ $id ]['state'], $action ) ||
                  ( 'verified' === $action && ( $event['evidence'] ?? '' ) !== 'provider_dashboard' ) ) {
                 return array();
             }
             $receipts[ $id ]['state'] = $action;
+            $receipts[ $id ]['at'] = $event['at'];
         }
     }
     return $receipts;
@@ -339,7 +359,8 @@ function pvdak_core_payment_metabox_html( $post ) {
 }
 function pvdak_core_payment_save( $post_id ) {
     $action = wp_unslash( $_POST['pvdak_payment_action'] ?? '' );
-    if ( ! is_string( $action ) || ! in_array( $action, array( 'created', 'verified', 'failed', 'refunded' ), true ) ||
+    if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
+         ! is_string( $action ) || ! in_array( $action, array( 'created', 'verified', 'failed', 'refunded' ), true ) ||
          ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
          'pvdak_professional' !== get_post_type( $post_id ) ||
          'private' !== get_post_status( $post_id ) || ! pvdak_core_profile_has_owner( $post_id ) ||
@@ -365,7 +386,11 @@ function pvdak_core_payment_save( $post_id ) {
     $lock = 'pvdak:sub:' . absint( $post_id ); // Same lock as subscription activation.
     if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, 5 ) ) ) { return; }
     try {
-        $receipts = pvdak_core_payment_ledger( $post_id );
+        $raw_events = get_post_meta( $post_id, '_pvdak_payment_event', false );
+        $receipts = pvdak_core_payment_fold( $raw_events );
+        if ( ! is_array( $raw_events ) || ( $raw_events && ! $receipts ) ) {
+            return; // Never append to an unreadable or corrupt payment ledger.
+        }
         $reservation = '';
         if ( 'created' === $action ) {
             $receipt_id = wp_generate_uuid4();
