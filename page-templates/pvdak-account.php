@@ -203,7 +203,7 @@ get_header(); ?>
 
           <div class="pvdak-form-actions pvdak-profile-actions">
             <button type="submit" data-pvdak-profile-save><span aria-hidden="true">✓</span> ذخیره تغییرات</button>
-            <button type="reset" class="pvdak-secondary-button"><span aria-hidden="true">↻</span> بازگرداندن مقدار قبلی</button>
+
           </div>
         </form>
 
