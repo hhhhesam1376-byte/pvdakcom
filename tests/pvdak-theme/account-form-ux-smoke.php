@@ -291,7 +291,8 @@ $checks = array(
     strpos($s['admin-management'], "if ( ! \$home_id ) { return current_user_can( 'manage_options' ); }") !== false &&
     strpos($s['admin-management'], "'راه‌اندازی صفحه اصلی'") !== false &&
     strpos($s['admin-management'], "defined( 'PVDAK_CORE_VERSION' )") !== false &&
-    strpos($s['admin-management'], "'افزونه Core فعال نیست'") !== false,
+    strpos($s['admin-management'], "'افزونه Core فعال نیست'") !== false &&
+    strpos($s['home-editor'], "if ( ! \$home_id && ! current_user_can( 'manage_options' ) )") !== false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
