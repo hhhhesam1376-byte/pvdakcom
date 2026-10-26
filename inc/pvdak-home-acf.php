@@ -268,6 +268,10 @@ add_action( 'acf/init', 'pvdak_register_home_acf_fields' );
  * the normal page-editor presentation.
  */
 function pvdak_home_add_admin_menu() {
+    // A role may edit pages in general but lack access to the selected
+    // homepage. Keep that editor out of a dead-end submenu.
+    $home_id = pvdak_home_page_id();
+    if ( $home_id && ! current_user_can( 'edit_post', $home_id ) ) { return; }
     $hook = add_submenu_page(
         'pvdak-management',
         'محتوای صفحه اصلی',
@@ -344,7 +348,10 @@ function pvdak_home_admin_landing() {
         } else {
             echo '<p>برای راه‌اندازی اولیه، از مدیر سایت کمک بگیرید.</p>';
         }
-        echo '<p><a href="' . esc_url( admin_url( 'options-reading.php' ) ) . '">تنظیمات خواندن وردپرس</a></p></div>';
+        if ( current_user_can( 'manage_options' ) ) {
+            echo '<p><a href="' . esc_url( admin_url( 'options-reading.php' ) ) . '">تنظیمات خواندن وردپرس</a></p>';
+        }
+        echo '</div>';
         return;
     }
     if ( ! current_user_can( 'edit_post', $page_id ) ) {
@@ -354,7 +361,8 @@ function pvdak_home_admin_landing() {
     if ( isset( $_GET['updated'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['updated'] ) ) ) {
         echo '<div class="notice notice-success is-dismissible"><p>تغییرات صفحه اصلی ذخیره شد.</p></div>';
     }
-    echo '<p><a href="' . esc_url( get_permalink( $page_id ) ) . '" target="_blank" rel="noopener noreferrer">پیش‌نمایش صفحه اصلی</a> | ';
+    $preview_url = 'publish' === get_post_status( $page_id ) ? get_permalink( $page_id ) : get_preview_post_link( $page_id );
+    echo '<p><a href="' . esc_url( $preview_url ) . '" target="_blank" rel="noopener noreferrer">پیش‌نمایش صفحه اصلی</a> | ';
     echo '<a href="' . esc_url( admin_url( 'post.php?post=' . $page_id . '&action=edit' ) ) . '">ویرایش برگه در وردپرس</a></p>';
 
     // Technical readiness and first-time content tools remain available to
