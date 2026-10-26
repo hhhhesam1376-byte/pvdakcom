@@ -239,7 +239,8 @@ add_shortcode('pvdak_forum', 'pvdak_forum_shortcode');
 function pvdak_forum_send_headers() {
   if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) nocache_headers();
 }
-add_action('send_headers', 'pvdak_forum_send_headers');
+// Main query is not resolved at send_headers; template_redirect runs before output.
+add_action('template_redirect', 'pvdak_forum_send_headers', 0);
 function pvdak_forum_robots($robots) {
   if (is_page() && pvdak_forum_page_valid(get_queried_object_id())) $robots['noindex'] = true;
   return $robots;
