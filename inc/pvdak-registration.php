@@ -12,7 +12,7 @@ function pvdak_registration_open() {
     return ! ( function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled() ) &&
         '1' === (string) get_option('pvdak_registration_enabled', '0') &&
         function_exists('pvdak_public_template_page_url') &&
-        (bool) pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php');
+        (bool) pvdak_public_template_page_url('account-login','page-templates/pvdak-login.php');
 }
 /**
  * Public signup is deliberately opt-in. Expose its existing gate in the native
@@ -57,8 +57,9 @@ function pvdak_native_registration_guard($errors,$login,$email) {
 add_filter('registration_errors','pvdak_native_registration_guard',10,3);
 
 function pvdak_registration_result_url() {
-    return pvdak_public_template_page_url('account-register','page-templates/pvdak-register.php')
-        ?: pvdak_auth_login_url();
+    // Email/SMS registration and all validation feedback live in the same
+    // published login screen. Keep the legacy register URL as redirect-only.
+    return add_query_arg('auth', 'register-email', pvdak_auth_login_url());
 }
 
 /**
@@ -142,6 +143,14 @@ function pvdak_register_submit() {
             array('existing_user_email', 'existing_user_login')
         );
         wp_safe_redirect(add_query_arg('state',$duplicate?'duplicate':'invalid',$url));exit;
+    }
+    // Never claim registration succeeded if the saved identity differs from
+    // the request (for example a filter changed the insert unexpectedly).
+    $created = get_userdata($user);
+    if (!$created || strtolower((string)$created->user_email) !== strtolower($email) ||
+        (string)$created->user_login !== $username) {
+        pvdak_registration_rollback_user($user);
+        wp_safe_redirect(add_query_arg('state','invalid',$url));exit;
     }
     $claim_saved=update_user_meta($user,'_pvdak_self_reported_category',$claim);
     $pending_saved=update_user_meta($user,'_pvdak_email_verification_pending','1');
