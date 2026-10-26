@@ -217,7 +217,10 @@ pvdak_public_smoke_require(
 // recheck privacy after moderator edits, before any comment becomes public.
 pvdak_public_smoke_require(
  strpos( $code['pages'], "add_comment_meta(\$comment_id, '_pvdak_forum_consent_at'" ) !== false &&
- strpos( $code['pages'], "get_comment_meta(\$entry->comment_ID, '_pvdak_forum_consent_at'" ) !== false &&
+ strpos( $code['pages'], "get_comment_meta(\$comment_id, '_pvdak_forum_consent_at'" ) !== false &&
+ strpos( $code['pages'], 'function pvdak_forum_consent_valid(' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_consent_valid($entry->comment_ID)' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_raw_text_valid($entry->comment_content, 6200)' ) !== false &&
  strpos( $code['pages'], "delete_comment_meta(\$comment_id, '_pvdak_forum_consent_at')" ) !== false,
  'D28 private per-message publication acknowledgement is persisted, required and cleaned on failure' );
 pvdak_public_smoke_require(
