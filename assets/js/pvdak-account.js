@@ -209,6 +209,8 @@
   var feedback = params.has('support') ? 'pvdak-support-notice' :
     params.has('sent') ? 'pvdak-contact-result' :
     params.has('error') ? 'pvdak-login-result' :
+    params.has('sms_status') && params.get('auth') === 'sms-register' &&
+      document.getElementById('pvdak-register-sms-result') ? 'pvdak-register-sms-result' :
     params.has('sms_status') && document.getElementById('pvdak-sms-login-result') ? 'pvdak-sms-login-result' :
     params.has('sms_status') && document.getElementById('pvdak-register-sms-result') ? 'pvdak-register-sms-result' :
     params.has('state') && document.getElementById('pvdak-register-email-result') ? 'pvdak-register-email-result' :
