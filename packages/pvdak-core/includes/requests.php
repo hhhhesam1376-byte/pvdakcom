@@ -256,10 +256,23 @@ function pvdak_core_my_requests() {
             $unexpected_rows = true;
         }
     }
-    // A modified query must not claim fewer total results than the rows
-    // actually returned. Do not render a partial or misleading private list.
-    if ( ! is_numeric( $query->found_posts ) || (int) $query->found_posts < count( $items ) ) {
+    // Reject impossible pagination supplied by a third-party query filter.
+    // An empty out-of-range page is valid, but a nonempty later page must
+    // account for all preceding pages in the reported result total.
+    $found_valid = is_numeric( $query->found_posts ) &&
+        ctype_digit( (string) $query->found_posts );
+    $pages_valid = is_numeric( $query->max_num_pages ) &&
+        ctype_digit( (string) $query->max_num_pages );
+    if ( ! $found_valid || ! $pages_valid || count( $items ) > 10 ||
+         ( is_array( $query->posts ) && count( $query->posts ) > 10 ) ) {
         $unexpected_rows = true;
+    } else {
+        $reported_total = (int) $query->found_posts;
+        $expected_pages = (int) ceil( $reported_total / 10 );
+        if ( (int) $query->max_num_pages !== $expected_pages ||
+             ( $items && ( ( $page - 1 ) * 10 + count( $items ) > $reported_total ) ) ) {
+            $unexpected_rows = true;
+        }
     }
     // Never show potentially foreign rows or an untrustworthy total when a
     // third-party query filter has changed the owner/private-only result.
