@@ -182,10 +182,40 @@ $checks = array(
   'D07 auth tabs follow restored URL on BFCache' => strpos( $s['script'], "if (!event.persisted) return;" ) !== false && strpos( $s['script'], 'showAuthMode(mode, false, false)' ) !== false,
   'Password match is validated before submission' => strpos( $s['script'], 'function validateRecovery()' ) !== false,
 
+  'D13 reset request is a state of the canonical login Page' =>
+    strpos($s['tools'], "if ( 'account-recovery' === $slug )")!==false &&
+    strpos($s['tools'], "add_query_arg( 'auth', 'recover', $login )")!==false &&
+    strpos($s['login'], 'data-pvdak-auth-pane="recover"')!==false &&
+    strpos($s['login'], 'data-pvdak-auth-pane="recover-change"')!==false &&
+    strpos($s['login'], 'name="action" value="pvdak_recovery_request"')!==false &&
+    strpos($s['login'], 'name="action" value="pvdak_recovery_change"')!==false &&
+    strpos($s['login'], 'check_password_reset_key($reset_key, $reset_login)')!==false,
+  'D13 reset links now land inside login without breaking old emailed URLs' =>
+    strpos($s['tools'], "'auth' => 'recover-change', 'reset' => '1'")!==false &&
+    strpos($s['recovery'], "wp_safe_redirect(add_query_arg($args, $canonical), 302)")!==false &&
+    strpos($s['tools'], "'auth' => 'password', 'status' => 'reset'")!==false,
+  'D13 branded RTL HTML email retains text alternative and mail hook cleanup' =>
+    strpos($s['tools'], 'lang="fa" dir="rtl"')!==false &&
+    strpos($s['tools'], 'بازیابی رمز عبور PVDak')!==false &&
+    strpos($s['tools'], 'pvdak_recovery_email_plain_text')!==false &&
+    strpos($s['tools'], "'wp_mail_content_type', $type_filter")!==false &&
+    strpos($s['tools'], "remove_action( 'phpmailer_init', $mail_alt, 30 )")!==false,
+  'D13 recovery JavaScript keeps 2 login methods and strips reset secrets' =>
+    strpos($s['script'], "modes.push('recover')")!==false &&
+    strpos($s['script'], "modes.push('recover-change')")!==false &&
+    strpos($s['script'], "link.searchParams.delete('status')")!==false &&
+    strpos($s['script'], "'reset', 'key', 'login'")!==false &&
+    strpos($s['script'], 'isRecovery ?')!==false,
+  'D13 recovery progress and positive completion message stay inside login' =>
+    strpos($s['login'], '۱. دریافت لینک')!==false &&
+    strpos($s['login'], '۲. رمز تازه')!==false &&
+    strpos($s['login'], '۳. ورود دوباره')!==false &&
+    strpos($s['login'], 'رمز عبور با موفقیت تغییر کرد')!==false &&
+    strpos($s['login'], 'مرحله اول انجام شد!')!==false,
   'D13 recovery URLs are not cached or sent as third-party referrers' =>
     strpos($s['tools'], "if ( ! defined( 'DONOTCACHEPAGE' ) )") !== false &&
     strpos($s['tools'], "header( 'Referrer-Policy: no-referrer', true );") !== false &&
-    strpos($s['tools'], "if ( is_page( 'account-recovery' ) )") !== false,
+    strpos($s['tools'], "if ( is_page( array( 'account-login', 'account-recovery' ) ) )") !== false,
   'D13 reset cannot falsely claim success without persisted hash and spent key' =>
     strpos($s['tools'],'reset_password( $user, $password );')!==false &&
     strpos($s['tools'],'$fresh = get_userdata( $user->ID );')!==false &&
