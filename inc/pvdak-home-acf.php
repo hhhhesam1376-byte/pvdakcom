@@ -268,14 +268,13 @@ add_action( 'acf/init', 'pvdak_register_home_acf_fields' );
  * the normal page-editor presentation.
  */
 function pvdak_home_add_admin_menu() {
-    $hook = add_menu_page(
+    $hook = add_submenu_page(
+        'pvdak-management',
         'محتوای صفحه اصلی',
         'محتوای صفحه اصلی',
         'edit_pages',
         'pvdak-home-content',
-        'pvdak_home_admin_landing',
-        'dashicons-admin-home',
-        22
+        'pvdak_home_admin_landing'
     );
     if ( $hook ) {
         add_action( 'load-' . $hook, 'pvdak_home_editor_load' );
@@ -326,7 +325,7 @@ function pvdak_home_admin_landing() {
         echo '<a class="button button-secondary" href="' . esc_url( admin_url( 'nav-menus.php' ) ) . '">فهرست‌های سایت</a>';
     }
     echo '</div>';
-    echo '<div class="notice notice-info inline"><p><strong>راهنمای مدیریت:</strong> برای «موضوعات حقوقی» برگه مادر و فرزند بسازید؛ برای «مجله» و «اطلاعیه‌ها» نوشته‌ها را در دسته‌های جدا منتشر کنید؛ برای «پرسش‌های متداول» از برگه‌های فرزند یک برگه مادر استفاده کنید. این بخش فقط انتخاب می‌کند که چه محتوایی کجا نمایش داده شود. فرم درخواست حقوقی و احراز صلاحیت حرفه‌ای هنوز منتشر نشده‌اند.</p></div>';
+    echo '<p class="description">برای موضوعات حقوقی از برگه‌های مادر و فرزند، و برای مجله از نوشته‌ها استفاده کنید. تغییرات این صفحه فقط مربوط به محتوای صفحه اصلی است.</p>';
 
     if ( ! function_exists( 'acf_form' ) || ! function_exists( 'acf_add_local_field_group' ) ) {
         echo '<div class="notice notice-warning"><p>افزونه Advanced Custom Fields (ACF) باید فعال باشد. پس از فعال‌سازی صفحه را دوباره باز کنید.</p></div>';
@@ -358,12 +357,18 @@ function pvdak_home_admin_landing() {
     echo '<p><a href="' . esc_url( get_permalink( $page_id ) ) . '" target="_blank" rel="noopener noreferrer">پیش‌نمایش صفحه اصلی</a> | ';
     echo '<a href="' . esc_url( admin_url( 'post.php?post=' . $page_id . '&action=edit' ) ) . '">ویرایش برگه در وردپرس</a></p>';
 
-    if ( function_exists( 'pvdak_home_readiness_panel' ) ) {
-        pvdak_home_readiness_panel();
-    }
-
-    if ( function_exists( 'pvdak_editor_bootstrap_card' ) ) {
-        pvdak_editor_bootstrap_card();
+    // Technical readiness and first-time content tools remain available to
+    // administrators, but no longer dominate the client's daily editor.
+    if ( current_user_can( 'manage_options' ) ) {
+        echo '<details style="margin:14px 0;padding:12px 16px;border:1px solid #dcdcde;background:#fff;border-radius:6px">';
+        echo '<summary style="cursor:pointer;font-weight:600">ابزارهای راه‌اندازی اولیه (فقط مدیر سایت)</summary>';
+        if ( function_exists( 'pvdak_home_readiness_panel' ) ) {
+            pvdak_home_readiness_panel();
+        }
+        if ( function_exists( 'pvdak_editor_bootstrap_card' ) ) {
+            pvdak_editor_bootstrap_card();
+        }
+        echo '</details>';
     }
 
     // ACF Free includes acf_form: no ACF Pro options-page license required.
