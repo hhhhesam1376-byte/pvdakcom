@@ -32,8 +32,14 @@ function pvdak_account_noindex( $robots ) {
 add_filter( 'wp_robots', 'pvdak_account_noindex' );
 function pvdak_account_cache_protection() {
     if ( is_page( array( 'account-login', 'account-profile', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
+        // Recovery links carry WordPress reset keys: never cache or forward the
+        // URL in a Referer header to analytics, CDNs or third-party assets.
+        if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
         nocache_headers();
         header( 'X-Robots-Tag: noindex, nofollow', true );
+        if ( is_page( 'account-recovery' ) ) {
+            header( 'Referrer-Policy: no-referrer', true );
+        }
     }
 }
 add_action( 'template_redirect', 'pvdak_account_cache_protection', 2 );
@@ -209,12 +215,23 @@ function pvdak_recovery_change() {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
     }
     $user = check_password_reset_key( $key, $login );
-    if ( is_wp_error( $user ) || pvdak_public_text_length( $password ) < 12 ||
+    if ( is_wp_error( $user ) || ! ( $user instanceof WP_User ) ||
+         pvdak_public_text_length( $password ) < 12 ||
          pvdak_public_text_length( $password ) > 256 || strlen( $password ) > 1024 ||
-         $password !== $confirm ) {
+         '' === trim( $password ) || $password !== $confirm ) {
         wp_safe_redirect( add_query_arg( 'status', 'invalid', $url ) ); exit;
     }
     reset_password( $user, $password );
+    // WordPress reset_password() does not return a success flag. Check the
+    // freshly stored hash and the one-use key before claiming the reset worked.
+    // A database failure must never display a false "password changed" state.
+    $fresh = get_userdata( $user->ID );
+    $saved = $fresh instanceof WP_User &&
+        wp_check_password( $password, $fresh->user_pass, $fresh->ID ) &&
+        is_wp_error( check_password_reset_key( $key, $login ) );
+    if ( ! $saved ) {
+        wp_safe_redirect( add_query_arg( 'status', 'failed', $url ) ); exit;
+    }
     wp_safe_redirect( add_query_arg( 'status', 'reset', pvdak_auth_login_url() ) ); exit;
 }
 add_action( 'admin_post_nopriv_pvdak_recovery_change', 'pvdak_recovery_change' );
