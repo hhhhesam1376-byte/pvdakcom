@@ -310,6 +310,16 @@ $checks = array(
     strpos($s['admin-management'], "! defined( 'PVDAK_CORE_VERSION' )")!==false &&
     strpos($s['admin-management'], "'manage_options', 'options-general.php?page=pvdak-core'")!==false &&
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'")!==false,
+  'D31 native moderation remains visible to administrators' =>
+    strpos($s['admin-management'], "! current_user_can('manage_options')") !== false &&
+    strpos($s['admin-management'], "remove_menu_page('edit-comments.php')") !== false,
+  'D31 dashboard shortcuts reuse the permission-checked queue allowlist' =>
+    strpos($s['admin-management'], '$queue_routes = array(') !== false &&
+    strpos($s['admin-management'], 'pvdak_management_link_available( $link )') !== false &&
+    strpos($s['admin-management'], "'edit.php?post_type=pvdak_request'") !== false &&
+    strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'") !== false &&
+    strpos($s['admin-management'], "'edit.php?post_type=pvdak_support_ticket'") !== false &&
+    strpos($s['admin-management'], 'get_comments(') === false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&
