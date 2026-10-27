@@ -90,7 +90,7 @@ function pvdak_core_case_admin_controls( $post_type ) {
     ) as $name => $label ) {
         echo '<label class="screen-reader-text" for="' . esc_attr( $name ) . '">' . esc_html( $label ) . '</label>';
         echo '<input type="number" min="1" max="2147483647" step="1" id="' . esc_attr( $name ) .
-            '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $f[ $name ] ?: '' ) .
+            '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $f[ $name ] > 0 ? $f[ $name ] : '' ) .
             '" placeholder="' . esc_attr( $label ) . '" aria-label="' . esc_attr( $label ) . '">';
     }
     echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ) . '">پاک‌کردن فیلترهای صف</a>';
