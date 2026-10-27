@@ -179,7 +179,12 @@ function get_posts( $query ) {
         if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
         return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
     }
-    return array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
+    $default = array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
+    $records = $GLOBALS['pvdak_mock_candidate_rows'] ?? $default;
+    $offset = (int) ( $query['offset'] ?? 0 );
+    if ( isset( $GLOBALS['pvdak_mock_candidate_fail_offset'] ) &&
+         $offset === $GLOBALS['pvdak_mock_candidate_fail_offset'] ) { return false; }
+    return array_slice( $records, $offset, (int) ( $query['posts_per_page'] ?? 200 ) );
 }
 
 /**
@@ -435,6 +440,27 @@ $GLOBALS['pvdak_mock_profile_author'] = 21;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Valid account restores normal eligibility' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 12, 'lawyer' ), 'Different legal landing is not considered a match' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 502, 11, 'lawyer' ), 'Student role cannot be matched as lawyer' );
+$GLOBALS['pvdak_mock_specialty_ids'] = array( 13 );
+pvdak_expect( pvdak_core_profile_referral_eligible( 501, 13, 'lawyer' ),
+    'D17/D23 nested published topic matches only an explicitly selected specialty' );
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ),
+    'D17/D23 selecting a child does not silently grant an unrelated parent specialty' );
+pvdak_expect( count( pvdak_core_assignable_profiles( 13, 'lawyer' ) ) === 1,
+    'D17/D23 manager shortlist supports a grandchild legal-topic landing' );
+unset( $GLOBALS['pvdak_mock_specialty_ids'] );
+$older = new WP_Post( 501, 'private', 21 );
+$GLOBALS['pvdak_mock_candidate_rows'] = array_fill( 0, 200, new WP_Post( 502, 'private', 22 ) );
+$GLOBALS['pvdak_mock_candidate_rows'][] = $older;
+pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 1,
+    'D17 manager scans page two to find an eligible older lawyer' );
+pvdak_expect( 1 === ( $GLOBALS['pvdak_assignment_preview_load'][501] ?? null ),
+    'D17 older lawyer retains capacity snapshot from checked eligibility' );
+$GLOBALS['pvdak_mock_candidate_fail_offset'] = 200;
+pvdak_expect( array() === pvdak_core_assignable_profiles( 11, 'lawyer' ),
+    'D17 a failed later candidate page rejects the entire partial shortlist' );
+pvdak_expect( array() === $GLOBALS['pvdak_assignment_preview_load'],
+    'D17 failed later page clears stale workload data' );
+unset( $GLOBALS['pvdak_mock_candidate_fail_offset'], $GLOBALS['pvdak_mock_candidate_rows'] );
 $GLOBALS['pvdak_mock_capacity_reads'] = 0;
 $pvdak_eligible = pvdak_core_assignable_profiles( 11, 'lawyer' );
 pvdak_expect( count( $pvdak_eligible ) === 1, 'Only eligible reviewed lawyer enters candidate set' );

@@ -30,48 +30,62 @@ function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
 }
 
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
+    // A changed or unpublished subject cannot be used to discover a lawyer.
+    $GLOBALS['pvdak_assignment_preview_load'] = array();
     if ( 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ) { return array(); }
-    $profiles = get_posts( array(
-        'post_type' => 'pvdak_professional',
-        'post_status' => 'private',
-        'posts_per_page' => 200,
-        'orderby' => 'date',
-        'order' => 'DESC',
-        'meta_query' => array(
-            'relation' => 'AND',
-            array( 'key' => '_pvdak_member_type', 'value' => 'lawyer' ),
-            array( 'key' => '_pvdak_member_state', 'value' => 'approved' ),
-            array( 'key' => '_pvdak_referral_cleared', 'value' => '1' ),
-        ),
-    ) );
     global $wpdb;
-    if ( ! is_array( $profiles ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
-        return array(); // A failed preview query cannot produce candidates.
-    }
-    // Take a single capacity snapshot per eligible profile, not two separate
-    // queries that could disagree and display incorrect ordering/load.
+    $eligible = array();
     $load = array();
-    $eligible = array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type, &$load ) {
-        if ( ! $profile instanceof WP_Post ||
-             'pvdak_professional' !== $profile->post_type ||
-             'private' !== $profile->post_status ||
-             ! pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) ) {
-            return false;
+    $per_page = 200;
+    $max_scan = 1000; // Bounded manager-side preview, not an exhaustive directory.
+    for ( $offset = 0; $offset < $max_scan; $offset += $per_page ) {
+        // Paginate the already staff-approved/cleared records. Otherwise a
+        // qualified older lawyer can be hidden by the first 200 profiles.
+        $profiles = get_posts( array(
+            'post_type' => 'pvdak_professional',
+            'post_status' => 'private',
+            'posts_per_page' => $per_page,
+            'offset' => $offset,
+            'orderby' => array( 'date' => 'DESC', 'ID' => 'DESC' ),
+            'no_found_rows' => true,
+            'suppress_filters' => true,
+            'meta_query' => array(
+                'relation' => 'AND',
+                array( 'key' => '_pvdak_member_type', 'value' => 'lawyer' ),
+                array( 'key' => '_pvdak_member_state', 'value' => 'approved' ),
+                array( 'key' => '_pvdak_referral_cleared', 'value' => '1' ),
+            ),
+        ) );
+        // A failed later query must not return an earlier partial shortlist.
+        if ( ! is_array( $profiles ) ||
+             ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
+            $GLOBALS['pvdak_assignment_preview_load'] = array();
+            return array();
         }
-        $active = null;
-        if ( ! pvdak_core_capacity_available( $profile->ID, $active ) ) { return false; }
-        $load[ (int) $profile->ID ] = $active;
-        return true;
-    } ) );
+        foreach ( $profiles as $profile ) {
+            if ( ! $profile instanceof WP_Post ||
+                 'pvdak_professional' !== $profile->post_type ||
+                 'private' !== $profile->post_status ||
+                 isset( $load[ (int) $profile->ID ] ) ||
+                 ! pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) ) {
+                continue;
+            }
+            $active = null;
+            if ( ! pvdak_core_capacity_available( $profile->ID, $active ) ) { continue; }
+            $load[ (int) $profile->ID ] = $active;
+            $eligible[] = $profile;
+        }
+        if ( count( $profiles ) < $per_page ) { break; }
+    }
     // Fair ordering for the manager only, NOT automatic assignment:
     // least active internal load first; stable tie break by profile ID.
-    // Keep this request's read-only workload snapshot for the admin dropdown;
-    // final eligibility is always rechecked INSIDE the DB advisory locks.
+    // These are read-only snapshots. Eligibility is checked again INSIDE
+    // the DB advisory locks for the final decision.
     $GLOBALS['pvdak_assignment_preview_load'] = $load;
-    usort( $eligible, function( $a, $b ) use ( $load ) {
-        $aa = $load[(int)$a->ID];
-        $bb = $load[(int)$b->ID];
-        return $aa === $bb ? ((int)$a->ID <=> (int)$b->ID) : ($aa <=> $bb);
+    usort( $eligible, function( $x, $y ) use ( $load ) {
+        $aa = $load[(int)$x->ID];
+        $bb = $load[(int)$y->ID];
+        return $aa === $bb ? ((int)$x->ID <=> (int)$y->ID) : ($aa <=> $bb);
     } );
     return $eligible;
 }
@@ -141,7 +155,7 @@ function pvdak_core_assignment_admin_page() {
         return pvdak_core_assignment_parties_distinct( $request_id, $p->ID );
     } ) );
     if ( ! $candidates ) {
-        echo '<div class="notice notice-info inline"><p>در میان حداکثر ۲۰۰ پرونده حرفه‌ای جدید بررسی‌شده، متخصص واجد شرایط و دارای ظرفیت آزاد پیدا نشد. این نتیجه به معنی بررسی همه متخصصان موجود نیست؛ وضعیت عضویت، تخصص و ظرفیت یا محدودیت فهرست را بررسی کنید.</p></div></div>';
+        echo '<div class="notice notice-info inline"><p>در میان حداکثر ۱۰۰۰ پرونده حرفه‌ای تأییدشده و دارای مجوز داخلی بررسی‌شده، متخصص واجد شرایط و دارای ظرفیت آزاد پیدا نشد. این نتیجه به معنی بررسی همه متخصصان موجود نیست؛ وضعیت عضویت، تخصص و ظرفیت یا محدودیت فهرست را بررسی کنید.</p></div></div>';
         return;
     }
     if ( isset( $_GET['pvdak_assignment_error'] ) ) {
@@ -163,7 +177,7 @@ function pvdak_core_assignment_admin_page() {
             ' — پرونده #' . esc_html( $profile->ID ) . ' | فعال: '.esc_html($GLOBALS['pvdak_assignment_preview_load'][(int)$profile->ID]??0).' از '.esc_html(pvdak_core_capacity_limit($profile->ID)).'</option>';
     }
     echo '</select></td></tr></table>';
-    echo '<p>فهرست از حداکثر ۲۰۰ پرونده حرفه‌ای جدید بررسی می‌شود؛ ممکن است متخصصان قدیمی‌تر در این فهرست نباشند. قبل از ادامه، صلاحیت و امکان قبول پرونده را مستقل بررسی کنید. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند؛ ظرفیت هنگام ارسال، زیر قفل پایگاه داده، دوباره بررسی می‌شود.</p>';
+    echo '<p>فهرست از حداکثر ۱۰۰۰ پرونده حرفه‌ای تأییدشده دارای مجوز داخلی بررسی می‌شود؛ ممکن است متخصصان قدیمی‌تر در این فهرست نباشند. قبل از ادامه، صلاحیت و امکان قبول پرونده را مستقل بررسی کنید. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند؛ ظرفیت هنگام ارسال، زیر قفل پایگاه داده، دوباره بررسی می‌شود.</p>';
     submit_button( 'ثبت انتساب داخلی (بدون اطلاع‌رسانی)' );
     echo '</form></div>';
 }
