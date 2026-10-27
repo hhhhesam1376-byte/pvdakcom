@@ -66,7 +66,12 @@ $checks = array(
   'Read-only readiness and safe versions' =>
     strpos($s['admin'],"current_user_can('manage_options')")!==false &&
     strpos($s['admin'],'get_page_by_path(')!==false &&
-    pvdak_test_release_at_least($s['theme'],'0.8.29') &&
+    strpos($s['admin'],'pvdak_filter_queue=pending&pvdak_case_order=oldest')!==false &&
+    strpos($s['admin'],'pvdak_state_filter=pending')!==false &&
+    strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
+    strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
+    strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
+    pvdak_test_release_at_least($s['theme'],'0.8.88') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&

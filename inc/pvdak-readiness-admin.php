@@ -46,7 +46,12 @@ function pvdak_management_links() {
         array('کاربران', 'مشاهده و مدیریت حساب‌های سایت', 'list_users', 'users.php'),
         array('تیکت‌های پشتیبانی', 'مشاهده و پاسخ به درخواست‌های پشتیبانی', 'manage_options', 'edit.php?post_type=pvdak_support_ticket'),
         array('درخواست‌های حقوقی', 'صف رسیدگی به درخواست‌ها؛ بدون فعال‌کردن پذیرش عمومی', 'edit_pvdak_requests', 'edit.php?post_type=pvdak_request'),
+        array('صف بررسی درخواست‌ها', 'نمای عملیاتی درخواست‌های خصوصی، بدون نمایش محتوای پرونده', 'edit_pvdak_requests', 'edit.php?post_type=pvdak_request&page=pvdak-request-triage'),
+        array('درخواست‌های منتظر بررسی', 'درخواست‌های ثبت‌شده یا در حال بررسی، قدیمی‌ترین ابتدا', 'edit_pvdak_requests', 'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest'),
         array('پرونده‌های عضویت متخصصان', 'بررسی پروفایل‌های خصوصی و مدارک در ابزار اصلی Core', 'edit_pvdak_professionals', 'edit.php?post_type=pvdak_professional'),
+        array('عضویت‌های منتظر بررسی', 'پرونده‌های همکاری ثبت‌شده و نیازمند رسیدگی', 'edit_pvdak_professionals', 'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending'),
+        array('برگه‌های پیش‌نویس', 'مرور صفحات آماده‌نشده پیش از انتشار', 'edit_pages', 'edit.php?post_type=page&post_status=draft'),
+        array('مقالات پیش‌نویس', 'مرور نوشته‌های منتشرنشده مجله', 'edit_posts', 'edit.php?post_status=draft'),
         array('دیدگاه‌ها و گفت‌وگوها', 'مدیریت و تأیید دیدگاه‌ها و گفت‌وگوهای انجمن، در صورت استفاده', 'moderate_comments', 'edit-comments.php'),
         array('صف انتظار تأیید', 'بررسی پیام‌های تازه پیش از نمایش عمومی', 'moderate_comments', 'edit-comments.php?comment_status=moderated'),
         array('تنظیمات اصلی', 'تنظیم ثبت‌نام و حالت تعمیرات سایت', 'manage_options', 'options-general.php'),
@@ -77,12 +82,19 @@ function pvdak_management_link_available( $link ) {
     if ( 'options-general.php?page=pvdak-core' === $link[3] &&
          ( ! defined( 'PVDAK_CORE_VERSION' ) || ! function_exists( 'pvdak_core_intake_open' ) ) ) { return false; }
     if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
-        $type = substr( $link[3], strlen( 'edit.php?post_type=' ) );
+        $type = explode( '&', substr( $link[3], strlen( 'edit.php?post_type=' ) ), 2 )[0];
         if ( ! post_type_exists( $type ) ) { return false; }
         $object = get_post_type_object( $type );
         if ( ! $object || ! isset( $object->cap->edit_posts ) ||
              ! current_user_can( $object->cap->edit_posts ) ) { return false; }
     }
+    // Deep links require their active Core query handlers, not merely a CPT.
+    if ( false !== strpos( $link[3], 'page=pvdak-request-triage' ) &&
+         ! function_exists( 'pvdak_core_triage_page' ) ) { return false; }
+    if ( false !== strpos( $link[3], 'pvdak_filter_queue=' ) &&
+         ! function_exists( 'pvdak_core_triage_filter_query' ) ) { return false; }
+    if ( false !== strpos( $link[3], 'pvdak_state_filter=' ) &&
+         ! function_exists( 'pvdak_core_prof_admin_query' ) ) { return false; }
     return true;
 }
 
@@ -153,13 +165,15 @@ function pvdak_management_daily_steps() {
         }
     }
     $steps = array(
-        array( 'محتوای صفحه اصلی و برگه‌ها را بازبینی کنید', array(
-            'admin.php?page=pvdak-home-content', 'edit.php?post_type=page',
+        array( 'محتوای صفحه اصلی و پیش‌نویس‌ها را بازبینی کنید', array(
+            'admin.php?page=pvdak-home-content', 'edit.php?post_type=page&post_status=draft',
+            'edit.php?post_status=draft',
         ) ),
-        array( 'درخواست‌های حقوقی و پشتیبانی را پیگیری کنید', array(
-            'edit.php?post_type=pvdak_request',
+        array( 'صف درخواست‌ها، عضویت‌ها و پشتیبانی را پیگیری کنید', array(
+            'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
+            'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest',
+            'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending',
             'edit.php?post_type=pvdak_support_ticket',
-            'edit.php?post_type=pvdak_professional',
         ) ),
         array( 'گفت‌وگوها و پیام‌های منتظر تأیید را بررسی کنید', array(
             'edit-comments.php?comment_status=moderated',
@@ -261,8 +275,8 @@ function pvdak_management_dashboard_widget() {
     // Use the same fixed, capability-checked destinations as the management hub.
     // Never query case, ticket, professional or comment contents in this widget.
     $queue_routes = array(
-        'edit.php?post_type=pvdak_request',
-        'edit.php?post_type=pvdak_professional',
+        'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
+        'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending',
         'edit.php?post_type=pvdak_support_ticket',
     );
     $queue_links = array();
