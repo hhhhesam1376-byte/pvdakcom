@@ -353,6 +353,7 @@ function pvdak_readiness_render() {
     foreach($facts as $name=>$value){
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
+    echo '</tbody></table>';
     // The required slugs are fixed by the theme; never query private page
     // contents or auto-create/publish anything from this read-only report.
     $audits = array();
