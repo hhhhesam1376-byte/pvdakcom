@@ -448,6 +448,9 @@ pvdak_expect( pvdak_core_specialty_ids( 501 ) === array( 11, 12 ),
 unset( $GLOBALS['pvdak_mock_specialty_ids'] );
 pvdak_expect( ! pvdak_core_valid_specialty( 999 ), 'Unrelated nonexistent Page cannot be selected' );
 pvdak_expect( 'ready' === pvdak_core_topic_resolution( 11 )['status'], 'Published child topic maps by Page ID' );
+$GLOBALS['pvdak_mock_topic_title'] = '  حقوق خانواده  ';
+pvdak_expect( 'حقوق خانواده' === pvdak_core_topic_resolution( 11 )['title'],
+    'D23 published topic returns the actual trimmed Page title, not an undefined value' );
 pvdak_expect( 'missing' === pvdak_core_topic_resolution( 0 )['status'], 'Missing topic has explicit repair state' );
 pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 999 )['status'], 'Unknown topic cannot be guessed from its title' );
 $GLOBALS['pvdak_mock_topic_title'] = '  ';
@@ -457,6 +460,8 @@ pvdak_expect( pvdak_core_specialty_ids( 501 ) === array(), 'Untitled topic is om
 $GLOBALS['pvdak_mock_topic_title'] = array( 'bad-title' );
 pvdak_expect( 'untitled' === pvdak_core_topic_resolution( 11 )['status'],
     'D23 malformed non-string Page title is not accepted as a legal-topic title' );
+pvdak_expect( '' === pvdak_core_topic_resolution( 11 )['title'],
+    'D23 malformed Page title cannot leak a bogus resolved title' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ),
     'D17/D23 malformed Page title blocks internal referral matching' );
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';

@@ -103,7 +103,10 @@ function pvdak_core_topic_resolution( $page_id ) {
     if ( ! pvdak_core_valid_specialty( $page_id ) ) {
         return array( 'status' => 'invalid', 'message' => 'برگه موضوع این درخواست حذف، پیش‌نویس یا از زیرمجموعه موضوعات حقوقی خارج شده است؛ نیازمند بررسی دستی است.', 'title' => '' );
     }
-    // A malformed non-string title must not become the literal word "Array"\n    // and incorrectly certify a legal topic as ready for internal matching.\n    $raw_title = get_post_field( 'post_title', $page_id );\n    $title = is_string( $raw_title ) ? trim( $raw_title ) : '';
+    // A malformed non-string title must not become the literal word "Array"
+    // and incorrectly certify a legal topic as ready for internal matching.
+    $raw_title = get_post_field( 'post_title', $page_id );
+    $title = is_string( $raw_title ) ? trim( $raw_title ) : '';
     if ( '' === $title ) {
         return array( 'status' => 'untitled', 'message' => 'برگه موضوع حقوقی عنوان ندارد؛ پیش از ارجاع باید عنوان برگه تکمیل شود.', 'title' => '' );
     }
