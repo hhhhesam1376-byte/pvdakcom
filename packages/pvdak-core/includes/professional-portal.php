@@ -90,7 +90,9 @@ function pvdak_core_professional_dashboard() {
     $statuses = pvdak_core_member_states();
     $member_type = get_post_meta( $profile_id, '_pvdak_member_type', true );
     $raw_status = get_post_meta( $profile_id, '_pvdak_member_state', true );
-    $status = is_string( $raw_status ) && isset( $statuses[ $raw_status ] ) ? $raw_status : 'pending';
+    // An unknown stored state must not be presented as a newly pending request.
+    $status = is_string( $raw_status ) && isset( $statuses[ $raw_status ] ) ? $raw_status : 'unknown';
+    $status_label = 'unknown' === $status ? 'نیازمند بررسی مدیر' : $statuses[ $status ];
     $type_label = is_string( $member_type ) && isset( $types[ $member_type ] ) ? $types[ $member_type ] : 'متقاضی همکاری';
     $city = get_post_meta( $profile_id, '_pvdak_member_city', true );
     $city_label = is_string( $city ) && '' !== trim( $city ) ? $city : 'ثبت نشده';
@@ -101,7 +103,7 @@ function pvdak_core_professional_dashboard() {
 
     $html .= '<div class="pvdak-core-prof-status pvdak-core-prof-status--' . esc_attr( $status ) . '">';
     $html .= '<span class="pvdak-core-prof-status-label">وضعیت درخواست</span>';
-    $html .= '<strong>' . esc_html( $statuses[ $status ] ) . '</strong></div>';
+    $html .= '<strong>' . esc_html( $status_label ) . '</strong></div>';
 
     $html .= '<dl class="pvdak-core-prof-facts">';
     $facts = array( 'شماره پیگیری' => '#' . $profile_id, 'نوع همکاری' => $type_label, 'شهر اعلام‌شده' => $city_label );
@@ -114,6 +116,8 @@ function pvdak_core_professional_dashboard() {
     $html .= '<h3>مراحل بررسی درخواست</h3>';
     if ( 'rejected' === $status ) {
         $html .= '<p class="pvdak-core-notice" role="status">بررسی اداری این درخواست با وضعیت ردشده پایان یافته است. برای پرسش عمومی از مسیر تماس با پشتیبانی استفاده کنید؛ ثبت دوباره خودکار فعال نیست.</p>';
+    } elseif ( 'unknown' === $status ) {
+        $html .= '<p class="pvdak-core-notice" role="status">وضعیت ذخیره‌شده درخواست قابل شناسایی نیست؛ مراحل بررسی تا اصلاح توسط مدیر نمایش داده نمی‌شوند.</p>';
     } else {
         $html .= '<ol class="pvdak-core-prof-steps" aria-label="مراحل بررسی اداری">';
         $position = 0;
@@ -132,9 +136,12 @@ function pvdak_core_professional_dashboard() {
         'review' => 'درخواست شما در حال بررسی اداری است. این مرحله به معنی تأیید مدارک یا صلاحیت حرفه‌ای نیست.',
         'approved' => 'بررسی اداری درخواست تکمیل شده است. این وضعیت به معنی احراز رسمی پروانه یا اجازه دسترسی به پرونده مراجعان نیست.',
         'rejected' => 'این درخواست در وضعیت ردشده است و هیچ دسترسی حرفه‌ای ایجاد نمی‌کند.',
+        'unknown' => 'وضعیت درخواست نیازمند بازبینی مدیر است؛ هیچ دسترسی حرفه‌ای بر اساس این مقدار فعال نمی‌شود.',
     );
     $html .= '<p class="pvdak-core-prof-guidance">' . esc_html( $guidance[ $status ] ) . '</p>';
-    $access = pvdak_core_professional_portal_access( $profile_id, $member_type, $status );
+    $access = 'unknown' === $status ?
+        array( 'ready' => false, 'reason' => 'وضعیت درخواست نامعتبر است؛ بررسی مدیر لازم است.' ) :
+        pvdak_core_professional_portal_access( $profile_id, $member_type, $status );
     $html .= '<div class="pvdak-core-notice" role="status"><strong>وضعیت امکان ارجاع داخلی: ' .
         ( $access['ready'] ? 'دارای شرایط اولیه' : 'غیرفعال' ) . '</strong><p>' .
         esc_html( $access['reason'] ) . '</p></div>';
