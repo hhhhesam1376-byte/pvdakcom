@@ -43,7 +43,7 @@ add_action( 'admin_init', 'pvdak_core_register_settings' );
 function pvdak_core_admin_menu() {
     add_options_page(
         'تنظیمات PVDak Core',
-        'PVDak Core',
+        'خدمات حقوقی PVDak',
         'manage_options',
         'pvdak-core',
         'pvdak_core_settings_page'
@@ -53,9 +53,11 @@ add_action( 'admin_menu', 'pvdak_core_admin_menu' );
 
 function pvdak_core_settings_page() {
     if ( ! current_user_can( 'manage_options' ) ) { return; }
-    echo '<div class="wrap"><h1>PVDak Core — تنظیمات موتور حقوقی</h1>';
+    echo '<div class="wrap"><h1>تنظیمات خدمات حقوقی PVDak</h1>';
+    echo '<p>از این صفحه می‌توانید برگه مادر حقوقی و کلیدهای پذیرش خدمات را مدیریت کنید. هیچ خدمتی با مشاهده این صفحه فعال نمی‌شود.</p>';
     echo '<div class="notice notice-warning inline"><p><strong>نسخه آزمایشی:</strong> این افزونه شامل فرم خصوصیِ ثبت درخواست است، اما اعتبارسنجی وکلا، ارجاع خودکار، پرداخت، اشتراک، نظارت و حریم خصوصی نهایی هنوز پیاده‌سازی/تأیید نشده‌اند. روی سایت واقعی تا تکمیل تست‌ها پذیرش درخواست را روشن نکنید.</p></div>';
-    echo '<h2>وضعیت امکانات</h2><table class="widefat striped" style="max-width:840px"><tbody>';
+    echo '<details><summary>اطلاعات تکمیلی امکانات (فقط راهنما)</summary>';
+    echo '<table class="widefat striped" style="max-width:840px"><tbody>';
     $items = array(
         'نقش‌های مراجعه‌کننده، وکیل، کارآموز و دانشجو' => 'ایجاد نقش؛ تأیید حرفه‌ای هنوز ندارد',
         'پروفایل حرفه‌ای' => 'نوع داده خصوصی؛ ثبت عمومی غیرفعال',
@@ -67,12 +69,12 @@ function pvdak_core_settings_page() {
         'ارجاع کنترل‌شده' => 'فقط به وکیل دارای تأیید داخلی، تخصص مرتبط و ظرفیت آزاد؛ بدون ارسال محتوای پرونده',
         'کنترل ظرفیت و پنل همکاری' => 'کنترل داخلی و آمار تجمیعی؛ فاقد دسترسی به محتوای پرونده',
         'اشتراک و سهمیه دستی' => 'نمونه اولیه با کنترل اختیاریِ پیش‌فرض خاموش؛ بدون پرداخت یا تمدید خودکار',
-        'استعلام رسمی، ارجاع خودکار، پرداخت و انجمن' => 'هنوز پیاده‌سازی نشده',
+        'استعلام رسمی، ارجاع خودکار و پرداخت آنلاین' => 'هنوز آماده بهره‌برداری نیست',
     );
     foreach( $items as $name => $status ) {
         echo '<tr><th scope="row">' . esc_html( $name ) . '</th><td>' . esc_html( $status ) . '</td></tr>';
     }
-    echo '</tbody></table>';
+    echo '</tbody></table></details>';
     echo '<h2>موضوعات حقوقی (برگه‌های لندینگ)</h2>';
     echo '<p>همان برگه مادر صفحه اصلی را انتخاب کنید؛ حوزه‌های تخصصی، موضوع درخواست‌ها و تطبیق داخلی همگی به برگه‌های فرزند منتشرشده این صفحه متصل می‌شوند.</p>';
     echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '">';
@@ -222,7 +224,8 @@ function pvdak_core_create_service_pages() {
             'post_content' => $item[1],
             'post_author' => get_current_user_id(),
         ), true );
-        if ( is_wp_error( $id ) || ! $id || 'page' !== get_post_type( $id ) ) {
+        if ( is_wp_error( $id ) || ! $id || 'page' !== get_post_type( $id ) ||
+             $slug !== get_post_field( 'post_name', $id ) ) {
             ++$failed;
             continue;
         }
