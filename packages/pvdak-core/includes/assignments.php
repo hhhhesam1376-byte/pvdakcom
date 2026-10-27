@@ -5,6 +5,14 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/** Strict bounded IDs: never turn a negative, malformed or overflowed value into a real case. */
+function pvdak_core_assignment_positive_id( $value ) {
+    if ( ! is_string( $value ) && ! is_int( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]{0,9}$/D', $raw ) || (float) $raw > 2147483647 ) { return 0; }
+    return (int) $raw;
+}
+
 /**
  * An internal referral may never point back to its requester.
  * Zero/legacy authors are not sufficient evidence of distinct parties.
@@ -78,12 +86,17 @@ add_action( 'admin_menu', 'pvdak_core_assignment_admin_page_register' );
 
 function pvdak_core_assignment_admin_page() {
     if ( ! current_user_can( 'edit_pvdak_requests' ) ) { wp_die( 'مجوز کافی نیست.', '', array( 'response' => 403 ) ); }
-    $request_id = isset( $_GET['request_id'] ) && is_scalar( $_GET['request_id'] ) ?
-        absint( wp_unslash( $_GET['request_id'] ) ) : 0;
+    $request_raw = isset( $_GET['request_id'] ) && is_string( $_GET['request_id'] ) ?
+        wp_unslash( $_GET['request_id'] ) : '';
+    $request_id = pvdak_core_assignment_positive_id( $request_raw );
     echo '<div class="wrap"><h1>ارجاع داخلی و کنترل‌شده درخواست</h1>';
     echo '<div class="notice notice-warning inline"><p>این ماژول یک انتساب داخلی برای مدیر ثبت می‌کند. احراز رسمی، توافق وکیل با موکل، ارتباطات و ارسال پرونده به وکیل هنوز پیاده‌سازی نشده و هیچ اطلاعات خصوصی برای متخصص ارسال نمی‌شود.</p></div>';
     if ( ! $request_id ) {
-        echo '<p>ابتدا از فهرست درخواست‌ها، پرونده موردنظر را باز کنید و از پیوند ارجاع داخلی در صفحه ویرایش استفاده کنید.</p></div>';
+        if ( array_key_exists( 'request_id', $_GET ) ) {
+            echo '<div class="notice notice-error inline"><p>شناسه درخواست نامعتبر است؛ هیچ پرونده‌ای باز نشده است.</p></div></div>';
+        } else {
+            echo '<p>ابتدا از فهرست درخواست‌ها، پرونده موردنظر را باز کنید و از پیوند ارجاع داخلی در صفحه ویرایش استفاده کنید.</p></div>';
+        }
         return;
     }
     if ( 'pvdak_request' !== get_post_type( $request_id ) ||
@@ -92,8 +105,10 @@ function pvdak_core_assignment_admin_page() {
     }
     $state = get_post_meta( $request_id, '_pvdak_request_state', true );
     $request_type = get_post_meta( $request_id, '_pvdak_request_type', true );
-    $landing_id = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
-    $assigned = absint( get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) );
+    $landing_id = pvdak_core_assignment_positive_id( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
+    $assigned_raw = get_post_meta( $request_id, '_pvdak_assigned_profile_id', true );
+    $assigned = pvdak_core_assignment_positive_id( $assigned_raw );
+    $invalid_assigned = ! in_array( $assigned_raw, array( '', '0', 0, false, null ), true ) && ! $assigned;
     echo '<p><strong>درخواست:</strong> ' . esc_html( get_the_title( $request_id ) ) . '</p>';
     $topic = pvdak_core_topic_resolution( $landing_id );
     echo '<p><strong>موضوع حقوقی:</strong> ' . ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : 'نیازمند اصلاح' ) . '</p>';
@@ -104,6 +119,10 @@ function pvdak_core_assignment_admin_page() {
     }
     if ( ! isset( pvdak_core_request_types()[ $request_type ] ) ) {
         echo '<div class="notice notice-warning inline"><p>نوع خدمت این پرونده نامعتبر یا قدیمی است؛ پیش از ارجاع باید توسط مدیر بررسی شود.</p></div></div>';
+        return;
+    }
+    if ( $invalid_assigned ) {
+        echo '<div class="notice notice-error inline"><p>شناسه ارجاع ذخیره‌شده نامعتبر است؛ تا بررسی و اصلاح دستی، ارجاع جدید ممکن نیست.</p></div></div>';
         return;
     }
     if ( $assigned ) {
@@ -151,7 +170,7 @@ function pvdak_core_assignment_admin_page() {
  */
 function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
     pvdak_core_refresh_assignment_meta( $request_id, $profile_id );
-    $landing_id = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
+    $landing_id = pvdak_core_assignment_positive_id( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
     $type = get_post_meta( $request_id, '_pvdak_request_type', true );
     if ( 'pvdak_request' !== get_post_type( $request_id ) ||
          'private' !== get_post_status( $request_id ) ||
@@ -213,8 +232,8 @@ function pvdak_core_assign_request() {
         wp_unslash( $_POST['request_id'] ) : '';
     $profile_raw = isset( $_POST['profile_id'] ) && is_string( $_POST['profile_id'] ) ?
         wp_unslash( $_POST['profile_id'] ) : '';
-    $request_id = preg_match( '/^[1-9][0-9]{0,17}$/D', $request_raw ) ? absint( $request_raw ) : 0;
-    $profile_id = preg_match( '/^[1-9][0-9]{0,17}$/D', $profile_raw ) ? absint( $profile_raw ) : 0;
+    $request_id = pvdak_core_assignment_positive_id( $request_raw );
+    $profile_id = pvdak_core_assignment_positive_id( $profile_raw );
     if ( ! $request_id || ! $profile_id || 'pvdak_request' !== get_post_type( $request_id ) ||
          ! current_user_can( 'edit_post', $request_id ) ) {
         wp_die( 'ورودی نامعتبر است.', '', array( 'response' => 403 ) );
@@ -247,11 +266,14 @@ add_action( 'add_meta_boxes', 'pvdak_core_assignment_link_metabox' );
 
 function pvdak_core_assignment_link_html( $post ) {
     if ( ! current_user_can( 'edit_post', $post->ID ) ) { return; }
-    $profile_id = absint( get_post_meta( $post->ID, '_pvdak_assigned_profile_id', true ) );
+    $assigned_raw = get_post_meta( $post->ID, '_pvdak_assigned_profile_id', true );
+    $profile_id = pvdak_core_assignment_positive_id( $assigned_raw );
     if ( $profile_id ) {
         echo '<p>پروفایل اختصاص‌داده‌شده: <strong>#' . esc_html( $profile_id ) . '</strong></p>';
+    } elseif ( ! in_array( $assigned_raw, array( '', '0', 0, false, null ), true ) ) {
+        echo '<p class="notice notice-error inline">شناسه ارجاع ذخیره‌شده نامعتبر است؛ بررسی مدیر لازم است.</p>';
     }
-    $landing = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
+    $landing = pvdak_core_assignment_positive_id( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
     $topic = pvdak_core_topic_resolution( $landing );
     echo '<p>موضوع حقوقی: ' . ( 'ready' === $topic['status'] ?
         esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
@@ -303,7 +325,7 @@ function pvdak_core_recheck_assigned_professional( $profile_id ) {
             if ( (int) get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) !== (int) $profile_id ) {
                 return 'already_removed';
             }
-            $topic = absint( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
+            $topic = pvdak_core_assignment_positive_id( get_post_meta( $request_id, '_pvdak_legal_landing_id', true ) );
             $type = get_post_meta( $request_id, '_pvdak_request_type', true );
             if ( pvdak_core_profile_referral_eligible( $profile_id, $topic, $type ) &&
                  pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) ) {
