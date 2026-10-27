@@ -66,6 +66,16 @@ $checks = array(
     'future service page titles use PVDak branding' =>
         strpos( $setup, 'پنل کاربری PVDak' ) !== false &&
         strpos( $setup, 'همکاری با متخصصان PVDak' ) !== false,
+    'malformed supplied numeric filters fail closed rather than widening private queue' =>
+        strpos( $src, 'function pvdak_core_case_admin_positive_filter( $name )' ) !== false &&
+        strpos( $src, 'array_key_exists( $name, $_GET )' ) !== false &&
+        strpos( $src, '(float) $raw > 2147483647' ) !== false &&
+        strpos( $src, "return -1;" ) !== false &&
+        strpos( $src, "'post__in', array( 0 )" ) !== false,
+    'stale or invalid topic is rejected and warning is visible' =>
+        strpos( $src, '! pvdak_core_valid_specialty( $topic ) ? -1' ) !== false &&
+        strpos( $src, 'شناسه یا موضوع فیلتر نامعتبر است' ) !== false &&
+        strpos( $src, '$f[ $name ] > 0 ? $f[ $name ]' ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {
