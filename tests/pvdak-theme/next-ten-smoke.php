@@ -71,7 +71,7 @@ $checks = array(
     strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
-    pvdak_test_release_at_least($s['theme'],'0.8.88') &&
+    pvdak_test_release_at_least($s['theme'],'0.8.89') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
@@ -83,3 +83,34 @@ foreach ($checks as $label=>$passes) {
     $count++;
 }
 echo "PVDAK_NEXT_TEN_SOURCE_OK: {$count}/10 static assertions (runtime not tested).\n";
+
+// Execute the real, read-only readiness helpers in an isolated PHP fixture.
+// Hooks are stubbed; this does not bootstrap WordPress or read production data.
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', $root . '/' ); }
+if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
+require_once $root . '/inc/pvdak-readiness-admin.php';
+$readiness_cases = array(
+    array( false, '', '', 'missing' ),
+    array( true, 'draft', '', 'unpublished' ),
+    array( true, 'private', '', 'unpublished' ),
+    array( true, 'trash', '', 'unpublished' ),
+    array( true, array(), '', 'unpublished' ),
+    array( true, 'publish', '1', 'provisional' ),
+    array( true, 'publish', array( '1' ), 'provisional' ),
+    array( true, 'publish', 'invalid', 'provisional' ),
+    array( true, 'publish', '', 'published' ),
+    array( true, 'publish', '0', 'published' ),
+    array( true, 'publish', false, 'published' ),
+);
+foreach ( $readiness_cases as $case ) {
+    if ( pvdak_readiness_page_classify( $case[0], $case[1], $case[2] ) !== $case[3] ) {
+        fwrite( STDERR, "PVD_READINESS_FAIL: " . $case[3] . "\n" );
+        exit( 1 );
+    }
+}
+if ( 'منتشرنشده — پیش‌نویس' !== pvdak_readiness_page_status_label( 'unpublished', 'draft' ) ||
+     'منتشرنشده — وضعیت نامعتبر یا نامشخص' !== pvdak_readiness_page_status_label( 'unpublished', array() ) ) {
+    fwrite( STDERR, "PVD_READINESS_FAIL: status labels\n" );
+    exit( 1 );
+}
+echo "PVDAK_READINESS_HELPERS_OK: 13/13 isolated PHP cases (not WordPress E2E).\n";

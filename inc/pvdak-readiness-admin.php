@@ -295,6 +295,34 @@ function pvdak_management_dashboard_widget() {
     }
 }
 
+/**
+ * Classify a required Page without reading its body or changing its status.
+ * Any unexpected provisional-policy metadata is treated as needing review,
+ * rather than silently certifying the Page as editorially complete.
+ */
+function pvdak_readiness_page_classify( $exists, $status, $provisional ) {
+    if ( ! $exists ) { return 'missing'; }
+    if ( ! is_string( $status ) || 'publish' !== $status ) { return 'unpublished'; }
+    if ( ! in_array( $provisional, array( '', '0', 0, false, null ), true ) ) {
+        return 'provisional';
+    }
+    return 'published';
+}
+
+/** Human-readable editorial status; never confuse publication with approval. */
+function pvdak_readiness_page_status_label( $classification, $status ) {
+    if ( 'missing' === $classification ) { return 'برگه وجود ندارد'; }
+    if ( 'provisional' === $classification ) { return 'منتشرشده — متن اولیه یا نشانگر نامعتبر؛ نیازمند تأیید'; }
+    if ( 'published' === $classification ) { return 'منتشرشده — تأیید محتوایی مستقل لازم است'; }
+    $statuses = array(
+        'draft' => 'پیش‌نویس', 'pending' => 'در انتظار بررسی',
+        'private' => 'خصوصی', 'trash' => 'زباله‌دان', 'future' => 'زمان‌بندی‌شده',
+    );
+    $label = is_string( $status ) && isset( $statuses[ $status ] ) ?
+        $statuses[ $status ] : 'وضعیت نامعتبر یا نامشخص';
+    return 'منتشرنشده — ' . $label;
+}
+
 function pvdak_readiness_render() {
     if(!current_user_can('manage_options')){
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -325,17 +353,47 @@ function pvdak_readiness_render() {
     foreach($facts as $name=>$value){
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
-    echo '</tbody></table><h2>برگه‌های مهم</h2><table class="widefat striped"><thead><tr><th>برگه</th><th>وضعیت</th><th>بررسی مدیر</th></tr></thead><tbody>';
-    foreach($pages as $slug=>$label){
-        $post=get_page_by_path($slug,OBJECT,'page');
-        $state=$post?'وضعیت: '.$post->post_status:'وجود ندارد';
-        if($post && '1'===(string)get_post_meta($post->ID,'_pvdak_provisional_policy',true)){
-            $state.=' — متن اولیه، نیازمند تأیید';
+    // The required slugs are fixed by the theme; never query private page
+    // contents or auto-create/publish anything from this read-only report.
+    $audits = array();
+    $totals = array( 'missing' => 0, 'unpublished' => 0, 'provisional' => 0, 'published' => 0 );
+    foreach ( $pages as $slug => $label ) {
+        $post = get_page_by_path( $slug, OBJECT, 'page' );
+        $exists = $post instanceof WP_Post && absint( $post->ID ) > 0;
+        $status = $exists ? $post->post_status : '';
+        $provisional = $exists ? get_post_meta( $post->ID, '_pvdak_provisional_policy', true ) : '';
+        $classification = pvdak_readiness_page_classify( $exists, $status, $provisional );
+        $totals[ $classification ]++;
+        $audits[] = array(
+            'slug' => $slug, 'title' => $label, 'post' => $exists ? $post : null,
+            'status' => pvdak_readiness_page_status_label( $classification, $status ),
+        );
+    }
+    echo '<h2>برگه‌های مهم</h2>';
+    echo '<p><strong>خلاصه وضعیت انتشار:</strong> ' .
+        esc_html( number_format_i18n( $totals['published'] ) ) . ' منتشرشده بدون نشانگر متن اولیه، ' .
+        esc_html( number_format_i18n( $totals['provisional'] ) ) . ' نیازمند تأیید متن اولیه، ' .
+        esc_html( number_format_i18n( $totals['unpublished'] ) ) . ' منتشرنشده و ' .
+        esc_html( number_format_i18n( $totals['missing'] ) ) . ' فاقد برگه.</p>';
+    echo '<p class="description">این آمار فقط وضعیت برگه‌هاست، نه تأیید حقوقی محتوا، امنیت خدمات یا مجوز افتتاح عمومی. هیچ برگه‌ای از این صفحه ساخته یا منتشر نمی‌شود.</p>';
+    echo '<table class="widefat striped"><thead><tr><th scope="col">برگه</th><th scope="col">نامک مورد انتظار</th><th scope="col">وضعیت</th><th scope="col">اقدام مدیر</th></tr></thead><tbody>';
+    foreach ( $audits as $audit ) {
+        $post = $audit['post'];
+        $url = $post && current_user_can( 'edit_post', $post->ID ) ?
+            get_edit_post_link( $post->ID ) : '';
+        $action = 'ویرایش و بررسی';
+        if ( ! $post && current_user_can( 'edit_pages' ) ) {
+            $url = admin_url( 'post-new.php?post_type=page' );
+            $action = 'ایجاد دستی برگه';
         }
-        $url=$post&&current_user_can('edit_post',$post->ID)?get_edit_post_link($post->ID):'';
-        echo '<tr><th scope="row">'.esc_html($label).'</th><td>'.esc_html($state).'</td><td>';
-        if($url)echo '<a href="'.esc_url($url).'">ویرایش و بررسی</a>';
-        else echo '—';
+        echo '<tr><th scope="row">' . esc_html( $audit['title'] ) .
+            '</th><td><code dir="ltr">' . esc_html( $audit['slug'] ) .
+            '</code></td><td>' . esc_html( $audit['status'] ) . '</td><td>';
+        if ( $url ) {
+            echo '<a href="' . esc_url( $url ) . '">' . esc_html( $action ) . '</a>';
+        } else {
+            echo '—';
+        }
         echo '</td></tr>';
     }
     echo '</tbody></table><p><strong>پیش از افتتاح:</strong> سیاست حریم خصوصی، قوانین، ایمیل‌های سیستمی، مجوزهای دو حساب مستقل و نسخه فعال Core باید عملاً بررسی شوند.</p>';
