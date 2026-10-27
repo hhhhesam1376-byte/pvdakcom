@@ -189,6 +189,7 @@ $front_cases = array(
     array( 'page', 12, 'page', 'draft', 'unpublished', 12 ),
     array( 'page', 12, 'post', 'publish', 'invalid', 12 ),
     array( 'page', 12, 'page', 'publish', 'ready', array( 12 ) ),
+    array( 'page', 12, 'page', 'publish', 'ready', '012' ),
 );
 foreach ( $front_cases as $case ) {
     if ( pvdak_readiness_front_page_state( $case[0], $case[1], $case[2], $case[3],
