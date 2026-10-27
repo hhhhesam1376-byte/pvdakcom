@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.44
+ * Version: 0.8.45
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,25 +10,41 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.44' );
+define( 'PVDAK_CORE_VERSION', '0.8.45' );
+
+/**
+ * D24: A malformed post/user ID must not be remapped by absint() to
+ * another person's private record or verified mailbox.
+ */
+function pvdak_core_notification_positive_id( $value ) {
+    if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]{0,9}$/D', $raw ) || (float) $raw > 2147483647 ) { return 0; }
+    return (int) $raw;
+}
 
 /**
  * D24: private, opt-in status notifications. Both administrator enablement
  * AND current-mailbox owner consent are required; neither is enabled on deploy.
  */
 function pvdak_core_notification_verified_mailbox( $owner ) {
-    $user = $owner ? get_userdata( absint( $owner ) ) : false;
-    if ( ! $user || ! isset( $user->user_email ) || ! is_email( $user->user_email ) ||
-         '1' === (string) get_user_meta( $owner, '_pvdak_email_verification_pending', true ) ||
-         (int) get_user_meta( $owner, '_pvdak_email_verified_at', true ) < 1 ) { return ''; }
+    $owner_id = pvdak_core_notification_positive_id( $owner );
+    if ( ! $owner_id ) { return ''; }
+    $user = get_userdata( $owner_id );
+    if ( ! $user || ! isset( $user->ID, $user->user_email ) ||
+         (int) $user->ID !== $owner_id || ! is_string( $user->user_email ) ||
+         ! is_email( $user->user_email ) ||
+         '1' === (string) get_user_meta( $owner_id, '_pvdak_email_verification_pending', true ) ||
+         (int) get_user_meta( $owner_id, '_pvdak_email_verified_at', true ) < 1 ) { return ''; }
     $mailbox = strtolower( trim( $user->user_email ) );
-    $verified = get_user_meta( $owner, '_pvdak_email_verified_address', true );
+    $verified = get_user_meta( $owner_id, '_pvdak_email_verified_address', true );
     return is_string( $verified ) && hash_equals( $mailbox, $verified ) ? $mailbox : '';
 }
 
 function pvdak_core_notification_consent_valid( $owner, $mailbox ) {
-    if ( ! $owner || ! is_string( $mailbox ) || '' === $mailbox ) { return false; }
-    $record = get_user_meta( absint( $owner ), '_pvdak_notification_consent', true );
+    $owner_id = pvdak_core_notification_positive_id( $owner );
+    if ( ! $owner_id || ! is_string( $mailbox ) || '' === $mailbox ) { return false; }
+    $record = get_user_meta( $owner_id, '_pvdak_notification_consent', true );
     if ( ! is_array( $record ) || ! isset( $record['address'], $record['at'] ) ||
          ! is_string( $record['address'] ) || ! is_string( $record['at'] ) ||
          ! hash_equals( $mailbox, $record['address'] ) ||
@@ -129,10 +145,15 @@ function pvdak_core_notify_owner( $post_id, $kind ) {
     if ( '1' !== (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ) ) { return false; }
     $allowed = array( 'pvdak_request', 'pvdak_professional', 'pvdak_support_ticket' );
     if ( ! in_array( $kind, $allowed, true ) ) { return false; }
-    $post = get_post( absint( $post_id ) );
-    if ( ! $post || $post->post_type !== $kind ||
+    $post_id = pvdak_core_notification_positive_id( $post_id );
+    if ( ! $post_id ) { return false; }
+    $post = get_post( $post_id );
+    if ( ! $post || ! isset( $post->ID ) ||
+         pvdak_core_notification_positive_id( $post->ID ) !== $post_id ||
+         $post->post_type !== $kind ||
          ! in_array( $post->post_status, 'pvdak_professional' === $kind ? array( 'private', 'draft' ) : array( 'private' ), true ) ) { return false; }
-    $owner = absint( $post->post_author );
+    $owner = pvdak_core_notification_positive_id( $post->post_author );
+    if ( ! $owner ) { return false; }
     $mailbox = pvdak_core_notification_verified_mailbox( $owner );
     if ( '' === $mailbox || ! pvdak_core_notification_consent_valid( $owner, $mailbox ) ) { return false; }
     $subject = 'اعلان تغییر در حساب PVDak';
