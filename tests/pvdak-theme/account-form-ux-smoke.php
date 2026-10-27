@@ -310,6 +310,10 @@ $checks = array(
     strpos($s['admin-management'], "! defined( 'PVDAK_CORE_VERSION' )")!==false &&
     strpos($s['admin-management'], "'manage_options', 'options-general.php?page=pvdak-core'")!==false &&
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'")!==false,
+  'D31 Core queue shortcuts follow actual CPT edit capabilities, not unrelated site settings' =>
+    strpos($s['admin-management'], "'edit_pvdak_requests', 'edit.php?post_type=pvdak_request'") !== false &&
+    strpos($s['admin-management'], "'edit_pvdak_professionals', 'edit.php?post_type=pvdak_professional'") !== false &&
+    strpos($s['admin-management'], "current_user_can( \$object->cap->edit_posts )") !== false,
   'D31 native moderation remains visible to administrators' =>
     strpos($s['admin-management'], "! current_user_can('manage_options')") !== false &&
     strpos($s['admin-management'], "remove_menu_page('edit-comments.php')") !== false,
