@@ -16,15 +16,35 @@ function pvdak_core_prof_admin_filters() {
         'pvdak_method_filter' => array_keys( pvdak_core_review_methods() ),
         'pvdak_expiry_filter' => array( 'expired', 'next30', 'future', 'missing' ),
     );
-    $filters = array();
+    $filters = array( '_invalid' => false );
     foreach ( $allowed as $key => $choices ) {
-        $raw = isset( $_GET[ $key ] ) && is_string( $_GET[ $key ] ) ?
-            sanitize_key( wp_unslash( $_GET[ $key ] ) ) : '';
-        $filters[ $key ] = in_array( $raw, $choices, true ) ? $raw : '';
+        if ( ! array_key_exists( $key, $_GET ) || '' === $_GET[ $key ] ) {
+            $filters[ $key ] = '';
+            continue;
+        }
+        if ( ! is_string( $_GET[ $key ] ) ) {
+            $filters[ $key ] = '';
+            $filters['_invalid'] = true;
+            continue;
+        }
+        $raw = wp_unslash( $_GET[ $key ] );
+        $clean = sanitize_key( $raw );
+        if ( $clean !== $raw || ! in_array( $clean, $choices, true ) ) {
+            $filters[ $key ] = '';
+            $filters['_invalid'] = true;
+            continue;
+        }
+        $filters[ $key ] = $clean;
     }
-    $city = isset( $_GET['pvdak_city_filter'] ) && is_string( $_GET['pvdak_city_filter'] ) ?
-        sanitize_text_field( wp_unslash( $_GET['pvdak_city_filter'] ) ) : '';
-    $filters['pvdak_city_filter'] = wp_html_excerpt( $city, 70, '' );
+    if ( array_key_exists( 'pvdak_city_filter', $_GET ) && ! is_string( $_GET['pvdak_city_filter'] ) ) {
+        $filters['_invalid'] = true;
+    }
+    $city_raw = isset( $_GET['pvdak_city_filter'] ) && is_string( $_GET['pvdak_city_filter'] ) ?
+        wp_unslash( $_GET['pvdak_city_filter'] ) : '';
+    $city = sanitize_text_field( $city_raw );
+    $bounded = wp_html_excerpt( $city, 70, '' );
+    if ( $city !== $city_raw || $bounded !== $city ) { $filters['_invalid'] = true; }
+    $filters['pvdak_city_filter'] = $filters['_invalid'] ? '' : $bounded;
     return $filters;
 }
 
@@ -57,12 +77,26 @@ function pvdak_core_prof_admin_controls( $post_type ) {
 }
 add_action( 'restrict_manage_posts', 'pvdak_core_prof_admin_controls' );
 
+/** Warn only on the professional queue; never echo untrusted filter values. */
+function pvdak_core_prof_admin_invalid_notice() {
+    if ( ! pvdak_core_prof_admin_allowed() ) { return; }
+    $screen = get_current_screen();
+    if ( ! $screen || 'edit' !== $screen->base || 'pvdak_professional' !== $screen->post_type ||
+         ! pvdak_core_prof_admin_filters()['_invalid'] ) { return; }
+    echo '<div class="notice notice-warning"><p>یکی از فیلترهای پرونده‌های عضویت نامعتبر است؛ برای جلوگیری از نمایش فهرست گسترده، نتیجه‌ای نمایش داده نمی‌شود. فیلترها را پاک کنید.</p></div>';
+}
+add_action( 'admin_notices', 'pvdak_core_prof_admin_invalid_notice' );
+
 /** Preserve native WordPress filters, paging and search; never alter another query. */
 function pvdak_core_prof_admin_query( $query ) {
     if ( ! is_admin() || ! $query->is_main_query() ||
          'pvdak_professional' !== $query->get( 'post_type' ) ||
          ! pvdak_core_prof_admin_allowed() ) { return; }
     $f = pvdak_core_prof_admin_filters();
+    if ( $f['_invalid'] ) {
+        $query->set( 'post__in', array( 0 ) );
+        return;
+    }
     $conditions = array();
     foreach ( array(
         'pvdak_member_filter' => '_pvdak_member_type',
