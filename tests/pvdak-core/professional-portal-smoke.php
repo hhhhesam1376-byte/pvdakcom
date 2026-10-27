@@ -17,11 +17,11 @@ $checks = array(
  'machine-readable date' => strpos($src, '<time datetime=') !== false,
  'city fallback' => strpos($src, 'ثبت نشده') !== false,
  'status allowlist' => strpos($src, 'isset( $statuses[ $raw_status ] )') !== false,
- 'unknown status does not impersonate pending' => strpos($src, "? $raw_status : 'unknown'") !== false &&
-     strpos($src, "'unknown' === $status ? 'نیازمند بررسی مدیر'") !== false,
- 'unknown state hides normal progress steps' => strpos($src, "elseif ( 'unknown' === $status )") !== false &&
+ 'unknown status does not impersonate pending' => strpos($src, '? $raw_status : \'unknown\'') !== false &&
+     strpos($src, '\'unknown\' === $status ? \'نیازمند بررسی مدیر\'') !== false,
+ 'unknown state hides normal progress steps' => strpos($src, 'elseif ( \'unknown\' === $status )') !== false &&
      strpos($src, 'مراحل بررسی تا اصلاح توسط مدیر نمایش داده نمی‌شوند') !== false,
- 'unknown state never unlocks professional access' => strpos($src, "'unknown' === $status ?") !== false &&
+ 'unknown state never unlocks professional access' => strpos($src, '\'unknown\' === $status ?') !== false &&
      strpos($src, "array( 'ready' => false, 'reason' =>") !== false,
  'status steps' => strpos($src, 'aria-current="step"') !== false,
  'rejection distinct' => strpos($src, "'rejected' === \$status") !== false,
