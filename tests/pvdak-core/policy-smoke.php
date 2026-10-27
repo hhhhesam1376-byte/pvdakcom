@@ -332,6 +332,12 @@ pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 11 )['status'], 'Unpubl
 pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 0, 'Unpublished topic has no candidate list' );
 $GLOBALS['pvdak_mock_topic_draft'] = false;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Internally cleared lawyer matches related landing' );
+// D16: exercise the actual strict identifier parser loaded from assignments.php (PHP-only mocks).
+pvdak_expect( 701 === pvdak_core_assignment_positive_id( '701' ), 'Valid decimal request ID is accepted' );
+pvdak_expect( 2147483647 === pvdak_core_assignment_positive_id( '2147483647' ), 'Maximum bounded ID is accepted' );
+foreach ( array( '-701', '+701', '0701', '701x', ' 701', '1e3', '2147483648', '999999999999999999', array( 701 ), 701.0, '0' ) as $invalid_id ) {
+    pvdak_expect( 0 === pvdak_core_assignment_positive_id( $invalid_id ), 'Malformed or out-of-range ID is rejected' );
+}
 pvdak_expect( pvdak_core_assignment_parties_distinct( 701, 501 ), 'Distinct real requester and lawyer owners permit internal referral' );
 pvdak_expect( ! pvdak_core_assignment_parties_distinct( 702, 501 ), 'Self-referral is blocked in preview, decision and recheck' );
 pvdak_expect( ! pvdak_core_assignment_parties_distinct( 703, 501 ), 'Legacy request without an owner cannot be assigned' );
