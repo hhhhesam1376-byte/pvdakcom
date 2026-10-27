@@ -329,6 +329,23 @@ function pvdak_readiness_page_status_label( $classification, $status ) {
     return 'منتشرنشده — ' . $label;
 }
 
+/**
+ * WordPress privacy-page setting is separate from publishing a privacy Page.
+ * This read-only comparison never treats the selected Page as legally approved.
+ */
+function pvdak_readiness_privacy_setting_state( $expected_id, $published, $selected_id ) {
+    if ( ! is_int( $expected_id ) || $expected_id < 1 || true !== $published ) {
+        return 'missing';
+    }
+    if ( 0 === $selected_id || '0' === $selected_id || '' === $selected_id ) {
+        return 'unset';
+    }
+    if ( ! is_int( $selected_id ) && ! is_string( $selected_id ) ) {
+        return 'mismatch';
+    }
+    return (string) $expected_id === (string) $selected_id ? 'matched' : 'mismatch';
+}
+
 function pvdak_readiness_render() {
     if(!current_user_can('manage_options')){
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -346,9 +363,23 @@ function pvdak_readiness_render() {
     );
     echo '<div class="wrap"><h1>آمادگی راه‌اندازی PVDak</h1>';
     echo '<p>این گزارش فقط خواندنی است و هیچ تنظیم یا اطلاعات کاربری را تغییر نمی‌دهد.</p>';
+    $privacy_page = get_page_by_path( 'privacy-policy', OBJECT, 'page' );
+    $privacy_expected_id = $privacy_page instanceof WP_Post ? (int) $privacy_page->ID : 0;
+    $privacy_published = $privacy_page instanceof WP_Post &&
+        'publish' === $privacy_page->post_status;
+    $privacy_state = pvdak_readiness_privacy_setting_state(
+        $privacy_expected_id, $privacy_published,
+        get_option( 'wp_page_for_privacy_policy', 0 ) );
+    $privacy_labels = array(
+        'missing' => 'برگه حریم خصوصی PVDak منتشر نشده یا وجود ندارد',
+        'unset' => 'در تنظیمات وردپرس هنوز برگه‌ای انتخاب نشده',
+        'mismatch' => 'برگه دیگری انتخاب شده؛ تنظیمات را بررسی کنید',
+        'matched' => 'برگه PVDak انتخاب شده؛ تأیید حقوقی متن جداگانه لازم است',
+    );
     $facts=array(
         'نسخه قالب'=>wp_get_theme()->get('Version'),
         'نسخه Core فعال'=>defined('PVDAK_CORE_VERSION')?PVDAK_CORE_VERSION:'نصب یا فعال نشده',
+        'برگه حریم خصوصی وردپرس'=>$privacy_labels[ $privacy_state ],
         'حالت تعمیرات'=>(function_exists('pvdak_maintenance_enabled')&&pvdak_maintenance_enabled())?'فعال':'غیرفعال',
         'ثبت‌نام عمومی'=>(function_exists('pvdak_registration_open')&&pvdak_registration_open())?'فعال — نیازمند بررسی':'بسته',
         'فرم پذیرش پرونده'=>(function_exists('pvdak_core_intake_open')&&pvdak_core_intake_open())?'فعال — نیازمند بررسی':'بسته',
@@ -360,6 +391,8 @@ function pvdak_readiness_render() {
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
     echo '</tbody></table>';
+    echo '<p><a href="' . esc_url( admin_url( 'options-privacy.php' ) ) .
+        '">بررسی تنظیمات حریم خصوصی وردپرس</a> — انتخاب برگه در وردپرس، جایگزین تأیید حقوقی متن نیست.</p>';
     // Use the same template definitions as the existing Page bootstrap.
     // A published URL with a changed template can break account flows.
     // Never read private page bodies or auto-create/publish from this report.
