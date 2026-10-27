@@ -184,7 +184,8 @@ function get_posts( $query ) {
     $offset = (int) ( $query['offset'] ?? 0 );
     if ( isset( $GLOBALS['pvdak_mock_candidate_fail_offset'] ) &&
          $offset === $GLOBALS['pvdak_mock_candidate_fail_offset'] ) { return false; }
-    return array_slice( $records, $offset, (int) ( $query['posts_per_page'] ?? 200 ) );
+    $limit = (int) ( $query['posts_per_page'] ?? 200 );
+    return -1 === $limit ? array_slice( $records, $offset ) : array_slice( $records, $offset, $limit );
 }
 
 /**
@@ -460,7 +461,12 @@ pvdak_expect( array() === pvdak_core_assignable_profiles( 11, 'lawyer' ),
     'D17 a failed later candidate page rejects the entire partial shortlist' );
 pvdak_expect( array() === $GLOBALS['pvdak_assignment_preview_load'],
     'D17 failed later page clears stale workload data' );
+pvdak_expect( true === $GLOBALS['pvdak_assignment_preview_error'],
+    'D17 incomplete database shortlist sets private manager error instead of no-match' );
 unset( $GLOBALS['pvdak_mock_candidate_fail_offset'], $GLOBALS['pvdak_mock_candidate_rows'] );
+pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 1 &&
+    false === $GLOBALS['pvdak_assignment_preview_error'],
+    'D17 successful follow-up search clears stale query-error flag' );
 $GLOBALS['pvdak_mock_capacity_reads'] = 0;
 $pvdak_eligible = pvdak_core_assignable_profiles( 11, 'lawyer' );
 pvdak_expect( count( $pvdak_eligible ) === 1, 'Only eligible reviewed lawyer enters candidate set' );

@@ -32,6 +32,7 @@ function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
     // A changed or unpublished subject cannot be used to discover a lawyer.
     $GLOBALS['pvdak_assignment_preview_load'] = array();
+    $GLOBALS['pvdak_assignment_preview_error'] = false;
     if ( 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ) { return array(); }
     global $wpdb;
     $eligible = array();
@@ -60,6 +61,7 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
         if ( ! is_array( $profiles ) ||
              ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
             $GLOBALS['pvdak_assignment_preview_load'] = array();
+            $GLOBALS['pvdak_assignment_preview_error'] = true;
             return array();
         }
         foreach ( $profiles as $profile ) {
@@ -155,7 +157,11 @@ function pvdak_core_assignment_admin_page() {
         return pvdak_core_assignment_parties_distinct( $request_id, $p->ID );
     } ) );
     if ( ! $candidates ) {
-        echo '<div class="notice notice-info inline"><p>در میان حداکثر ۱۰۰۰ پرونده حرفه‌ای تأییدشده و دارای مجوز داخلی بررسی‌شده، متخصص واجد شرایط و دارای ظرفیت آزاد پیدا نشد. این نتیجه به معنی بررسی همه متخصصان موجود نیست؛ وضعیت عضویت، تخصص و ظرفیت یا محدودیت فهرست را بررسی کنید.</p></div></div>';
+        if ( ! empty( $GLOBALS['pvdak_assignment_preview_error'] ) ) {
+            echo '<div class="notice notice-error inline"><p>جست‌وجوی متخصصان کامل نشد؛ برای جلوگیری از پیشنهاد ناقص، فهرست ارجاع غیرفعال است. اتصال دیتابیس را بررسی کنید.</p></div></div>';
+        } else {
+            echo '<div class="notice notice-info inline"><p>در میان حداکثر ۱۰۰۰ پرونده حرفه‌ای تأییدشده و دارای مجوز داخلی بررسی‌شده، متخصص واجد شرایط و دارای ظرفیت آزاد پیدا نشد. این نتیجه به معنی بررسی همه متخصصان موجود نیست؛ وضعیت عضویت، تخصص و ظرفیت یا محدودیت فهرست را بررسی کنید.</p></div></div>';
+        }
         return;
     }
     if ( isset( $_GET['pvdak_assignment_error'] ) ) {
