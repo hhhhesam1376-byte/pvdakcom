@@ -431,6 +431,7 @@ function pvdak_readiness_render() {
         'privacy-policy'=>'حریم خصوصی',
         'terms-of-use'=>'شرایط استفاده',
         'account-login'=>'ورود اختصاصی',
+        'account-register'=>'ثبت‌نام (برگه قدیمی)',
         'account-recovery'=>'بازیابی رمز',
         'account-profile'=>'پروفایل',
         'my-pvdak-account'=>'پنل کاربری',
@@ -500,6 +501,7 @@ function pvdak_readiness_render() {
         );
     }
     echo '<h2>برگه‌های مهم</h2>';
+    echo '<p class="description">ثبت‌نام فعلی در زبانه صفحه ورود انجام می‌شود؛ برگه «ثبت‌نام (برگه قدیمی)» فقط برای سازگاری با پیوندهای قبلی بررسی می‌شود و فعال‌بودن آن به معنی بازبودن ثبت‌نام نیست.</p>';
     echo '<p><strong>خلاصه وضعیت انتشار:</strong> ' .
         esc_html( number_format_i18n( $totals['published'] ) ) . ' منتشرشده بدون نشانگر متن اولیه، ' .
         esc_html( number_format_i18n( $totals['provisional'] ) ) . ' نیازمند تأیید متن اولیه، ' .

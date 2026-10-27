@@ -19,7 +19,10 @@ function pvdak_public_page_url($slug) {
 function pvdak_public_template_page_url( $slug, $template ) {
   $page = get_page_by_path( sanitize_title( $slug ), OBJECT, 'page' );
   if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ||
-       $template !== get_page_template_slug( $page->ID ) ) {
+       $template !== get_page_template_slug( $page->ID ) ||
+       // A matching stored slug does not prove the PHP template was deployed.
+       // Fail closed rather than advertising a broken login/account route.
+       ! locate_template( $template, false, false ) ) {
     return '';
   }
   return get_permalink( $page->ID );

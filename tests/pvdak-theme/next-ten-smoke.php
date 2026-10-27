@@ -20,6 +20,7 @@ $paths = array(
   'theme'=>'style.css',
   'core'=>'packages/pvdak-core/pvdak-core.php',
   'registration'=>'inc/pvdak-registration.php',
+  'public'=>'inc/pvdak-public-pages.php',
 );
 $s = array();
 foreach ($paths as $key=>$path) {
@@ -86,11 +87,13 @@ $checks = array(
     strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
-    pvdak_test_release_at_least($s['theme'],'0.8.94') &&
+    pvdak_test_release_at_least($s['theme'],'0.8.95') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
-    strpos($s['registration'],"pvdak_public_template_page_url('account-login','page-templates/pvdak-login.php')")!==false,
+    strpos($s['registration'],"pvdak_public_template_page_url('account-login','page-templates/pvdak-login.php')")!==false &&
+    strpos($s['public'],'! locate_template( $template, false, false )')!==false &&
+    strpos($s['admin'],"'account-register'=>'ثبت‌نام (برگه قدیمی)'")!==false,
 );
 $count = 0;
 foreach ($checks as $label=>$passes) {
@@ -206,3 +209,76 @@ foreach ( array( 'ready', 'posts_mode', 'invalid_mode', 'posts_conflict', 'missi
     }
 }
 echo "PVDAK_READINESS_FRONT_PAGE_OK: 32/32 isolated PHP cases (not WordPress E2E).\n";
+
+// D13/D14: exercise the actual public Page and registration gate functions.
+// WordPress is NOT loaded. All Pages, options and templates below are synthetic.
+if ( ! function_exists( 'add_filter' ) ) { function add_filter() {} }
+if ( ! function_exists( 'add_shortcode' ) ) { function add_shortcode() {} }
+if ( ! class_exists( 'WP_Post' ) ) {
+    class WP_Post {
+        public $ID, $post_status, $post_type;
+        public function __construct( $id, $status = 'publish' ) {
+            $this->ID = $id; $this->post_status = $status; $this->post_type = 'page';
+        }
+    }
+}
+if ( ! function_exists( 'sanitize_title' ) ) { function sanitize_title( $slug ) { return $slug; } }
+if ( ! function_exists( 'get_page_by_path' ) ) {
+    function get_page_by_path( $slug, $output = null, $type = null ) {
+        return $GLOBALS['pvdak_test_public_page'] ?? null;
+    }
+}
+if ( ! function_exists( 'get_page_template_slug' ) ) {
+    function get_page_template_slug( $id ) { return $GLOBALS['pvdak_test_template_slug'] ?? ''; }
+}
+if ( ! function_exists( 'locate_template' ) ) {
+    function locate_template( $template, $load = false, $require_once = true ) {
+        return ! empty( $GLOBALS['pvdak_test_template_installed'] ) ? '/mock/theme/' . $template : '';
+    }
+}
+if ( ! function_exists( 'get_permalink' ) ) {
+    function get_permalink( $id ) { return 'https://example.test/account-login/'; }
+}
+if ( ! function_exists( 'get_option' ) ) {
+    function get_option( $key, $default = false ) {
+        return 'pvdak_registration_enabled' === $key ?
+            ( $GLOBALS['pvdak_test_signup_setting'] ?? '0' ) : $default;
+    }
+}
+require_once $root . '/inc/pvdak-public-pages.php';
+require_once $root . '/inc/pvdak-registration.php';
+$GLOBALS['pvdak_test_template_slug'] = 'page-templates/pvdak-login.php';
+$GLOBALS['pvdak_test_template_installed'] = true;
+$GLOBALS['pvdak_test_signup_setting'] = '1';
+$public_cases = array(
+    array( new WP_Post( 100, 'publish' ), 'page-templates/pvdak-login.php', true, true ),
+    array( new WP_Post( 100, 'publish' ), 'page-templates/pvdak-login.php', false, false ),
+    array( new WP_Post( 100, 'draft' ), 'page-templates/pvdak-login.php', true, false ),
+    array( new WP_Post( 100, 'private' ), 'page-templates/pvdak-login.php', true, false ),
+    array( new WP_Post( 100, 'publish' ), 'page-templates/pvdak-account.php', true, false ),
+    array( null, 'page-templates/pvdak-login.php', true, false ),
+);
+foreach ( $public_cases as $case ) {
+    $GLOBALS['pvdak_test_public_page'] = $case[0];
+    $GLOBALS['pvdak_test_template_slug'] = $case[1];
+    $GLOBALS['pvdak_test_template_installed'] = $case[2];
+    $found = pvdak_public_template_page_url( 'account-login', 'page-templates/pvdak-login.php' );
+    if ( ( '' !== $found ) !== $case[3] ) {
+        fwrite( STDERR, "PVD_PUBLIC_ROUTE_FAIL: published Page/template availability\n" );
+        exit( 1 );
+    }
+}
+$GLOBALS['pvdak_test_public_page'] = new WP_Post( 100, 'publish' );
+$GLOBALS['pvdak_test_template_slug'] = 'page-templates/pvdak-login.php';
+foreach ( array(
+    array( '1', true, true ), array( '1', false, false ),
+    array( '0', true, false ),
+) as $case ) {
+    $GLOBALS['pvdak_test_signup_setting'] = $case[0];
+    $GLOBALS['pvdak_test_template_installed'] = $case[1];
+    if ( pvdak_registration_open() !== $case[2] ) {
+        fwrite( STDERR, "PVD_PUBLIC_ROUTE_FAIL: registration must close on missing template\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_PUBLIC_TEMPLATE_GATE_OK: 9/9 original-source PHP cases (not WordPress E2E).\n";
