@@ -280,6 +280,22 @@ pvdak_expect( pvdak_core_request_note_token_seen( array(), 'invalid' ),
     'Missing or malformed note token fails closed' );
 
 pvdak_expect( count( pvdak_core_member_types() ) === 3, 'Three professional application categories' );
+pvdak_expect( 'review' === pvdak_core_member_review_state_choice( 'review' ),
+    'D19 exact membership state is accepted' );
+pvdak_expect( 'approved' === pvdak_core_member_review_state_choice( 'approved' ),
+    'D19 legitimate approval state is accepted' );
+foreach ( array( 'approved!', ' approved', 'APPROVED', 'review%', '', 'unknown', array( 'review' ), null ) as $bad_state ) {
+    pvdak_expect( null === pvdak_core_member_review_state_choice( $bad_state ),
+        'D19 malformed membership decision state is rejected' );
+}
+foreach ( array( 'lawyer', 'trainee', 'student' ) as $valid_type ) {
+    pvdak_expect( pvdak_core_member_review_type_valid( $valid_type ),
+        'D20 recognized membership category is reviewable' );
+}
+foreach ( array( 'lawyer!', '', 'unrecognized', array( 'lawyer' ), null ) as $bad_type ) {
+    pvdak_expect( ! pvdak_core_member_review_type_valid( $bad_type ),
+        'D20 malformed membership category blocks status decision' );
+}
 pvdak_expect( pvdak_core_member_application_input_valid( 'lawyer', str_repeat( 'آ', 110 ), 'تهران', 'حقوق خانواده', true ),
     'Professional intake accepts 110 Persian name characters' );
 pvdak_expect( ! pvdak_core_member_application_input_valid( 'lawyer', str_repeat( 'آ', 111 ), 'تهران', 'حقوق خانواده', true ),
@@ -590,6 +606,19 @@ pvdak_expect( 'lock_unavailable' === $result && ! $callback_invoked,
     'Noncanonical database lock response cannot authorize writes' );
 pvdak_expect( array() === $GLOBALS['wpdb']->locks,
     'Rejected database lock response leaves no held mock locks' );
+$GLOBALS['wpdb']->acquire_override = null;
+$member_lock_called = false;
+pvdak_expect( 'created' === pvdak_core_with_member_application_lock( 23, function() use ( &$member_lock_called ) {
+    $member_lock_called = isset( $GLOBALS['wpdb']->locks['pvdak:member:23'] );
+    return 'created';
+} ) && $member_lock_called, 'D19 valid applicant lock protects callback' );
+pvdak_expect( array() === $GLOBALS['wpdb']->locks, 'D19 applicant lock released on success' );
+$GLOBALS['wpdb']->acquire_override = '1invalid';
+$member_lock_called = false;
+pvdak_expect( 'lock_unavailable' === pvdak_core_with_member_application_lock( 23, function() use ( &$member_lock_called ) {
+    $member_lock_called = true;
+    return 'unsafe';
+} ) && ! $member_lock_called, 'D19 malformed DB lock response cannot authorize applicant write' );
 $GLOBALS['wpdb']->acquire_override = null;
 $threw = false;
 try {

@@ -117,6 +117,18 @@ function pvdak_core_member_application_input_valid( $type, $name, $city, $about,
  * Serialize submissions for one user across PHP workers using the existing
  * MariaDB connection. If advisory locks are unavailable, fail closed.
  */
+/** Exact choices prevent altered POST data being silently normalized. */
+function pvdak_core_member_review_state_choice( $value ) {
+    $states = pvdak_core_member_states();
+    return is_string( $value ) && isset( $states[ $value ] ) ? $value : null;
+}
+
+/** Only recognized member categories can receive a new decision. */
+function pvdak_core_member_review_type_valid( $value ) {
+    $types = pvdak_core_member_types();
+    return is_string( $value ) && isset( $types[ $value ] );
+}
+
 function pvdak_core_with_member_application_lock( $user_id, $callback ) {
     global $wpdb;
     if ( ! absint( $user_id ) || ! is_callable( $callback ) || ! isset( $wpdb ) ||
@@ -124,7 +136,10 @@ function pvdak_core_with_member_application_lock( $user_id, $callback ) {
         return 'lock_unavailable';
     }
     $name = 'pvdak:member:' . absint( $user_id );
-    if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, 3 ) ) ) {
+    $acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, 3 ) );
+    // Reject an unexpected DB response such as "1invalid" instead of
+    // casting it to integer 1 and allowing an unprotected submission.
+    if ( 1 !== $acquired && '1' !== $acquired ) {
         return 'lock_unavailable';
     }
     try {
@@ -217,6 +232,10 @@ function pvdak_core_member_meta_box_html( $post ) {
     $type = get_post_meta( $post->ID, '_pvdak_member_type', true );
     $types = pvdak_core_member_types();
     echo '<p><strong>نوع درخواست:</strong> ' . esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' ) . '</p>';
+    if ( ! pvdak_core_member_review_type_valid( $type ) ) {
+        echo '<p class="notice notice-warning inline">نوع همکاری ذخیره‌شده نامعتبر است؛ تغییر وضعیت تا اصلاح داده توسط مدیر مسدود است.</p>';
+        return;
+    }
     $city = get_post_meta( $post->ID, '_pvdak_member_city', true );
     echo '<p><strong>شهر:</strong> ' . esc_html( is_string( $city ) ? $city : 'نامشخص' ) . '</p>';
     echo '<p>تغییر وضعیت صرفاً اداری است؛ تأیید رسمی مدارک و انتشار پروفایل در این نسخه انجام نمی‌شود.</p>';
@@ -245,13 +264,18 @@ function pvdak_core_save_member_review( $id ) {
          ! is_string( $_POST['_pvdak_member_review_nonce'] ) ||
          ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_pvdak_member_review_nonce'] ) ),
              'pvdak_core_member_review_' . $id ) ) { return; }
-    $new = isset( $_POST['pvdak_member_state'] ) && is_string( $_POST['pvdak_member_state'] ) ?
-        sanitize_key( wp_unslash( $_POST['pvdak_member_state'] ) ) : '';
-    $expected = isset( $_POST['pvdak_member_previous_state'] ) && is_string( $_POST['pvdak_member_previous_state'] ) ?
-        sanitize_key( wp_unslash( $_POST['pvdak_member_previous_state'] ) ) : '';
+    $new = pvdak_core_member_review_state_choice(
+        isset( $_POST['pvdak_member_state'] ) && is_string( $_POST['pvdak_member_state'] )
+            ? wp_unslash( $_POST['pvdak_member_state'] ) : null
+    );
+    $expected = pvdak_core_member_review_state_choice(
+        isset( $_POST['pvdak_member_previous_state'] ) && is_string( $_POST['pvdak_member_previous_state'] )
+            ? wp_unslash( $_POST['pvdak_member_previous_state'] ) : null
+    );
     $old = get_post_meta( $id, '_pvdak_member_state', true );
-    if ( ! is_string( $old ) || ! isset( pvdak_core_member_states()[ $old ] ) ||
-         $expected !== $old || $new === $old ||
+    if ( ! pvdak_core_member_review_type_valid( get_post_meta( $id, '_pvdak_member_type', true ) ) ||
+         ! is_string( $old ) || ! isset( pvdak_core_member_states()[ $old ] ) ||
+         $expected !== $old || null === $new || $new === $old ||
          ! in_array( $new, pvdak_core_member_allowed_transitions( $old ), true ) ) { return; }
     // An unpublished draft is never an approved member, even for staff.
     if ( 'approved' === $new && 'private' !== get_post_status( $id ) ) { return; }
