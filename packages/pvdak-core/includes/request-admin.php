@@ -10,6 +10,20 @@ function pvdak_core_case_admin_allowed() {
     return $type && current_user_can( $type->cap->edit_posts );
 }
 
+/**
+ * An empty admin filter means "all"; a supplied malformed identifier means
+ * "no results", never an accidental unrestricted case list.
+ */
+function pvdak_core_case_admin_positive_filter( $name ) {
+    if ( ! array_key_exists( $name, $_GET ) ) { return 0; }
+    if ( ! is_string( $_GET[ $name ] ) ) { return -1; }
+    $raw = trim( wp_unslash( $_GET[ $name ] ) );
+    if ( '' === $raw ) { return 0; }
+    if ( ! preg_match( '/^[1-9][0-9]{0,9}$/D', $raw ) ||
+         (float) $raw > 2147483647 ) { return -1; }
+    return (int) $raw;
+}
+
 /** Validate all URL inputs before they can affect WP_Query. */
 function pvdak_core_case_admin_filters() {
     $choices = array(
@@ -25,15 +39,13 @@ function pvdak_core_case_admin_filters() {
         $result[ $name ] = in_array( $raw, $allowed, true ) ? $raw : '';
     }
     foreach ( array( 'pvdak_case_id', 'pvdak_case_owner' ) as $name ) {
-        $raw = isset( $_GET[ $name ] ) && is_string( $_GET[ $name ] )
-            ? trim( wp_unslash( $_GET[ $name ] ) ) : '';
-        $result[ $name ] = preg_match( '/^[1-9][0-9]{0,9}$/D', $raw ) ? absint( $raw ) : 0;
+        $result[ $name ] = pvdak_core_case_admin_positive_filter( $name );
     }
     $raw_topic = isset( $_GET['pvdak_case_topic'] ) && is_string( $_GET['pvdak_case_topic'] )
         ? trim( wp_unslash( $_GET['pvdak_case_topic'] ) ) : '';
-    $topic = preg_match( '/^[1-9][0-9]{0,9}$/D', $raw_topic ) ? absint( $raw_topic ) : 0;
+    $topic = pvdak_core_case_admin_positive_filter( 'pvdak_case_topic' );
     $result['pvdak_case_topic'] = 'missing' === $raw_topic ? 'missing'
-        : ( $topic && pvdak_core_valid_specialty( $topic ) ? $topic : '' );
+        : ( $topic > 0 && ! pvdak_core_valid_specialty( $topic ) ? -1 : $topic );
     return $result;
 }
 
@@ -82,6 +94,9 @@ function pvdak_core_case_admin_controls( $post_type ) {
             '" placeholder="' . esc_attr( $label ) . '" aria-label="' . esc_attr( $label ) . '">';
     }
     echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ) . '">پاک‌کردن فیلترهای صف</a>';
+    if ( in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
+        echo '<span class="pvdak-case-active-filters" role="status">شناسه یا موضوع فیلتر نامعتبر است؛ هیچ پرونده‌ای نمایش داده نمی‌شود.</span>';
+    }
 }
 add_action( 'restrict_manage_posts', 'pvdak_core_case_admin_controls', 20 );
 
@@ -91,6 +106,10 @@ function pvdak_core_case_admin_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
         'pvdak_request' !== $query->get( 'post_type' ) || ! pvdak_core_case_admin_allowed() ) { return; }
     $f = pvdak_core_case_admin_filters();
+    if ( in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
+        $query->set( 'post__in', array( 0 ) );
+        return; // Invalid supplied filters must never expand the private queue.
+    }
     if ( array_filter( $f ) && ! $query->get( 'post_status' ) &&
         ( ! isset( $_GET['post_status'] ) || '' === $_GET['post_status'] ) ) {
         $query->set( 'post_status', 'private' );
