@@ -403,6 +403,20 @@ function pvdak_core_request_note_token_seen( $notes, $token ) {
     return false;
 }
 
+/** Only exact server-defined case states may be accepted from admin forms.
+ * sanitize_key() could turn a forged value such as "review!" into "review".
+ */
+function pvdak_core_request_state_choice( $value ) {
+    $states = pvdak_core_request_statuses();
+    return is_string( $value ) && isset( $states[ $value ] ) ? $value : null;
+}
+
+/** A damaged or legacy-unknown service type needs explicit repair first. */
+function pvdak_core_request_workflow_type_valid( $type ) {
+    $types = pvdak_core_request_types();
+    return is_string( $type ) && isset( $types[ $type ] );
+}
+
 function pvdak_core_request_metabox() {
     add_meta_box( 'pvdak_request_state', 'رسیدگی به درخواست', 'pvdak_core_request_metabox_html', 'pvdak_request', 'side', 'high' );
 }
@@ -414,6 +428,10 @@ function pvdak_core_request_metabox_html( $post ) {
     $type = get_post_meta( $post->ID, '_pvdak_request_type', true );
     $types = pvdak_core_request_types();
     $statuses = pvdak_core_request_statuses();
+    if ( ! pvdak_core_request_workflow_type_valid( $type ) ) {
+        echo '<p class="notice notice-warning inline">نوع خدمت این پرونده نامعتبر است؛ تغییر وضعیت و یادداشت تا اصلاح داده توسط مدیر مسدود است.</p>';
+        return;
+    }
     $landing_id = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
     $topic = pvdak_core_topic_resolution( $landing_id );
     echo '<p><strong>موضوع حقوقی:</strong> ' .
@@ -435,7 +453,7 @@ function pvdak_core_request_metabox_html( $post ) {
         echo '<option value="' . esc_attr( $next ) . '">' . esc_html( $statuses[ $next ] ) . '</option>';
     }
     echo '</select>';
-    echo '<p class="description">«ارجاع به وکیل» تا زمان احراز متخصص و راه‌اندازی موتور ارجاع در دسترس نیست.</p>';
+    echo '<p class="description">انتساب داخلی فقط از بخش «مدیریت ارجاع داخلی» و پس از کنترل صلاحیت، تخصص و ظرفیت انجام می‌شود. وضعیت انتساب را از این فرم به‌صورت دستی نمی‌توان انتخاب کرد.</p>';
     echo '<label for="pvdak_internal_note"><strong>یادداشت داخلی مدیر</strong></label>';
     echo '<textarea id="pvdak_internal_note" name="pvdak_internal_note" class="widefat" maxlength="1000" rows="4" placeholder="فقط برای مدیران مجاز"></textarea>';
     echo '<p class="description">این یادداشت در پنل مراجعه‌کننده نمایش داده نمی‌شود.</p>';
@@ -457,8 +475,8 @@ function pvdak_core_request_metabox_html( $post ) {
             if ( ! is_array( $event ) ) { continue; }
             $from = isset( $event['from'] ) && is_string( $event['from'] ) ? $event['from'] : '';
             $to = isset( $event['to'] ) && is_string( $event['to'] ) ? $event['to'] : '';
-            echo '<li>' . esc_html( isset( $statuses[ $from ] ) ? $statuses[ $from ] : $from ) .
-                ' ← ' . esc_html( isset( $statuses[ $to ] ) ? $statuses[ $to ] : $to ) .
+            echo '<li>' . esc_html( isset( $statuses[ $from ] ) ? $statuses[ $from ] : 'وضعیت نامعتبر' ) .
+                ' ← ' . esc_html( isset( $statuses[ $to ] ) ? $statuses[ $to ] : 'وضعیت نامعتبر' ) .
                 ' <small>' . esc_html( isset( $event['at'] ) && is_string( $event['at'] ) ? $event['at'] : '' ) . '</small></li>';
         }
         echo '</ol></details>';
@@ -473,17 +491,24 @@ function pvdak_core_save_request_state( $post_id, $post ) {
     if ( ! isset( $_POST['_pvdak_state_nonce'] ) || ! is_string( $_POST['_pvdak_state_nonce'] ) ||
         ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_pvdak_state_nonce'] ) ), 'pvdak_core_state_' . $post_id ) ) { return; }
 
+    // WordPress may call save_post for records with incomplete legacy metadata.
+    // Never advance such a record or attach notes to an unknown service type.
+    if ( ! pvdak_core_request_workflow_type_valid( get_post_meta( $post_id, '_pvdak_request_type', true ) ) ) {
+        return;
+    }
     $statuses = pvdak_core_request_statuses();
     $raw_previous = get_post_meta( $post_id, '_pvdak_request_state', true );
     // Missing legacy state is treated as submitted; an unknown nonempty state is never overwritten.
     if ( ! is_string( $raw_previous ) || ( '' !== $raw_previous && ! isset( $statuses[ $raw_previous ] ) ) ) { return; }
     $previous = '' === $raw_previous ? 'submitted' : $raw_previous;
-    $expected = isset( $_POST['_pvdak_expected_state'] ) && is_string( $_POST['_pvdak_expected_state'] ) ?
-        sanitize_key( wp_unslash( $_POST['_pvdak_expected_state'] ) ) : '';
-    if ( $expected !== $previous ) { return; } // Stale editor tab: do not alter state or append notes.
+    $expected = pvdak_core_request_state_choice( $_POST['_pvdak_expected_state'] ?? null );
+    if ( $expected !== $previous ) { return; } // Stale or malformed editor form.
 
-    $next = isset( $_POST['pvdak_state'] ) && is_string( $_POST['pvdak_state'] ) ?
-        sanitize_key( wp_unslash( $_POST['pvdak_state'] ) ) : $previous;
+    // A missing state field can accompany a note-only legacy edit; a
+    // malformed supplied state is different and must reject the entire write.
+    $next = array_key_exists( 'pvdak_state', $_POST )
+        ? pvdak_core_request_state_choice( $_POST['pvdak_state'] ) : $previous;
+    if ( null === $next ) { return; }
     if ( $next !== $previous ) {
         if ( ! in_array( $next, pvdak_core_allowed_request_transitions( $previous ), true ) ) { return; }
         // Compare the previous stored value when available to avoid overwriting a concurrent transition.

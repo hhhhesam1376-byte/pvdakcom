@@ -221,6 +221,24 @@ function pvdak_expect( $condition, $description ) {
 }
 
 pvdak_expect( count( pvdak_core_request_types() ) === 3, 'Three distinct legal request types' );
+pvdak_expect( 'review' === pvdak_core_request_state_choice( 'review' ),
+    'Valid admin state is accepted exactly' );
+pvdak_expect( 'matched' === pvdak_core_request_state_choice( 'matched' ),
+    'Existing matched records remain recognizable without allowing forged transitions' );
+foreach ( array( 'review!', 'REVIEW', ' review', 'answered%', '', 'unknown', array( 'review' ), null ) as $invalid ) {
+    pvdak_expect( null === pvdak_core_request_state_choice( $invalid ),
+        'Malformed admin workflow state fails closed' );
+}
+pvdak_expect( pvdak_core_request_workflow_type_valid( 'lawyer' ),
+    'Known legal request type permits workflow review' );
+pvdak_expect( pvdak_core_request_workflow_type_valid( 'consultation' ),
+    'Consultation permits workflow review' );
+pvdak_expect( pvdak_core_request_workflow_type_valid( 'question' ),
+    'Question permits workflow review' );
+foreach ( array( 'lawyer!', '', 'unrecognized', array( 'lawyer' ), null ) as $invalid_type ) {
+    pvdak_expect( ! pvdak_core_request_workflow_type_valid( $invalid_type ),
+        'Malformed or missing legal request type blocks state/notes' );
+}
 
 pvdak_expect( pvdak_core_request_input_valid( str_repeat( 'آ', 140 ), str_repeat( 'ب', 3000 ) ),
     'Intake accepts 140/3000 Persian characters within byte limits' );
