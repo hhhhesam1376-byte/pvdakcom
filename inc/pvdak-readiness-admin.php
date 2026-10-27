@@ -207,11 +207,17 @@ function pvdak_management_render() {
         $signup = function_exists('pvdak_registration_open') && pvdak_registration_open();
         $core_available = defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' );
         $requests = $core_available && pvdak_core_intake_open();
+        $members = $core_available && function_exists( 'pvdak_core_member_intake_open' ) && pvdak_core_member_intake_open();
+        $directory = $core_available && function_exists( 'pvdak_core_directory_enabled' ) && pvdak_core_directory_enabled();
+        $notifications = $core_available && '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' );
         echo '<h2 style="margin-top:30px">وضعیت دسترسی‌های عمومی</h2>';
         echo '<p>این بخش فقط وضعیت فعلی را نشان می‌دهد؛ هیچ خدمتی را به‌صورت خودکار فعال نمی‌کند.</p><ul style="list-style:disc;padding-right:20px">';
         echo '<li>حالت تعمیرات: <strong>' . ($maintenance ? 'فعال' : 'غیرفعال') . '</strong></li>';
         echo '<li>ثبت‌نام عمومی: <strong>' . ($signup ? 'فعال' : 'بسته') . '</strong></li>';
         echo '<li>پذیرش درخواست حقوقی: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $requests ? 'فعال' : 'بسته' ) ) . '</strong></li>';
+        echo '<li>پذیرش همکاری متخصصان: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $members ? 'فعال' : 'بسته' ) ) . '</strong></li>';
+        echo '<li>فهرست عمومی متخصصان: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $directory ? 'کلید فعال است؛ رضایت فردی لازم است' : 'بسته' ) ) . '</strong></li>';
+        echo '<li>اعلان ایمیلی: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $notifications ? 'کلید فعال است؛ رضایت فردی لازم است' : 'خاموش' ) ) . '</strong></li>';
         echo '</ul><p>پیش از فعال‌سازی خدمات جدید، مقررات و تأییدهای لازم را بررسی کنید.</p>';
     }
     echo '</div>';
