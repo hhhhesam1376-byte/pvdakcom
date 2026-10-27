@@ -374,22 +374,35 @@ function pvdak_readiness_front_page_id( $value ) {
  * WordPress can still load front-page.php when "latest posts" is selected,
  * but the ACF homepage editor needs a published static Page.
  */
-function pvdak_readiness_front_page_state( $mode, $selected_id, $post_type, $post_status ) {
-    if ( 'page' !== $mode ) { return 'posts_mode'; }
-    if ( ! pvdak_readiness_front_page_id( $selected_id ) ) { return 'missing'; }
+function pvdak_readiness_front_page_state( $mode, $selected_id, $post_type, $post_status, $posts_page_id = 0 ) {
+    if ( 'posts' === $mode ) { return 'posts_mode'; }
+    // A corrupted Reading option must not masquerade as the valid posts mode.
+    if ( 'page' !== $mode ) { return 'invalid_mode'; }
+    $front_id = pvdak_readiness_front_page_id( $selected_id );
+    if ( ! $front_id ) { return 'missing'; }
     if ( 'page' !== $post_type ) { return 'invalid'; }
-    return 'publish' === $post_status ? 'ready' : 'unpublished';
+    if ( 'publish' !== $post_status ) { return 'unpublished'; }
+    // A Page cannot safely serve as both the static front page and posts index.
+    if ( $front_id === pvdak_readiness_front_page_id( $posts_page_id ) ) {
+        return 'posts_conflict';
+    }
+    return 'ready';
 }
 
 /** Read only WordPress options and Page metadata, never edit them. */
 function pvdak_readiness_front_page_snapshot() {
     $mode = get_option( 'show_on_front', 'posts' );
+    // Do not query Pages when WordPress is configured for latest posts.
+    if ( 'page' !== $mode ) {
+        return pvdak_readiness_front_page_state( $mode, 0, false, false );
+    }
     $selected_id = get_option( 'page_on_front', 0 );
     $id = pvdak_readiness_front_page_id( $selected_id );
     return pvdak_readiness_front_page_state(
         $mode, $selected_id,
         $id ? get_post_type( $id ) : false,
-        $id ? get_post_status( $id ) : false
+        $id ? get_post_status( $id ) : false,
+        get_option( 'page_for_posts', 0 )
     );
 }
 
@@ -397,6 +410,8 @@ function pvdak_readiness_front_page_status_label( $state ) {
     $labels = array(
         'ready' => 'برگه ثابت منتشرشده برای صفحه اصلی انتخاب شده است',
         'posts_mode' => 'حالت آخرین نوشته‌ها انتخاب شده؛ قالب صفحه اصلی ممکن است نمایش داده شود، اما ویرایشگر محتوای آن به برگه ثابت نیاز دارد',
+        'invalid_mode' => 'تنظیم نمایش صفحه اصلی وردپرس نامعتبر است؛ تنظیمات خواندن را بررسی کنید',
+        'posts_conflict' => 'یک برگه هم‌زمان برای صفحه اصلی و فهرست نوشته‌ها انتخاب شده؛ این دو برگه باید متفاوت باشند',
         'missing' => 'برگه ثابت صفحه اصلی انتخاب نشده یا شناسه تنظیم‌شده نامعتبر است',
         'invalid' => 'انتخاب صفحه اصلی به یک برگه معتبر اشاره نمی‌کند',
         'unpublished' => 'برگه انتخاب‌شده برای صفحه اصلی هنوز منتشر نشده است',

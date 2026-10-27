@@ -80,10 +80,13 @@ $checks = array(
     strpos($s['admin'],"admin_url( 'options-reading.php' )")!==false &&
     strpos($s['admin'],'pvdak_readiness_front_page_snapshot()')!==false &&
     strpos($s['admin'],'pvdak_readiness_front_page_status_label( $front_state )')!==false &&
+    strpos($s['admin'],"get_option( 'page_for_posts', 0 )")!==false &&
+    strpos($s['admin'],"'posts_conflict' =>")!==false &&
+    strpos($s['admin'],"'invalid_mode' =>")!==false &&
     strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
-    pvdak_test_release_at_least($s['theme'],'0.8.93') &&
+    pvdak_test_release_at_least($s['theme'],'0.8.94') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
@@ -177,19 +180,28 @@ $front_cases = array(
     array( 'page', 12, 'page', 'draft', 'unpublished' ),
     array( 'page', 12, 'page', 'private', 'unpublished' ),
     array( 'posts', 12, 'page', 'publish', 'posts_mode' ),
-    array( 'invalid', 12, 'page', 'publish', 'posts_mode' ),
+    array( 'invalid', 12, 'page', 'publish', 'invalid_mode' ),
+    array( '', 12, 'page', 'publish', 'invalid_mode' ),
+    array( array( 'page' ), 12, 'page', 'publish', 'invalid_mode' ),
+    array( 'page', 12, 'page', 'publish', 'posts_conflict', 12 ),
+    array( 'page', '12', 'page', 'publish', 'posts_conflict', '12' ),
+    array( 'page', 12, 'page', 'publish', 'ready', '13' ),
+    array( 'page', 12, 'page', 'draft', 'unpublished', 12 ),
+    array( 'page', 12, 'post', 'publish', 'invalid', 12 ),
+    array( 'page', 12, 'page', 'publish', 'ready', array( 12 ) ),
 );
 foreach ( $front_cases as $case ) {
-    if ( pvdak_readiness_front_page_state( $case[0], $case[1], $case[2], $case[3] ) !== $case[4] ) {
+    if ( pvdak_readiness_front_page_state( $case[0], $case[1], $case[2], $case[3],
+        array_key_exists( 5, $case ) ? $case[5] : 0 ) !== $case[4] ) {
         fwrite( STDERR, "PVD_READINESS_FAIL: WordPress static front Page state\n" );
         exit( 1 );
     }
 }
-foreach ( array( 'ready', 'posts_mode', 'missing', 'invalid', 'unpublished' ) as $state ) {
+foreach ( array( 'ready', 'posts_mode', 'invalid_mode', 'posts_conflict', 'missing', 'invalid', 'unpublished' ) as $state ) {
     if ( '' === pvdak_readiness_front_page_status_label( $state ) ||
          'وضعیت تنظیم صفحه اصلی نامشخص است' === pvdak_readiness_front_page_status_label( $state ) ) {
         fwrite( STDERR, "PVD_READINESS_FAIL: front Page status label\n" );
         exit( 1 );
     }
 }
-echo "PVDAK_READINESS_FRONT_PAGE_OK: 21/21 isolated PHP cases (not WordPress E2E).\n";
+echo "PVDAK_READINESS_FRONT_PAGE_OK: 32/32 isolated PHP cases (not WordPress E2E).\n";
