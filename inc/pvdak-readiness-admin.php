@@ -217,6 +217,13 @@ function pvdak_management_render() {
     pvdak_management_daily_steps();
     pvdak_management_render_links();
     if (current_user_can('manage_options')) {
+        $front_state = pvdak_readiness_front_page_snapshot();
+        if ( 'ready' !== $front_state ) {
+            echo '<div class="notice notice-warning inline"><p><strong>تنظیم صفحه اصلی:</strong> ' .
+                esc_html( pvdak_readiness_front_page_status_label( $front_state ) ) .
+                ' — <a href="' . esc_url( admin_url( 'options-reading.php' ) ) .
+                '">بررسی تنظیمات خواندن</a>. هیچ تنظیمی از این راهنما تغییر نمی‌کند.</p></div>';
+        }
         $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();
         $signup = function_exists('pvdak_registration_open') && pvdak_registration_open();
         $core_available = defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' );
@@ -353,6 +360,51 @@ function pvdak_readiness_privacy_setting_state( $expected_id, $published, $selec
     return (string) $expected_id === (string) $selected_id ? 'matched' : 'mismatch';
 }
 
+/** A malformed page_on_front option must not be coerced into a real Page ID. */
+function pvdak_readiness_front_page_id( $value ) {
+    if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]*$/D', $raw ) ) { return 0; }
+    $id = (int) $raw;
+    return $id > 0 && (string) $id === $raw ? $id : 0;
+}
+
+/**
+ * Report Reading settings, not a claim about rendered front-page.php.
+ * WordPress can still load front-page.php when "latest posts" is selected,
+ * but the ACF homepage editor needs a published static Page.
+ */
+function pvdak_readiness_front_page_state( $mode, $selected_id, $post_type, $post_status ) {
+    if ( 'page' !== $mode ) { return 'posts_mode'; }
+    if ( ! pvdak_readiness_front_page_id( $selected_id ) ) { return 'missing'; }
+    if ( 'page' !== $post_type ) { return 'invalid'; }
+    return 'publish' === $post_status ? 'ready' : 'unpublished';
+}
+
+/** Read only WordPress options and Page metadata, never edit them. */
+function pvdak_readiness_front_page_snapshot() {
+    $mode = get_option( 'show_on_front', 'posts' );
+    $selected_id = get_option( 'page_on_front', 0 );
+    $id = pvdak_readiness_front_page_id( $selected_id );
+    return pvdak_readiness_front_page_state(
+        $mode, $selected_id,
+        $id ? get_post_type( $id ) : false,
+        $id ? get_post_status( $id ) : false
+    );
+}
+
+function pvdak_readiness_front_page_status_label( $state ) {
+    $labels = array(
+        'ready' => 'برگه ثابت منتشرشده برای صفحه اصلی انتخاب شده است',
+        'posts_mode' => 'حالت آخرین نوشته‌ها انتخاب شده؛ قالب صفحه اصلی ممکن است نمایش داده شود، اما ویرایشگر محتوای آن به برگه ثابت نیاز دارد',
+        'missing' => 'برگه ثابت صفحه اصلی انتخاب نشده یا شناسه تنظیم‌شده نامعتبر است',
+        'invalid' => 'انتخاب صفحه اصلی به یک برگه معتبر اشاره نمی‌کند',
+        'unpublished' => 'برگه انتخاب‌شده برای صفحه اصلی هنوز منتشر نشده است',
+    );
+    return is_string( $state ) && isset( $labels[ $state ] ) ?
+        $labels[ $state ] : 'وضعیت تنظیم صفحه اصلی نامشخص است';
+}
+
 function pvdak_readiness_render() {
     if(!current_user_can('manage_options')){
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -383,8 +435,10 @@ function pvdak_readiness_render() {
         'mismatch' => 'برگه دیگری انتخاب شده؛ تنظیمات را بررسی کنید',
         'matched' => 'برگه PVDak انتخاب شده؛ تأیید حقوقی متن جداگانه لازم است',
     );
+    $front_state = pvdak_readiness_front_page_snapshot();
     $facts=array(
         'نسخه قالب'=>wp_get_theme()->get('Version'),
+        'تنظیم صفحه اصلی'=>pvdak_readiness_front_page_status_label( $front_state ),
         'نسخه Core فعال'=>defined('PVDAK_CORE_VERSION')?PVDAK_CORE_VERSION:'نصب یا فعال نشده',
         'برگه حریم خصوصی وردپرس'=>$privacy_labels[ $privacy_state ],
         'حالت تعمیرات'=>(function_exists('pvdak_maintenance_enabled')&&pvdak_maintenance_enabled())?'فعال':'غیرفعال',
@@ -398,6 +452,8 @@ function pvdak_readiness_render() {
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
     echo '</tbody></table>';
+    echo '<p><a href="' . esc_url( admin_url( 'options-reading.php' ) ) .
+        '">بررسی تنظیمات خواندن و برگه صفحه اصلی</a> — این گزارش وضعیت برگه انتخاب‌شده را بررسی می‌کند، نه نمایش نهایی قالب front-page.php.</p>';
     echo '<p><a href="' . esc_url( admin_url( 'options-privacy.php' ) ) .
         '">بررسی تنظیمات حریم خصوصی وردپرس</a> — انتخاب برگه در وردپرس، جایگزین تأیید حقوقی متن نیست.</p>';
     // Use the same template definitions as the existing Page bootstrap.
