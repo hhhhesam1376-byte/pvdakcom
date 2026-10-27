@@ -351,13 +351,19 @@ function pvdak_core_case_ops_column_content( $column, $post_id ) {
         $state = get_post_meta( $post_id, '_pvdak_request_state', true );
         echo esc_html( isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'نامعتبر / نیازمند بررسی' );
     } elseif ( 'pvdak_case_assignee' === $column ) {
-        $profile_id = absint( get_post_meta( $post_id, '_pvdak_assigned_profile_id', true ) );
+        $raw_profile_id = get_post_meta( $post_id, '_pvdak_assigned_profile_id', true );
+        $profile_id = is_scalar( $raw_profile_id ) &&
+            preg_match( '/^[1-9][0-9]{0,9}$/D', (string) $raw_profile_id ) ? absint( $raw_profile_id ) : 0;
+        $invalid_assignment = is_scalar( $raw_profile_id ) &&
+            '' !== (string) $raw_profile_id && '0' !== (string) $raw_profile_id && ! $profile_id;
         $state = get_post_meta( $post_id, '_pvdak_request_state', true );
         if ( ! $profile_id ) {
-            echo 'matched' === $state ? '<strong class="pvdak-case-alert">ارجاع ناقص؛ بررسی شود</strong>' : '—';
+            echo 'matched' === $state || $invalid_assignment ?
+                '<strong class="pvdak-case-alert">ارجاع ناقص یا نامعتبر؛ بررسی شود</strong>' : '—';
         } else {
             echo '<code>#' . esc_html( $profile_id ) . '</code>';
-            if ( 'pvdak_professional' !== get_post_type( $profile_id ) ) {
+            if ( 'pvdak_professional' !== get_post_type( $profile_id ) ||
+                 ! in_array( get_post_status( $profile_id ), array( 'private', 'draft' ), true ) ) {
                 echo ' <strong class="pvdak-case-alert">پرونده حرفه‌ای نامعتبر</strong>';
             } elseif ( current_user_can( 'edit_post', $profile_id ) ) {
                 $link = get_edit_post_link( $profile_id );
