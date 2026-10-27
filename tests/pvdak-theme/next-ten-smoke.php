@@ -70,10 +70,13 @@ $checks = array(
     strpos($s['admin'],'pvdak_state_filter=pending')!==false &&
     strpos($s['admin'],"echo '</tbody></table>';")!==false &&
     strpos($s['admin'],'pvdak_readiness_page_classify(')!==false &&
+    strpos($s['admin'],'pvdak_public_page_seeds()')!==false &&
+    strpos($s['admin'],'get_page_template_slug( $post->ID )')!==false &&
+    strpos($s['admin'],"'wrong_template' => 0")!==false &&
     strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
-    pvdak_test_release_at_least($s['theme'],'0.8.89') &&
+    pvdak_test_release_at_least($s['theme'],'0.8.90') &&
     pvdak_test_release_at_least($s['core'],'0.8.2') &&
     strpos($s['registration'],"get_option('pvdak_registration_enabled', '0')")!==false &&
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
@@ -103,16 +106,24 @@ $readiness_cases = array(
     array( true, 'publish', '', 'published' ),
     array( true, 'publish', '0', 'published' ),
     array( true, 'publish', false, 'published' ),
+    array( true, 'publish', '', 'wrong_template', false ),
+    array( true, 'publish', '1', 'wrong_template', false ),
+    array( true, 'draft', '', 'unpublished', false ),
+    array( true, 'publish', '', 'published', true ),
+    array( false, '', '', 'missing', false ),
 );
 foreach ( $readiness_cases as $case ) {
-    if ( pvdak_readiness_page_classify( $case[0], $case[1], $case[2] ) !== $case[3] ) {
+    $template_matches = array_key_exists( 4, $case ) ? $case[4] : true;
+    if ( pvdak_readiness_page_classify( $case[0], $case[1], $case[2], $template_matches ) !== $case[3] ) {
         fwrite( STDERR, "PVD_READINESS_FAIL: " . $case[3] . "\n" );
         exit( 1 );
     }
 }
 if ( 'منتشرنشده — پیش‌نویس' !== pvdak_readiness_page_status_label( 'unpublished', 'draft' ) ||
-     'منتشرنشده — وضعیت نامعتبر یا نامشخص' !== pvdak_readiness_page_status_label( 'unpublished', array() ) ) {
+     'منتشرنشده — وضعیت نامعتبر یا نامشخص' !== pvdak_readiness_page_status_label( 'unpublished', array() ) ||
+     'منتشرشده — قالب صفحه نادرست است؛ مسیر ممکن است کار نکند' !==
+         pvdak_readiness_page_status_label( 'wrong_template', 'publish' ) ) {
     fwrite( STDERR, "PVD_READINESS_FAIL: status labels\n" );
     exit( 1 );
 }
-echo "PVDAK_READINESS_HELPERS_OK: 13/13 isolated PHP cases (not WordPress E2E).\n";
+echo "PVDAK_READINESS_HELPERS_OK: 19/19 isolated PHP cases (not WordPress E2E).\n";

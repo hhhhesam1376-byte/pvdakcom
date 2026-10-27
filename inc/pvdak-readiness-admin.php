@@ -300,9 +300,12 @@ function pvdak_management_dashboard_widget() {
  * Any unexpected provisional-policy metadata is treated as needing review,
  * rather than silently certifying the Page as editorially complete.
  */
-function pvdak_readiness_page_classify( $exists, $status, $provisional ) {
+function pvdak_readiness_page_classify( $exists, $status, $provisional, $template_matches = true ) {
     if ( ! $exists ) { return 'missing'; }
     if ( ! is_string( $status ) || 'publish' !== $status ) { return 'unpublished'; }
+    // A published Page with the wrong template is not a working login,
+    // recovery or account route. Detect this before provisional text status.
+    if ( true !== $template_matches ) { return 'wrong_template'; }
     if ( ! in_array( $provisional, array( '', '0', 0, false, null ), true ) ) {
         return 'provisional';
     }
@@ -312,6 +315,9 @@ function pvdak_readiness_page_classify( $exists, $status, $provisional ) {
 /** Human-readable editorial status; never confuse publication with approval. */
 function pvdak_readiness_page_status_label( $classification, $status ) {
     if ( 'missing' === $classification ) { return 'برگه وجود ندارد'; }
+    if ( 'wrong_template' === $classification ) {
+        return 'منتشرشده — قالب صفحه نادرست است؛ مسیر ممکن است کار نکند';
+    }
     if ( 'provisional' === $classification ) { return 'منتشرشده — متن اولیه یا نشانگر نامعتبر؛ نیازمند تأیید'; }
     if ( 'published' === $classification ) { return 'منتشرشده — تأیید محتوایی مستقل لازم است'; }
     $statuses = array(
@@ -354,19 +360,29 @@ function pvdak_readiness_render() {
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
     echo '</tbody></table>';
-    // The required slugs are fixed by the theme; never query private page
-    // contents or auto-create/publish anything from this read-only report.
+    // Use the same template definitions as the existing Page bootstrap.
+    // A published URL with a changed template can break account flows.
+    // Never read private page bodies or auto-create/publish from this report.
+    $seed_pages = function_exists( 'pvdak_public_page_seeds' ) ?
+        pvdak_public_page_seeds() : array();
     $audits = array();
-    $totals = array( 'missing' => 0, 'unpublished' => 0, 'provisional' => 0, 'published' => 0 );
+    $totals = array( 'missing' => 0, 'unpublished' => 0, 'wrong_template' => 0,
+        'provisional' => 0, 'published' => 0 );
     foreach ( $pages as $slug => $label ) {
         $post = get_page_by_path( $slug, OBJECT, 'page' );
         $exists = $post instanceof WP_Post && absint( $post->ID ) > 0;
         $status = $exists ? $post->post_status : '';
         $provisional = $exists ? get_post_meta( $post->ID, '_pvdak_provisional_policy', true ) : '';
-        $classification = pvdak_readiness_page_classify( $exists, $status, $provisional );
+        $expected_template = isset( $seed_pages[ $slug ][1] ) &&
+            is_string( $seed_pages[ $slug ][1] ) ? $seed_pages[ $slug ][1] : '';
+        $template_matches = $exists && '' !== $expected_template &&
+            $expected_template === get_page_template_slug( $post->ID );
+        $classification = pvdak_readiness_page_classify(
+            $exists, $status, $provisional, $template_matches );
         $totals[ $classification ]++;
         $audits[] = array(
             'slug' => $slug, 'title' => $label, 'post' => $exists ? $post : null,
+            'classification' => $classification,
             'status' => pvdak_readiness_page_status_label( $classification, $status ),
         );
     }
@@ -374,15 +390,17 @@ function pvdak_readiness_render() {
     echo '<p><strong>خلاصه وضعیت انتشار:</strong> ' .
         esc_html( number_format_i18n( $totals['published'] ) ) . ' منتشرشده بدون نشانگر متن اولیه، ' .
         esc_html( number_format_i18n( $totals['provisional'] ) ) . ' نیازمند تأیید متن اولیه، ' .
+        esc_html( number_format_i18n( $totals['wrong_template'] ) ) . ' با قالب نادرست، ' .
         esc_html( number_format_i18n( $totals['unpublished'] ) ) . ' منتشرنشده و ' .
         esc_html( number_format_i18n( $totals['missing'] ) ) . ' فاقد برگه.</p>';
-    echo '<p class="description">این آمار فقط وضعیت برگه‌هاست، نه تأیید حقوقی محتوا، امنیت خدمات یا مجوز افتتاح عمومی. هیچ برگه‌ای از این صفحه ساخته یا منتشر نمی‌شود.</p>';
+    echo '<p class="description">این آمار فقط وضعیت برگه‌ها و تطبیق قالب آن‌هاست، نه تأیید حقوقی محتوا، امنیت خدمات یا مجوز افتتاح عمومی. برای برگه‌های دارای قالب نادرست، در ویرایش برگه قالب مناسب را بررسی کنید. هیچ برگه‌ای از این صفحه ساخته یا منتشر نمی‌شود.</p>';
     echo '<table class="widefat striped"><thead><tr><th scope="col">برگه</th><th scope="col">نامک مورد انتظار</th><th scope="col">وضعیت</th><th scope="col">اقدام مدیر</th></tr></thead><tbody>';
     foreach ( $audits as $audit ) {
         $post = $audit['post'];
         $url = $post && current_user_can( 'edit_post', $post->ID ) ?
             get_edit_post_link( $post->ID ) : '';
-        $action = 'ویرایش و بررسی';
+        $action = 'wrong_template' === $audit['classification'] ?
+            'بازبینی قالب برگه' : 'ویرایش و بررسی';
         if ( ! $post && current_user_can( 'edit_pages' ) ) {
             $url = admin_url( 'post-new.php?post_type=page' );
             $action = 'ایجاد دستی برگه';
