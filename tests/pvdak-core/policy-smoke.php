@@ -59,17 +59,27 @@ function get_page_by_path( $slug, $output = null, $type = null ) {
     return 'legal-topics' === $slug ? new WP_Post( 10 ) : null;
 }
 function get_post_type( $id ) {
-    return in_array( (int) $id, array( 10, 11, 12 ), true ) ? 'page' :
+    return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17 ), true ) ? 'page' :
         ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' :
         ( in_array( (int) $id, array( 701, 702, 703, 704 ), true ) ? 'pvdak_request' : '' ) );
 }
 $GLOBALS['pvdak_mock_topic_draft'] = false;
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 function get_post_status( $id ) {
-    if ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) { return 'draft'; }
+    if ( ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) ||
+         17 === (int) $id ) { return 'draft'; }
     return in_array( (int) $id, array( 501, 502, 701, 702, 703, 704 ), true ) ? 'private' : 'publish';
 }
-function wp_get_post_parent_id( $id ) { return in_array( (int) $id, array( 11, 12 ), true ) ? 10 : 0; }
+function wp_get_post_parent_id( $id ) {
+    $parents = array( 11 => 10, 12 => 10, 13 => 11, 14 => 15, 15 => 14, 16 => 17, 17 => 10 );
+    return $parents[ (int) $id ] ?? 0;
+}
+function get_pages( $args ) {
+    // No WordPress runtime: feed a mixed descendant fixture and require Core
+    // to exclude cycles and any page under an unpublished intermediate node.
+    return array( new WP_Post( 11 ), new WP_Post( 12 ), new WP_Post( 13 ),
+        new WP_Post( 14 ), new WP_Post( 16 ) );
+}
 $GLOBALS['pvdak_mock_profile_author'] = 21;
 $GLOBALS['pvdak_mock_profile_name'] = 'وکیل نمونه';
 $GLOBALS['pvdak_mock_profile_city'] = 'تهران';
@@ -78,6 +88,7 @@ function get_post_field( $field, $id ) {
     if ( 'post_title' === $field && 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_name']; }
     if ( 'post_title' === $field && 11 === (int) $id ) { return $GLOBALS['pvdak_mock_topic_title']; }
     if ( 'post_title' === $field && 12 === (int) $id ) { return 'حقوق تجارت'; }
+    if ( 'post_title' === $field && 13 === (int) $id ) { return 'شرکت سهامی عام'; }
     if ( 'post_author' !== $field ) { return ''; }
     if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
     if ( 502 === (int) $id ) { return 22; }
@@ -368,6 +379,19 @@ foreach ( array( -11, '-11', '+11', '011', '11x', ' 11', '11 ', 11.0, array( 11 
 }
 pvdak_expect( 'missing' === pvdak_core_topic_resolution( '' )['status'],
     'D23 genuinely absent topic retains explicit missing diagnostic' );
+pvdak_expect( pvdak_core_valid_specialty( 13 ),
+    'D23 published grandchild legal subject is a valid specialty' );
+pvdak_expect( 'ready' === pvdak_core_topic_resolution( 13 )['status'],
+    'D23 grandchild company type resolves by actual Page ID' );
+pvdak_expect( ! pvdak_core_valid_specialty( 14 ),
+    'D23 cyclic Page hierarchy fails closed' );
+pvdak_expect( ! pvdak_core_valid_specialty( 16 ),
+    'D23 unpublished ancestor blocks a seemingly published descendant' );
+pvdak_expect( array( 11, 12, 13 ) === array_map( function ( $page ) { return $page->ID; },
+    pvdak_core_specialty_pages() ), 'D23 admin choices include nested legal topics but exclude invalid ancestry' );
+$GLOBALS['pvdak_mock_specialty_ids'] = array( 13 );
+pvdak_expect( array( 13 ) === pvdak_core_specialty_ids( 501 ),
+    'D23 published grandchild specialty remains available for later matching' );
 $GLOBALS['pvdak_mock_specialty_ids'] = array( -11, '-11', '011', 11.0, array( 11 ) );
 pvdak_expect( array() === pvdak_core_specialty_ids( 501 ),
     'D23 malformed persisted specialties cannot silently match valid landing 11' );

@@ -42,22 +42,41 @@ function pvdak_core_landing_parent_id() {
 function pvdak_core_specialty_pages() {
     $parent_id = pvdak_core_landing_parent_id();
     if ( ! $parent_id ) { return array(); }
-    return get_posts( array(
-        'post_type' => 'page',
+    // Legal taxonomy is a Page tree: a specialist may serve a grandchild
+    // (e.g., public joint-stock company below company law), not only a
+    // direct child of the top-level legal-topics landing.
+    $pages = get_pages( array(
+        'child_of' => $parent_id,
         'post_status' => 'publish',
-        'post_parent' => $parent_id,
-        'posts_per_page' => 200,
-        'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
-        'order' => 'ASC',
+        'number' => 200,
+        'sort_column' => 'menu_order,post_title',
+        'hierarchical' => true,
     ) );
+    if ( ! is_array( $pages ) ) { return array(); }
+    return array_values( array_filter( $pages, function ( $page ) {
+        return $page instanceof WP_Post &&
+            pvdak_core_valid_specialty( $page->ID );
+    } ) );
 }
 
 function pvdak_core_valid_specialty( $page_id ) {
     $page_id = pvdak_core_specialty_page_id( $page_id );
     $parent_id = pvdak_core_landing_parent_id();
-    return $parent_id && $page_id && 'page' === get_post_type( $page_id ) &&
-        'publish' === get_post_status( $page_id ) &&
-        $parent_id === (int) wp_get_post_parent_id( $page_id );
+    if ( ! $parent_id || ! $page_id || $page_id === $parent_id ) { return false; }
+    $seen = array();
+    // The tree must terminate at the configured published root. Cycles,
+    // unpublished intermediate parents and extreme depths fail closed.
+    for ( $depth = 0; $depth < 20; $depth++ ) {
+        if ( isset( $seen[ $page_id ] ) ||
+             'page' !== get_post_type( $page_id ) ||
+             'publish' !== get_post_status( $page_id ) ) { return false; }
+        $seen[ $page_id ] = true;
+        $direct_parent = pvdak_core_specialty_page_id( wp_get_post_parent_id( $page_id ) );
+        if ( ! $direct_parent ) { return false; }
+        if ( $direct_parent === $parent_id ) { return true; }
+        $page_id = $direct_parent;
+    }
+    return false;
 }
 
 /**
