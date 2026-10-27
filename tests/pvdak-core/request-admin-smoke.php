@@ -3,7 +3,8 @@
 $root = dirname( __DIR__, 2 );
 $src = file_get_contents( $root . '/packages/pvdak-core/includes/request-admin.php' );
 $boot = file_get_contents( $root . '/packages/pvdak-core/pvdak-core.php' );
-if ( false === $src || false === $boot ) { fwrite( STDERR, "PVDAK_CASE_ADMIN_SOURCE_MISSING\n" ); exit( 2 ); }
+$setup = file_get_contents( $root . '/packages/pvdak-core/includes/admin.php' );
+if ( false === $src || false === $boot || false === $setup ) { fwrite( STDERR, "PVDAK_CASE_ADMIN_SOURCE_MISSING\n" ); exit( 2 ); }
 $checks = array(
     'private CPT capability' => strpos( $src, 'get_post_type_object( \'pvdak_request\' )' ) !== false,
     'main query' => strpos( $src, '$query->is_main_query()' ) !== false,
@@ -43,6 +44,18 @@ $checks = array(
     'future registration filter' => strpos( $src, '\'future\' === $age' ) !== false,
     'deduplicated admin columns' => strpos( $src, 'unset( $columns[\'pvdak_kind\']' ) !== false,
     'invalid professional warning' => strpos( $src, 'پرونده حرفه‌ای نامعتبر' ) !== false,
+    'draft generator checks actual insert result and retains existing pages' =>
+        strpos( $setup, "get_page_by_path( \$slug, OBJECT, 'page' )" ) !== false &&
+        strpos( $setup, 'wp_insert_post( array(' ) !== false &&
+        strpos( $setup, 'is_wp_error( $id )' ) !== false &&
+        strpos( $setup, "'draft' !== get_post_status( \$id )" ) !== false,
+    'draft generator distinguishes partial failure from successful creation' =>
+        strpos( $setup, "'partial' : 'failed'" ) !== false &&
+        strpos( $setup, "'created' : 'existing'" ) !== false &&
+        strpos( $setup, "'pvdak_pages'" ) !== false,
+    'future service page titles use PVDak branding' =>
+        strpos( $setup, 'پنل کاربری PVDak' ) !== false &&
+        strpos( $setup, 'همکاری با متخصصان PVDak' ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {

@@ -305,6 +305,11 @@ $checks = array(
     strpos($s['admin-management'], "defined( 'PVDAK_CORE_VERSION' )") !== false &&
     strpos($s['admin-management'], "'افزونه Core فعال نیست'") !== false &&
     strpos($s['home-editor'], "if ( ! \$home_id && ! current_user_can( 'manage_options' ) )") !== false,
+  'D31 core controls are linked only when Core is installed and administrator is authorized' =>
+    strpos($s['admin-management'], "'options-general.php?page=pvdak-core'")!==false &&
+    strpos($s['admin-management'], "! defined( 'PVDAK_CORE_VERSION' )")!==false &&
+    strpos($s['admin-management'], "'manage_options', 'options-general.php?page=pvdak-core'")!==false &&
+    strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'")!==false,
   'D13/D14 recovery/contact IP ceilings and published contact route' =>
     strpos($s['tools'],"pvdak_registration_rate_exceeded( 'recovery-request', 12")!==false &&
     strpos($s['public'],"pvdak_registration_rate_exceeded('contact',12")!==false &&

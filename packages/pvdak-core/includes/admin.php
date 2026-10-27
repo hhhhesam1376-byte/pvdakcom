@@ -126,8 +126,17 @@ function pvdak_core_settings_page() {
     wp_nonce_field( 'pvdak_core_create_pages' );
     submit_button( 'ساخت برگه‌های آزمایشی به‌صورت پیش‌نویس', 'secondary' );
     echo '</form>';
-    if ( isset( $_GET['pvdak_pages'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['pvdak_pages'] ) ) ) {
-        echo '<div class="notice notice-success inline"><p>برگه‌ها بررسی و در صورت نیاز به‌صورت پیش‌نویس ساخته شدند. برای مشاهده به بخش برگه‌ها بروید.</p></div>';
+    $page_result = isset( $_GET['pvdak_pages'] ) && is_string( $_GET['pvdak_pages'] ) ?
+        sanitize_key( wp_unslash( $_GET['pvdak_pages'] ) ) : '';
+    $page_messages = array(
+        'created' => array( 'success', 'برگه‌های جدید به‌صورت پیش‌نویس ساخته شدند؛ برگه‌های موجود بدون تغییر باقی ماندند.' ),
+        'existing' => array( 'info', 'همه برگه‌های موردنیاز از قبل وجود دارند؛ هیچ برگه‌ای تغییر نکرد.' ),
+        'partial' => array( 'warning', 'برخی برگه‌ها ساخته شدند اما ساخت همه برگه‌ها موفق نبود؛ پیش از تکرار، فهرست برگه‌ها را بررسی کنید.' ),
+        'failed' => array( 'error', 'ساخت برگه‌های جدید موفق نبود؛ هیچ موفقیت تأییدنشده‌ای ثبت نشد.' ),
+    );
+    if ( isset( $page_messages[ $page_result ] ) ) {
+        $message = $page_messages[ $page_result ];
+        echo '<div class="notice notice-' . esc_attr( $message[0] ) . ' inline"><p>' . esc_html( $message[1] ) . '</p></div>';
     }
     echo '<h2>برگه‌های موردنیاز</h2><p>هر برگه از یکی از کدهای کوتاه زیر استفاده می‌کند:</p>';
     echo '<p><code>[pvdak_request_form type="lawyer"]</code>، <code>[pvdak_request_form type="consultation"]</code>، <code>[pvdak_request_form type="question"]</code></p>';
@@ -190,29 +199,46 @@ function pvdak_core_default_service_pages() {
         'request-consultation' => array( 'درخواست مشاوره حقوقی', '[pvdak_request_form type="consultation"]' ),
         'request-question' => array( 'پرسش حقوقی', '[pvdak_request_form type="question"]' ),
         'my-legal-requests' => array( 'درخواست‌های من', '[pvdak_my_requests]' ),
-        'join-legal-community' => array( 'همکاری با پویش وکلا', '[pvdak_professional_application]' ),
-        'my-pvdak-account' => array( 'پنل کاربری پویش', '[pvdak_account_dashboard]' ),
+        'join-legal-community' => array( 'همکاری با متخصصان PVDak', '[pvdak_professional_application]' ),
+        'my-pvdak-account' => array( 'پنل کاربری PVDak', '[pvdak_account_dashboard]' ),
         'my-professional-account' => array( 'پنل همکاری حقوقی', '[pvdak_professional_dashboard]' ),
     );
 }
 function pvdak_core_create_service_pages() {
-    if ( ! current_user_can( 'manage_options' ) ) {
+    if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_pages' ) ) {
         wp_die( 'دسترسی مجاز نیست.', '', array( 'response' => 403 ) );
     }
     check_admin_referer( 'pvdak_core_create_pages' );
+    $created = 0;
+    $failed = 0;
     foreach ( pvdak_core_default_service_pages() as $slug => $item ) {
-        $existing = get_page_by_path( $slug, OBJECT, 'page' );
-        if ( $existing ) { continue; }
-        wp_insert_post( array(
+        // Never overwrite, rename or republish an existing page, even a draft.
+        if ( get_page_by_path( $slug, OBJECT, 'page' ) ) { continue; }
+        $id = wp_insert_post( array(
             'post_type' => 'page',
             'post_status' => 'draft',
             'post_title' => $item[0],
             'post_name' => $slug,
             'post_content' => $item[1],
             'post_author' => get_current_user_id(),
-        ) );
+        ), true );
+        if ( is_wp_error( $id ) || ! $id || 'page' !== get_post_type( $id ) ) {
+            ++$failed;
+            continue;
+        }
+        // A third-party save hook may alter status. Only a verified draft
+        // counts as created; attempt to restore this newly inserted page.
+        if ( 'draft' !== get_post_status( $id ) ) {
+            $restored = wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ), true );
+            if ( is_wp_error( $restored ) || 'draft' !== get_post_status( $id ) ) {
+                ++$failed;
+                continue;
+            }
+        }
+        ++$created;
     }
-    wp_safe_redirect( admin_url( 'options-general.php?page=pvdak-core&pvdak_pages=1' ) );
+    $result = $failed ? ( $created ? 'partial' : 'failed' ) : ( $created ? 'created' : 'existing' );
+    wp_safe_redirect( admin_url( 'options-general.php?page=pvdak-core&pvdak_pages=' . $result ) );
     exit;
 }
 add_action( 'admin_post_pvdak_core_create_pages', 'pvdak_core_create_service_pages' );

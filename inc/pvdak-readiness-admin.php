@@ -50,6 +50,7 @@ function pvdak_management_links() {
         array('دیدگاه‌ها و گفت‌وگوها', 'مدیریت و تأیید دیدگاه‌ها و گفت‌وگوهای انجمن، در صورت استفاده', 'moderate_comments', 'edit-comments.php'),
         array('صف انتظار تأیید', 'بررسی پیام‌های تازه پیش از نمایش عمومی', 'moderate_comments', 'edit-comments.php?comment_status=moderated'),
         array('تنظیمات اصلی', 'تنظیم ثبت‌نام و حالت تعمیرات سایت', 'manage_options', 'options-general.php'),
+        array('تنظیمات خدمات حقوقی', 'کنترل‌های حساس پذیرش، عضویت و اعلان‌ها؛ فقط مدیر سایت', 'manage_options', 'options-general.php?page=pvdak-core'),
         array('بررسی پیش از راه‌اندازی', 'وضعیت فنی و حقوقی فقط برای مدیر سایت', 'manage_options', 'tools.php?page=pvdak-readiness'),
     );
     return $links;
@@ -72,6 +73,9 @@ function pvdak_management_link_available( $link ) {
             if ( ! current_user_can( 'edit_post', $home_id ) ) { return false; }
         }
     }
+    // Never advertise a Core settings page when its plugin is not active.
+    if ( 'options-general.php?page=pvdak-core' === $link[3] &&
+         ( ! defined( 'PVDAK_CORE_VERSION' ) || ! function_exists( 'pvdak_core_intake_open' ) ) ) { return false; }
     if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
         $type = substr( $link[3], strlen( 'edit.php?post_type=' ) );
         if ( ! post_type_exists( $type ) ) { return false; }
@@ -103,7 +107,7 @@ function pvdak_management_render_links() {
             'صف انتظار تأیید', 'دیدگاه‌ها و گفت‌وگوها',
         ),
         'حساب‌ها و تنظیمات' => array(
-            'کاربران', 'تنظیمات اصلی', 'بررسی پیش از راه‌اندازی',
+            'کاربران', 'تنظیمات اصلی', 'تنظیمات خدمات حقوقی', 'بررسی پیش از راه‌اندازی',
         ),
     );
     $links = pvdak_management_links();
@@ -155,6 +159,7 @@ function pvdak_management_daily_steps() {
         array( 'درخواست‌های حقوقی و پشتیبانی را پیگیری کنید', array(
             'edit.php?post_type=pvdak_request',
             'edit.php?post_type=pvdak_support_ticket',
+            'edit.php?post_type=pvdak_professional',
         ) ),
         array( 'گفت‌وگوها و پیام‌های منتظر تأیید را بررسی کنید', array(
             'edit-comments.php?comment_status=moderated',
@@ -162,6 +167,7 @@ function pvdak_management_daily_steps() {
         ) ),
         array( 'پیش از ارائه عمومی، وضعیت خدمات را بررسی کنید', array(
             'tools.php?page=pvdak-readiness', 'options-general.php',
+            'options-general.php?page=pvdak-core',
         ) ),
     );
     $items = array();
