@@ -132,9 +132,19 @@ function pvdak_core_triage_filters() {
     );
     $selected = array();
     foreach ( $choices as $name => $allowed ) {
-        $raw = isset( $_GET[ $name ] ) && is_string( $_GET[ $name ] )
-            ? sanitize_key( wp_unslash( $_GET[ $name ] ) ) : '';
-        $selected[ $name ] = in_array( $raw, $allowed, true ) ? $raw : '';
+        if ( ! array_key_exists( $name, $_GET ) ) {
+            $selected[ $name ] = '';
+            continue;
+        }
+        // A malformed, nonempty selection must NEVER become "all" in a
+        // private case list. Do not sanitize into a different valid choice.
+        if ( ! is_string( $_GET[ $name ] ) ) {
+            $selected[ $name ] = '-1';
+            continue;
+        }
+        $raw = trim( wp_unslash( $_GET[ $name ] ) );
+        $selected[ $name ] = '' === $raw ? ''
+            : ( in_array( $raw, $allowed, true ) ? $raw : '-1' );
     }
     return $selected;
 }
@@ -327,6 +337,9 @@ function pvdak_core_triage_page() {
 function pvdak_core_triage_list_filters( $post_type ) {
     if ( 'pvdak_request' !== $post_type || ! pvdak_core_triage_can_manage() ) { return; }
     $f = pvdak_core_triage_filters();
+    if ( in_array( '-1', $f, true ) ) {
+        echo '<span class="pvdak-triage-invalid-filter" role="status">فیلتر صف نامعتبر است؛ هیچ پرونده‌ای نمایش داده نمی‌شود.</span>';
+    }
     $choices = array(
         'pvdak_filter_type' => array_merge( array( '' => 'همه انواع درخواست' ),
             pvdak_core_request_types(), array( 'legacy' => 'نوع نامشخص / قدیمی' ) ),
@@ -364,6 +377,10 @@ function pvdak_core_triage_filter_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
          ! pvdak_core_triage_can_manage() || 'pvdak_request' !== $query->get( 'post_type' ) ) { return; }
     $f = pvdak_core_triage_filters();
+    if ( in_array( '-1', $f, true ) ) {
+        $query->set( 'post__in', array( 0 ) );
+        return; // Fail closed; invalid selections must not widen a private queue.
+    }
     // Dashboard counters cover private records only. Match that scope for
     // dashboard-driven links, but preserve an explicit native status tab.
     if ( array_filter( $f ) && ! $query->get( 'post_status' ) &&

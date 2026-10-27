@@ -53,9 +53,9 @@ check_triage( 'review' === $f['pvdak_filter_state'], 'valid state' );
 check_triage( 'pending7' === $f['pvdak_filter_queue'], 'valid queue' );
 $_GET = array( 'pvdak_filter_type' => array( 'lawyer' ), 'pvdak_filter_state' => 'injected', 'pvdak_filter_queue' => 'pending90' );
 $f = pvdak_core_triage_filters();
-check_triage( '' === $f['pvdak_filter_type'], 'reject array' );
-check_triage( '' === $f['pvdak_filter_state'], 'reject unknown state' );
-check_triage( '' === $f['pvdak_filter_queue'], 'reject unknown queue' );
+check_triage( '-1' === $f['pvdak_filter_type'], 'reject array' );
+check_triage( '-1' === $f['pvdak_filter_state'], 'reject unknown state' );
+check_triage( '-1' === $f['pvdak_filter_queue'], 'reject unknown queue' );
 $_GET = array( 'pvdak_filter_type' => 'legacy', 'pvdak_filter_state' => 'legacy' );
 $f = pvdak_core_triage_filters();
 check_triage( 'legacy' === $f['pvdak_filter_type'], 'legacy type allowlisted' );
@@ -121,11 +121,29 @@ check_triage( 'AND' === $q->get( 'date_query' )['relation'], 'preserve plugin da
 check_triage( 'AND' === $q->get( 'meta_query' )['relation'], 'preserve plugin meta filter' );
 check_triage( 'third_party' === $q->get( 'meta_query' )[0][0]['key'], 'preserve plugin meta content' );
 $_GET = array( 'pvdak_filter_queue' => 'pending999' );
-check_triage( '' === pvdak_core_triage_filters()['pvdak_filter_queue'], 'reject arbitrary queue' );
+check_triage( '-1' === pvdak_core_triage_filters()['pvdak_filter_queue'], 'reject arbitrary queue' );
 $_GET = array( 'pvdak_filter_queue' => array( 'pending1' ) );
-check_triage( '' === pvdak_core_triage_filters()['pvdak_filter_queue'], 'reject array queue' );
+check_triage( '-1' === pvdak_core_triage_filters()['pvdak_filter_queue'], 'reject array queue' );
 check_triage( '2026-10-23 12:00:00' === pvdak_core_triage_cutoff( 1 ), 'shared timezone cutoff' );
 check_triage( '2026-10-24 12:00:00' === pvdak_core_triage_cutoff( -10 ), 'clamp negative cutoff' );
+// Malformed GET selectors must return zero cases, not a broad private list.
+foreach ( array(
+    array( 'pvdak_filter_type' => array( 'lawyer' ) ),
+    array( 'pvdak_filter_type' => 'lawyer!' ),
+    array( 'pvdak_filter_state' => 'review%' ),
+    array( 'pvdak_filter_queue' => 'pending999' ),
+    array( 'pvdak_filter_queue' => array( 'pending1' ) ),
+    array( 'pvdak_filter_type' => 'lawyer', 'pvdak_filter_state' => 'invalid' ),
+) as $invalid ) {
+    $_GET = $invalid;
+    $q = new PvdakTriageFakeQuery( array( 'post_type' => 'pvdak_request',
+        'meta_query' => array( array( 'key' => 'existing' ) ) ) );
+    pvdak_core_triage_filter_query( $q );
+    check_triage( array( 0 ) === $q->get( 'post__in' ), 'invalid selector returns no cases' );
+    check_triage( 'existing' === $q->get( 'meta_query' )[0]['key'], 'preserve unrelated meta' );
+}
+$_GET = array();
+check_triage( '' === pvdak_core_triage_filters()['pvdak_filter_queue'], 'absent queue means all' );
 $GLOBALS['pvdak_test_allowed'] = false;
 $q = new PvdakTriageFakeQuery( array( 'post_type' => 'pvdak_request' ) );
 pvdak_core_triage_filter_query( $q );
