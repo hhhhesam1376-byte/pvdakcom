@@ -21,8 +21,13 @@ function pvdak_core_professional_portal_access( $profile_id, $member_type, $memb
          'private' !== get_post_status( $id ) || ! pvdak_core_profile_has_owner( $id ) ) {
         return $blocked( 'پروفایل خصوصی معتبر و حساب مالک برای ارجاع داخلی لازم است.' );
     }
-    if ( 'lawyer' !== $member_type || 'approved' !== $member_state ) {
-        return $blocked( 'تأیید اداری درخواست از نوع وکیل هنوز تکمیل نشده است.' );
+    // Do not trust a caller's cached type/state. Recheck the persisted record:
+    // a stale UI or another integration must not show referral readiness after
+    // approval is withdrawn or the membership category changes.
+    if ( 'lawyer' !== $member_type || 'approved' !== $member_state ||
+         'lawyer' !== get_post_meta( $id, '_pvdak_member_type', true ) ||
+         'approved' !== get_post_meta( $id, '_pvdak_member_state', true ) ) {
+        return $blocked( 'نوع همکاری یا تأیید اداری فعلی پرونده برای ارجاع داخلی معتبر نیست.' );
     }
     if ( '1' !== (string) get_post_meta( $id, '_pvdak_referral_cleared', true ) ) {
         return $blocked( 'مجوز ارجاع داخلی توسط مدیر ثبت نشده است.' );
@@ -37,8 +42,15 @@ function pvdak_core_professional_portal_access( $profile_id, $member_type, $memb
         return $blocked( 'پذیرش انتساب داخلی توسط مدیر متوقف شده است.' );
     }
     $limit = pvdak_core_capacity_limit( $id );
-    if ( $limit < 1 || pvdak_core_active_assignment_count( $id ) >= $limit ) {
-        return $blocked( 'ظرفیت انتساب داخلی تنظیم نشده یا تکمیل است.' );
+    if ( $limit < 1 ) {
+        return $blocked( 'سقف ظرفیت انتساب داخلی هنوز توسط مدیر تنظیم نشده است.' );
+    }
+    $active = pvdak_core_active_assignment_count( $id );
+    if ( PHP_INT_MAX === $active ) {
+        return $blocked( 'محاسبه ظرفیت قابل اتکا نیست؛ ارجاع جدید تا بررسی مدیر متوقف است.' );
+    }
+    if ( $active >= $limit ) {
+        return $blocked( 'ظرفیت انتساب داخلی تکمیل است.' );
     }
     if ( function_exists( 'pvdak_core_subscription_allows_new_assignment' ) &&
          ! pvdak_core_subscription_allows_new_assignment( $id ) ) {
@@ -48,6 +60,20 @@ function pvdak_core_professional_portal_access( $profile_id, $member_type, $memb
         'ready' => true,
         'reason' => 'شرایط اولیه ارجاع داخلی فراهم است؛ تصمیم نهایی فقط با بررسی مجدد مدیر و کنترل‌های مستقل هر پرونده انجام می‌شود.',
     );
+}
+
+/** Invalid stored categories and impossible draft approvals need review, not
+ * an apparent successful administrative workflow in the applicant UI.
+ */
+function pvdak_core_professional_visible_state( $type, $state, $visibility ) {
+    $types = pvdak_core_member_types();
+    $statuses = pvdak_core_member_states();
+    if ( ! is_string( $type ) || ! isset( $types[ $type ] ) ||
+         ! is_string( $state ) || ! isset( $statuses[ $state ] ) ||
+         ( 'draft' === $visibility && 'approved' === $state ) ) {
+        return 'unknown';
+    }
+    return $state;
 }
 
 function pvdak_core_professional_dashboard() {
@@ -90,10 +116,14 @@ function pvdak_core_professional_dashboard() {
     $statuses = pvdak_core_member_states();
     $member_type = get_post_meta( $profile_id, '_pvdak_member_type', true );
     $raw_status = get_post_meta( $profile_id, '_pvdak_member_state', true );
-    // An unknown stored state must not be presented as a newly pending request.
-    $status = is_string( $raw_status ) && isset( $statuses[ $raw_status ] ) ? $raw_status : 'unknown';
+    // A damaged membership category or an impossible approved draft cannot
+    // be shown as an accepted application, even if state meta says approved.
+    $status = pvdak_core_professional_visible_state(
+        $member_type, $raw_status, get_post_status( $profile_id )
+    );
     $status_label = 'unknown' === $status ? 'نیازمند بررسی مدیر' : $statuses[ $status ];
-    $type_label = is_string( $member_type ) && isset( $types[ $member_type ] ) ? $types[ $member_type ] : 'متقاضی همکاری';
+    $type_label = is_string( $member_type ) && isset( $types[ $member_type ] )
+        ? $types[ $member_type ] : 'نوع همکاری نامعتبر؛ نیازمند بررسی مدیر';
     $city = get_post_meta( $profile_id, '_pvdak_member_city', true );
     $city_label = is_string( $city ) && '' !== trim( $city ) ? $city : 'ثبت نشده';
     $created_iso = get_the_date( 'Y-m-d', $profile_id );
@@ -117,7 +147,7 @@ function pvdak_core_professional_dashboard() {
     if ( 'rejected' === $status ) {
         $html .= '<p class="pvdak-core-notice" role="status">بررسی اداری این درخواست با وضعیت ردشده پایان یافته است. برای پرسش عمومی از مسیر تماس با پشتیبانی استفاده کنید؛ ثبت دوباره خودکار فعال نیست.</p>';
     } elseif ( 'unknown' === $status ) {
-        $html .= '<p class="pvdak-core-notice" role="status">وضعیت ذخیره‌شده درخواست قابل شناسایی نیست؛ مراحل بررسی تا اصلاح توسط مدیر نمایش داده نمی‌شوند.</p>';
+        $html .= '<p class="pvdak-core-notice" role="status">نوع همکاری یا وضعیت ذخیره‌شده درخواست نیازمند اصلاح مدیر است؛ مراحل بررسی تا اصلاح توسط مدیر نمایش داده نمی‌شوند.</p>';
     } else {
         $html .= '<ol class="pvdak-core-prof-steps" aria-label="مراحل بررسی اداری">';
         $position = 0;

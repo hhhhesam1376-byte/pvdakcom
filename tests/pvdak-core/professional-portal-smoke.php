@@ -16,9 +16,16 @@ $checks = array(
  'tracking reference' => strpos($src, 'شماره پیگیری') !== false,
  'machine-readable date' => strpos($src, '<time datetime=') !== false,
  'city fallback' => strpos($src, 'ثبت نشده') !== false,
- 'status allowlist' => strpos($src, 'isset( $statuses[ $raw_status ] )') !== false,
- 'unknown status does not impersonate pending' => strpos($src, '? $raw_status : \'unknown\'') !== false &&
-     strpos($src, '\'unknown\' === $status ? \'نیازمند بررسی مدیر\'') !== false,
+ 'status allowlist' => strpos($src, 'pvdak_core_professional_visible_state(') !== false &&
+     strpos($src, 'isset( $statuses[ $state ] )') !== false,
+ 'unknown status does not impersonate pending' => strpos($src, "return 'unknown';") !== false &&
+     strpos($src, "'unknown' === $status ? 'نیازمند بررسی مدیر'") !== false,
+ 'unknown membership category fails closed' => strpos($src, "isset( \$types[ \$type ] )") !== false &&
+     strpos($src, 'نوع همکاری نامعتبر؛ نیازمند بررسی مدیر') !== false,
+ 'draft approval is not presented as accepted' => strpos($src, "'draft' === \$visibility && 'approved' === \$state") !== false,
+ 'readiness rechecks saved membership state' => strpos($src, "'approved' !== get_post_meta( \$id, '_pvdak_member_state', true )") !== false,
+ 'readiness rechecks saved member type' => strpos($src, "'lawyer' !== get_post_meta( \$id, '_pvdak_member_type', true )") !== false,
+ 'capacity error blocks readiness' => strpos($src, 'PHP_INT_MAX === $active') !== false,
  'unknown state hides normal progress steps' => strpos($src, 'elseif ( \'unknown\' === $status )') !== false &&
      strpos($src, 'مراحل بررسی تا اصلاح توسط مدیر نمایش داده نمی‌شوند') !== false,
  'unknown state never unlocks professional access' => strpos($src, '\'unknown\' === $status ?') !== false &&

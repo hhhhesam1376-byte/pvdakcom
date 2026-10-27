@@ -127,7 +127,9 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_specialty_page_ids' === $key ) { return $GLOBALS['pvdak_mock_specialty_ids'] ?? array( 11 ); }
     if ( '_pvdak_referral_cleared' === $key ) { return $GLOBALS['pvdak_mock_cleared']; }
     if ( '_pvdak_member_state' === $key ) { return $GLOBALS['pvdak_mock_state']; }
-    if ( '_pvdak_member_type' === $key ) { return (int) $id === 501 ? 'lawyer' : 'student'; }
+    if ( '_pvdak_member_type' === $key ) {
+        return (int) $id === 501 ? ( $GLOBALS['pvdak_mock_member_type'] ?? 'lawyer' ) : 'student';
+    }
     if ( '_pvdak_member_city' === $key ) { return $GLOBALS['pvdak_mock_profile_city']; }
     if ( '_pvdak_license_review_identity' === $key ) { return $GLOBALS['pvdak_mock_license_signature'] ?? ''; }
     if ( '_pvdak_license_review_status' === $key ) { return $GLOBALS['pvdak_mock_license_status']; }
@@ -660,8 +662,31 @@ pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Review without accoun
 $GLOBALS['pvdak_mock_license_reviewer'] = 10;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Eligible lawyer can be matched only after independent current review' );
 
+// These exercise the loaded portal functions, not a copied implementation.
+pvdak_expect( 'approved' === pvdak_core_professional_visible_state( 'lawyer', 'approved', 'private' ),
+    'D21 valid private approved lawyer retains accurate visible status' );
+pvdak_expect( 'rejected' === pvdak_core_professional_visible_state( 'student', 'rejected', 'private' ),
+    'D21 rejected applicant retains rejection notice without privileged access' );
+foreach ( array(
+    array( 'unknown', 'approved', 'private' ),
+    array( 'lawyer', 'approved', 'draft' ),
+    array( 'lawyer', 'invalid', 'private' ),
+    array( array( 'lawyer' ), 'approved', 'private' ),
+    array( 'student', array( 'approved' ), 'private' ),
+) as $invalid ) {
+    pvdak_expect( 'unknown' === pvdak_core_professional_visible_state( $invalid[0], $invalid[1], $invalid[2] ),
+        'D21 malformed membership or approved draft cannot impersonate approval' );
+}
 pvdak_expect( pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
     'D21 portal readiness requires current lawyer review and available internal capacity' );
+$GLOBALS['pvdak_mock_state'] = 'pending';
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 stale approved caller value cannot override actual pending state' );
+$GLOBALS['pvdak_mock_state'] = 'approved';
+$GLOBALS['pvdak_mock_member_type'] = 'student';
+pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
+    'D21 stale lawyer caller value cannot override stored student type' );
+unset( $GLOBALS['pvdak_mock_member_type'] );
 $GLOBALS['pvdak_mock_cleared'] = '0';
 pvdak_expect( ! pvdak_core_professional_portal_access( 501, 'lawyer', 'approved' )['ready'],
     'D21 portal blocks missing staff clearance' );
