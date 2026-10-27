@@ -44,6 +44,16 @@ $checks = array(
     'future registration filter' => strpos( $src, '\'future\' === $age' ) !== false,
     'deduplicated admin columns' => strpos( $src, 'unset( $columns[\'pvdak_kind\']' ) !== false,
     'invalid professional warning' => strpos( $src, 'پرونده حرفه‌ای نامعتبر' ) !== false,
+    'malformed stored assignment IDs cannot be silently coerced' =>
+        strpos( $src, "preg_match( '/^[1-9][0-9]{0,9}$/D', (string) \$raw_profile_id )" ) !== false &&
+        strpos( $src, 'ارجاع ناقص یا نامعتبر؛ بررسی شود' ) !== false,
+    'professional list checks nonpublic profile status' =>
+        strpos( $src, "get_post_status( \$profile_id ), array( 'private', 'draft' )" ) !== false,
+    'client-facing Core settings keep controls outside technical guide' =>
+        strpos( $setup, '<details><summary>اطلاعات تکمیلی امکانات' ) !== false &&
+        strpos( $setup, "echo '</tbody></table></details>';" ) !== false,
+    'new service page slug verified after insert' =>
+        strpos( $setup, "\$slug !== get_post_field( 'post_name', \$id )" ) !== false,
     'draft generator checks actual insert result and retains existing pages' =>
         strpos( $setup, "get_page_by_path( \$slug, OBJECT, 'page' )" ) !== false &&
         strpos( $setup, 'wp_insert_post( array(' ) !== false &&
