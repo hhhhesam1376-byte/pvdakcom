@@ -425,6 +425,24 @@ $GLOBALS['pvdak_mock_topic_draft'] = false;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Internally cleared lawyer matches related landing' );
 // D16: exercise the actual strict identifier parser loaded from assignments.php (PHP-only mocks).
 pvdak_expect( 701 === pvdak_core_assignment_positive_id( '701' ), 'Valid decimal request ID is accepted' );
+foreach ( array( 'lawyer', 'consultation', 'question' ) as $valid_request_type ) {
+    pvdak_expect( pvdak_core_assignment_request_type_valid( $valid_request_type ),
+        'D17 stored legal service type is an exact known string' );
+}
+foreach ( array( array( 'lawyer' ), null, false, 'lawyer!', 'Lawyer', '', 1 ) as $bad_request_type ) {
+    pvdak_expect( ! pvdak_core_assignment_request_type_valid( $bad_request_type ),
+        'D17 corrupted legal service type is blocked without PHP offset error' );
+}
+pvdak_expect( ! pvdak_core_assignment_profiles_page_valid( array( 'corrupt' ), 200 ),
+    'D17 non-object query page is rejected' );
+pvdak_expect( ! pvdak_core_assignment_profiles_page_valid( array( new WP_Post( 501, 'draft', 21 ) ), 200 ),
+    'D17 nonprivate query page is rejected' );
+pvdak_expect( ! pvdak_core_assignment_profiles_page_valid( array( new WP_Post( 701, 'private', 23 ) ), 200 ),
+    'D17 wrong content type from query is rejected' );
+pvdak_expect( ! pvdak_core_assignment_profiles_page_valid( array_fill( 0, 201, new WP_Post( 501, 'private', 21 ) ), 200 ),
+    'D17 oversized query page is rejected' );
+pvdak_expect( pvdak_core_assignment_profiles_page_valid( array( new WP_Post( 501, 'private', 21 ) ), 200 ),
+    'D17 valid private professional query page is accepted' );
 pvdak_expect( 2147483647 === pvdak_core_assignment_positive_id( '2147483647' ), 'Maximum bounded ID is accepted' );
 foreach ( array( '-701', '+701', '0701', '701x', ' 701', '1e3', '2147483648', '999999999999999999', array( 701 ), 701.0, '0' ) as $invalid_id ) {
     pvdak_expect( 0 === pvdak_core_assignment_positive_id( $invalid_id ), 'Malformed or out-of-range ID is rejected' );
@@ -456,6 +474,12 @@ pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 1,
     'D17 manager scans page two to find an eligible older lawyer' );
 pvdak_expect( 1 === ( $GLOBALS['pvdak_assignment_preview_load'][501] ?? null ),
     'D17 older lawyer retains capacity snapshot from checked eligibility' );
+$GLOBALS['pvdak_mock_candidate_rows'] = array( new WP_Post( 501, 'private', 21 ), 'corrupt' );
+pvdak_expect( array() === pvdak_core_assignable_profiles( 11, 'lawyer' ) &&
+    true === $GLOBALS['pvdak_assignment_preview_error'],
+    'D17 malformed query data rejects entire shortlist instead of hiding a corrupt row' );
+$GLOBALS['pvdak_mock_candidate_rows'] = array_fill( 0, 200, new WP_Post( 502, 'private', 22 ) );
+$GLOBALS['pvdak_mock_candidate_rows'][] = $older;
 $GLOBALS['pvdak_mock_candidate_fail_offset'] = 200;
 pvdak_expect( array() === pvdak_core_assignable_profiles( 11, 'lawyer' ),
     'D17 a failed later candidate page rejects the entire partial shortlist' );

@@ -29,11 +29,34 @@ function pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) {
         (int) $professional_user->ID === $professional;
 }
 
+/** Exact type check: array-valued legacy metadata must not trigger a
+ * PHP TypeError in the private manager page or be coerced into a service.
+ */
+function pvdak_core_assignment_request_type_valid( $request_type ) {
+    $types = pvdak_core_request_types();
+    return is_string( $request_type ) && isset( $types[ $request_type ] );
+}
+
+/** Never present a partial match list if a WordPress query has been
+ * modified to return malformed, non-private or oversized records.
+ */
+function pvdak_core_assignment_profiles_page_valid( $profiles, $page_size ) {
+    if ( ! is_array( $profiles ) || count( $profiles ) > $page_size ) { return false; }
+    foreach ( $profiles as $profile ) {
+        if ( ! $profile instanceof WP_Post ||
+             ! pvdak_core_assignment_positive_id( $profile->ID ) ||
+             'pvdak_professional' !== $profile->post_type ||
+             'private' !== $profile->post_status ) { return false; }
+    }
+    return true;
+}
+
 function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
     // A changed or unpublished subject cannot be used to discover a lawyer.
     $GLOBALS['pvdak_assignment_preview_load'] = array();
     $GLOBALS['pvdak_assignment_preview_error'] = false;
-    if ( 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ) { return array(); }
+    if ( ! pvdak_core_assignment_request_type_valid( $request_type ) ||
+         'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ) { return array(); }
     global $wpdb;
     $eligible = array();
     $load = array();
@@ -58,17 +81,14 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
             ),
         ) );
         // A failed later query must not return an earlier partial shortlist.
-        if ( ! is_array( $profiles ) ||
+        if ( ! pvdak_core_assignment_profiles_page_valid( $profiles, $per_page ) ||
              ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
             $GLOBALS['pvdak_assignment_preview_load'] = array();
             $GLOBALS['pvdak_assignment_preview_error'] = true;
             return array();
         }
         foreach ( $profiles as $profile ) {
-            if ( ! $profile instanceof WP_Post ||
-                 'pvdak_professional' !== $profile->post_type ||
-                 'private' !== $profile->post_status ||
-                 isset( $load[ (int) $profile->ID ] ) ||
+            if ( isset( $load[ (int) $profile->ID ] ) ||
                  ! pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) ) {
                 continue;
             }
@@ -137,7 +157,7 @@ function pvdak_core_assignment_admin_page() {
             ' تا اصلاح موضوع، فهرست متخصصان و ثبت انتساب غیرفعال است؛ موضوع دیگری به‌صورت حدسی انتخاب نمی‌شود.</p></div></div>';
         return;
     }
-    if ( ! isset( pvdak_core_request_types()[ $request_type ] ) ) {
+    if ( ! pvdak_core_assignment_request_type_valid( $request_type ) ) {
         echo '<div class="notice notice-warning inline"><p>نوع خدمت این پرونده نامعتبر یا قدیمی است؛ پیش از ارجاع باید توسط مدیر بررسی شود.</p></div></div>';
         return;
     }
@@ -200,6 +220,7 @@ function pvdak_core_assign_request_decision( $request_id, $profile_id ) {
          'private' !== get_post_status( $request_id ) ||
          'review' !== get_post_meta( $request_id, '_pvdak_request_state', true ) ||
          get_post_meta( $request_id, '_pvdak_assigned_profile_id', true ) ||
+         ! pvdak_core_assignment_request_type_valid( $type ) ||
          ! pvdak_core_profile_referral_eligible( $profile_id, $landing_id, $type ) ||
          ! pvdak_core_assignment_parties_distinct( $request_id, $profile_id ) ||
          ! pvdak_core_capacity_available( $profile_id ) ) {
