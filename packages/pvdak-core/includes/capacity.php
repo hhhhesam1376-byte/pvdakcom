@@ -60,13 +60,18 @@ function pvdak_core_active_assignment_count( $profile_id ) {
     return $total;
 }
 
-function pvdak_core_capacity_available( $profile_id ) {
+function pvdak_core_capacity_available( $profile_id, &$active_count = null ) {
+    // A caller may reuse the checked workload snapshot for sorting. Every
+    // later assignment still performs an independent check under DB locks.
+    $active_count = null;
     // Subscription enforcement is an explicit default-OFF manager switch.
     if ( function_exists( 'pvdak_core_subscription_allows_new_assignment' ) &&
          ! pvdak_core_subscription_allows_new_assignment( $profile_id ) ) { return false; }
     if ( ! pvdak_core_capacity_accepting( $profile_id ) ) { return false; }
     $limit = pvdak_core_capacity_limit( $profile_id );
-    return $limit > 0 && pvdak_core_active_assignment_count( $profile_id ) < $limit;
+    if ( $limit <= 0 ) { return false; }
+    $active_count = pvdak_core_active_assignment_count( $profile_id );
+    return $active_count < $limit;
 }
 
 function pvdak_core_capacity_metabox() {

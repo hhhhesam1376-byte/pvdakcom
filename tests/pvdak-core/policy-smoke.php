@@ -160,6 +160,9 @@ function get_posts( $query ) {
         return ! empty( $GLOBALS['pvdak_mock_directory_query_fail'] ) ? false : array( 501, 502 );
     }
     if ( isset( $query['post_type'] ) && 'pvdak_request' === $query['post_type'] ) {
+        if ( isset( $query['meta_key'] ) && '_pvdak_assigned_profile_id' === $query['meta_key'] ) {
+            $GLOBALS['pvdak_mock_capacity_reads'] = ( $GLOBALS['pvdak_mock_capacity_reads'] ?? 0 ) + 1;
+        }
         if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
         return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
     }
@@ -368,7 +371,21 @@ $GLOBALS['pvdak_mock_profile_author'] = 21;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Valid account restores normal eligibility' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 12, 'lawyer' ), 'Different legal landing is not considered a match' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 502, 11, 'lawyer' ), 'Student role cannot be matched as lawyer' );
-pvdak_expect( count( pvdak_core_assignable_profiles( 11, 'lawyer' ) ) === 1, 'Only eligible reviewed lawyer enters candidate set' );
+$GLOBALS['pvdak_mock_capacity_reads'] = 0;
+$pvdak_eligible = pvdak_core_assignable_profiles( 11, 'lawyer' );
+pvdak_expect( count( $pvdak_eligible ) === 1, 'Only eligible reviewed lawyer enters candidate set' );
+pvdak_expect( 1 === $GLOBALS['pvdak_mock_capacity_reads'],
+    'Admin shortlist calculates workload once for the eligible lawyer' );
+pvdak_expect( 1 === ( $GLOBALS['pvdak_assignment_preview_load'][501] ?? null ),
+    'Shortlist displays the same checked active workload snapshot' );
+$active_snapshot = null;
+pvdak_expect( pvdak_core_capacity_available( 501, $active_snapshot ) && 1 === $active_snapshot,
+    'Capacity helper exposes the checked workload to authorized internal callers' );
+$GLOBALS['pvdak_mock_capacity_limit'] = '0';
+$no_snapshot = 9;
+pvdak_expect( ! pvdak_core_capacity_available( 501, $no_snapshot ) && null === $no_snapshot,
+    'A closed capacity setting never reports a stale workload as approval' );
+$GLOBALS['pvdak_mock_capacity_limit'] = '2';
 $GLOBALS['pvdak_mock_cleared'] = '0';
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Removing manual referral clearance blocks assignment' );
 $GLOBALS['pvdak_mock_cleared'] = '1';

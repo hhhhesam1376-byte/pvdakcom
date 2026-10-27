@@ -48,19 +48,23 @@ function pvdak_core_assignable_profiles( $landing_id, $request_type ) {
     if ( ! is_array( $profiles ) || ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) ) {
         return array(); // A failed preview query cannot produce candidates.
     }
-    $eligible = array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type ) {
-        return $profile instanceof WP_Post &&
-            'pvdak_professional' === $profile->post_type &&
-            'private' === $profile->post_status &&
-            pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) &&
-            pvdak_core_capacity_available( $profile->ID );
+    // Take a single capacity snapshot per eligible profile, not two separate
+    // queries that could disagree and display incorrect ordering/load.
+    $load = array();
+    $eligible = array_values( array_filter( $profiles, function ( $profile ) use ( $landing_id, $request_type, &$load ) {
+        if ( ! $profile instanceof WP_Post ||
+             'pvdak_professional' !== $profile->post_type ||
+             'private' !== $profile->post_status ||
+             ! pvdak_core_profile_referral_eligible( $profile->ID, $landing_id, $request_type ) ) {
+            return false;
+        }
+        $active = null;
+        if ( ! pvdak_core_capacity_available( $profile->ID, $active ) ) { return false; }
+        $load[ (int) $profile->ID ] = $active;
+        return true;
     } ) );
     // Fair ordering for the manager only, NOT automatic assignment:
     // least active internal load first; stable tie break by profile ID.
-    $load = array();
-    foreach ( $eligible as $profile ) {
-        $load[(int)$profile->ID] = pvdak_core_active_assignment_count($profile->ID);
-    }
     // Keep this request's read-only workload snapshot for the admin dropdown;
     // final eligibility is always rechecked INSIDE the DB advisory locks.
     $GLOBALS['pvdak_assignment_preview_load'] = $load;
@@ -137,7 +141,7 @@ function pvdak_core_assignment_admin_page() {
         return pvdak_core_assignment_parties_distinct( $request_id, $p->ID );
     } ) );
     if ( ! $candidates ) {
-        echo '<div class="notice notice-info inline"><p>متخصصی با تخصص مرتبط، تأیید داخلی و ظرفیت پذیرش آزاد پیدا نشد. وضعیت عضویت، تخصص و ظرفیت پرونده‌های فعال را در مدیریت پروفایل‌ها بررسی کنید.</p></div></div>';
+        echo '<div class="notice notice-info inline"><p>در میان حداکثر ۲۰۰ پرونده حرفه‌ای جدید بررسی‌شده، متخصص واجد شرایط و دارای ظرفیت آزاد پیدا نشد. این نتیجه به معنی بررسی همه متخصصان موجود نیست؛ وضعیت عضویت، تخصص و ظرفیت یا محدودیت فهرست را بررسی کنید.</p></div></div>';
         return;
     }
     if ( isset( $_GET['pvdak_assignment_error'] ) ) {
@@ -159,7 +163,7 @@ function pvdak_core_assignment_admin_page() {
             ' — پرونده #' . esc_html( $profile->ID ) . ' | فعال: '.esc_html($GLOBALS['pvdak_assignment_preview_load'][(int)$profile->ID]??0).' از '.esc_html(pvdak_core_capacity_limit($profile->ID)).'</option>';
     }
     echo '</select></td></tr></table>';
-    echo '<p>قبل از ادامه، اطلاعات صلاحیت و امکان قبول پرونده باید خارج از این نسخه به‌صورت مستقل بررسی شود. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند. ظرفیت هر متخصص هنگام ارسال دوباره بررسی می‌شود.</p>';
+    echo '<p>فهرست از حداکثر ۲۰۰ پرونده حرفه‌ای جدید بررسی می‌شود؛ ممکن است متخصصان قدیمی‌تر در این فهرست نباشند. قبل از ادامه، صلاحیت و امکان قبول پرونده را مستقل بررسی کنید. این عمل فقط شناسه پروفایل را به درخواست متصل می‌کند؛ ظرفیت هنگام ارسال، زیر قفل پایگاه داده، دوباره بررسی می‌شود.</p>';
     submit_button( 'ثبت انتساب داخلی (بدون اطلاع‌رسانی)' );
     echo '</form></div>';
 }
