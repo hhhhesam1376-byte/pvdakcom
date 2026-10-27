@@ -119,7 +119,8 @@ function get_post( $id ) {
     if ( 900 === (int) $id ) { return new WP_Post( 900 ); }
     if ( 901 === (int) $id ) {
         return (object) array( 'ID' => 901, 'post_type' => 'pvdak_request',
-            'post_status' => $GLOBALS['pvdak_mock_notify_status'] ?? 'private', 'post_author' => 21 );
+            'post_status' => $GLOBALS['pvdak_mock_notify_status'] ?? 'private',
+            'post_author' => $GLOBALS['pvdak_mock_notify_author'] ?? 21 );
     }
     return null;
 }
@@ -905,6 +906,27 @@ pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 malformed 
 $GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s', time() + 3600 ) );
 pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 future consent date fails closed' );
 $GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s' ) );
+// D24: Never normalize a forged ID into a different user's verified mailbox.
+foreach ( array( -21, '-21', '021', 21.0, array( 21 ), '2147483648' ) as $bad_owner ) {
+    pvdak_expect( '' === pvdak_core_notification_verified_mailbox( $bad_owner ),
+        'D24 malformed owner cannot resolve a different verified mailbox' );
+    pvdak_expect( ! pvdak_core_notification_consent_valid( $bad_owner, 'owner@example.test' ),
+        'D24 malformed owner cannot inherit another account consent' );
+}
+pvdak_expect( 'owner@example.test' === pvdak_core_notification_verified_mailbox( '21' ),
+    'D24 canonical owner ID preserves valid verified mailbox' );
+pvdak_expect( pvdak_core_notification_consent_valid( '21', 'owner@example.test' ),
+    'D24 canonical owner ID preserves valid explicit consent' );
+foreach ( array( -901, '-901', '0901', 901.0, array( 901 ), '2147483648' ) as $bad_post ) {
+    pvdak_expect( ! pvdak_core_notify_owner( $bad_post, 'pvdak_request' ) &&
+        ! $GLOBALS['pvdak_mock_sent_mail'], 'D24 malformed private record ID cannot trigger email' );
+}
+foreach ( array( -21, '-21', '021', 21.0, array( 21 ) ) as $bad_author ) {
+    $GLOBALS['pvdak_mock_notify_author'] = $bad_author;
+    pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) &&
+        ! $GLOBALS['pvdak_mock_sent_mail'], 'D24 malformed stored record author cannot trigger email' );
+}
+unset( $GLOBALS['pvdak_mock_notify_author'] );
 pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
     'D24 sends a generic email only with explicit current-mailbox consent' );
 $GLOBALS['pvdak_mock_notify_verified_address'] = 'other@example.test';
