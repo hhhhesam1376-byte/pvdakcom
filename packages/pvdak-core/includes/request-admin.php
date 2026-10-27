@@ -24,6 +24,17 @@ function pvdak_core_case_admin_positive_filter( $name ) {
     return (int) $raw;
 }
 
+/** Preserve the distinction between an empty filter and a malformed supplied value.
+ * Silently ignoring invalid selectors could widen the private case list.
+ */
+function pvdak_core_case_admin_choice_filter( $name, $allowed ) {
+    if ( ! array_key_exists( $name, $_GET ) ) { return ''; }
+    if ( ! is_string( $_GET[ $name ] ) ) { return '-1'; }
+    $raw = trim( wp_unslash( $_GET[ $name ] ) );
+    if ( '' === $raw ) { return ''; }
+    return in_array( $raw, $allowed, true ) ? $raw : '-1';
+}
+
 /** Validate all URL inputs before they can affect WP_Query. */
 function pvdak_core_case_admin_filters() {
     $choices = array(
@@ -34,9 +45,7 @@ function pvdak_core_case_admin_filters() {
     );
     $result = array();
     foreach ( $choices as $name => $allowed ) {
-        $raw = isset( $_GET[ $name ] ) && is_string( $_GET[ $name ] )
-            ? sanitize_key( wp_unslash( $_GET[ $name ] ) ) : '';
-        $result[ $name ] = in_array( $raw, $allowed, true ) ? $raw : '';
+        $result[ $name ] = pvdak_core_case_admin_choice_filter( $name, $allowed );
     }
     foreach ( array( 'pvdak_case_id', 'pvdak_case_owner' ) as $name ) {
         $result[ $name ] = pvdak_core_case_admin_positive_filter( $name );
@@ -94,8 +103,9 @@ function pvdak_core_case_admin_controls( $post_type ) {
             '" placeholder="' . esc_attr( $label ) . '" aria-label="' . esc_attr( $label ) . '">';
     }
     echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=pvdak_request' ) ) . '">پاک‌کردن فیلترهای صف</a>';
-    if ( in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
-        echo '<span class="pvdak-case-active-filters" role="status">شناسه یا موضوع فیلتر نامعتبر است؛ هیچ پرونده‌ای نمایش داده نمی‌شود.</span>';
+    if ( in_array( '-1', $f, true ) ||
+         in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
+        echo '<span class="pvdak-case-active-filters" role="status">یکی از فیلترهای صف نامعتبر است؛ هیچ پرونده‌ای نمایش داده نمی‌شود.</span>';
     }
 }
 add_action( 'restrict_manage_posts', 'pvdak_core_case_admin_controls', 20 );
@@ -106,7 +116,8 @@ function pvdak_core_case_admin_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
         'pvdak_request' !== $query->get( 'post_type' ) || ! pvdak_core_case_admin_allowed() ) { return; }
     $f = pvdak_core_case_admin_filters();
-    if ( in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
+    if ( in_array( '-1', $f, true ) ||
+         in_array( -1, array( $f['pvdak_case_id'], $f['pvdak_case_owner'], $f['pvdak_case_topic'] ), true ) ) {
         $query->set( 'post__in', array( 0 ) );
         return; // Invalid supplied filters must never expand the private queue.
     }
@@ -241,9 +252,7 @@ function pvdak_core_case_ops_filters() {
     );
     $result = array();
     foreach ( $choices as $key => $allowed ) {
-        $raw = isset( $_GET[ $key ] ) && is_string( $_GET[ $key ] )
-            ? sanitize_key( wp_unslash( $_GET[ $key ] ) ) : '';
-        $result[ $key ] = in_array( $raw, $allowed, true ) ? $raw : '';
+        $result[ $key ] = pvdak_core_case_admin_choice_filter( $key, $allowed );
     }
     return $result;
 }
@@ -281,7 +290,9 @@ function pvdak_core_case_ops_controls( $post_type ) {
     ), $f['pvdak_case_modified'] );
     echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=pvdak_request&page=pvdak-request-triage' ) ) .
         '">نمای صف بررسی</a>';
-    if ( array_filter( $f ) ) {
+    if ( in_array( '-1', $f, true ) ) {
+        echo '<span class="pvdak-case-active-filters" role="status">فیلتر عملیاتی نامعتبر است؛ هیچ پرونده‌ای نمایش داده نمی‌شود.</span>';
+    } elseif ( array_filter( $f ) ) {
         echo '<span class="pvdak-case-active-filters" role="status">فیلتر عملیاتی فعال است</span>';
     }
 }
@@ -293,6 +304,10 @@ function pvdak_core_case_ops_query( $query ) {
     if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ||
         'pvdak_request' !== $query->get( 'post_type' ) || ! pvdak_core_case_admin_allowed() ) { return; }
     $f = pvdak_core_case_ops_filters();
+    if ( in_array( '-1', $f, true ) ) {
+        $query->set( 'post__in', array( 0 ) );
+        return; // Malformed operational selectors must never widen the private list.
+    }
     if ( ! array_filter( $f ) ) { return; }
     // When a custom operational filter is selected, default to private cases;
     // preserve explicit native WordPress status tabs (draft/trash/etc.).
