@@ -22,7 +22,16 @@ function get_option( $name, $default = false ) {
     if ( 'pvdak_core_subscription_gate_enabled' === $name ) {
         return $GLOBALS['pvdak_mock_subscription_gate'] ?? '0';
     }
+    if ( 'pvdak_core_landing_parent_id' === $name ) {
+        return $GLOBALS['pvdak_mock_landing_parent'] ?? 0;
+    }
+    if ( 'page_on_front' === $name ) {
+        return $GLOBALS['pvdak_mock_front_page'] ?? 0;
+    }
     return $default;
+}
+function get_field( $name, $page_id ) {
+    return $GLOBALS['pvdak_mock_acf_parent'] ?? 0;
 }
 function wp_salt( $scheme = 'auth' ) { return 'test-only-salt-' . $scheme; }
 
@@ -56,7 +65,7 @@ function get_permalink( $id = 0 ) { return 'https://example.test/directory/'; }
 function add_query_arg( $key, $value, $base ) { return $base . '?' . urlencode( $key ) . '=' . urlencode( (string) $value ); }
 function absint( $value ) { return abs( (int) $value ); }
 function get_page_by_path( $slug, $output = null, $type = null ) {
-    return 'legal-topics' === $slug ? new WP_Post( 10 ) : null;
+    return 'legal-topics' === $slug && ( $GLOBALS['pvdak_mock_fallback_parent'] ?? true ) ? new WP_Post( 10 ) : null;
 }
 function get_post_type( $id ) {
     return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17 ), true ) ? 'page' :
@@ -373,6 +382,34 @@ pvdak_expect(
     'Private cases can remain drafts while administered'
 );
 pvdak_expect( pvdak_core_landing_parent_id() === 10, 'Real published landing Page is a valid parent' );
+// D23: corrupted root/ACF settings must never turn -10, 010 or an array
+// into published Page 10. A real published default remains a safe fallback.
+$GLOBALS['pvdak_mock_fallback_parent'] = false;
+foreach ( array( -10, '-10', '010', '10.0', 10.0, array( 10 ), '2147483648' ) as $bad_root ) {
+    $GLOBALS['pvdak_mock_landing_parent'] = $bad_root;
+    pvdak_expect( 0 === pvdak_core_landing_parent_id(),
+        'D23 malformed configured legal-topic root fails closed without absint remapping' );
+}
+$GLOBALS['pvdak_mock_landing_parent'] = '10';
+pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 canonical configured Page root is valid' );
+unset( $GLOBALS['pvdak_mock_landing_parent'] );
+$GLOBALS['pvdak_mock_front_page'] = 99;
+foreach ( array( -10, '-10', '010', 10.0, array( 10 ), '2147483648' ) as $bad_acf_root ) {
+    $GLOBALS['pvdak_mock_acf_parent'] = $bad_acf_root;
+    pvdak_expect( 0 === pvdak_core_landing_parent_id(),
+        'D23 malformed ACF root does not become a published legal-topic Page' );
+}
+$GLOBALS['pvdak_mock_acf_parent'] = new WP_Post( 10 );
+pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 valid ACF Page object selects published root' );
+$GLOBALS['pvdak_mock_acf_parent'] = '10';
+pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 canonical ACF Page ID selects published root' );
+$GLOBALS['pvdak_mock_front_page'] = '-99';
+pvdak_expect( 0 === pvdak_core_landing_parent_id(), 'D23 malformed front Page option cannot select ACF root' );
+unset( $GLOBALS['pvdak_mock_acf_parent'], $GLOBALS['pvdak_mock_front_page'] );
+$GLOBALS['pvdak_mock_fallback_parent'] = true;
+pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 valid published fallback legal-topics Page still works' );
+unset( $GLOBALS['pvdak_mock_fallback_parent'] );
+
 pvdak_expect( pvdak_core_valid_specialty( 11 ), 'Published child landing Page is a valid specialty' );
 pvdak_expect( 11 === pvdak_core_specialty_page_id( '11' ), 'D23 positive decimal child Page ID parses exactly' );
 foreach ( array( -11, '-11', '+11', '011', '11x', ' 11', '11 ', 11.0, array( 11 ), '2147483648', '999999999999999999' ) as $bad_topic_id ) {
@@ -417,6 +454,11 @@ $GLOBALS['pvdak_mock_topic_title'] = '  ';
 pvdak_expect( 'untitled' === pvdak_core_topic_resolution( 11 )['status'], 'Untitled topic is flagged for repair' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Untitled topic cannot silently match a lawyer' );
 pvdak_expect( pvdak_core_specialty_ids( 501 ) === array(), 'Untitled topic is omitted from stored specialist mappings' );
+$GLOBALS['pvdak_mock_topic_title'] = array( 'bad-title' );
+pvdak_expect( 'untitled' === pvdak_core_topic_resolution( 11 )['status'],
+    'D23 malformed non-string Page title is not accepted as a legal-topic title' );
+pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ),
+    'D17/D23 malformed Page title blocks internal referral matching' );
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 $GLOBALS['pvdak_mock_topic_draft'] = true;
 pvdak_expect( 'invalid' === pvdak_core_topic_resolution( 11 )['status'], 'Unpublished topic loses referral eligibility' );

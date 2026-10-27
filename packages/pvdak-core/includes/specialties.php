@@ -20,23 +20,28 @@ function pvdak_core_specialty_page_id( $value ) {
 }
 
 function pvdak_core_landing_parent_id() {
-    $id = absint( get_option( 'pvdak_core_landing_parent_id', 0 ) );
+    // A negative or malformed option must never be remapped by absint() to
+    // a real published legal Page. Reuse the strict D23 Page-ID parser.
+    $id = pvdak_core_specialty_page_id( get_option( 'pvdak_core_landing_parent_id', 0 ) );
     if ( $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) {
         return $id;
     }
     // If the theme's ACF home editor already chooses a root, reuse it.
     // The Core plugin does not require the theme or ACF to be active.
     if ( function_exists( 'get_field' ) ) {
-        $front_id = absint( get_option( 'page_on_front' ) );
+        $front_id = pvdak_core_specialty_page_id( get_option( 'page_on_front', 0 ) );
         $acf_page = $front_id ? get_field( 'legal_topics_parent_page', $front_id ) : 0;
-        $acf_id = $acf_page instanceof WP_Post ? (int) $acf_page->ID :
-            ( ( is_int( $acf_page ) || ( is_string( $acf_page ) && ctype_digit( $acf_page ) ) ) ? absint( $acf_page ) : 0 );
+        $acf_id = pvdak_core_specialty_page_id(
+            $acf_page instanceof WP_Post ? $acf_page->ID : $acf_page
+        );
         if ( $acf_id && 'page' === get_post_type( $acf_id ) && 'publish' === get_post_status( $acf_id ) ) {
             return $acf_id;
         }
     }
     $default = get_page_by_path( 'legal-topics', OBJECT, 'page' );
-    return $default && 'publish' === $default->post_status ? (int) $default->ID : 0;
+    $default_id = $default instanceof WP_Post ? pvdak_core_specialty_page_id( $default->ID ) : 0;
+    return $default_id && 'page' === get_post_type( $default_id ) &&
+        'publish' === get_post_status( $default_id ) ? $default_id : 0;
 }
 
 function pvdak_core_specialty_pages() {
@@ -98,7 +103,7 @@ function pvdak_core_topic_resolution( $page_id ) {
     if ( ! pvdak_core_valid_specialty( $page_id ) ) {
         return array( 'status' => 'invalid', 'message' => 'برگه موضوع این درخواست حذف، پیش‌نویس یا از زیرمجموعه موضوعات حقوقی خارج شده است؛ نیازمند بررسی دستی است.', 'title' => '' );
     }
-    $title = trim( (string) get_post_field( 'post_title', $page_id ) );
+    // A malformed non-string title must not become the literal word "Array"\n    // and incorrectly certify a legal topic as ready for internal matching.\n    $raw_title = get_post_field( 'post_title', $page_id );\n    $title = is_string( $raw_title ) ? trim( $raw_title ) : '';
     if ( '' === $title ) {
         return array( 'status' => 'untitled', 'message' => 'برگه موضوع حقوقی عنوان ندارد؛ پیش از ارجاع باید عنوان برگه تکمیل شود.', 'title' => '' );
     }
