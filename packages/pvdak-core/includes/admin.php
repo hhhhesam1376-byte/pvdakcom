@@ -140,6 +140,7 @@ function pvdak_core_settings_page() {
         $message = $page_messages[ $page_result ];
         echo '<div class="notice notice-' . esc_attr( $message[0] ) . ' inline"><p>' . esc_html( $message[1] ) . '</p></div>';
     }
+    echo '<details style="margin-top:18px"><summary>راهنمای فنی برگه‌ها و کدهای کوتاه (در صورت نیاز)</summary>';
     echo '<h2>برگه‌های موردنیاز</h2><p>هر برگه از یکی از کدهای کوتاه زیر استفاده می‌کند:</p>';
     echo '<p><code>[pvdak_request_form type="lawyer"]</code>، <code>[pvdak_request_form type="consultation"]</code>، <code>[pvdak_request_form type="question"]</code></p>';
     echo '<p>پنل پیگیری درخواست‌های شخصی: <code>[pvdak_my_requests]</code></p>';
@@ -148,6 +149,7 @@ function pvdak_core_settings_page() {
     echo '<p>پنل همکاری حرفه‌ای (بدون اطلاعات پرونده): <code>[pvdak_professional_dashboard]</code></p>';
     echo '<p>فهرست عمومی رضایت‌محور (برگه فقط با تصمیم مدیر منتشر شود): <code>[pvdak_professional_directory]</code></p>';
     echo '<p>وقتی برگه‌ها تست شدند، لینک‌های سه خدمت را در منوی «محتوای صفحه اصلی» قالب روی همان برگه‌ها قرار دهید.</p>';
+    echo '</details>';
     echo '</div>';
 }
 
