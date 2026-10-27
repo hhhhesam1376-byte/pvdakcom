@@ -228,7 +228,7 @@ function pvdak_management_render() {
  * remains reachable from the management hub, including forum discussions.
  */
 function pvdak_management_trim_menu() {
-    if (current_user_can('edit_pages') && current_user_can('moderate_comments')) {
+    if (current_user_can('edit_pages') && current_user_can('moderate_comments') && ! current_user_can('manage_options')) {
         remove_menu_page('edit-comments.php');
     }
 }
@@ -257,6 +257,24 @@ function pvdak_management_dashboard_widget() {
         $pending = pvdak_management_pending_comments();
         $queue_label = $pending > 0 ? 'بررسی ' . number_format_i18n( $pending ) . ' پیام منتظر تأیید' : 'بررسی پیام‌های منتظر تأیید';
         echo '<p><a href="' . esc_url(admin_url('edit-comments.php?comment_status=moderated')) . '">' . esc_html( $queue_label ) . '</a></p>';
+    }
+    // Use the same fixed, capability-checked destinations as the management hub.
+    // Never query case, ticket, professional or comment contents in this widget.
+    $queue_routes = array(
+        'edit.php?post_type=pvdak_request',
+        'edit.php?post_type=pvdak_professional',
+        'edit.php?post_type=pvdak_support_ticket',
+    );
+    $queue_links = array();
+    foreach ( $links as $link ) {
+        if ( in_array( $link[3], $queue_routes, true ) &&
+             pvdak_management_link_available( $link ) ) {
+            $queue_links[] = '<a href="' . esc_url( admin_url( $link[3] ) ) . '">' .
+                esc_html( $link[0] ) . '</a>';
+        }
+    }
+    if ( $queue_links ) {
+        echo '<p><strong>پیگیری کارها:</strong> ' . implode( ' | ', $queue_links ) . '</p>';
     }
     if (current_user_can('manage_options')) {
         echo '<p><a href="' . esc_url(admin_url('tools.php?page=pvdak-readiness')) . '">بررسی وضعیت راه‌اندازی</a></p>';
