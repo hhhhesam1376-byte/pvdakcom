@@ -6,6 +6,19 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * D23: Never coerce forged negative/overflowed IDs into another published
+ * legal landing. Use the same strict bounded decimal representation in
+ * request-topic matching, saved profile specialties and admin submissions.
+ */
+function pvdak_core_specialty_page_id( $value ) {
+    if ( ! is_string( $value ) && ! is_int( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]{0,9}$/D', $raw ) ||
+         (float) $raw > 2147483647 ) { return 0; }
+    return (int) $raw;
+}
+
 function pvdak_core_landing_parent_id() {
     $id = absint( get_option( 'pvdak_core_landing_parent_id', 0 ) );
     if ( $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) {
@@ -40,7 +53,7 @@ function pvdak_core_specialty_pages() {
 }
 
 function pvdak_core_valid_specialty( $page_id ) {
-    $page_id = absint( $page_id );
+    $page_id = pvdak_core_specialty_page_id( $page_id );
     $parent_id = pvdak_core_landing_parent_id();
     return $parent_id && $page_id && 'page' === get_post_type( $page_id ) &&
         'publish' === get_post_status( $page_id ) &&
@@ -53,9 +66,12 @@ function pvdak_core_valid_specialty( $page_id ) {
  * request text or the titles of unpublished Pages in a diagnostic.
  */
 function pvdak_core_topic_resolution( $page_id ) {
-    $page_id = absint( $page_id );
-    if ( ! $page_id ) {
+    if ( null === $page_id || 0 === $page_id || '0' === $page_id || '' === $page_id ) {
         return array( 'status' => 'missing', 'message' => 'موضوع حقوقی برای این درخواست ثبت نشده است؛ مدیر باید داده پرونده را بررسی کند.', 'title' => '' );
+    }
+    $page_id = pvdak_core_specialty_page_id( $page_id );
+    if ( ! $page_id ) {
+        return array( 'status' => 'invalid', 'message' => 'شناسه موضوع حقوقی نامعتبر است؛ پیش از ارجاع، مدیر باید داده پرونده را اصلاح کند.', 'title' => '' );
     }
     if ( ! pvdak_core_landing_parent_id() ) {
         return array( 'status' => 'parent_missing', 'message' => 'برگه مادر موضوعات حقوقی منتشر یا تنظیم نشده است؛ ابتدا تنظیمات موضوعات را اصلاح کنید.', 'title' => '' );
@@ -75,8 +91,7 @@ function pvdak_core_specialty_ids( $profile_id ) {
     if ( ! is_array( $ids ) ) { return array(); }
     $valid = array();
     foreach ( array_slice( $ids, 0, 200 ) as $raw ) {
-        if ( ! ( is_int( $raw ) || ( is_string( $raw ) && ctype_digit( $raw ) ) ) ) { continue; }
-        $id = absint( $raw );
+        $id = pvdak_core_specialty_page_id( $raw );
         if ( $id && 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $valid[ $id ] = $id; }
     }
     return array_values( $valid );
@@ -109,7 +124,7 @@ function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $requ
     // No trainee/student matching without a separate supervision policy.
     if ( 'lawyer' !== get_post_meta( $profile_id, '_pvdak_member_type', true ) ) { return false; }
     return in_array( $request_type, array( 'lawyer', 'consultation', 'question' ), true ) &&
-        in_array( absint( $specialty_id ), pvdak_core_specialty_ids( $profile_id ), true );
+        in_array( pvdak_core_specialty_page_id( $specialty_id ), pvdak_core_specialty_ids( $profile_id ), true );
 }
 
 function pvdak_core_specialty_metabox() {
@@ -160,11 +175,14 @@ function pvdak_core_save_specialties( $post_id ) {
     if ( isset( $_POST['pvdak_specialty_page_ids'] ) && ! is_array( $_POST['pvdak_specialty_page_ids'] ) ) { return; }
     $raw = isset( $_POST['pvdak_specialty_page_ids'] ) ?
         wp_unslash( $_POST['pvdak_specialty_page_ids'] ) : array();
+    // A forged/obsolete selection must not silently wipe or remap the
+    // previous specialties. An actually empty checkbox set can still clear.
+    if ( ! is_array( $raw ) || count( $raw ) > 200 ) { return; }
     $ids = array();
-    foreach ( array_slice( $raw, 0, 200 ) as $raw_id ) {
-        if ( ! ( is_int( $raw_id ) || ( is_string( $raw_id ) && ctype_digit( $raw_id ) ) ) ) { continue; }
-        $id = absint( $raw_id );
-        if ( $id && 'ready' === pvdak_core_topic_resolution( $id )['status'] ) { $ids[ $id ] = $id; }
+    foreach ( $raw as $raw_id ) {
+        $id = pvdak_core_specialty_page_id( $raw_id );
+        if ( ! $id || 'ready' !== pvdak_core_topic_resolution( $id )['status'] ) { return; }
+        $ids[ $id ] = $id;
     }
     $next_ids = array_values( $ids );
     $old_ids = get_post_meta( $post_id, '_pvdak_specialty_page_ids', true );

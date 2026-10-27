@@ -357,6 +357,24 @@ pvdak_expect(
 );
 pvdak_expect( pvdak_core_landing_parent_id() === 10, 'Real published landing Page is a valid parent' );
 pvdak_expect( pvdak_core_valid_specialty( 11 ), 'Published child landing Page is a valid specialty' );
+pvdak_expect( 11 === pvdak_core_specialty_page_id( '11' ), 'D23 positive decimal child Page ID parses exactly' );
+foreach ( array( -11, '-11', '+11', '011', '11x', ' 11', '11 ', 11.0, array( 11 ), '2147483648', '999999999999999999' ) as $bad_topic_id ) {
+    pvdak_expect( 0 === pvdak_core_specialty_page_id( $bad_topic_id ),
+        'D23 malformed and overflowed specialty ID cannot become valid Page ID' );
+    pvdak_expect( ! pvdak_core_valid_specialty( $bad_topic_id ),
+        'D23 bad Page ID cannot match a published child landing' );
+    pvdak_expect( 'invalid' === pvdak_core_topic_resolution( $bad_topic_id )['status'],
+        'D23 bad Page ID is diagnosed as invalid, not remapped or missing' );
+}
+pvdak_expect( 'missing' === pvdak_core_topic_resolution( '' )['status'],
+    'D23 genuinely absent topic retains explicit missing diagnostic' );
+$GLOBALS['pvdak_mock_specialty_ids'] = array( -11, '-11', '011', 11.0, array( 11 ) );
+pvdak_expect( array() === pvdak_core_specialty_ids( 501 ),
+    'D23 malformed persisted specialties cannot silently match valid landing 11' );
+$GLOBALS['pvdak_mock_specialty_ids'] = array( '-11', 12 );
+pvdak_expect( array( 12 ) === pvdak_core_specialty_ids( 501 ),
+    'D23 invalid specialty metadata is omitted without discarding real valid Page 12' );
+unset( $GLOBALS['pvdak_mock_specialty_ids'] );
 $GLOBALS['pvdak_mock_specialty_ids'] = array( array( 11 ), -11, '11', 'bad', 12 );
 pvdak_expect( pvdak_core_specialty_ids( 501 ) === array( 11, 12 ),
     'D23 malformed specialty metadata is ignored without casting arrays or negative IDs' );
