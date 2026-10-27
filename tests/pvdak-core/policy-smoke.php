@@ -28,6 +28,9 @@ function get_option( $name, $default = false ) {
     if ( 'page_on_front' === $name ) {
         return $GLOBALS['pvdak_mock_front_page'] ?? 0;
     }
+    if ( 'show_on_front' === $name ) {
+        return $GLOBALS['pvdak_mock_front_mode'] ?? 'posts';
+    }
     return $default;
 }
 function get_field( $name, $page_id ) {
@@ -68,7 +71,7 @@ function get_page_by_path( $slug, $output = null, $type = null ) {
     return 'legal-topics' === $slug && ( $GLOBALS['pvdak_mock_fallback_parent'] ?? true ) ? new WP_Post( 10 ) : null;
 }
 function get_post_type( $id ) {
-    return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17 ), true ) ? 'page' :
+    return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17, 99 ), true ) ? 'page' :
         ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' :
         ( in_array( (int) $id, array( 701, 702, 703, 704 ), true ) ? 'pvdak_request' : '' ) );
 }
@@ -76,6 +79,7 @@ $GLOBALS['pvdak_mock_topic_draft'] = false;
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 function get_post_status( $id ) {
     if ( ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) ||
+         ( 99 === (int) $id && ! empty( $GLOBALS['pvdak_mock_front_draft'] ) ) ||
          17 === (int) $id ) { return 'draft'; }
     return in_array( (int) $id, array( 501, 502, 701, 702, 703, 704 ), true ) ? 'private' : 'publish';
 }
@@ -394,6 +398,7 @@ $GLOBALS['pvdak_mock_landing_parent'] = '10';
 pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 canonical configured Page root is valid' );
 unset( $GLOBALS['pvdak_mock_landing_parent'] );
 $GLOBALS['pvdak_mock_front_page'] = 99;
+$GLOBALS['pvdak_mock_front_mode'] = 'page';
 foreach ( array( -10, '-10', '010', 10.0, array( 10 ), '2147483648' ) as $bad_acf_root ) {
     $GLOBALS['pvdak_mock_acf_parent'] = $bad_acf_root;
     pvdak_expect( 0 === pvdak_core_landing_parent_id(),
@@ -403,9 +408,20 @@ $GLOBALS['pvdak_mock_acf_parent'] = new WP_Post( 10 );
 pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 valid ACF Page object selects published root' );
 $GLOBALS['pvdak_mock_acf_parent'] = '10';
 pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 canonical ACF Page ID selects published root' );
+$GLOBALS['pvdak_mock_front_mode'] = 'posts';
+pvdak_expect( 0 === pvdak_core_landing_parent_id(),
+    'D23 stale page_on_front cannot source legal topics while WordPress shows posts' );
+$GLOBALS['pvdak_mock_front_mode'] = 'page';
+$GLOBALS['pvdak_mock_front_draft'] = true;
+pvdak_expect( 0 === pvdak_core_landing_parent_id(),
+    'D23 draft homepage cannot source ACF legal-topic root' );
+unset( $GLOBALS['pvdak_mock_front_draft'] );
+$GLOBALS['pvdak_mock_front_page'] = 999;
+pvdak_expect( 0 === pvdak_core_landing_parent_id(),
+    'D23 non-Page homepage cannot source ACF legal-topic root' );
 $GLOBALS['pvdak_mock_front_page'] = '-99';
 pvdak_expect( 0 === pvdak_core_landing_parent_id(), 'D23 malformed front Page option cannot select ACF root' );
-unset( $GLOBALS['pvdak_mock_acf_parent'], $GLOBALS['pvdak_mock_front_page'] );
+unset( $GLOBALS['pvdak_mock_acf_parent'], $GLOBALS['pvdak_mock_front_page'], $GLOBALS['pvdak_mock_front_mode'] );
 $GLOBALS['pvdak_mock_fallback_parent'] = true;
 pvdak_expect( 10 === pvdak_core_landing_parent_id(), 'D23 valid published fallback legal-topics Page still works' );
 unset( $GLOBALS['pvdak_mock_fallback_parent'] );
@@ -435,6 +451,10 @@ pvdak_expect( array( 11, 12, 13 ) === array_map( function ( $page ) { return $pa
 $GLOBALS['pvdak_mock_specialty_ids'] = array( 13 );
 pvdak_expect( array( 13 ) === pvdak_core_specialty_ids( 501 ),
     'D23 published grandchild specialty remains available for later matching' );
+foreach ( array( -501, '0501', 501.0, array( 501 ) ) as $bad_profile_id ) {
+    pvdak_expect( array() === pvdak_core_specialty_ids( $bad_profile_id ),
+        'D17 malformed professional ID cannot read another profile specialties' );
+}
 $GLOBALS['pvdak_mock_specialty_ids'] = array( -11, '-11', '011', 11.0, array( 11 ) );
 pvdak_expect( array() === pvdak_core_specialty_ids( 501 ),
     'D23 malformed persisted specialties cannot silently match valid landing 11' );
@@ -502,6 +522,14 @@ $GLOBALS['pvdak_mock_profile_author'] = 0;
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Orphan professional without owner cannot be matched' );
 $GLOBALS['pvdak_mock_profile_author'] = 88;
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Deleted professional account cannot be matched' );
+foreach ( array( -21, '-21', '021', '21abc', 21.0, array( 21 ) ) as $bad_owner_id ) {
+    $GLOBALS['pvdak_mock_profile_author'] = $bad_owner_id;
+    pvdak_expect( ! pvdak_core_profile_has_owner( 501 ),
+        'D17 malformed professional author cannot be remapped to a real WordPress account' );
+}
+$GLOBALS['pvdak_mock_profile_author'] = '21';
+pvdak_expect( pvdak_core_profile_has_owner( 501 ), 'D17 canonical string author ID remains eligible' );
+pvdak_expect( ! pvdak_core_profile_has_owner( -501 ), 'D17 negative profile ID cannot impersonate a real profile' );
 $GLOBALS['pvdak_mock_profile_author'] = 21;
 pvdak_expect( pvdak_core_profile_referral_eligible( 501, 11, 'lawyer' ), 'Valid account restores normal eligibility' );
 pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, 12, 'lawyer' ), 'Different legal landing is not considered a match' );

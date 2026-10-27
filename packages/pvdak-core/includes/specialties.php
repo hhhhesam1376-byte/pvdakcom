@@ -28,9 +28,13 @@ function pvdak_core_landing_parent_id() {
     }
     // If the theme's ACF home editor already chooses a root, reuse it.
     // The Core plugin does not require the theme or ACF to be active.
-    if ( function_exists( 'get_field' ) ) {
+    if ( function_exists( 'get_field' ) && 'page' === get_option( 'show_on_front', 'posts' ) ) {
+        // A stale page_on_front option is not the live homepage in posts mode.
+        // Never trust ACF values from an unpublished or non-Page homepage.
         $front_id = pvdak_core_specialty_page_id( get_option( 'page_on_front', 0 ) );
-        $acf_page = $front_id ? get_field( 'legal_topics_parent_page', $front_id ) : 0;
+        $acf_page = $front_id && 'page' === get_post_type( $front_id ) &&
+            'publish' === get_post_status( $front_id ) ?
+            get_field( 'legal_topics_parent_page', $front_id ) : 0;
         $acf_id = pvdak_core_specialty_page_id(
             $acf_page instanceof WP_Post ? $acf_page->ID : $acf_page
         );
@@ -114,7 +118,10 @@ function pvdak_core_topic_resolution( $page_id ) {
 }
 
 function pvdak_core_specialty_ids( $profile_id ) {
-    $ids = get_post_meta( absint( $profile_id ), '_pvdak_specialty_page_ids', true );
+    // Do not turn a malformed negative or zero-padded profile ID into another profile.
+    $profile_id = pvdak_core_specialty_page_id( $profile_id );
+    if ( ! $profile_id ) { return array(); }
+    $ids = get_post_meta( $profile_id, '_pvdak_specialty_page_ids', true );
     if ( ! is_array( $ids ) ) { return array(); }
     $valid = array();
     foreach ( array_slice( $ids, 0, 200 ) as $raw ) {
@@ -134,7 +141,10 @@ function pvdak_core_specialty_ids( $profile_id ) {
  * Imported/orphaned profiles (author 0 or a deleted user) fail closed.
  */
 function pvdak_core_profile_has_owner( $profile_id ) {
-    $owner_id = absint( get_post_field( 'post_author', absint( $profile_id ) ) );
+    // An imported negative/zero-padded author ID must never map to a real user.
+    $profile_id = pvdak_core_specialty_page_id( $profile_id );
+    if ( ! $profile_id ) { return false; }
+    $owner_id = pvdak_core_specialty_page_id( get_post_field( 'post_author', $profile_id ) );
     if ( ! $owner_id ) { return false; }
     $owner = get_userdata( $owner_id );
     return $owner && isset( $owner->ID ) && (int) $owner->ID === $owner_id;
