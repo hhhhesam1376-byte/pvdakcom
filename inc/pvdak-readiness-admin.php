@@ -245,15 +245,10 @@ function pvdak_management_render() {
 }
 
 /**
- * Simplify the primary menu, not permissions or content. Comment moderation
- * remains reachable from the management hub, including forum discussions.
+ * Keep WordPress's native Comments menu visible to every role already allowed
+ * to moderate comments. The PVDak management hub remains an additional shortcut,
+ * not a replacement for WordPress moderation or its pending-count badge.
  */
-function pvdak_management_trim_menu() {
-    if (current_user_can('edit_pages') && current_user_can('moderate_comments') && ! current_user_can('manage_options')) {
-        remove_menu_page('edit-comments.php');
-    }
-}
-add_action('admin_menu','pvdak_management_trim_menu',999);
 
 function pvdak_management_dashboard_setup() {
     if (!current_user_can('edit_pages')) { return; }
@@ -420,6 +415,25 @@ function pvdak_readiness_front_page_status_label( $state ) {
         $labels[ $state ] : 'وضعیت تنظیم صفحه اصلی نامشخص است';
 }
 
+/**
+ * Only required Pages count toward the readiness summary. Optional legacy
+ * routes may be listed for cleanup without blocking the current login flow.
+ * Ignore malformed rows rather than allowing a PHP illegal-offset error.
+ */
+function pvdak_readiness_required_totals( $audits ) {
+    $totals = array( 'missing' => 0, 'unpublished' => 0, 'wrong_template' => 0,
+        'template_unavailable' => 0, 'provisional' => 0, 'published' => 0 );
+    if ( ! is_array( $audits ) ) { return $totals; }
+    foreach ( $audits as $audit ) {
+        if ( ! is_array( $audit ) || ! empty( $audit['optional'] ) ||
+             ! isset( $audit['classification'] ) ||
+             ! is_string( $audit['classification'] ) ||
+             ! array_key_exists( $audit['classification'], $totals ) ) { continue; }
+        $totals[ $audit['classification'] ]++;
+    }
+    return $totals;
+}
+
 function pvdak_readiness_render() {
     if(!current_user_can('manage_options')){
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -431,11 +445,12 @@ function pvdak_readiness_render() {
         'privacy-policy'=>'حریم خصوصی',
         'terms-of-use'=>'شرایط استفاده',
         'account-login'=>'ورود اختصاصی',
-        'account-register'=>'ثبت‌نام (برگه قدیمی)',
         'account-recovery'=>'بازیابی رمز',
         'account-profile'=>'پروفایل',
         'my-pvdak-account'=>'پنل کاربری',
     );
+    // Kept for old bookmarks only: signup now happens inside account-login.
+    $optional_pages = array( 'account-register'=>'ثبت‌نام (برگه قدیمی)' );
     echo '<div class="wrap"><h1>آمادگی راه‌اندازی PVDak</h1>';
     echo '<p>این گزارش فقط خواندنی است و هیچ تنظیم یا اطلاعات کاربری را تغییر نمی‌دهد.</p>';
     $privacy_page = get_page_by_path( 'privacy-policy', OBJECT, 'page' );
@@ -478,9 +493,7 @@ function pvdak_readiness_render() {
     $seed_pages = function_exists( 'pvdak_public_page_seeds' ) ?
         pvdak_public_page_seeds() : array();
     $audits = array();
-    $totals = array( 'missing' => 0, 'unpublished' => 0, 'wrong_template' => 0,
-        'template_unavailable' => 0, 'provisional' => 0, 'published' => 0 );
-    foreach ( $pages as $slug => $label ) {
+    foreach ( $pages + $optional_pages as $slug => $label ) {
         $post = get_page_by_path( $slug, OBJECT, 'page' );
         $exists = $post instanceof WP_Post && absint( $post->ID ) > 0;
         $status = $exists ? $post->post_status : '';
@@ -493,16 +506,17 @@ function pvdak_readiness_render() {
             $expected_template === get_page_template_slug( $post->ID );
         $classification = pvdak_readiness_page_classify(
             $exists, $status, $provisional, $template_matches, $template_available );
-        $totals[ $classification ]++;
         $audits[] = array(
             'slug' => $slug, 'title' => $label, 'post' => $exists ? $post : null,
+            'optional' => isset( $optional_pages[ $slug ] ),
             'classification' => $classification,
             'status' => pvdak_readiness_page_status_label( $classification, $status ),
         );
     }
+    $totals = pvdak_readiness_required_totals( $audits );
     echo '<h2>برگه‌های مهم</h2>';
-    echo '<p class="description">ثبت‌نام فعلی در زبانه صفحه ورود انجام می‌شود؛ برگه «ثبت‌نام (برگه قدیمی)» فقط برای سازگاری با پیوندهای قبلی بررسی می‌شود و فعال‌بودن آن به معنی بازبودن ثبت‌نام نیست.</p>';
-    echo '<p><strong>خلاصه وضعیت انتشار:</strong> ' .
+    echo '<p class="description">۹ برگه ضروری در آمار زیر شمرده می‌شوند. برگه «ثبت‌نام (برگه قدیمی)» صرفاً برای بررسی پیوندهای قبلی در جدول باقی می‌ماند؛ نبود آن نقص راه‌اندازی نیست. ثبت‌نام فعلی در زبانه صفحه ورود انجام می‌شود و وجود برگه قدیمی به معنی فعال‌بودن ثبت‌نام نیست.</p>';
+    echo '<p><strong>خلاصه وضعیت ۹ برگه ضروری:</strong> ' .
         esc_html( number_format_i18n( $totals['published'] ) ) . ' منتشرشده بدون نشانگر متن اولیه، ' .
         esc_html( number_format_i18n( $totals['provisional'] ) ) . ' نیازمند تأیید متن اولیه، ' .
         esc_html( number_format_i18n( $totals['wrong_template'] ) ) . ' با قالب نادرست، ' .
@@ -518,7 +532,11 @@ function pvdak_readiness_render() {
         $action = 'template_unavailable' === $audit['classification'] ?
             'بررسی قالب با توسعه‌دهنده' : ( 'wrong_template' === $audit['classification'] ?
             'بازبینی قالب برگه' : 'ویرایش و بررسی' );
-        if ( ! $post && current_user_can( 'edit_pages' ) ) {
+        if ( ! $post && ! empty( $audit['optional'] ) ) {
+            // An absent legacy registration Page is expected, not a task.
+            $url = '';
+            $action = 'نیازی به ایجاد نیست';
+        } elseif ( ! $post && current_user_can( 'edit_pages' ) ) {
             $url = admin_url( 'post-new.php?post_type=page' );
             $action = 'ایجاد دستی برگه';
         }
@@ -528,7 +546,7 @@ function pvdak_readiness_render() {
         if ( $url ) {
             echo '<a href="' . esc_url( $url ) . '">' . esc_html( $action ) . '</a>';
         } else {
-            echo '—';
+            echo esc_html( $action );
         }
         echo '</td></tr>';
     }

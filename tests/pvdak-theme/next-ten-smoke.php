@@ -93,7 +93,11 @@ $checks = array(
     strpos($s['registration'],"function pvdak_native_registration_guard(")!==false &&
     strpos($s['registration'],"pvdak_public_template_page_url('account-login','page-templates/pvdak-login.php')")!==false &&
     strpos($s['public'],'! locate_template( $template, false, false )')!==false &&
-    strpos($s['admin'],"'account-register'=>'ثبت‌نام (برگه قدیمی)'")!==false,
+    strpos($s['admin'],"'account-register'=>'ثبت‌نام (برگه قدیمی)'")!==false &&
+    strpos($s['admin'],'pvdak_readiness_required_totals( $audits )')!==false &&
+    strpos($s['admin'],"'optional' => isset( $optional_pages[ $slug ] )")!==false &&
+    strpos($s['admin'],"$"+"optional_pages = array(")!==false &&
+    strpos($s['admin'],"remove_menu_page('edit-comments.php')")===false,
 );
 $count = 0;
 foreach ($checks as $label=>$passes) {
@@ -148,6 +152,35 @@ if ( 'منتشرنشده — پیش‌نویس' !== pvdak_readiness_page_status_
     exit( 1 );
 }
 echo "PVDAK_READINESS_HELPERS_OK: 25/25 isolated PHP cases (not WordPress E2E).\n";
+// D31: the legacy registration Page must not inflate the required-page count.
+$readiness_totals = pvdak_readiness_required_totals( array(
+    array( 'classification' => 'published', 'optional' => false ),
+    array( 'classification' => 'missing', 'optional' => true ),
+    array( 'classification' => 'unpublished', 'optional' => false ),
+    array( 'classification' => 'wrong_template', 'optional' => false ),
+    array( 'classification' => 'template_unavailable', 'optional' => false ),
+    array( 'classification' => 'provisional', 'optional' => false ),
+    array( 'classification' => 'missing', 'optional' => false ),
+    array( 'classification' => array( 'published' ), 'optional' => false ),
+    array( 'classification' => 'unrecognized', 'optional' => false ),
+    'malformed',
+) );
+foreach ( array( 'published', 'missing', 'unpublished', 'wrong_template', 'template_unavailable', 'provisional' ) as $key ) {
+    if ( 1 !== $readiness_totals[ $key ] ) {
+        fwrite( STDERR, "PVD_READINESS_FAIL: required-only counts for {$key}\n" );
+        exit( 1 );
+    }
+}
+$only_optional = pvdak_readiness_required_totals( array(
+    array( 'classification' => 'missing', 'optional' => true ),
+    array( 'classification' => 'published', 'optional' => true ),
+) );
+if ( 0 !== array_sum( $only_optional ) ||
+     0 !== array_sum( pvdak_readiness_required_totals( false ) ) ) {
+    fwrite( STDERR, "PVD_READINESS_FAIL: optional or malformed totals\n" );
+    exit( 1 );
+}
+echo "PVDAK_READINESS_REQUIRED_PAGES_OK: 8/8 isolated PHP checks (not WordPress E2E).\n";
 $privacy_cases = array(
     array( 0, false, 0, 'missing' ),
     array( 12, false, 12, 'missing' ),
