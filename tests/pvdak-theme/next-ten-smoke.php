@@ -68,6 +68,8 @@ $checks = array(
     strpos($s['admin'],'get_page_by_path(')!==false &&
     strpos($s['admin'],'pvdak_filter_queue=pending&pvdak_case_order=oldest')!==false &&
     strpos($s['admin'],'pvdak_state_filter=pending')!==false &&
+    strpos($s['admin'],"echo '</tbody></table>';")!==false &&
+    strpos($s['admin'],'pvdak_readiness_page_classify(')!==false &&
     strpos($s['admin'],"explode( '&', substr( \$link[3]")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_triage_filter_query' )")!==false &&
     strpos($s['admin'],"function_exists( 'pvdak_core_prof_admin_query' )")!==false &&
