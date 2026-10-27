@@ -176,6 +176,8 @@ function get_posts( $query ) {
 class PVDak_Test_Lock_DB {
     public $locks = array();
     public $deny = false;
+    public $deny_name = '';
+    public $acquire_override = null;
     public $last_error = '';
     public function prepare( $sql, ...$args ) {
         $escaped = array_map( function( $arg ) {
@@ -186,7 +188,9 @@ class PVDak_Test_Lock_DB {
     }
     public function get_var( $sql ) {
         if ( preg_match( "/GET_LOCK\\('([^']+)'/", $sql, $matches ) ) {
-            if ( $this->deny || isset( $this->locks[ $matches[1] ] ) ) { return 0; }
+            if ( null !== $this->acquire_override ) { return $this->acquire_override; }
+            if ( $this->deny || $this->deny_name === $matches[1] ||
+                isset( $this->locks[ $matches[1] ] ) ) { return 0; }
             $this->locks[ $matches[1] ] = true;
             return 1;
         }
@@ -559,7 +563,44 @@ $denied = pvdak_core_with_assignment_locks( 702, 501, function() use ( &$callbac
 pvdak_expect( 'lock_unavailable' === $denied && ! $callback_invoked, 'Lock timeout fails closed without writes' );
 $GLOBALS['wpdb']->deny = false;
 pvdak_expect( count( $GLOBALS['wpdb']->locks ) === 0, 'Denied acquisition does not leak advisory locks' );
-pvdak_expect( 'lock_unavailable' === pvdak_core_with_assignment_locks( 0, 501, function() {} ), 'Zero request IDs cannot acquire locks' );
+pvdak_expect( 'lock_unavailable' === pvdak_core_with_assignment_locks( 0, 501, function() {} ),
+    'Zero request IDs cannot acquire locks' );
+foreach ( array( -701, '-701', '0701', '701x', array( 701 ), 2147483648 ) as $bad_lock_id ) {
+    pvdak_expect( array() === pvdak_core_assignment_lock_names( $bad_lock_id, 501 ),
+        'Malformed request cannot acquire a different valid case lock' );
+}
+$GLOBALS['wpdb']->deny_name = 'pvdak:req:701'; // Pro lock succeeds; request lock fails.
+$callback_invoked = false;
+$result = pvdak_core_with_assignment_locks( 701, 501, function () use ( &$callback_invoked ) {
+    $callback_invoked = true;
+    return 'unsafe';
+} );
+pvdak_expect( 'lock_unavailable' === $result && ! $callback_invoked,
+    'Second lock failure never calls the assignment decision' );
+pvdak_expect( array() === $GLOBALS['wpdb']->locks,
+    'First named lock is released if the second acquisition fails' );
+$GLOBALS['wpdb']->deny_name = '';
+$GLOBALS['wpdb']->acquire_override = '1garbage';
+$callback_invoked = false;
+$result = pvdak_core_with_assignment_locks( 701, 501, function () use ( &$callback_invoked ) {
+    $callback_invoked = true;
+    return 'unsafe';
+} );
+pvdak_expect( 'lock_unavailable' === $result && ! $callback_invoked,
+    'Noncanonical database lock response cannot authorize writes' );
+pvdak_expect( array() === $GLOBALS['wpdb']->locks,
+    'Rejected database lock response leaves no held mock locks' );
+$GLOBALS['wpdb']->acquire_override = null;
+$threw = false;
+try {
+    pvdak_core_with_assignment_locks( 701, 501, function () {
+        throw new RuntimeException( 'synthetic callback exception' );
+    } );
+} catch ( RuntimeException $e ) {
+    $threw = true;
+}
+pvdak_expect( $threw && array() === $GLOBALS['wpdb']->locks,
+    'Both locks are released when callback throws, without suppressing error' );
 pvdak_expect( pvdak_core_license_review_current( 501 ), 'Time-limited staff review is valid with source, reviewer and expiry' );
 $GLOBALS['pvdak_mock_profile_name'] = 'نام تغییرکرده';
 pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Changed professional identity invalidates an earlier review' );
