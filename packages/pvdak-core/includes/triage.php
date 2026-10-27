@@ -220,8 +220,10 @@ function pvdak_core_triage_priority_table( $cases, $base ) {
         $edit = get_edit_post_link( $id );
         if ( ! $edit ) { continue; }
         $age = human_time_diff( $case['timestamp'], current_time( 'timestamp', true ) );
-        $kind = isset( $types[ $case['kind'] ] ) ? $types[ $case['kind'] ] : 'نوع نامشخص';
-        $state = isset( $states[ $case['state'] ] ) ? $states[ $case['state'] ] : 'نیازمند بررسی';
+        $kind = isset( $case['kind'] ) && is_string( $case['kind'] ) &&
+            isset( $types[ $case['kind'] ] ) ? $types[ $case['kind'] ] : 'نوع نامشخص';
+        $state = isset( $case['state'] ) && is_string( $case['state'] ) &&
+            isset( $states[ $case['state'] ] ) ? $states[ $case['state'] ] : 'نیازمند بررسی';
         echo '<tr><th scope="row"><a href="' . esc_url( $edit ) . '">#' . esc_html( $id ) . '</a></th>';
         echo '<td>' . esc_html( $kind ) . '</td><td>' . esc_html( $state ) . '</td>';
         echo '<td><time datetime="' . esc_attr( gmdate( 'c', $case['timestamp'] ) ) . '">' .

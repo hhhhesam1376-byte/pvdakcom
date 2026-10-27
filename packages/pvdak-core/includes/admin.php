@@ -167,11 +167,11 @@ function pvdak_core_request_column_content( $column, $post_id ) {
     if ( 'pvdak_kind' === $column ) {
         $types = pvdak_core_request_types();
         $type = get_post_meta( $post_id, '_pvdak_request_type', true );
-        echo esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' );
+        echo esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص' );
     } elseif ( 'pvdak_state' === $column ) {
         $statuses = pvdak_core_request_statuses();
         $status = get_post_meta( $post_id, '_pvdak_request_state', true );
-        echo esc_html( isset( $statuses[ $status ] ) ? $statuses[ $status ] : 'ثبت‌شده' );
+        echo esc_html( is_string( $status ) && isset( $statuses[ $status ] ) ? $statuses[ $status ] : 'نیازمند بررسی' );
     } elseif ( 'pvdak_owner' === $column ) {
         $user = get_user_by( 'id', get_post_field( 'post_author', $post_id ) );
         echo $user ? esc_html( $user->display_name ) : 'نامشخص';

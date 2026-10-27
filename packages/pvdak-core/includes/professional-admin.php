@@ -154,9 +154,12 @@ function pvdak_core_prof_admin_column_content( $column, $post_id ) {
     if ( 'pvdak_tracking' === $column ) {
         echo '<code>#' . esc_html( absint( $post_id ) ) . '</code>';
     } elseif ( 'pvdak_license' === $column ) {
-        $status = (string) get_post_meta( $post_id, '_pvdak_license_review_status', true );
-        $method = (string) get_post_meta( $post_id, '_pvdak_license_review_method', true );
-        $expiry = (string) get_post_meta( $post_id, '_pvdak_license_review_expires', true );
+        $raw_status = get_post_meta( $post_id, '_pvdak_license_review_status', true );
+        $raw_method = get_post_meta( $post_id, '_pvdak_license_review_method', true );
+        $raw_expiry = get_post_meta( $post_id, '_pvdak_license_review_expires', true );
+        $status = is_string( $raw_status ) ? $raw_status : '';
+        $method = is_string( $raw_method ) ? $raw_method : '';
+        $expiry = is_string( $raw_expiry ) ? $raw_expiry : '';
         if ( pvdak_core_license_review_current( $post_id ) ) {
             echo '<strong>بررسی داخلی معتبر</strong>';
         } elseif ( 'checked' === $status && $expiry && $expiry < current_time( 'Y-m-d' ) ) {
@@ -167,8 +170,8 @@ function pvdak_core_prof_admin_column_content( $column, $post_id ) {
             echo 'نیازمند بررسی مستقل';
         }
     } elseif ( 'pvdak_license_expiry' === $column ) {
-        $expiry = (string) get_post_meta( $post_id, '_pvdak_license_review_expires', true );
-        echo preg_match( '/^\d{4}-\d{2}-\d{2}$/D', $expiry ) ? '<time datetime="' . esc_attr( $expiry ) . '">' . esc_html( $expiry ) . '</time>' : '—';
+        $expiry = get_post_meta( $post_id, '_pvdak_license_review_expires', true );
+        echo is_string( $expiry ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/D', $expiry ) ? '<time datetime="' . esc_attr( $expiry ) . '">' . esc_html( $expiry ) . '</time>' : '—';
     } elseif ( 'pvdak_reviewer' === $column ) {
         $reviewer_id = absint( get_post_meta( $post_id, '_pvdak_license_review_by', true ) );
         $reviewer = $reviewer_id ? get_user_by( 'id', $reviewer_id ) : false;

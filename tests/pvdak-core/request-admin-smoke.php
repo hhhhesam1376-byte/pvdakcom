@@ -45,7 +45,8 @@ $checks = array(
     'deduplicated admin columns' => strpos( $src, 'unset( $columns[\'pvdak_kind\']' ) !== false,
     'invalid professional warning' => strpos( $src, 'پرونده حرفه‌ای نامعتبر' ) !== false,
     'malformed stored assignment IDs cannot be silently coerced' =>
-        strpos( $src, "preg_match( '/^[1-9][0-9]{0,9}$/D', (string) \$raw_profile_id )" ) !== false &&
+        strpos( $src, 'pvdak_core_assignment_positive_id( $raw_profile_id )' ) !== false &&
+        strpos( $src, "! in_array( \$raw_profile_id, array( '', '0', 0, false, null ), true )" ) !== false &&
         strpos( $src, 'ارجاع ناقص یا نامعتبر؛ بررسی شود' ) !== false,
     'professional list checks nonpublic profile status' =>
         strpos( $src, "get_post_status( \$profile_id ), array( 'private', 'draft' )" ) !== false,
@@ -84,6 +85,13 @@ $checks = array(
         substr_count( $src, "in_array( '-1', \$f, true )" ) >= 4 &&
         strpos( $src, 'Malformed operational selectors must never widen the private list.' ) !== false &&
         strpos( $src, 'فیلتر عملیاتی نامعتبر است' ) !== false,
+    'malformed case labels cannot crash list columns' =>
+        strpos( $src, 'is_string( $type ) && isset( $types[ $type ] )' ) !== false &&
+        strpos( $src, 'is_string( $state ) && isset( $statuses[ $state ] )' ) !== false &&
+        strpos( $setup, 'is_string( $type ) && isset( $types[ $type ] )' ) !== false &&
+        strpos( $setup, 'is_string( $status ) && isset( $statuses[ $status ] )' ) !== false,
+    'malformed topic ID is not coerced' =>
+        strpos( $src, "pvdak_core_assignment_positive_id( get_post_meta( \$post_id, '_pvdak_legal_landing_id', true ) )" ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {

@@ -214,7 +214,7 @@ function pvdak_core_case_admin_column_content( $column, $post_id ) {
         echo $edit_url ? '<a href="' . esc_url( $edit_url ) . '"><code>' . esc_html( $label ) . '</code></a>'
             : '<code>' . esc_html( $label ) . '</code>';
     } elseif ( 'pvdak_case_topic_column' === $column ) {
-        $id = absint( get_post_meta( $post_id, '_pvdak_legal_landing_id', true ) );
+        $id = pvdak_core_assignment_positive_id( get_post_meta( $post_id, '_pvdak_legal_landing_id', true ) );
         echo $id && pvdak_core_valid_specialty( $id ) ? esc_html( get_the_title( $id ) ) : 'ثبت‌نشده / قدیمی';
     } elseif ( 'pvdak_case_age_column' === $column ) {
         $timestamp = get_post_time( 'U', true, $post_id );
@@ -379,17 +379,15 @@ function pvdak_core_case_ops_column_content( $column, $post_id ) {
     if ( 'pvdak_case_kind' === $column ) {
         $types = pvdak_core_request_types();
         $type = get_post_meta( $post_id, '_pvdak_request_type', true );
-        echo esc_html( isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص / قدیمی' );
+        echo esc_html( is_string( $type ) && isset( $types[ $type ] ) ? $types[ $type ] : 'نامشخص / قدیمی' );
     } elseif ( 'pvdak_case_state' === $column ) {
         $statuses = pvdak_core_request_statuses();
         $state = get_post_meta( $post_id, '_pvdak_request_state', true );
-        echo esc_html( isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'نامعتبر / نیازمند بررسی' );
+        echo esc_html( is_string( $state ) && isset( $statuses[ $state ] ) ? $statuses[ $state ] : 'نامعتبر / نیازمند بررسی' );
     } elseif ( 'pvdak_case_assignee' === $column ) {
         $raw_profile_id = get_post_meta( $post_id, '_pvdak_assigned_profile_id', true );
-        $profile_id = is_scalar( $raw_profile_id ) &&
-            preg_match( '/^[1-9][0-9]{0,9}$/D', (string) $raw_profile_id ) ? absint( $raw_profile_id ) : 0;
-        $invalid_assignment = is_scalar( $raw_profile_id ) &&
-            '' !== (string) $raw_profile_id && '0' !== (string) $raw_profile_id && ! $profile_id;
+        $profile_id = pvdak_core_assignment_positive_id( $raw_profile_id );
+        $invalid_assignment = ! in_array( $raw_profile_id, array( '', '0', 0, false, null ), true ) && ! $profile_id;
         $state = get_post_meta( $post_id, '_pvdak_request_state', true );
         if ( ! $profile_id ) {
             echo 'matched' === $state || $invalid_assignment ?
