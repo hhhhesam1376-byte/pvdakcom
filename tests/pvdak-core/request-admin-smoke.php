@@ -74,8 +74,16 @@ $checks = array(
         strpos( $src, "'post__in', array( 0 )" ) !== false,
     'stale or invalid topic is rejected and warning is visible' =>
         strpos( $src, '! pvdak_core_valid_specialty( $topic ) ? -1' ) !== false &&
-        strpos( $src, 'شناسه یا موضوع فیلتر نامعتبر است' ) !== false &&
+        strpos( $src, 'یکی از فیلترهای صف نامعتبر است' ) !== false &&
         strpos( $src, '$f[ $name ] > 0 ? $f[ $name ]' ) !== false,
+    'enumerated filters reject malformed supplied values' =>
+        strpos( $src, 'function pvdak_core_case_admin_choice_filter( $name, $allowed )' ) !== false &&
+        strpos( $src, "! is_string( \$_GET[ \$name ] ) ) { return '-1'; }" ) !== false &&
+        strpos( $src, "in_array( \$raw, \$allowed, true ) ? \$raw : '-1'" ) !== false,
+    'both list query handlers fail closed on invalid selectors' =>
+        substr_count( $src, "in_array( '-1', \$f, true )" ) >= 4 &&
+        strpos( $src, 'Malformed operational selectors must never widen the private list.' ) !== false &&
+        strpos( $src, 'فیلتر عملیاتی نامعتبر است' ) !== false,
     'no data mutations' => strpos( $src, 'update_post_meta(' ) === false && strpos( $src, 'wp_insert_post(' ) === false,
 );
 foreach ( $checks as $label => $ok ) {
