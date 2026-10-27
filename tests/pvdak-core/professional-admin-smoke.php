@@ -14,11 +14,11 @@ $checks = array(
     'method allowlist' => strpos( $src, 'array_keys( pvdak_core_review_methods() )' ) !== false,
     'expiry allowlist' => strpos( $src, "array( 'expired', 'next30', 'future', 'missing' )" ) !== false,
     'sanitized GET' => strpos( $src, 'sanitize_key( $raw )' ) !== false,
-    'malformed filters fail closed' => strpos( $src, "$filters['_invalid'] = true" ) !== false &&
-        strpos( $src, "$query->set( 'post__in', array( 0 ) )" ) !== false,
+    'malformed filters fail closed' => strpos( $src, '$filters[\'_invalid\'] = true' ) !== false &&
+        strpos( $src, '$query->set( \'post__in\', array( 0 ) )' ) !== false,
     'invalid input never echoed in warning' => strpos( $src, 'pvdak_core_prof_admin_invalid_notice' ) !== false &&
         strpos( $src, 'فیلترها را پاک کنید') !== false,
-    'city rejects overlong or altered text' => strpos( $src, "$bounded !== $city" ) !== false,
+    'city rejects overlong or altered text' => strpos( $src, '$bounded !== $city' ) !== false,
     'bounded city' => strpos( $src, 'wp_html_excerpt( $city, 70' ) !== false,
     'city search' => strpos( $src, "'compare' => 'LIKE'" ) !== false,
     'preserve other meta filters' => strpos( $src, '$query->get( \'meta_query\' )' ) !== false,
