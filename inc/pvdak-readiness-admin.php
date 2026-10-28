@@ -105,7 +105,14 @@ function pvdak_management_link_available( $link ) {
 function pvdak_management_pending_comments() {
     if ( ! current_user_can( 'moderate_comments' ) ) { return 0; }
     $counts = wp_count_comments();
-    return is_object( $counts ) && isset( $counts->moderated ) ? absint( $counts->moderated ) : 0;
+    if ( ! is_object( $counts ) || ! isset( $counts->moderated ) ) { return 0; }
+    $value = $counts->moderated;
+    if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
+    $raw = (string) $value;
+    // Do not turn a negative/malformed count into a misleading pending badge.
+    if ( ! preg_match( '/^(?:0|[1-9][0-9]{0,9})$/D', $raw ) ||
+         (float) $raw > 2147483647 ) { return 0; }
+    return (int) $raw;
 }
 
 function pvdak_management_render_links() {
