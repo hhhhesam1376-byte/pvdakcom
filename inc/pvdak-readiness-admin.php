@@ -121,8 +121,8 @@ function pvdak_management_pending_comments() {
  * approved by pvdak_management_link_available() may enter $available.
  * No request, professional, ticket or comment contents are queried here.
  */
-function pvdak_management_primary_queue_routes( $available ) {
-    $groups = array(
+function pvdak_management_queue_route_groups() {
+    return array(
         array(
             'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
             'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest',
@@ -134,8 +134,11 @@ function pvdak_management_primary_queue_routes( $available ) {
         ),
         array( 'edit.php?post_type=pvdak_support_ticket' ),
     );
+}
+
+function pvdak_management_primary_queue_routes( $available ) {
     $selected = array();
-    foreach ( $groups as $alternatives ) {
+    foreach ( pvdak_management_queue_route_groups() as $alternatives ) {
         foreach ( $alternatives as $route ) {
             if ( isset( $available[ $route ] ) ) {
                 $selected[] = $route;
@@ -144,6 +147,23 @@ function pvdak_management_primary_queue_routes( $available ) {
         }
     }
     return $selected;
+}
+
+/**
+ * Keep every authorized alternative available, but show only the preferred
+ * queue card by default. Native WordPress/Core routes are never removed.
+ */
+function pvdak_management_secondary_queue_routes( $available ) {
+    $primary = pvdak_management_primary_queue_routes( $available );
+    $secondary = array();
+    foreach ( pvdak_management_queue_route_groups() as $alternatives ) {
+        foreach ( $alternatives as $route ) {
+            if ( isset( $available[ $route ] ) && ! in_array( $route, $primary, true ) ) {
+                $secondary[] = $route;
+            }
+        }
+    }
+    return $secondary;
 }
 
 /**
@@ -176,11 +196,19 @@ function pvdak_management_render_links() {
         ),
     );
     $links = pvdak_management_links();
+    $available = array();
+    foreach ( $links as $link ) {
+        if ( pvdak_management_link_available( $link ) ) {
+            $available[ $link[3] ] = $link;
+        }
+    }
+    $secondary_routes = pvdak_management_secondary_queue_routes( $available );
     foreach ( $sections as $heading => $names ) {
         $cards = array();
+        $secondary_cards = array();
         foreach ( $links as $link ) {
             if ( ! in_array( $link[0], $names, true ) ||
-                 ! pvdak_management_link_available( $link ) ) { continue; }
+                 ! isset( $available[ $link[3] ] ) ) { continue; }
             $label = $link[0];
             $description = $link[1];
             if ( 'ویرایش صفحه اصلی' === $label && function_exists( 'pvdak_home_page_id' ) &&
@@ -192,16 +220,28 @@ function pvdak_management_render_links() {
                 $pending = pvdak_management_pending_comments();
                 if ( $pending > 0 ) { $label .= ' (' . number_format_i18n( $pending ) . ')'; }
             }
-            $cards[] = '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
+            $card = '<a style="display:block;padding:18px;background:#fff;border:1px solid #dcdcde;border-radius:8px;text-decoration:none" href="' .
                 esc_url( admin_url( $link[3] ) ) . '"><strong style="display:block;font-size:15px;margin-bottom:8px">' .
                 esc_html( $label ) . '</strong><span style="color:#50575e">' . esc_html( $description ) . '</span></a>';
+            if ( in_array( $link[3], $secondary_routes, true ) ) {
+                $secondary_cards[] = $card;
+            } else {
+                $cards[] = $card;
+            }
         }
         if ( ! $cards ) { continue; }
         echo '<section aria-label="' . esc_attr( $heading ) . '"><h2 style="margin-top:26px">' .
             esc_html( $heading ) . '</h2>';
         echo '<div class="pvdak-management-links" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;max-width:1050px">';
         echo implode( '', $cards ); // Every card is built from escaped, fixed admin routes.
-        echo '</div></section>';
+        echo '</div>';
+        if ( $secondary_cards ) {
+            echo '<details style="margin-top:12px;max-width:1050px"><summary>مسیرهای تکمیلی صف‌ها</summary>';
+            echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;margin-top:12px">';
+            echo implode( '', $secondary_cards );
+            echo '</div></details>';
+        }
+        echo '</section>';
     }
 }
 

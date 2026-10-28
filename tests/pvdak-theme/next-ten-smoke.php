@@ -149,6 +149,23 @@ foreach ( $queue_cases as $case ) {
 }
 echo "PVDAK_MANAGEMENT_QUEUE_ROUTES_OK: 6/6 isolated PHP cases (not WordPress E2E).\n";
 
+$secondary_queue_cases = array(
+    array( array( $triage => 1, $pending => 1, $requests => 1, $prof_pending => 1, $professionals => 1, $support => 1 ), array( $pending, $requests, $professionals ) ),
+    array( array( $pending => 1, $requests => 1, $professionals => 1, $support => 1 ), array( $requests ) ),
+    array( array( $requests => 1, $professionals => 1, $support => 1 ), array() ),
+    array( array( $support => 1 ), array() ),
+    array( array( 'untrusted.php' => 1 ), array() ),
+    array( array(), array() ),
+);
+foreach ( $secondary_queue_cases as $case ) {
+    if ( pvdak_management_secondary_queue_routes( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_MANAGEMENT_FAIL: supplementary queue links must remain capability-filtered\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_MANAGEMENT_SECONDARY_QUEUE_OK: 6/6 original-source PHP cases (not WordPress E2E).\n";
+
+
 $draft_page = 'edit.php?post_type=page&post_status=draft';
 $draft_post = 'edit.php?post_status=draft';
 $draft_cases = array(
