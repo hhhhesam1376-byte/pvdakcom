@@ -220,7 +220,7 @@ function pvdak_core_handle_request() {
     $id = absint( $id );
     if ( 'pvdak_request' !== get_post_type( $id ) ||
          'private' !== get_post_status( $id ) ||
-         (int) get_post_field( 'post_author', $id ) !== $user_id ||
+         pvdak_core_request_positive_id( get_post_field( 'post_author', $id ) ) !== $user_id ||
          $type !== get_post_meta( $id, '_pvdak_request_type', true ) ||
          $landing_id !== pvdak_core_request_positive_id( get_post_meta( $id, '_pvdak_legal_landing_id', true ) ) ||
          'submitted' !== get_post_meta( $id, '_pvdak_request_state', true ) ) {
@@ -288,7 +288,8 @@ function pvdak_core_my_requests() {
     foreach ( is_array( $query->posts ) ? $query->posts : array() as $item ) {
         // Defense in depth against third-party query filters or stale records.
         if ( $item instanceof WP_Post && 'pvdak_request' === $item->post_type && 'private' === $item->post_status &&
-            (int) $item->post_author === $user_id &&
+            pvdak_core_request_positive_id( $item->ID ) > 0 &&
+            pvdak_core_request_positive_id( $item->post_author ) === $user_id &&
             ( ! $type_filter || $type_filter === get_post_meta( $item->ID, '_pvdak_request_type', true ) ) &&
             ( ! $status_filter || $status_filter === get_post_meta( $item->ID, '_pvdak_request_state', true ) ) ) {
             $items[] = $item;
