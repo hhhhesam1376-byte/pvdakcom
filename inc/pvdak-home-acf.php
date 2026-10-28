@@ -135,6 +135,9 @@ function pvdak_home_value( $name, $default = null ) {
         $default = isset( $defaults[$name] ) ? $defaults[$name] : '';
     }
     $page_id = pvdak_home_page_id();
+    // A draft/private/trash Page must never supply public homepage copy.
+    // Keep its ACF data intact for the editor, but render safe defaults.
+    if ( $page_id && 'publish' !== get_post_status( $page_id ) ) { $page_id = 0; }
     if ( $page_id && function_exists( 'get_field' ) ) {
         $value = get_field( $name, $page_id );
         if ( false !== $value && null !== $value && '' !== $value ) { return pvdak_home_brand_copy( $name, $value ); }
@@ -148,8 +151,10 @@ function pvdak_home_value( $name, $default = null ) {
 }
 function pvdak_home_image_url( $name ) {
     $value = pvdak_home_value( $name, '' );
-    if ( is_array( $value ) && isset( $value['ID'] ) ) { $value = (int) $value['ID']; }
-    $url = is_numeric( $value ) && $value > 0 ? wp_get_attachment_image_url( (int) $value, 'full' ) : '';
+    if ( is_array( $value ) ) { $value = isset( $value['ID'] ) ? $value['ID'] : null; }
+    // Reject malformed/scientific-notation IDs instead of casting them to an attachment.
+    $id = pvdak_home_configured_page_id( $value );
+    $url = $id ? wp_get_attachment_image_url( $id, 'full' ) : '';
     return $url ? $url : '';
 }
 function pvdak_register_home_acf_fields() {
@@ -354,7 +359,14 @@ function pvdak_home_admin_landing() {
     }
     $page_id = pvdak_home_page_id();
     if ( ! $page_id ) {
-        echo '<div class="notice notice-info inline"><p>صفحه اصلی وردپرس هنوز به یک برگه ثابت متصل نشده است. برای فعال‌کردن ویرایشگر، یک‌بار دکمه زیر را بزنید.</p></div>';
+        echo '<div class="notice notice-info inline"><p>صفحه اصلی وردپرس هنوز به یک برگه ثابت متصل نشده است. اگر برگه اختصاصی PVDak پیش‌نویس است، ابتدا آن را بازبینی و منتشر کنید؛ سپس دکمه راه‌اندازی را بزنید.</p></div>';
+        $candidate = get_page_by_path( 'pvdak-home', OBJECT, 'page' );
+        if ( $candidate instanceof WP_Post && 'trash' !== $candidate->post_status &&
+             'publish' !== $candidate->post_status &&
+             current_user_can( 'edit_post', $candidate->ID ) ) {
+            echo '<p><a class="button" href="' . esc_url( get_edit_post_link( $candidate->ID ) ) .
+                '">بازبینی و انتشار برگه پیش‌نویس صفحه اصلی</a></p>';
+        }
         if ( current_user_can( 'manage_options' ) ) {
             echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
             echo '<input type="hidden" name="action" value="pvdak_prepare_home_page">';
@@ -373,6 +385,10 @@ function pvdak_home_admin_landing() {
     if ( ! current_user_can( 'edit_post', $page_id ) ) {
         echo '<div class="notice notice-error inline"><p>مجوز ویرایش برگه صفحه اصلی را ندارید.</p></div></div>';
         return;
+    }
+    if ( 'publish' !== get_post_status( $page_id ) ) {
+        echo '<div class="notice notice-warning inline"><p>برگه انتخاب‌شده هنوز منتشر نشده است؛ متن‌های آن در صفحه اصلی عمومی نمایش داده نمی‌شوند. ';
+        echo '<a href="' . esc_url( get_edit_post_link( $page_id ) ) . '">بازبینی وضعیت انتشار برگه</a></p></div>';
     }
     if ( isset( $_GET['updated'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['updated'] ) ) ) {
         echo '<div class="notice notice-success is-dismissible"><p>تغییرات صفحه اصلی ذخیره شد.</p></div>';
@@ -419,12 +435,21 @@ function pvdak_home_prepare_page() {
     check_admin_referer( 'pvdak_prepare_home_page' );
 
     $page_id = pvdak_home_configured_page_id( get_option( 'page_on_front' ) );
+    // Never auto-publish a selected draft/private Page while preparing the editor.
+    if ( $page_id && 'page' === get_post_type( $page_id ) &&
+         'publish' !== get_post_status( $page_id ) ) {
+        wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=review' ) );
+        exit;
+    }
     if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
         $existing = get_page_by_path( 'pvdak-home', OBJECT, 'page' );
         if ( $existing && 'trash' !== $existing->post_status ) {
             $page_id = (int) $existing->ID;
+            // Existing unpublished editorial content requires an explicit
+            // review/publish action in WordPress, never silent publication.
             if ( 'publish' !== $existing->post_status ) {
-                wp_update_post( array( 'ID' => $page_id, 'post_status' => 'publish' ) );
+                wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=review' ) );
+                exit;
             }
         } else {
             $created = wp_insert_post( array(

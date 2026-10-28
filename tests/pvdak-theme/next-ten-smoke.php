@@ -499,8 +499,15 @@ if ( ! function_exists( 'get_post_type' ) ) {
 if ( ! function_exists( 'get_field' ) ) {
     function get_field( $name, $id ) {
         $GLOBALS['pvdak_test_home_field_reads'][] = $id;
-        return 'متن آزمایشی';
+        return array_key_exists( 'pvdak_test_home_field_value', $GLOBALS ) ?
+            $GLOBALS['pvdak_test_home_field_value'] : 'متن آزمایشی';
     }
+}
+if ( ! function_exists( 'get_post_status' ) ) {
+    function get_post_status( $id ) { return $GLOBALS['pvdak_test_front_status'] ?? 'publish'; }
+}
+if ( ! function_exists( 'wp_get_attachment_image_url' ) ) {
+    function wp_get_attachment_image_url( $id, $size ) { return 'https://example.test/image-' . $id . '.jpg'; }
 }
 require_once $root . '/inc/pvdak-home-acf.php';
 $home_id_cases = array(
@@ -561,3 +568,49 @@ if ( 'fallback' !== pvdak_home_value( 'hero_title', 'fallback' ) ||
 }
 $home_checks++;
 echo "PVDAK_D31_HOME_ID_OK: {$home_checks}/{$home_checks} original-source PHP cases (not WordPress E2E).\n";
+
+
+// D31: exercise original homepage public-copy and attachment guards against
+// synthetic unpublished Pages and malformed ACF IDs; no WordPress DB loaded.
+$GLOBALS['pvdak_test_front_mode'] = 'page';
+$GLOBALS['pvdak_test_front_type'] = 'page';
+$GLOBALS['pvdak_test_front_id'] = '21';
+$draft_status_checks = 0;
+foreach ( array( 'draft', 'private', 'pending', 'future', 'trash' ) as $status ) {
+    $GLOBALS['pvdak_test_front_status'] = $status;
+    $GLOBALS['pvdak_test_home_field_reads'] = array();
+    if ( 'fallback' !== pvdak_home_value( 'hero_title', 'fallback' ) ||
+         $GLOBALS['pvdak_test_home_field_reads'] ) {
+        fwrite( STDERR, "PVD_D31_DRAFT_COPY_FAIL: unpublished Page ACF reached public output\n" );
+        exit( 1 );
+    }
+    $draft_status_checks++;
+}
+$GLOBALS['pvdak_test_front_status'] = 'publish';
+$GLOBALS['pvdak_test_home_field_value'] = '21';
+$image_cases = array(
+    array( 21, 'https://example.test/image-21.jpg' ),
+    array( '21', 'https://example.test/image-21.jpg' ),
+    array( array( 'ID' => '21' ), 'https://example.test/image-21.jpg' ),
+    array( '021', '' ), array( '21junk', '' ), array( '2e1', '' ),
+    array( '21.0', '' ), array( true, '' ),
+    array( array( 'ID' => '21junk' ), '' ),
+    array( array( 'ID' => array( 21 ) ), '' ),
+    array( array( 'id' => 21 ), '' ),
+);
+foreach ( $image_cases as $case ) {
+    $GLOBALS['pvdak_test_home_field_value'] = $case[0];
+    if ( pvdak_home_image_url( 'hero_image' ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_IMAGE_FAIL: malformed attachment ID\n" );
+        exit( 1 );
+    }
+}
+unset( $GLOBALS['pvdak_test_home_field_value'] );
+$home_source = file_get_contents( $root . '/inc/pvdak-home-acf.php' );
+if ( strpos( $home_source, "wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=review' ) );" ) === false ||
+     strpos( $home_source, "wp_update_post( array( 'ID' => \$page_id, 'post_status' => 'publish' ) )" ) !== false ) {
+    fwrite( STDERR, "PVD_D31_SETUP_FAIL: draft must not be auto-published\n" );
+    exit( 1 );
+}
+echo "PVDAK_D31_DRAFT_IMAGE_OK: {$draft_status_checks} status + " . count( $image_cases ) .
+    " image original-source PHP cases; setup source-only guard (not WP E2E).\n";
