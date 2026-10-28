@@ -207,8 +207,7 @@ function pvdak_email_verification_resend() {
     }
     if (is_email($email)) {
         $rate = 'pvdak_verify_resend_' . substr(hash_hmac('sha256', strtolower($email), wp_salt('nonce')), 0, 32);
-        if (!get_transient($rate)) {
-            set_transient($rate, '1', 300);
+        if (!pvdak_registration_rate_exceeded_key($rate, 1, 300)) {
             $user = get_user_by('email', $email);
             if ($user && '1' === (string)get_user_meta($user->ID, '_pvdak_email_verification_pending', true)) {
                 pvdak_email_verification_issue($user->ID);
