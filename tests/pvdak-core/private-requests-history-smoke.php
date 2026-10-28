@@ -13,8 +13,12 @@ $checks = array(
  'login required' => strpos($src, 'if ( ! is_user_logged_in() )') !== false,
  'author scoped query' => strpos($src, "'author' => \$user_id") !== false,
  'private post status' => strpos($src, "'post_status' => 'private'") !== false,
- 'defense in depth owner' => strpos($src, '(int) $item->post_author === $user_id') !== false,
- 'defense in depth private' => strpos($src, "'private' === \$item->post_status") !== false,
+ 'defense in depth owner' => strpos($src, 'pvdak_core_request_positive_id( $item->post_author ) === $user_id') !== false,
+ 'defense in depth rejects malformed row IDs' =>
+    strpos($src, 'pvdak_core_request_positive_id( $item->ID ) > 0') !== false,
+  'saved request owner is strictly parsed' =>
+    strpos($requests, 'pvdak_core_request_positive_id( get_post_field( \'post_author\', $id ) ) !== $user_id') !== false,
+  'defense in depth private' => strpos($src, "'private' === \$item->post_status") !== false,
  'ten per page' => strpos($src, "'posts_per_page' => 10") !== false,
  'bounded page' => strpos($src, 'min( 1000, (int) $raw_page )') !== false,
  'status allowlist' => strpos($src, 'isset( $statuses[$raw_status] )') !== false,
