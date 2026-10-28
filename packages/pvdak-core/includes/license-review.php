@@ -22,12 +22,12 @@ function pvdak_core_review_methods() {
  * Legacy records without a signature must be explicitly reviewed again.
  */
 function pvdak_core_license_review_identity_signature( $profile_id ) {
-    $id = absint( $profile_id );
+    $id = pvdak_core_request_positive_id( $profile_id );
     if ( ! $id || 'pvdak_professional' !== get_post_type( $id ) ||
          'private' !== get_post_status( $id ) ||
          'lawyer' !== get_post_meta( $id, '_pvdak_member_type', true ) ||
          'approved' !== get_post_meta( $id, '_pvdak_member_state', true ) ) { return ''; }
-    $owner = absint( get_post_field( 'post_author', $id ) );
+    $owner = pvdak_core_request_positive_id( get_post_field( 'post_author', $id ) );
     $name = get_post_field( 'post_title', $id );
     $city = get_post_meta( $id, '_pvdak_member_city', true );
     if ( ! is_string( $name ) || ! is_string( $city ) ||
@@ -41,7 +41,7 @@ function pvdak_core_license_review_identity_signature( $profile_id ) {
  * expiry date. An ordinary membership approval cannot substitute for it.
  */
 function pvdak_core_license_review_current( $profile_id ) {
-    $id = absint( $profile_id );
+    $id = pvdak_core_request_positive_id( $profile_id );
     $signature = pvdak_core_license_review_identity_signature( $id );
     $saved = get_post_meta( $id, '_pvdak_license_review_identity', true );
     if ( ! is_string( $saved ) || '' === $signature || ! preg_match( '/^[a-f0-9]{64}$/D', $saved ) ||
@@ -54,8 +54,21 @@ function pvdak_core_license_review_current( $profile_id ) {
     if ( ! is_string( $date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/D', $date ) || ! wp_checkdate(
         (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 ), $date
     ) ) { return false; }
-    $reviewer = absint( get_post_meta( $id, '_pvdak_license_review_by', true ) );
-    return $reviewer > 0 && (bool) get_userdata( $reviewer ) && $date >= current_time( 'Y-m-d' );
+    $reviewer = pvdak_core_request_positive_id( get_post_meta( $id, '_pvdak_license_review_by', true ) );
+    // A deleted or de-privileged reviewer must not remain a current authority.
+    if ( ! $reviewer || ! get_userdata( $reviewer ) || ! user_can( $reviewer, 'manage_options' ) ||
+         $date < current_time( 'Y-m-d' ) ) { return false; }
+    // The audit is the accountable record of a deliberate independent check.
+    // A direct metadata edit or a later pending audit cannot grant referrals.
+    $audit = get_post_meta( $id, '_pvdak_license_review_audit', false );
+    if ( ! is_array( $audit ) || ! $audit ) { return false; }
+    $last = end( $audit );
+    return is_array( $last ) &&
+        ( $last['to'] ?? null ) === 'checked' &&
+        ( $last['method'] ?? null ) === 'official_source' &&
+        ( $last['expires'] ?? null ) === $date &&
+        ( $last['identity_bound'] ?? null ) === true &&
+        pvdak_core_request_positive_id( $last['by'] ?? null ) === $reviewer;
 }
 
 function pvdak_core_license_review_metabox() {
@@ -76,6 +89,7 @@ function pvdak_core_license_review_metabox_html( $post ) {
     $method = is_string( $method ) ? $method : '';
     $expiry = is_string( $expiry ) ? $expiry : '';
     echo '<p>این بخش فقط سابقه بررسی داخلی توسط مدیر مجاز را ثبت می‌کند. سیستم هیچ استعلام خودکاری انجام نمی‌دهد و تا تکمیل رویه مصوب نمی‌توان تأیید رسمی بودن پروانه را به کاربران اعلام کرد.</p>';
+    echo '<p><strong>پیش از تأیید:</strong> منبع رسمی، تطبیق هویت و وضعیت اعتبار را خارج از این فرم بررسی کنید. مدارک، شماره ملی، شماره پروانه و نشانی‌های خصوصی را در یادداشت وارد نکنید. صرف بررسی اولیه مدارک مجوز ارجاع نیست.</p>';
     echo '<p><label for="pvdak_review_method">روش بررسی</label><br>';
     echo '<select id="pvdak_review_method" name="pvdak_review_method"><option value="">انتخاب نشده</option>';
     foreach ( pvdak_core_review_methods() as $key => $label ) {
