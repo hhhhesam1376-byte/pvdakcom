@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.60
+ * Version: 0.8.61
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.60' );
+define( 'PVDAK_CORE_VERSION', '0.8.61' );
 
 /**
  * D24: Use one strict switch parser for the consent UI, admin checkbox,
@@ -33,6 +33,17 @@ function pvdak_core_notification_positive_id( $value ) {
 }
 
 /**
+ * A consent granted before the latest mailbox verification is stale.
+ * Never accept impossible/future verification times as proof of ownership.
+ */
+function pvdak_core_notification_verified_timestamp( $owner ) {
+    $owner_id = pvdak_core_notification_positive_id( $owner );
+    if ( ! $owner_id ) { return 0; }
+    $stamp = pvdak_core_notification_positive_id( get_user_meta( $owner_id, '_pvdak_email_verified_at', true ) );
+    return $stamp >= 1577836800 && $stamp <= time() + 300 ? $stamp : 0;
+}
+
+/**
  * D24: private, opt-in status notifications. Both administrator enablement
  * AND current-mailbox owner consent are required; neither is enabled on deploy.
  */
@@ -47,7 +58,7 @@ function pvdak_core_notification_verified_mailbox( $owner ) {
          pvdak_core_notification_positive_id( $user->ID ) !== $owner_id || ! is_string( $user->user_email ) ||
          ! is_email( $user->user_email ) ||
          ! in_array( $pending, array( '', '0', 0, false, null ), true ) ||
-         ! pvdak_core_notification_positive_id( get_user_meta( $owner_id, '_pvdak_email_verified_at', true ) ) ) { return ''; }
+         ! pvdak_core_notification_verified_timestamp( $owner_id ) ) { return ''; }
     $mailbox = strtolower( trim( $user->user_email ) );
     $verified = get_user_meta( $owner_id, '_pvdak_email_verified_address', true );
     return is_string( $verified ) && hash_equals( $mailbox, $verified ) ? $mailbox : '';
@@ -64,8 +75,10 @@ function pvdak_core_notification_consent_valid( $owner, $mailbox ) {
         return false;
     }
     $date = DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $record['at'], new DateTimeZone( 'UTC' ) );
-    return $date instanceof DateTimeImmutable &&
+    $verified_at = pvdak_core_notification_verified_timestamp( $owner_id );
+    return $verified_at > 0 && $date instanceof DateTimeImmutable &&
         $date->format( 'Y-m-d H:i:s' ) === $record['at'] &&
+        $date->getTimestamp() >= $verified_at &&
         $date->getTimestamp() >= 1577836800 && $date->getTimestamp() <= time() + 300;
 }
 
