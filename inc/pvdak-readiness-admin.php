@@ -277,7 +277,7 @@ function pvdak_management_render_links() {
             echo implode( '', $secondary_content_cards );
             echo '</div></details>';
         }
-        echo '</section';
+        echo '</section>';
     }
 }
 
