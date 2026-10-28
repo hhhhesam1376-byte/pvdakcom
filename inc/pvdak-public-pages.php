@@ -230,14 +230,17 @@ function pvdak_forum_contains_contact_number($text) {
     1 === preg_match('/(?<!\\p{N})(?:\\+?\\p{N}[\\s().\\-]*){9,}\\p{N}(?!\\p{N})/u', $text);
 }
 function pvdak_forum_public_entry_valid($entry) {
-  if (!$entry instanceof WP_Comment || !pvdak_forum_enabled() ||
+  if (!$entry instanceof WP_Comment) return false;
+  $marker = get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true);
+  $submitter = get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true);
+  if (!pvdak_forum_enabled() ||
       !pvdak_forum_page_valid($entry->comment_post_ID) ||
       '1' !== (string) $entry->comment_approved ||
       'comment' !== (string) $entry->comment_type ||
       0 !== (int) $entry->comment_parent || 0 !== (int) $entry->user_id ||
-      '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
-      !ctype_digit((string) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true)) ||
-      (int) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true) < 1 ||
+      !is_string($marker) || '1' !== $marker ||
+      !is_string($submitter) || !ctype_digit($submitter) ||
+      strlen($submitter) > 10 || (int) $submitter < 1 ||
       'عضو جامعه' !== (string) $entry->comment_author ||
       '' !== (string) $entry->comment_author_email ||
       '' !== (string) $entry->comment_author_url ||
