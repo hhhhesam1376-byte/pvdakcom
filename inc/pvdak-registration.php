@@ -71,12 +71,50 @@ function pvdak_registration_rate_key($scope) {
     $remote = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     return 'pvdak_reg_' . substr(hash_hmac('sha256', $scope . '|' . $remote, wp_salt('nonce')), 0, 40);
 }
+/**
+ * Serialize rate reservations across PHP workers on the existing MariaDB connection.
+ * Transient read-then-write alone is not atomic. A missing/contended DB lock denies
+ * the request; the lock name contains a digest, never an IP, email or phone.
+ */
+function pvdak_registration_with_rate_lock($key, $callback) {
+    global $wpdb;
+    if (!is_string($key) || '' === $key || !is_callable($callback) ||
+        !isset($wpdb) || !method_exists($wpdb, 'prepare') || !method_exists($wpdb, 'get_var')) {
+        return null;
+    }
+    $lock = 'pvdak_rl_' . substr(hash('sha256', $key), 0, 40);
+    $held = $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 2)', $lock));
+    if ('1' !== (string)$held) { return null; }
+    try {
+        return $callback();
+    } finally {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
+    }
+}
+/** Consume one quota slot atomically; true means blocked or storage unavailable. */
+function pvdak_registration_rate_exceeded_key($key, $limit, $seconds) {
+    if (!is_string($key) || '' === $key || !is_int($limit) || $limit < 1 ||
+        !is_int($seconds) || $seconds < 1) { return true; }
+    $allowed = pvdak_registration_with_rate_lock($key, static function() use ($key, $limit, $seconds) {
+        $raw = get_transient($key);
+        if (false === $raw) {
+            $count = 0;
+        } elseif (is_int($raw) && $raw >= 0) {
+            $count = $raw;
+        } elseif (is_string($raw) && strlen($raw) <= 8 && ctype_digit($raw)) {
+            $count = (int)$raw;
+        } else {
+            return false;
+        }
+        if ($count >= $limit) { return false; }
+        return true === set_transient($key, $count + 1, $seconds);
+    });
+    return true !== $allowed;
+}
 function pvdak_registration_rate_exceeded($scope, $limit, $seconds) {
-    $key = pvdak_registration_rate_key($scope);
-    $count = max(0, (int) get_transient($key));
-    if ($count >= $limit) { return true; }
-    set_transient($key, min($limit, $count + 1), $seconds);
-    return false;
+    return pvdak_registration_rate_exceeded_key(
+        pvdak_registration_rate_key($scope), $limit, $seconds
+    );
 }
 /** A partially initialized NEW signup must never remain login-capable. */
 function pvdak_registration_rollback_user($user_id) {
@@ -130,7 +168,9 @@ function pvdak_register_submit() {
         ($admin_email && strtolower($email) === strtolower($admin_email))) {
         wp_safe_redirect(add_query_arg('state','duplicate',$url));exit;
     }
-    set_transient($rate,1,180);
+    if (pvdak_registration_rate_exceeded_key($rate, 1, 180)) {
+        wp_safe_redirect(add_query_arg('state','slow',$url));exit;
+    }
     // A professional claim does not create a verified professional account.
     $role=get_role('pvdak_client')?'pvdak_client':'subscriber';
     $user=wp_insert_user(array('user_login'=>$username,'user_email'=>$email,
