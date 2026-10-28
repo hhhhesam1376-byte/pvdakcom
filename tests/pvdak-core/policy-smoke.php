@@ -1098,6 +1098,15 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
      pvdak_expect( ! pvdak_core_profile_has_owner( 501 ), 'D17 malformed owner object ID is rejected' );
  }
  unset( $GLOBALS['pvdak_mock_userdata_id'] );
+ // D17: malformed profile/topic identifiers must not reach referral matching.
+ foreach ( array( '-501', '0501', '501junk', array( 501 ) ) as $bad_profile ) {
+     pvdak_expect( ! pvdak_core_profile_referral_eligible( $bad_profile, 11 ),
+         'D17 malformed profile ID is rejected before referral lookup' );
+ }
+ foreach ( array( '-11', '011', '11junk', array( 11 ) ) as $bad_topic ) {
+     pvdak_expect( ! pvdak_core_profile_referral_eligible( 501, $bad_topic ),
+         'D17 malformed topic ID is rejected before referral lookup' );
+ }
  // D23: the metabox must not render more checkboxes than its save limit,
  // while retaining an already selected topic beyond the initial catalog cap.
  $pvdak_fake_catalog = array();

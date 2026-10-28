@@ -44,6 +44,8 @@ $checks = array(
  'intake requires a positive decimal topic id rather than absint of forged input' =>
     strpos($requests, 'pvdak_core_request_positive_id( $raw_landing )') !== false &&
     strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'request shortcode rejects malformed non-string type' =>
+    strpos($requests, "if ( ! is_string( \$atts['type'] ) ) { return ''; }") !== false,
  'intake errors show safe reason-specific feedback' =>
     strpos($requests, 'function pvdak_core_request_error_message(') !== false &&
     strpos($requests, "'limit' =>") !== false &&

@@ -70,13 +70,14 @@ function pvdak_management_link_available( $link ) {
     // The homepage editor must not advertise an edit route for a page this
     // staff member cannot edit, even if their role can edit other pages.
     if ( 'admin.php?page=pvdak-home-content' === $link[3] ) {
-        if ( ! function_exists( 'pvdak_home_admin_landing' ) ) { return false; }
-        if ( function_exists( 'pvdak_home_page_id' ) ) {
-            $home_id = pvdak_home_page_id();
-            // Only an administrator can initialize a missing front page.
-            if ( ! $home_id ) { return current_user_can( 'manage_options' ); }
-            if ( ! current_user_can( 'edit_post', $home_id ) ) { return false; }
-        }
+        // Never advertise a Page editor without the resolver needed for
+        // its per-Page permission check, even when the handler exists.
+        if ( ! function_exists( 'pvdak_home_admin_landing' ) ||
+             ! function_exists( 'pvdak_home_page_id' ) ) { return false; }
+        $home_id = pvdak_home_page_id();
+        // Only an administrator can initialize a missing front page.
+        if ( ! $home_id ) { return current_user_can( 'manage_options' ); }
+        if ( ! current_user_can( 'edit_post', $home_id ) ) { return false; }
     }
     // Never advertise a Core settings page when its plugin is not active.
     if ( 'options-general.php?page=pvdak-core' === $link[3] &&
@@ -312,6 +313,14 @@ function pvdak_management_render() {
     echo '<p>از اینجا کارهای روزمره سایت را انجام دهید. هر بخش مستقیماً به ابزار اصلی وردپرس متصل است و اطلاعات شما را جابه‌جا نمی‌کند.</p>';
     echo '<p><a class="button" href="' . esc_url( home_url( '/' ) ) . '" target="_blank" rel="noopener noreferrer">مشاهده سایت</a></p>';
     echo '<p class="description">ابتدا محتوای سایت را ویرایش کنید، سپس درخواست‌ها و گفت‌وگوها را بررسی کنید. بخش‌هایی که نصب یا مجوز لازم ندارند در این راهنما نمایش داده نمی‌شوند؛ دسترسی مستقیم و تنظیمات امنیتی وردپرس تغییری نمی‌کنند.</p>';
+    // Give managers an actionable explanation when Core queues are absent;
+    // do not activate plugins, change permissions or read private case data.
+    if ( current_user_can( 'manage_options' ) &&
+         ( ! defined( 'PVDAK_CORE_VERSION' ) || ! function_exists( 'pvdak_core_intake_open' ) ) ) {
+        echo '<div class="notice notice-warning inline"><p>ابزارهای درخواست حقوقی و عضویت متخصصان در این نصب در دسترس نیستند. مدیر می‌تواند وضعیت <a href="' .
+            esc_url( admin_url( 'plugins.php' ) ) .
+            '">افزونه‌های نصب‌شده</a> را بررسی کند؛ این راهنما هیچ افزونه یا خدمتی را فعال نمی‌کند.</p></div>';
+    }
     pvdak_management_daily_steps();
     pvdak_management_render_links();
     if (current_user_can('manage_options')) {

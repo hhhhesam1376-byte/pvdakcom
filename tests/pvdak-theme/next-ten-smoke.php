@@ -125,6 +125,20 @@ if ( ! function_exists( 'wp_count_comments' ) ) {
 }
 require_once $root . '/inc/pvdak-readiness-admin.php';
 
+// D31: a handler without its Page resolver cannot authorize a home shortcut.
+if ( ! function_exists( 'pvdak_home_admin_landing' ) ) {
+    function pvdak_home_admin_landing() {}
+}
+$GLOBALS['pvdak_mock_edit_pages'] = true;
+if ( pvdak_management_link_available( array(
+    'ویرایش صفحه اصلی', '', 'edit_pages', 'admin.php?page=pvdak-home-content'
+) ) ) {
+    fwrite( STDERR, "PVD_D31_HOME_ROUTE_FAIL: missing resolver must fail closed\n" );
+    exit( 1 );
+}
+unset( $GLOBALS['pvdak_mock_edit_pages'] );
+echo "PVDAK_D31_HOME_ROUTE_OK: original-source guard (not WP E2E).\n";
+
 // The helper uses only allowlisted/capability-filtered routes supplied by
 // the caller. Run the real function against synthetic maps, without WP/DB.
 $triage = 'edit.php?post_type=pvdak_request&page=pvdak-request-triage';

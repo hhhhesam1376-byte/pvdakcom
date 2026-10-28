@@ -85,6 +85,8 @@ function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
 
 function pvdak_core_request_form( $atts ) {
     $atts = shortcode_atts( array( 'type' => 'lawyer' ), $atts, 'pvdak_request_form' );
+    // Malformed shortcode attributes must not trigger a PHP type error.
+    if ( ! is_string( $atts['type'] ) ) { return ''; }
     $type = sanitize_key( $atts['type'] );
     $types = pvdak_core_request_types();
     if ( ! isset( $types[ $type ] ) ) {

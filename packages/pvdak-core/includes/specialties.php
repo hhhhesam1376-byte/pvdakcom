@@ -152,6 +152,10 @@ function pvdak_core_profile_has_owner( $profile_id ) {
 }
 
 function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $request_type = 'lawyer' ) {
+    // Fail closed before any WordPress post/meta lookup could coerce an ID.
+    $profile_id = pvdak_core_specialty_page_id( $profile_id );
+    $specialty_id = pvdak_core_specialty_page_id( $specialty_id );
+    if ( ! $profile_id || ! $specialty_id ) { return false; }
     if ( 'pvdak_professional' !== get_post_type( $profile_id ) ||
          'private' !== get_post_status( $profile_id ) ||
          'ready' !== pvdak_core_topic_resolution( $specialty_id )['status'] ||
