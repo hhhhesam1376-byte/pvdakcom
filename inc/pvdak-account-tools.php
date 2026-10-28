@@ -257,8 +257,7 @@ function pvdak_recovery_request() {
     }
     $token = 'pvdak_recovery_' . substr( hash_hmac( 'sha256',
         ( $_SERVER['REMOTE_ADDR'] ?? '' ) . '|' . strtolower( $identity ), wp_salt( 'nonce' ) ), 0, 35 );
-    if ( ! get_transient( $token ) ) {
-        set_transient( $token, 1, 90 );
+    if ( ! pvdak_registration_rate_exceeded_key( $token, 1, 90 ) ) {
         // Scope HTML/AltBody and the subject to this one reset email only.
         // Even mail errors must not affect unrelated WordPress messages.
         $alternative = '';
