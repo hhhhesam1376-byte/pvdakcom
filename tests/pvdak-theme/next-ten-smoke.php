@@ -20,6 +20,9 @@ $paths = array(
   'theme'=>'style.css',
   'core'=>'packages/pvdak-core/pvdak-core.php',
   'registration'=>'inc/pvdak-registration.php',
+  'sms'=>'inc/pvdak-sms-auth.php',
+  'recovery'=>'inc/pvdak-account-tools.php',
+  'core_requests'=>'packages/pvdak-core/includes/requests.php',
   'public'=>'inc/pvdak-public-pages.php',
 );
 $s = array();
@@ -34,7 +37,7 @@ foreach ($paths as $key=>$path) {
 $checks = array(
   'Login attempt throttling' =>
     strpos($s['auth'],'pvdak_auth_attempt_key(')!==false &&
-    strpos($s['auth'],'get_transient($key)>=6')!==false &&
+    strpos($s['auth'],'pvdak_registration_rate_exceeded_key($key,6,15*MINUTE_IN_SECONDS)')!==false &&
     strpos($s['auth'],'delete_transient($key)')!==false,
   'Verification and staff review' =>
     strpos($s['verify'],'wp_hash_password($token)')!==false &&
@@ -660,3 +663,102 @@ if ( false === $review_redirect_at || false === $posts_conflict_at || false === 
     exit( 1 );
 }
 echo "PVDAK_D31_SETUP_DRAFT_SOURCE_OK: source-only guards; WordPress E2E NOT_TESTED.\n";
+
+
+/**
+ * D14 source guard and original-function fixture. This is not a WordPress
+ * integration test: a fake DB models lock success/contention and transients.
+ */
+$d14_guards = array(
+    'atomic rate lock' => strpos($s['registration'], 'SELECT GET_LOCK(%s, 2)') !== false &&
+        strpos($s['registration'], 'SELECT RELEASE_LOCK(%s)') !== false,
+    'registration reservation' => strpos($s['registration'], 'pvdak_registration_rate_exceeded_key($rate, 1, 180)') !== false,
+    'sms send and verify' => strpos($s['sms'], 'pvdak_sms_reserve_send($phone)') !== false &&
+        strpos($s['sms'], 'pvdak_sms_claim_challenge($key,$code)') !== false,
+    'verification resend' => strpos($s['verify'], 'pvdak_registration_rate_exceeded_key($rate, 1, 300)') !== false,
+    'recovery cooldown' => strpos($s['recovery'], 'pvdak_registration_rate_exceeded_key( $token, 1, 90 )') !== false,
+    'private intake' => strpos($s['core_requests'], 'pvdak_core_intake_reserve( $user_id )') !== false &&
+        strpos($s['core_requests'], '$honeypot_filled') !== false,
+);
+foreach ($d14_guards as $name => $ok) {
+    if (!$ok) { fwrite(STDERR, "PVD_D14_SOURCE_FAIL: {$name}\n"); exit(1); }
+}
+if (!defined('MINUTE_IN_SECONDS')) { define('MINUTE_IN_SECONDS', 60); }
+if (!defined('HOUR_IN_SECONDS')) { define('HOUR_IN_SECONDS', 3600); }
+if (!function_exists('get_transient')) {
+    function get_transient($key) {
+        return array_key_exists($key, $GLOBALS['pvdak_d14_transients']) ?
+            $GLOBALS['pvdak_d14_transients'][$key] : false;
+    }
+}
+if (!function_exists('set_transient')) {
+    function set_transient($key, $value, $ttl) {
+        if (!empty($GLOBALS['pvdak_d14_storage_fail'])) { return false; }
+        $GLOBALS['pvdak_d14_transients'][$key] = $value;
+        return true;
+    }
+}
+if (!function_exists('delete_transient')) {
+    function delete_transient($key) {
+        if (!array_key_exists($key, $GLOBALS['pvdak_d14_transients'])) { return false; }
+        unset($GLOBALS['pvdak_d14_transients'][$key]);
+        return true;
+    }
+}
+if (!function_exists('wp_check_password')) {
+    function wp_check_password($code, $hash) {
+        return hash_equals($hash, 'mock:' . $code);
+    }
+}
+if (!function_exists('wp_salt')) {
+    function wp_salt($scheme = 'auth') { return 'isolated-fixture-only'; }
+}
+class PvdakD14FakeDb {
+    public $busy = false;
+    public $locks = 0;
+    public $releases = 0;
+    public function prepare($query, $name) {
+        return str_replace('%s', "'" . $name . "'", $query);
+    }
+    public function get_var($query) {
+        if (strpos($query, 'GET_LOCK') !== false) {
+            if ($this->busy) { return 0; }
+            $this->locks++;
+            return 1;
+        }
+        if (strpos($query, 'RELEASE_LOCK') !== false) {
+            $this->releases++;
+            return 1;
+        }
+        return null;
+    }
+}
+$GLOBALS['pvdak_d14_transients'] = array();
+$wpdb = new PvdakD14FakeDb();
+require_once $root . '/inc/pvdak-registration.php';
+require_once $root . '/inc/pvdak-sms-auth.php';
+$d14_results = array();
+$d14_results['first'] = !pvdak_registration_rate_exceeded_key('test-rate', 2, 60);
+$d14_results['second'] = !pvdak_registration_rate_exceeded_key('test-rate', 2, 60);
+$d14_results['third denied'] = pvdak_registration_rate_exceeded_key('test-rate', 2, 60);
+$wpdb->busy = true;
+$d14_results['busy denied'] = pvdak_registration_rate_exceeded_key('busy', 2, 60);
+$wpdb->busy = false;
+$GLOBALS['pvdak_d14_transients']['bad'] = array('malformed');
+$d14_results['malformed denied'] = pvdak_registration_rate_exceeded_key('bad', 2, 60);
+$GLOBALS['pvdak_d14_storage_fail'] = true;
+$d14_results['storage denied'] = pvdak_registration_rate_exceeded_key('store', 2, 60);
+$GLOBALS['pvdak_d14_storage_fail'] = false;
+$d14_results['phone reserved'] = pvdak_sms_reserve_send('09120000000');
+$d14_results['phone cooldown'] = !pvdak_sms_reserve_send('09120000000');
+$GLOBALS['pvdak_d14_transients']['challenge'] = array(
+    'hash' => 'mock:123456', 'expires' => time() + 300, 'tries' => 0,
+);
+$d14_results['OTP claimed'] = is_array(pvdak_sms_claim_challenge('challenge', '123456'));
+$d14_results['OTP replay denied'] = false === pvdak_sms_claim_challenge('challenge', '123456');
+$d14_results['all locks released'] = $wpdb->locks === $wpdb->releases;
+foreach ($d14_results as $name => $ok) {
+    if (!$ok) { fwrite(STDERR, "PVD_D14_FIXTURE_FAIL: {$name}\n"); exit(1); }
+}
+echo 'PVDAK_D14_ORIGINAL_FUNCTIONS_OK: ' . count($d14_results) .
+    " isolated cases, " . count($d14_guards) . " source checks; WP/MariaDB E2E NOT_TESTED.\n";
