@@ -936,6 +936,18 @@ pvdak_expect( pvdak_core_notification_consent_valid( '21', 'owner@example.test' 
  pvdak_expect( 'owner@example.test' === pvdak_core_notification_verified_mailbox( 21 ),
      'D24 accepts canonical string timestamp from WordPress metadata' );
  $GLOBALS['pvdak_mock_notify_verified_at'] = 1770000000;
+ // D24: malformed pending markers must not masquerade as a verified mailbox.
+ foreach ( array( '1', 1, true, '2', 'invalid', array( '1' ), array(), '00', -1, 1.0 ) as $bad_pending ) {
+     $GLOBALS['pvdak_mock_notify_pending'] = $bad_pending;
+     pvdak_expect( '' === pvdak_core_notification_verified_mailbox( 21 ),
+         'D24 malformed pending verification marker blocks notifications' );
+ }
+ foreach ( array( '', '0', 0, false ) as $cleared_pending ) {
+     $GLOBALS['pvdak_mock_notify_pending'] = $cleared_pending;
+     pvdak_expect( 'owner@example.test' === pvdak_core_notification_verified_mailbox( 21 ),
+         'D24 cleared verification marker preserves verified mailbox' );
+ }
+ $GLOBALS['pvdak_mock_notify_pending'] = '0';
 foreach ( array( -901, '-901', '0901', 901.0, array( 901 ), '2147483648' ) as $bad_post ) {
     pvdak_expect( ! pvdak_core_notify_owner( $bad_post, 'pvdak_request' ) &&
         ! $GLOBALS['pvdak_mock_sent_mail'], 'D24 malformed private record ID cannot trigger email' );
