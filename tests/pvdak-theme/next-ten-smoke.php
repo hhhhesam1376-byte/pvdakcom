@@ -124,6 +124,31 @@ if ( ! function_exists( 'wp_count_comments' ) ) {
     function wp_count_comments() { return $GLOBALS['pvdak_mock_comment_counts'] ?? null; }
 }
 require_once $root . '/inc/pvdak-readiness-admin.php';
+
+// The helper uses only allowlisted/capability-filtered routes supplied by
+// the caller. Run the real function against synthetic maps, without WP/DB.
+$triage = 'edit.php?post_type=pvdak_request&page=pvdak-request-triage';
+$pending = 'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest';
+$requests = 'edit.php?post_type=pvdak_request';
+$prof_pending = 'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending';
+$professionals = 'edit.php?post_type=pvdak_professional';
+$support = 'edit.php?post_type=pvdak_support_ticket';
+$queue_cases = array(
+    array( array( $triage => 1, $pending => 1, $requests => 1, $prof_pending => 1, $professionals => 1, $support => 1 ), array( $triage, $prof_pending, $support ) ),
+    array( array( $pending => 1, $requests => 1, $professionals => 1, $support => 1 ), array( $pending, $professionals, $support ) ),
+    array( array( $requests => 1, $professionals => 1, $support => 1 ), array( $requests, $professionals, $support ) ),
+    array( array( $support => 1 ), array( $support ) ),
+    array( array( 'untrusted.php' => 1 ), array() ),
+    array( array(), array() ),
+);
+foreach ( $queue_cases as $case ) {
+    if ( pvdak_management_primary_queue_routes( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_MANAGEMENT_FAIL: queue fallback/allowlist\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_MANAGEMENT_QUEUE_ROUTES_OK: 6/6 isolated PHP cases (not WordPress E2E).\n";
+
 $comment_cases = array(
     array( true, (object) array( 'moderated' => 0 ), 0 ),
     array( true, (object) array( 'moderated' => '0' ), 0 ),

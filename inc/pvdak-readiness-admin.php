@@ -115,15 +115,48 @@ function pvdak_management_pending_comments() {
     return (int) $raw;
 }
 
+/**
+ * Prefer the actionable queue for each service, but fall back to its native
+ * post list if a Core triage/filter handler is absent. Only routes already
+ * approved by pvdak_management_link_available() may enter $available.
+ * No request, professional, ticket or comment contents are queried here.
+ */
+function pvdak_management_primary_queue_routes( $available ) {
+    $groups = array(
+        array(
+            'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
+            'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest',
+            'edit.php?post_type=pvdak_request',
+        ),
+        array(
+            'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending',
+            'edit.php?post_type=pvdak_professional',
+        ),
+        array( 'edit.php?post_type=pvdak_support_ticket' ),
+    );
+    $selected = array();
+    foreach ( $groups as $alternatives ) {
+        foreach ( $alternatives as $route ) {
+            if ( isset( $available[ $route ] ) ) {
+                $selected[] = $route;
+                break;
+            }
+        }
+    }
+    return $selected;
+}
+
 function pvdak_management_render_links() {
     $sections = array(
         'محتوا و ظاهر سایت' => array(
             'ویرایش صفحه اصلی', 'برگه‌ها و موضوعات حقوقی', 'مقالات و اطلاعیه‌ها',
             'تصاویر و فایل‌ها', 'فهرست‌های سایت',
+            'برگه‌های پیش‌نویس', 'مقالات پیش‌نویس',
         ),
         'درخواست‌ها و گفت‌وگوها' => array(
-            'درخواست‌های حقوقی', 'پرونده‌های عضویت متخصصان', 'تیکت‌های پشتیبانی',
-            'صف انتظار تأیید', 'دیدگاه‌ها و گفت‌وگوها',
+            'درخواست‌های حقوقی', 'صف بررسی درخواست‌ها', 'درخواست‌های منتظر بررسی',
+            'پرونده‌های عضویت متخصصان', 'عضویت‌های منتظر بررسی',
+            'تیکت‌های پشتیبانی', 'صف انتظار تأیید', 'دیدگاه‌ها و گفت‌وگوها',
         ),
         'حساب‌ها و تنظیمات' => array(
             'کاربران', 'تنظیمات اصلی', 'تنظیمات خدمات حقوقی', 'بررسی پیش از راه‌اندازی',
@@ -176,12 +209,8 @@ function pvdak_management_daily_steps() {
             'admin.php?page=pvdak-home-content', 'edit.php?post_type=page&post_status=draft',
             'edit.php?post_status=draft',
         ) ),
-        array( 'صف درخواست‌ها، عضویت‌ها و پشتیبانی را پیگیری کنید', array(
-            'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
-            'edit.php?post_type=pvdak_request&pvdak_filter_queue=pending&pvdak_case_order=oldest',
-            'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending',
-            'edit.php?post_type=pvdak_support_ticket',
-        ) ),
+        array( 'صف درخواست‌ها، عضویت‌ها و پشتیبانی را پیگیری کنید',
+            pvdak_management_primary_queue_routes( $available ) ),
         array( 'گفت‌وگوها و پیام‌های منتظر تأیید را بررسی کنید', array(
             'edit-comments.php?comment_status=moderated',
             'edit-comments.php',
@@ -296,18 +325,17 @@ function pvdak_management_dashboard_widget() {
     }
     // Use the same fixed, capability-checked destinations as the management hub.
     // Never query case, ticket, professional or comment contents in this widget.
-    $queue_routes = array(
-        'edit.php?post_type=pvdak_request&page=pvdak-request-triage',
-        'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending',
-        'edit.php?post_type=pvdak_support_ticket',
-    );
-    $queue_links = array();
+    $available = array();
     foreach ( $links as $link ) {
-        if ( in_array( $link[3], $queue_routes, true ) &&
-             pvdak_management_link_available( $link ) ) {
-            $queue_links[] = '<a href="' . esc_url( admin_url( $link[3] ) ) . '">' .
-                esc_html( $link[0] ) . '</a>';
+        if ( pvdak_management_link_available( $link ) ) {
+            $available[ $link[3] ] = $link;
         }
+    }
+    $queue_links = array();
+    foreach ( pvdak_management_primary_queue_routes( $available ) as $route ) {
+        $link = $available[ $route ];
+        $queue_links[] = '<a href="' . esc_url( admin_url( $route ) ) . '">' .
+            esc_html( $link[0] ) . '</a>';
     }
     if ( $queue_links ) {
         echo '<p><strong>پیگیری کارها:</strong> ' . implode( ' | ', $queue_links ) . '</p>';
