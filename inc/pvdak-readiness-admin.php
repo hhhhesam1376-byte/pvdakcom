@@ -65,6 +65,11 @@ function pvdak_management_links() {
  * Only advertise routes that exist for this installation and current role.
  * The underlying WordPress and Core permission checks remain authoritative.
  */
+/** Shared read-only Core availability for both links and staff guidance. */
+function pvdak_management_core_available() {
+    return defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' );
+}
+
 function pvdak_management_link_available( $link ) {
     if ( ! current_user_can( $link[2] ) ) { return false; }
     // The homepage editor must not advertise an edit route for a page this
@@ -81,7 +86,7 @@ function pvdak_management_link_available( $link ) {
     }
     // Never advertise a Core settings page when its plugin is not active.
     if ( 'options-general.php?page=pvdak-core' === $link[3] &&
-         ( ! defined( 'PVDAK_CORE_VERSION' ) || ! function_exists( 'pvdak_core_intake_open' ) ) ) { return false; }
+         ! pvdak_management_core_available() ) { return false; }
     if ( 0 === strpos( $link[3], 'edit.php?post_type=' ) ) {
         $type = explode( '&', substr( $link[3], strlen( 'edit.php?post_type=' ) ), 2 )[0];
         if ( ! post_type_exists( $type ) ) { return false; }
@@ -315,11 +320,15 @@ function pvdak_management_render() {
     echo '<p class="description">ابتدا محتوای سایت را ویرایش کنید، سپس درخواست‌ها و گفت‌وگوها را بررسی کنید. بخش‌هایی که نصب یا مجوز لازم ندارند در این راهنما نمایش داده نمی‌شوند؛ دسترسی مستقیم و تنظیمات امنیتی وردپرس تغییری نمی‌کنند.</p>';
     // Give managers an actionable explanation when Core queues are absent;
     // do not activate plugins, change permissions or read private case data.
-    if ( current_user_can( 'manage_options' ) &&
-         ( ! defined( 'PVDAK_CORE_VERSION' ) || ! function_exists( 'pvdak_core_intake_open' ) ) ) {
-        echo '<div class="notice notice-warning inline"><p>ابزارهای درخواست حقوقی و عضویت متخصصان در این نصب در دسترس نیستند. مدیر می‌تواند وضعیت <a href="' .
-            esc_url( admin_url( 'plugins.php' ) ) .
-            '">افزونه‌های نصب‌شده</a> را بررسی کند؛ این راهنما هیچ افزونه یا خدمتی را فعال نمی‌کند.</p></div>';
+    if ( ! pvdak_management_core_available() ) {
+        echo '<div class="notice notice-warning inline"><p>ابزارهای درخواست حقوقی و عضویت متخصصان در این نصب در دسترس نیستند. ';
+        if ( current_user_can( 'manage_options' ) ) {
+            echo 'مدیر می‌تواند وضعیت <a href="' . esc_url( admin_url( 'plugins.php' ) ) .
+                '">افزونه‌های نصب‌شده</a> را بررسی کند.';
+        } else {
+            echo 'برای بررسی وضعیت نصب، با مدیر سایت هماهنگ کنید.';
+        }
+        echo ' این راهنما هیچ افزونه یا خدمتی را فعال نمی‌کند.</p></div>';
     }
     pvdak_management_daily_steps();
     pvdak_management_render_links();
@@ -333,7 +342,7 @@ function pvdak_management_render() {
         }
         $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();
         $signup = function_exists('pvdak_registration_open') && pvdak_registration_open();
-        $core_available = defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' );
+        $core_available = pvdak_management_core_available();
         $requests = $core_available && pvdak_core_intake_open();
         $members = $core_available && function_exists( 'pvdak_core_member_intake_open' ) && pvdak_core_member_intake_open();
         $directory = $core_available && function_exists( 'pvdak_core_directory_enabled' ) && pvdak_core_directory_enabled();
