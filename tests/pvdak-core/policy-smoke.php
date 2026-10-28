@@ -1098,6 +1098,19 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
      pvdak_expect( ! pvdak_core_profile_has_owner( 501 ), 'D17 malformed owner object ID is rejected' );
  }
  unset( $GLOBALS['pvdak_mock_userdata_id'] );
+ // D23: the metabox must not render more checkboxes than its save limit,
+ // while retaining an already selected topic beyond the initial catalog cap.
+ $pvdak_fake_catalog = array();
+ foreach ( range( 1, 201 ) as $pvdak_fake_id ) {
+     $pvdak_fake_catalog[] = new WP_Post( $pvdak_fake_id );
+ }
+ $pvdak_limited_catalog = pvdak_core_specialty_form_limit( $pvdak_fake_catalog, array( 201 ) );
+ pvdak_expect( 200 === count( $pvdak_limited_catalog ),
+     'D23 specialty editor caps displayed checkboxes at the supported save limit' );
+ pvdak_expect( 201 === $pvdak_limited_catalog[0]->ID,
+     'D23 existing selected topic beyond catalog cap is prioritized' );
+ pvdak_expect( ! in_array( 200, array_map( function ( $p ) { return $p->ID; }, $pvdak_limited_catalog ), true ),
+     'D23 unselected tail topic is omitted instead of a previously selected topic' );
  // D23: A selected, valid child Page outside the first 200 choices remains
  // visible in the edit form; an empty catalog never silently wipes metadata.
  $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );

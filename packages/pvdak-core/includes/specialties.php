@@ -177,6 +177,25 @@ function pvdak_core_specialty_metabox() {
 }
 add_action( 'add_meta_boxes', 'pvdak_core_specialty_metabox' );
 
+/**
+ * D23: The editor may include previously selected topics beyond the first
+ * 200 catalog rows. Prefer those selections but never render more than the
+ * 200 checkboxes that the save handler can safely accept.
+ */
+function pvdak_core_specialty_form_limit( $pages, $selected ) {
+    if ( count( $pages ) <= 200 ) { return $pages; }
+    $chosen = array();
+    $other = array();
+    foreach ( $pages as $page ) {
+        if ( in_array( (int) $page->ID, $selected, true ) ) {
+            $chosen[] = $page;
+        } else {
+            $other[] = $page;
+        }
+    }
+    return array_slice( array_merge( $chosen, $other ), 0, 200 );
+}
+
 function pvdak_core_specialty_metabox_html( $post ) {
     if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post->ID ) ) { return; }
     wp_nonce_field( 'pvdak_core_specialties_' . $post->ID, '_pvdak_specialties_nonce' );
@@ -199,8 +218,13 @@ function pvdak_core_specialty_metabox_html( $post ) {
             $listed[ $selected_id ] = true;
         }
     }
+    $catalog_over_limit = count( $pages ) > 200;
+    $pages = pvdak_core_specialty_form_limit( $pages, $selected );
     if ( count( $pages ) >= 200 ) {
-        echo '<p class="description">فهرست موضوعات حداکثر ۲۰۰ مورد اولیه را نشان می‌دهد؛ موضوعات معتبرِ انتخاب‌شده قبلی نیز برای جلوگیری از حذف ناخواسته نمایش داده می‌شوند.</p>';
+        echo '<p class="description">در هر نوبت حداکثر ۲۰۰ موضوع قابل انتخاب است. موضوعات معتبرِ انتخاب‌شده قبلی در اولویت نمایش هستند؛ برای افزودن موضوعات دیگر، ابتدا برخی انتخاب‌ها را بردارید و فرم را دوباره باز کنید.</p>';
+    }
+    if ( $catalog_over_limit ) {
+        echo '<p class="notice notice-info inline">برای جلوگیری از رد خاموش ذخیره، فهرست این فرم به ۲۰۰ گزینه محدود شده است؛ انتخاب‌های قبلی حفظ شده‌اند.</p>';
     }
     if ( ! $pages ) {
         // The form had no selectable checkboxes. Preserve existing selections
