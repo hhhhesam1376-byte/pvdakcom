@@ -2,6 +2,27 @@
 /** Private, authenticated PVDak request intake. Off by default. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * D14: reserve one intake slot under a DB advisory lock. A transient alone
+ * is not an inter-process mutex, even when a persistent object cache is used.
+ * A failed lock/storage denies submission; no applicant data enters the lock.
+ */
+function pvdak_core_intake_reserve($user_id) {
+    global $wpdb;
+    if (!is_int($user_id) || $user_id < 1 || !isset($wpdb) ||
+        !method_exists($wpdb, 'prepare') || !method_exists($wpdb, 'get_var')) { return false; }
+    $key = 'pvdak_intake_' . $user_id;
+    $lock = 'pvdak_intake_' . substr(hash('sha256', (string)$user_id), 0, 40);
+    $held = $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 2)', $lock));
+    if ('1' !== (string)$held) { return false; }
+    try {
+        if (get_transient($key)) { return false; }
+        return true === set_transient($key, 1, 90);
+    } finally {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
+    }
+}
+
 function pvdak_core_request_types() {
     return array(
         'lawyer' => 'به وکیل نیاز دارم',
@@ -186,11 +207,7 @@ function pvdak_core_handle_request() {
     }
     $user_id = get_current_user_id();
     $rate_key = 'pvdak_intake_' . $user_id;
-    if ( get_transient( $rate_key ) ) {
-        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'limit', 'pvdak_error_type' => $type ), $destination ) );
-        exit;
-    }
-    if ( ! set_transient( $rate_key, 1, 90 ) ) {
+    if ( ! pvdak_core_intake_reserve( $user_id ) ) {
         wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'limit', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
