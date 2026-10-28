@@ -45,8 +45,10 @@ class WP_Post {
     public $post_author;
     public $post_type;
     public $post_content = '';
+    public $post_title = '';
     public function __construct( $id, $status = 'publish', $author = 1 ) {
         $this->ID = $id;
+        $this->post_title = 'موضوع نمونه ' . $id;
         $this->post_status = $status;
         $this->post_author = $author;
         $this->post_type = in_array( (int) $id, array( 501, 502 ), true )
@@ -71,7 +73,7 @@ function get_page_by_path( $slug, $output = null, $type = null ) {
     return 'legal-topics' === $slug && ( $GLOBALS['pvdak_mock_fallback_parent'] ?? true ) ? new WP_Post( 10 ) : null;
 }
 function get_post_type( $id ) {
-    return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17, 99 ), true ) ? 'page' :
+    return in_array( (int) $id, array( 10, 11, 12, 13, 14, 15, 16, 17, 18, 99 ), true ) ? 'page' :
         ( in_array( (int) $id, array( 501, 502 ), true ) ? 'pvdak_professional' :
         ( in_array( (int) $id, array( 701, 702, 703, 704 ), true ) ? 'pvdak_request' : '' ) );
 }
@@ -84,12 +86,13 @@ function get_post_status( $id ) {
     return in_array( (int) $id, array( 501, 502, 701, 702, 703, 704 ), true ) ? 'private' : 'publish';
 }
 function wp_get_post_parent_id( $id ) {
-    $parents = array( 11 => 10, 12 => 10, 13 => 11, 14 => 15, 15 => 14, 16 => 17, 17 => 10 );
+    $parents = array( 11 => 10, 12 => 10, 13 => 11, 14 => 15, 15 => 14, 16 => 17, 17 => 10, 18 => 10 );
     return $parents[ (int) $id ] ?? 0;
 }
 function get_pages( $args ) {
     // No WordPress runtime: feed a mixed descendant fixture and require Core
     // to exclude cycles and any page under an unpublished intermediate node.
+    if ( ! empty( $GLOBALS['pvdak_mock_empty_specialty_pages'] ) ) { return array(); }
     return array( new WP_Post( 11 ), new WP_Post( 12 ), new WP_Post( 13 ),
         new WP_Post( 14 ), new WP_Post( 16 ) );
 }
@@ -102,6 +105,7 @@ function get_post_field( $field, $id ) {
     if ( 'post_title' === $field && 11 === (int) $id ) { return $GLOBALS['pvdak_mock_topic_title']; }
     if ( 'post_title' === $field && 12 === (int) $id ) { return 'حقوق تجارت'; }
     if ( 'post_title' === $field && 13 === (int) $id ) { return 'شرکت سهامی عام'; }
+    if ( 'post_title' === $field && 18 === (int) $id ) { return 'موضوع خارج از ۲۰۰ مورد اولیه'; }
     if ( 'post_author' !== $field ) { return ''; }
     if ( 501 === (int) $id ) { return $GLOBALS['pvdak_mock_profile_author']; }
     if ( 502 === (int) $id ) { return 22; }
@@ -116,6 +120,7 @@ function get_userdata( $id ) {
         (object) array( 'ID' => ( $GLOBALS['pvdak_mock_userdata_id'] ?? (int) $id ), 'user_email' => 'owner@example.test' ) : false;
 }
 function get_post( $id ) {
+    if ( 18 === (int) $id ) { return new WP_Post( 18 ); }
     if ( 900 === (int) $id ) { return new WP_Post( 900 ); }
     if ( 901 === (int) $id ) {
         return (object) array( 'ID' => 901, 'post_type' => 'pvdak_request',
@@ -250,6 +255,29 @@ require $core_entry;
 $GLOBALS['pvdak_mock_license_signature'] = pvdak_core_license_review_identity_signature( 501 );
 
 $checks = 0;
+
+// Minimal editor mocks for the private specialties metabox/save regression.
+// No WordPress installation or persistent records are touched.
+function current_user_can( $cap, $post_id = null ) { return true; }
+function wp_nonce_field( $action, $name ) { echo '<input type="hidden" name="' . $name . '" value="test">'; }
+function esc_attr( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
+function checked( $value, $current = true, $echo = true ) {
+    $out = $value === $current ? ' checked="checked"' : '';
+    if ( $echo ) { echo $out; }
+    return $out;
+}
+function wp_is_post_revision( $id ) { return false; }
+function wp_verify_nonce( $value, $action ) { return true; }
+function sanitize_text_field( $value ) { return $value; }
+function wp_unslash( $value ) { return $value; }
+function update_post_meta( $id, $key, $value ) {
+    if ( '_pvdak_specialty_page_ids' === $key ) { $GLOBALS['pvdak_mock_specialty_ids'] = $value; }
+    if ( '_pvdak_referral_cleared' === $key ) { $GLOBALS['pvdak_mock_cleared'] = $value; }
+    return true;
+}
+function add_post_meta( $id, $key, $value, $unique = false ) { return true; }
+function get_current_user_id() { return 10; }
+
 function pvdak_expect( $condition, $description ) {
     global $checks;
     $checks++;
@@ -1028,4 +1056,42 @@ $GLOBALS['pvdak_mock_notify_pending'] = '0';
 $GLOBALS['pvdak_mock_directory_consent'] = '';
 pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
     'D27 revoked consent removes listing even when verification is current' );
+
+ // D17: A malformed user object must not inherit another real account's
+ // verified ownership via PHP's permissive integer cast.
+ $GLOBALS['pvdak_mock_profile_author'] = 21;
+ unset( $GLOBALS['pvdak_mock_userdata_id'] );
+ foreach ( array( 21, '21' ) as $good_owner ) {
+     $GLOBALS['pvdak_mock_userdata_id'] = $good_owner;
+     pvdak_expect( pvdak_core_profile_has_owner( 501 ), 'D17 canonical owner ID remains eligible' );
+ }
+ foreach ( array( '21junk', '021', -21, 21.0, array( 21 ) ) as $bad_owner ) {
+     $GLOBALS['pvdak_mock_userdata_id'] = $bad_owner;
+     pvdak_expect( ! pvdak_core_profile_has_owner( 501 ), 'D17 malformed owner object ID is rejected' );
+ }
+ unset( $GLOBALS['pvdak_mock_userdata_id'] );
+ // D23: A selected, valid child Page outside the first 200 choices remains
+ // visible in the edit form; an empty catalog never silently wipes metadata.
+ $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
+ ob_start();
+ pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
+ $specialty_html = ob_get_clean();
+ pvdak_expect( false !== strpos( $specialty_html, 'value="18"' ) &&
+     false !== strpos( $specialty_html, 'checked="checked"' ),
+     'D23 selected topic outside capped catalog stays visible in admin editor' );
+ $GLOBALS['pvdak_mock_empty_specialty_pages'] = true;
+ $GLOBALS['pvdak_mock_cleared'] = '1';
+ $_POST = array( '_pvdak_specialties_nonce' => 'test' );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( array( 11, 18 ) === $GLOBALS['pvdak_mock_specialty_ids'],
+     'D23 missing catalog does not silently erase saved specialty IDs' );
+ pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 clearance can still be revoked when topic catalog is missing' );
+ $GLOBALS['pvdak_mock_empty_specialty_pages'] = false;
+ $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( array() === $GLOBALS['pvdak_mock_specialty_ids'],
+     'D23 deliberate uncheck clears saved specialties when catalog is available' );
+ unset( $_POST, $GLOBALS['pvdak_mock_empty_specialty_pages'], $GLOBALS['pvdak_mock_specialty_ids'] );
+
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";

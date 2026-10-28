@@ -147,7 +147,8 @@ function pvdak_core_profile_has_owner( $profile_id ) {
     $owner_id = pvdak_core_specialty_page_id( get_post_field( 'post_author', $profile_id ) );
     if ( ! $owner_id ) { return false; }
     $owner = get_userdata( $owner_id );
-    return $owner && isset( $owner->ID ) && (int) $owner->ID === $owner_id;
+    return $owner && isset( $owner->ID ) &&
+        pvdak_core_specialty_page_id( $owner->ID ) === $owner_id;
 }
 
 function pvdak_core_profile_referral_eligible( $profile_id, $specialty_id, $request_type = 'lawyer' ) {
@@ -184,8 +185,25 @@ function pvdak_core_specialty_metabox_html( $post ) {
     $pages = array_values( array_filter( pvdak_core_specialty_pages(), function ( $page ) {
         return $page instanceof WP_Post && 'ready' === pvdak_core_topic_resolution( $page->ID )['status'];
     } ) );
+    // get_pages() intentionally caps the list at 200. Keep any previously
+    // selected, still-valid topic visible even when it falls outside that cap;
+    // otherwise saving an unrelated profile field could silently drop it.
+    $listed = array();
+    foreach ( $pages as $page ) { $listed[ (int) $page->ID ] = true; }
+    foreach ( $selected as $selected_id ) {
+        if ( isset( $listed[ $selected_id ] ) ) { continue; }
+        $selected_page = get_post( $selected_id );
+        if ( $selected_page instanceof WP_Post &&
+             'ready' === pvdak_core_topic_resolution( $selected_id )['status'] ) {
+            $pages[] = $selected_page;
+            $listed[ $selected_id ] = true;
+        }
+    }
+    if ( count( $pages ) >= 200 ) {
+        echo '<p class="description">فهرست موضوعات حداکثر ۲۰۰ مورد اولیه را نشان می‌دهد؛ موضوعات معتبرِ انتخاب‌شده قبلی نیز برای جلوگیری از حذف ناخواسته نمایش داده می‌شوند.</p>';
+    }
     if ( ! $pages ) {
-        echo '<p>ابتدا برگه مادر موضوعات حقوقی و لندینگ‌های زیرمجموعه را منتشر کنید و در تنظیمات PVDak Core برگه مادر را انتخاب کنید.</p>';
+        echo '<p>ابتدا برگه مادر موضوعات حقوقی و لندینگ‌های زیرمجموعه را منتشر کنید و در تنظیمات PVDak Core برگه مادر را انتخاب کنید. در نبود فهرست معتبر، انتخاب‌های ذخیره‌شده به‌صورت خودکار پاک نمی‌شوند؛ لغو مجوز ارجاع داخلی همچنان ممکن است.</p>';
     } else {
         echo '<fieldset><legend class="screen-reader-text">موضوعات تخصص</legend>';
         foreach ( $pages as $page ) {
@@ -223,6 +241,12 @@ function pvdak_core_save_specialties( $post_id ) {
     }
     $next_ids = array_values( $ids );
     $old_ids = get_post_meta( $post_id, '_pvdak_specialty_page_ids', true );
+    // A temporarily missing/unconfigured Page catalog is not an instruction
+    // to erase stored specialties on an unrelated admin save. Still process
+    // the independent clearance checkbox below so revocation remains possible.
+    if ( ! $raw && is_array( $old_ids ) && $old_ids && ! pvdak_core_specialty_pages() ) {
+        $next_ids = $old_ids;
+    }
     if ( $old_ids !== $next_ids &&
          false === update_post_meta( $post_id, '_pvdak_specialty_page_ids', $next_ids ) ) { return; }
     if ( get_post_meta( $post_id, '_pvdak_specialty_page_ids', true ) !== $next_ids ) { return; }
