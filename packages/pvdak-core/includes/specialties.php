@@ -203,6 +203,9 @@ function pvdak_core_specialty_metabox_html( $post ) {
         echo '<p class="description">فهرست موضوعات حداکثر ۲۰۰ مورد اولیه را نشان می‌دهد؛ موضوعات معتبرِ انتخاب‌شده قبلی نیز برای جلوگیری از حذف ناخواسته نمایش داده می‌شوند.</p>';
     }
     if ( ! $pages ) {
+        // The form had no selectable checkboxes. Preserve existing selections
+        // if the catalog recovers before the administrator submits this form.
+        echo '<input type="hidden" name="pvdak_specialty_catalog_unavailable" value="1">';
         echo '<p>ابتدا برگه مادر موضوعات حقوقی و لندینگ‌های زیرمجموعه را منتشر کنید و در تنظیمات PVDak Core برگه مادر را انتخاب کنید. در نبود فهرست معتبر، انتخاب‌های ذخیره‌شده به‌صورت خودکار پاک نمی‌شوند؛ لغو مجوز ارجاع داخلی همچنان ممکن است.</p>';
     } else {
         echo '<fieldset><legend class="screen-reader-text">موضوعات تخصص</legend>';
@@ -244,7 +247,15 @@ function pvdak_core_save_specialties( $post_id ) {
     // A temporarily missing/unconfigured Page catalog is not an instruction
     // to erase stored specialties on an unrelated admin save. Still process
     // the independent clearance checkbox below so revocation remains possible.
-    if ( ! $raw && is_array( $old_ids ) && $old_ids && ! pvdak_core_specialty_pages() ) {
+    $catalog_was_unavailable = isset( $_POST['pvdak_specialty_catalog_unavailable'] ) &&
+        is_string( $_POST['pvdak_specialty_catalog_unavailable'] ) &&
+        '1' === wp_unslash( $_POST['pvdak_specialty_catalog_unavailable'] );
+    // The catalog can reappear between form rendering and submission. An
+    // empty checkbox set from a form that offered NO choices is not consent
+    // to erase previously saved specialties. A form with choices still lets
+    // an administrator deliberately uncheck all of them.
+    if ( ! $raw && is_array( $old_ids ) && $old_ids &&
+         ( $catalog_was_unavailable || ! pvdak_core_specialty_pages() ) ) {
         $next_ids = $old_ids;
     }
     if ( $old_ids !== $next_ids &&

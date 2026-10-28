@@ -1087,7 +1087,21 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
      'D23 missing catalog does not silently erase saved specialty IDs' );
  pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
      'D17 clearance can still be revoked when topic catalog is missing' );
+ // The catalog was absent when the admin form rendered, but returns before
+ // submit: no checkboxes were available to uncheck, so retain saved choices.
+ $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
+ ob_start();
+ pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
+ $empty_catalog_html = ob_get_clean();
+ pvdak_expect( false !== strpos( $empty_catalog_html, 'name="pvdak_specialty_catalog_unavailable" value="1"' ),
+     'D23 empty specialty catalog marks the rendered form as lacking choices' );
  $GLOBALS['pvdak_mock_empty_specialty_pages'] = false;
+ $_POST = array( '_pvdak_specialties_nonce' => 'test', 'pvdak_specialty_catalog_unavailable' => '1' );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( array( 11, 18 ) === $GLOBALS['pvdak_mock_specialty_ids'],
+     'D23 catalog recovery before submit cannot silently erase prior specialties' );
+ // A normal form with choices and no checked topics can still clear them.
+ $_POST = array( '_pvdak_specialties_nonce' => 'test' );
  $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
  pvdak_core_save_specialties( 501 );
  pvdak_expect( array() === $GLOBALS['pvdak_mock_specialty_ids'],
