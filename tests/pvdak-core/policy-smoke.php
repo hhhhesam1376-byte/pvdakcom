@@ -116,6 +116,10 @@ function get_post_field( $field, $id ) {
     if ( 702 === (int) $id ) { return 21; }
     return 0;
 }
+function user_can( $user_id, $capability ) {
+    return 'manage_options' === $capability &&
+        10 === (int) $user_id && ! empty( $GLOBALS['pvdak_mock_reviewer_can_manage'] );
+}
 function get_userdata( $id ) {
     if ( 10 === (int) $id && $GLOBALS['pvdak_mock_reviewer_exists'] ) { return (object) array( 'ID' => 10 ); }
     return in_array( (int) $id, array( 21, 22, 23 ), true ) ?
@@ -149,6 +153,11 @@ $GLOBALS['pvdak_mock_license_status'] = 'checked';
 $GLOBALS['pvdak_mock_license_method'] = 'official_source';
 $GLOBALS['pvdak_mock_license_expiry'] = '2099-12-31';
 $GLOBALS['pvdak_mock_license_reviewer'] = 10;
+$GLOBALS['pvdak_mock_reviewer_can_manage'] = true;
+$GLOBALS['pvdak_mock_license_audit'] = array( array(
+    'to' => 'checked', 'method' => 'official_source', 'expires' => '2099-12-31',
+    'identity_bound' => true, 'by' => 10,
+) );
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 $GLOBALS['pvdak_mock_accepting'] = '1';
 $GLOBALS['pvdak_mock_active_count'] = 1;
@@ -168,6 +177,7 @@ function get_post_meta( $id, $key, $single = true ) {
     if ( '_pvdak_license_review_method' === $key ) { return $GLOBALS['pvdak_mock_license_method']; }
     if ( '_pvdak_license_review_expires' === $key ) { return $GLOBALS['pvdak_mock_license_expiry']; }
     if ( '_pvdak_license_review_by' === $key ) { return $GLOBALS['pvdak_mock_license_reviewer']; }
+    if ( '_pvdak_license_review_audit' === $key ) { return $GLOBALS['pvdak_mock_license_audit']; }
     if ( '_pvdak_capacity_limit' === $key ) { return $GLOBALS['pvdak_mock_capacity_limit']; }
     if ( '_pvdak_subscription_state' === $key ) { return $GLOBALS['pvdak_mock_subscription_state'] ?? 'inactive'; }
     if ( '_pvdak_subscription_plan' === $key ) { return $GLOBALS['pvdak_mock_subscription_plan'] ?? 'none'; }
@@ -888,6 +898,33 @@ try {
 pvdak_expect( $threw && array() === $GLOBALS['wpdb']->locks,
     'Both locks are released when callback throws, without suppressing error' );
 pvdak_expect( pvdak_core_license_review_current( 501 ), 'Time-limited staff review is valid with source, reviewer and expiry' );
+foreach ( array( -501, '0501', '501junk', array( '501' ) ) as $bad_id ) {
+    pvdak_expect( ! pvdak_core_license_review_current( $bad_id ),
+        'D20 malformed professional ID cannot alias a verified profile' );
+}
+$GLOBALS['pvdak_mock_reviewer_can_manage'] = false;
+pvdak_expect( ! pvdak_core_license_review_current( 501 ),
+    'D20 removed manager permission invalidates old clearance' );
+$GLOBALS['pvdak_mock_reviewer_can_manage'] = true;
+$original_license_audit = $GLOBALS['pvdak_mock_license_audit'];
+foreach ( array(
+    array(),
+    array( array( 'to' => 'pending', 'method' => 'official_source', 'expires' => '2099-12-31',
+        'identity_bound' => true, 'by' => 10 ) ),
+    array( array( 'to' => 'checked', 'method' => 'document_review', 'expires' => '2099-12-31',
+        'identity_bound' => true, 'by' => 10 ) ),
+    array( array( 'to' => 'checked', 'method' => 'official_source', 'expires' => '2099-12-31',
+        'identity_bound' => true, 'by' => '10junk' ) ),
+    array( array( 'to' => 'checked', 'method' => 'official_source', 'expires' => '2099-12-31',
+        'identity_bound' => false, 'by' => 10 ) ),
+) as $bad_audit ) {
+    $GLOBALS['pvdak_mock_license_audit'] = $bad_audit;
+    pvdak_expect( ! pvdak_core_license_review_current( 501 ),
+        'D20 absent, stale or malformed review audit cannot authorize referrals' );
+}
+$GLOBALS['pvdak_mock_license_audit'] = $original_license_audit;
+pvdak_expect( pvdak_core_license_review_current( 501 ),
+    'D20 matching latest audit restores read-only eligibility after test fixtures' );
 $GLOBALS['pvdak_mock_profile_name'] = 'نام تغییرکرده';
 pvdak_expect( ! pvdak_core_license_review_current( 501 ), 'Changed professional identity invalidates an earlier review' );
 $GLOBALS['pvdak_mock_profile_name'] = 'وکیل نمونه';
