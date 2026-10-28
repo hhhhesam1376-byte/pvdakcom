@@ -987,6 +987,28 @@ pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 malformed 
 $GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s', time() + 3600 ) );
 pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ), 'D24 future consent date fails closed' );
 $GLOBALS['pvdak_mock_notify_consent'] = array( 'address' => 'owner@example.test', 'at' => gmdate( 'Y-m-d H:i:s' ) );
+// D24: A new mailbox verification must invalidate an earlier opt-in even
+// when the address string has not changed. Only a fresh consent restores it.
+$pvdak_notify_now = time();
+$GLOBALS['pvdak_mock_notify_verified_at'] = $pvdak_notify_now - 30;
+$GLOBALS['pvdak_mock_notify_consent']['at'] = gmdate( 'Y-m-d H:i:s', $pvdak_notify_now - 90 );
+pvdak_expect( ! pvdak_core_notification_consent_valid( 21, 'owner@example.test' ),
+    'D24 consent predating the latest mailbox verification is invalid' );
+pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) && ! $GLOBALS['pvdak_mock_sent_mail'],
+    'D24 re-verification never sends with stale consent' );
+$GLOBALS['pvdak_mock_notify_consent']['at'] = gmdate( 'Y-m-d H:i:s', $pvdak_notify_now );
+pvdak_expect( pvdak_core_notification_consent_valid( 21, 'owner@example.test' ),
+    'D24 fresh consent after mailbox verification is valid' );
+$GLOBALS['pvdak_mock_notify_verified_at'] = $pvdak_notify_now + 3600;
+pvdak_expect( '' === pvdak_core_notification_verified_mailbox( 21 ),
+    'D24 impossible future mailbox verification cannot enable notifications' );
+pvdak_expect( ! pvdak_core_notification_consent_valid( 21, 'owner@example.test' ),
+    'D24 future verification cannot validate an existing consent' );
+$GLOBALS['pvdak_mock_notify_verified_at'] = 1577836799;
+pvdak_expect( '' === pvdak_core_notification_verified_mailbox( 21 ),
+    'D24 pre-policy verification timestamp is not accepted as current proof' );
+$GLOBALS['pvdak_mock_notify_verified_at'] = 1770000000;
+$GLOBALS['pvdak_mock_notify_consent']['at'] = gmdate( 'Y-m-d H:i:s' );
 // D24: Never normalize a forged ID into a different user's verified mailbox.
 foreach ( array( -21, '-21', '021', 21.0, array( 21 ), '2147483648' ) as $bad_owner ) {
     pvdak_expect( '' === pvdak_core_notification_verified_mailbox( $bad_owner ),
