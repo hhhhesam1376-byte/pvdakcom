@@ -1134,6 +1134,36 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
  pvdak_core_save_specialties( 501 );
  pvdak_expect( array() === $GLOBALS['pvdak_mock_specialty_ids'],
      'D23 deliberate uncheck clears saved specialties when catalog is available' );
+ // D17/D23: a malformed or oversized specialty list must never prevent
+ // an authorized administrator from immediately revoking internal clearance.
+ $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
+ $GLOBALS['pvdak_mock_cleared'] = '1';
+ $_POST = array( '_pvdak_specialties_nonce' => 'test',
+     'pvdak_specialty_page_ids' => array( 'invalid-topic' ) );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 malformed specialty selection cannot block manual clearance revocation' );
+ pvdak_expect( array( 11, 18 ) === $GLOBALS['pvdak_mock_specialty_ids'],
+     'D23 invalid selection does not overwrite previous specialty metadata' );
+ $GLOBALS['pvdak_mock_cleared'] = '1';
+ $_POST['pvdak_specialty_page_ids'] = array_fill( 0, 201, '11' );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 oversized specialty form cannot block revocation' );
+ $GLOBALS['pvdak_mock_cleared'] = '1';
+ $_POST['pvdak_specialty_page_ids'] = 'bad-scalar';
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 non-array specialty field cannot block revocation' );
+ $_POST['pvdak_referral_cleared'] = '1';
+ $_POST['pvdak_specialty_page_ids'] = array( 'invalid-topic' );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( '0' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 malformed specialty submission cannot grant internal clearance' );
+ $_POST['pvdak_specialty_page_ids'] = array( '11' );
+ pvdak_core_save_specialties( 501 );
+ pvdak_expect( '1' === $GLOBALS['pvdak_mock_cleared'],
+     'D17 valid specialty save can still grant reviewed internal clearance' );
  unset( $_POST, $GLOBALS['pvdak_mock_empty_specialty_pages'], $GLOBALS['pvdak_mock_specialty_ids'] );
 
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";

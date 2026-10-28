@@ -223,6 +223,33 @@ function pvdak_core_specialty_metabox_html( $post ) {
     echo '<p class="description">این علامت به‌تنهایی مجوز وکالت صادر نمی‌کند، جایگزین استعلام پروانه معتبر نیست و مشخصات را عمومی نمی‌کند. فقط برای متقاضی نوع «وکیل» با وضعیت «تأیید اداری» و تخصص مرتبط اثر دارد.</p>';
 }
 
+/**
+ * D17/D23: Revocation is independent of a stale or malformed specialty list.
+ * Never grant clearance until the specialty submission has been validated and
+ * saved. Every actual transition keeps its existing private audit trail.
+ */
+function pvdak_core_save_referral_clearance( $post_id, $cleared ) {
+    if ( ! in_array( $cleared, array( '0', '1' ), true ) ) { return false; }
+    $stored = get_post_meta( $post_id, '_pvdak_referral_cleared', true );
+    $old = is_string( $stored ) && in_array( $stored, array( '0', '1' ), true ) ? $stored : 'invalid';
+    if ( $old === $cleared ) { return true; }
+    if ( false === update_post_meta( $post_id, '_pvdak_referral_cleared', $cleared ) ||
+         $cleared !== get_post_meta( $post_id, '_pvdak_referral_cleared', true ) ) {
+        update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
+        return false;
+    }
+    if ( false === add_post_meta( $post_id, '_pvdak_referral_clearance_audit', array(
+        'from' => $old,
+        'to' => $cleared,
+        'by' => get_current_user_id(),
+        'at' => current_time( 'mysql', true ),
+    ), false ) ) {
+        update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
+        return false;
+    }
+    return true;
+}
+
 function pvdak_core_save_specialties( $post_id ) {
     if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
          ! current_user_can( 'manage_options' ) || ! current_user_can( 'edit_post', $post_id ) ||
@@ -230,6 +257,12 @@ function pvdak_core_save_specialties( $post_id ) {
          'private' !== get_post_status( $post_id ) || ! pvdak_core_profile_has_owner( $post_id ) ) { return; }
     if ( ! isset( $_POST['_pvdak_specialties_nonce'] ) || ! is_string( $_POST['_pvdak_specialties_nonce'] ) ||
          ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_pvdak_specialties_nonce'] ) ), 'pvdak_core_specialties_' . $post_id ) ) { return; }
+    $cleared = isset( $_POST['pvdak_referral_cleared'] ) &&
+        is_string( $_POST['pvdak_referral_cleared'] ) &&
+        '1' === wp_unslash( $_POST['pvdak_referral_cleared'] ) ? '1' : '0';
+    // Unchecking clearance is an urgent safety action. Even an obsolete,
+    // oversized or malformed specialty submission must not block revocation.
+    if ( '0' === $cleared && ! pvdak_core_save_referral_clearance( $post_id, '0' ) ) { return; }
     if ( isset( $_POST['pvdak_specialty_page_ids'] ) && ! is_array( $_POST['pvdak_specialty_page_ids'] ) ) { return; }
     $raw = isset( $_POST['pvdak_specialty_page_ids'] ) ?
         wp_unslash( $_POST['pvdak_specialty_page_ids'] ) : array();
@@ -261,25 +294,7 @@ function pvdak_core_save_specialties( $post_id ) {
     if ( $old_ids !== $next_ids &&
          false === update_post_meta( $post_id, '_pvdak_specialty_page_ids', $next_ids ) ) { return; }
     if ( get_post_meta( $post_id, '_pvdak_specialty_page_ids', true ) !== $next_ids ) { return; }
-    $cleared = isset( $_POST['pvdak_referral_cleared'] ) &&
-        is_string( $_POST['pvdak_referral_cleared'] ) &&
-        '1' === wp_unslash( $_POST['pvdak_referral_cleared'] ) ? '1' : '0';
-    $old = (string) get_post_meta( $post_id, '_pvdak_referral_cleared', true );
-    if ( $old !== $cleared ) {
-        if ( false === update_post_meta( $post_id, '_pvdak_referral_cleared', $cleared ) ||
-             $cleared !== (string) get_post_meta( $post_id, '_pvdak_referral_cleared', true ) ) {
-            update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
-            return;
-        }
-        if ( false === add_post_meta( $post_id, '_pvdak_referral_clearance_audit', array(
-            'from' => $old,
-            'to' => $cleared,
-            'by' => get_current_user_id(),
-            'at' => current_time( 'mysql', true ),
-        ), false ) ) {
-            // Missing audit cannot leave a newly granted clearance active.
-            update_post_meta( $post_id, '_pvdak_referral_cleared', '0' );
-        }
-    }
+    // Granting clearance is allowed only after valid specialties are persisted.
+    if ( '1' === $cleared ) { pvdak_core_save_referral_clearance( $post_id, '1' ); }
 }
 add_action( 'save_post_pvdak_professional', 'pvdak_core_save_specialties' );
