@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.46
+ * Version: 0.8.47
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.46' );
+define( 'PVDAK_CORE_VERSION', '0.8.47' );
 
 /**
  * D24: A malformed post/user ID must not be remapped by absint() to
@@ -31,10 +31,13 @@ function pvdak_core_notification_verified_mailbox( $owner ) {
     $owner_id = pvdak_core_notification_positive_id( $owner );
     if ( ! $owner_id ) { return ''; }
     $user = get_userdata( $owner_id );
+    // Missing/cleared pending metadata is allowed; any unexpected pending
+    // value must fail closed instead of being cast to a misleading string.
+    $pending = get_user_meta( $owner_id, '_pvdak_email_verification_pending', true );
     if ( ! $user || ! isset( $user->ID, $user->user_email ) ||
          pvdak_core_notification_positive_id( $user->ID ) !== $owner_id || ! is_string( $user->user_email ) ||
          ! is_email( $user->user_email ) ||
-         '1' === (string) get_user_meta( $owner_id, '_pvdak_email_verification_pending', true ) ||
+         ! in_array( $pending, array( '', '0', 0, false, null ), true ) ||
          ! pvdak_core_notification_positive_id( get_user_meta( $owner_id, '_pvdak_email_verified_at', true ) ) ) { return ''; }
     $mailbox = strtolower( trim( $user->user_email ) );
     $verified = get_user_meta( $owner_id, '_pvdak_email_verified_address', true );
