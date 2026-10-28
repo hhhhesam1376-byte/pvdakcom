@@ -80,6 +80,8 @@ function get_post_type( $id ) {
 $GLOBALS['pvdak_mock_topic_draft'] = false;
 $GLOBALS['pvdak_mock_topic_title'] = 'حقوق خانواده';
 function get_post_status( $id ) {
+    if ( in_array( (int) $id, array( 701, 702, 703, 704 ), true ) &&
+         isset( $GLOBALS['pvdak_mock_audit_post_status'] ) ) { return $GLOBALS['pvdak_mock_audit_post_status']; }
     if ( ( 11 === (int) $id && $GLOBALS['pvdak_mock_topic_draft'] ) ||
          ( 99 === (int) $id && ! empty( $GLOBALS['pvdak_mock_front_draft'] ) ) ||
          17 === (int) $id ) { return 'draft'; }
@@ -195,7 +197,10 @@ function get_posts( $query ) {
         if ( isset( $query['meta_key'] ) && '_pvdak_assigned_profile_id' === $query['meta_key'] ) {
             $GLOBALS['pvdak_mock_capacity_reads'] = ( $GLOBALS['pvdak_mock_capacity_reads'] ?? 0 ) + 1;
         }
-        if ( isset( $query['meta_query'] ) ) { return $GLOBALS['pvdak_mock_audit_request_ids']; }
+        if ( isset( $query['meta_query'] ) ) {
+            $GLOBALS['pvdak_mock_audit_query_statuses'] = $query['post_status'] ?? null;
+            return $GLOBALS['pvdak_mock_audit_request_ids'];
+        }
         return $GLOBALS['pvdak_mock_active_count'] ? array_fill( 0, $GLOBALS['pvdak_mock_active_count'], 701 ) : array();
     }
     $default = array( new WP_Post( 501, 'private', 21 ), new WP_Post( 502, 'private', 22 ) );
@@ -659,6 +664,28 @@ pvdak_expect( 3 === pvdak_core_subscription_month_assignments( 501 ),
     'Quota counts successful events but not revocations, old events or foreign scope' );
 pvdak_expect( 1 === pvdak_core_subscription_month_assignments( 502 ),
     'Monthly quota counts only the selected professional' );
+pvdak_expect( in_array( 'trash', $GLOBALS['pvdak_mock_audit_query_statuses'], true ) &&
+    in_array( 'draft', $GLOBALS['pvdak_mock_audit_query_statuses'], true ),
+    'D25 historical quota query includes Trash and draft' );
+$GLOBALS['pvdak_mock_audit_post_status'] = 'trash';
+pvdak_expect( 3 === pvdak_core_subscription_month_assignments( 501 ),
+    'D25 moving an assigned case to Trash does not reset monthly quota' );
+$GLOBALS['pvdak_mock_audit_post_status'] = 'inherit';
+pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
+    'D25 unknown request status fails closed' );
+unset( $GLOBALS['pvdak_mock_audit_post_status'] );
+$GLOBALS['pvdak_mock_assignment_audits'][701][] = array(
+    'profile_id' => 501, 'at' => '2026-02-31 12:00:00', 'scope' => 'internal_only', 'action' => 'assigned'
+);
+pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
+    'D25 impossible calendar date in matching audit fails closed' );
+array_pop( $GLOBALS['pvdak_mock_assignment_audits'][701] );
+$GLOBALS['pvdak_mock_assignment_audits'][701][] = array(
+    'profile_id' => 501, 'at' => '2026-10-15 25:00:00', 'scope' => 'internal_only', 'action' => 'assigned'
+);
+pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
+    'D25 impossible clock time in matching audit fails closed' );
+array_pop( $GLOBALS['pvdak_mock_assignment_audits'][701] );
 $GLOBALS['wpdb']->last_error = 'synthetic query failure';
 pvdak_expect( PHP_INT_MAX === pvdak_core_subscription_month_assignments( 501 ),
     'Failed audit query cannot silently reset quota usage' );
@@ -679,6 +706,32 @@ pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
 $GLOBALS['pvdak_mock_subscription_plan'] = 'basic';
 pvdak_expect( pvdak_core_subscription_allows_new_assignment( 501 ),
     'D25 valid active tier, quota and future expiry allow a new referral' );
+$GLOBALS['pvdak_mock_subscription_source'] = array( 'payment' );
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ) &&
+    '' === pvdak_core_subscription_snapshot( 501 )['source'],
+    'D25 malformed source cannot bypass payment verification' );
+$GLOBALS['pvdak_mock_subscription_source'] = '';
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 missing source does not silently grant manual subscription' );
+$GLOBALS['pvdak_mock_subscription_source'] = 'manual';
+$GLOBALS['pvdak_mock_subscription_quota'] = true;
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 boolean quota cannot grant one assignment' );
+$GLOBALS['pvdak_mock_subscription_quota'] = '999';
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
+    'D25 quota above 100 is rejected rather than capped to allowance' );
+$GLOBALS['pvdak_mock_subscription_quota'] = '4';
+$GLOBALS['pvdak_mock_subscription_source'] = 'payment';
+$GLOBALS['pvdak_mock_subscription_receipt'] = array( 'invalid' );
+pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ) &&
+    '' === pvdak_core_subscription_snapshot( 501 )['receipt'],
+    'D25 malformed receipt cannot grant paid entitlement' );
+$GLOBALS['pvdak_mock_subscription_source'] = 'manual';
+$GLOBALS['pvdak_mock_subscription_receipt'] = '';
+$GLOBALS['pvdak_mock_subscription_gate'] = array( '1' );
+pvdak_expect( ! pvdak_core_subscription_gate_on(),
+    'D25 malformed gate option stays off without warning' );
+$GLOBALS['pvdak_mock_subscription_gate'] = '1';
 $GLOBALS['pvdak_mock_subscription_expiry'] = '2020-01-01';
 pvdak_expect( ! pvdak_core_subscription_allows_new_assignment( 501 ),
     'D25 expired subscription blocks a new referral' );

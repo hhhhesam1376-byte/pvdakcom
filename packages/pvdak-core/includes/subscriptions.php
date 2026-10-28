@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 function pvdak_core_subscription_gate_on() {
-    return '1' === (string) get_option( 'pvdak_core_subscription_gate_enabled', '0' );
+    return in_array( get_option( 'pvdak_core_subscription_gate_enabled', '0' ), array( '1', 1, true ), true );
 }
 function pvdak_core_subscription_plan( $profile_id ) {
     $raw = get_post_meta( absint( $profile_id ), '_pvdak_subscription_plan', true );
@@ -15,8 +15,15 @@ function pvdak_core_subscription_plan( $profile_id ) {
 }
 function pvdak_core_subscription_monthly_quota( $profile_id ) {
     $raw = get_post_meta( absint( $profile_id ), '_pvdak_subscription_monthly_quota', true );
-    return is_scalar( $raw ) && ctype_digit( (string ) $raw ) ?
-        min( 100, absint( $raw ) ) : 0;
+    // Unexpected types and oversized values never become an entitlement.
+    if ( ! is_int( $raw ) && ! is_string( $raw ) ) { return 0; }
+    if ( ! preg_match( '/^(?:0|[1-9][0-9]{0,2})$/D', (string) $raw ) || (int) $raw > 100 ) { return 0; }
+    return (int) $raw;
+}
+/** An unknown source must never be silently interpreted as a manual grant. */
+function pvdak_core_subscription_source( $profile_id ) {
+    $raw = get_post_meta( absint( $profile_id ), '_pvdak_subscription_source', true );
+    return is_string( $raw ) && in_array( $raw, array( 'manual', 'payment' ), true ) ? $raw : '';
 }
 function pvdak_core_subscription_expiry( $profile_id ) {
     $date = get_post_meta( absint( $profile_id ), '_pvdak_subscription_expires', true );
@@ -40,7 +47,8 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
     do {
         $ids = get_posts( array(
             'post_type' => 'pvdak_request',
-            'post_status' => 'private',
+            // Historical assignments still consume quota after archiving or Trash.
+            'post_status' => array( 'private', 'draft', 'pending', 'publish', 'future', 'trash' ),
             'posts_per_page' => $batch_size,
             'paged' => $page,
             'orderby' => 'ID',
@@ -61,7 +69,9 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
         foreach ( $ids as $id ) {
             if ( ! ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) ||
                  ! absint( $id ) || 'pvdak_request' !== get_post_type( $id ) ||
-                 'private' !== get_post_status( $id ) ) { return PHP_INT_MAX; }
+                 ! in_array( get_post_status( $id ), array( 'private', 'draft', 'pending', 'publish', 'future', 'trash' ), true ) ) {
+                return PHP_INT_MAX;
+            }
             $entries = get_post_meta( absint( $id ), '_pvdak_assignment_audit', false );
             if ( ! is_array( $entries ) ) { return PHP_INT_MAX; }
             foreach ( $entries as $entry ) {
@@ -72,8 +82,12 @@ function pvdak_core_subscription_month_assignments( $profile_id ) {
                 if ( absint( $actor ) !== $profile_id || ( $entry['scope'] ?? '' ) !== 'internal_only' ||
                      ( isset( $entry['action'] ) && 'assigned' !== $entry['action'] ) ) { continue; }
                 if ( ! isset( $entry['at'] ) || ! is_string( $entry['at'] ) ||
-                     ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $entry['at'] ) ) {
-                    return PHP_INT_MAX; // Corrupt matching assignment must not restore quota.
+                     ! preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/D', $entry['at'] ) ||
+                     ! checkdate( (int) substr( $entry['at'], 5, 2 ), (int) substr( $entry['at'], 8, 2 ), (int) substr( $entry['at'], 0, 4 ) ) ||
+                     (int) substr( $entry['at'], 11, 2 ) > 23 ||
+                     (int) substr( $entry['at'], 14, 2 ) > 59 ||
+                     (int) substr( $entry['at'], 17, 2 ) > 59 ) {
+                    return PHP_INT_MAX; // Impossible matching timestamp cannot restore quota.
                 }
                 if ( $entry['at'] < $first || $entry['at'] >= $next ) { continue; }
                 // Reassignment after revocation consumes another quota event.
@@ -96,9 +110,13 @@ function pvdak_core_subscription_allows_new_assignment( $profile_id ) {
          'none' === pvdak_core_subscription_plan( $profile_id ) ) {
         return false;
     }
-    if ( 'payment' === (string) get_post_meta( $profile_id, '_pvdak_subscription_source', true ) &&
-         ! pvdak_core_payment_receipt_verified( $profile_id, (string) get_post_meta( $profile_id, '_pvdak_subscription_receipt', true ) ) ) {
-        return false; // Refund or failed reconciliation immediately blocks paid entitlement.
+    $source = pvdak_core_subscription_source( $profile_id );
+    if ( '' === $source ) { return false; }
+    if ( 'payment' === $source ) {
+        $receipt = get_post_meta( $profile_id, '_pvdak_subscription_receipt', true );
+        if ( ! is_string( $receipt ) || ! pvdak_core_payment_receipt_verified( $profile_id, $receipt ) ) {
+            return false; // Refund or failed reconciliation blocks paid entitlement.
+        }
     }
     $expires = pvdak_core_subscription_expiry( $profile_id );
     $quota = pvdak_core_subscription_monthly_quota( $profile_id );
@@ -109,13 +127,15 @@ function pvdak_core_subscription_allows_new_assignment( $profile_id ) {
 /** Canonical readback used for stale-form detection; no payment claims. */
 function pvdak_core_subscription_snapshot( $profile_id ) {
     $profile_id = absint( $profile_id );
+    $raw_state = get_post_meta( $profile_id, '_pvdak_subscription_state', true );
+    $raw_receipt = get_post_meta( $profile_id, '_pvdak_subscription_receipt', true );
     return array(
-        'state' => (string) get_post_meta( $profile_id, '_pvdak_subscription_state', true ),
+        'state' => is_string( $raw_state ) ? $raw_state : '',
         'plan' => pvdak_core_subscription_plan( $profile_id ),
         'quota' => pvdak_core_subscription_monthly_quota( $profile_id ),
         'expires' => pvdak_core_subscription_expiry( $profile_id ),
-        'source' => 'payment' === get_post_meta( $profile_id, '_pvdak_subscription_source', true ) ? 'payment' : 'manual',
-        'receipt' => (string) get_post_meta( $profile_id, '_pvdak_subscription_receipt', true ),
+        'source' => pvdak_core_subscription_source( $profile_id ),
+        'receipt' => is_string( $raw_receipt ) ? $raw_receipt : '',
     );
 }
 function pvdak_core_subscription_revision( $snapshot ) {
