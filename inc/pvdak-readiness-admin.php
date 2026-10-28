@@ -52,6 +52,8 @@ function pvdak_management_links() {
         array('عضویت‌های منتظر بررسی', 'پرونده‌های همکاری ثبت‌شده و نیازمند رسیدگی', 'edit_pvdak_professionals', 'edit.php?post_type=pvdak_professional&pvdak_state_filter=pending'),
         array('برگه‌های پیش‌نویس', 'مرور صفحات آماده‌نشده پیش از انتشار', 'edit_pages', 'edit.php?post_type=page&post_status=draft'),
         array('مقالات پیش‌نویس', 'مرور نوشته‌های منتشرنشده مجله', 'edit_posts', 'edit.php?post_status=draft'),
+        array('برگه‌های منتظر بازبینی', 'برگه‌هایی که برای بررسی تحریریه ارسال شده‌اند؛ بدون انتشار خودکار', 'edit_pages', 'edit.php?post_type=page&post_status=pending'),
+        array('مقالات منتظر بازبینی', 'نوشته‌هایی که برای بررسی تحریریه ارسال شده‌اند؛ بدون انتشار خودکار', 'edit_posts', 'edit.php?post_status=pending'),
         array('دیدگاه‌ها و گفت‌وگوها', 'مدیریت و تأیید دیدگاه‌ها و گفت‌وگوهای انجمن، در صورت استفاده', 'moderate_comments', 'edit-comments.php'),
         array('صف انتظار تأیید', 'بررسی پیام‌های تازه پیش از نمایش عمومی', 'moderate_comments', 'edit-comments.php?comment_status=moderated'),
         array('تنظیمات اصلی', 'تنظیم ثبت‌نام و حالت تعمیرات سایت', 'manage_options', 'options-general.php'),
@@ -185,12 +187,30 @@ function pvdak_management_draft_routes( $available ) {
     return $selected;
 }
 
+/**
+ * Optional editorial-review routes are deliberately separate from the main
+ * draft cards. Only capability/CPT-checked entries in $available are used.
+ * No unpublished content or author details are loaded into the dashboard.
+ */
+function pvdak_management_secondary_content_routes( $available ) {
+    $routes = array(
+        'edit.php?post_type=page&post_status=pending',
+        'edit.php?post_status=pending',
+    );
+    $selected = array();
+    foreach ( $routes as $route ) {
+        if ( isset( $available[ $route ] ) ) { $selected[] = $route; }
+    }
+    return $selected;
+}
+
 function pvdak_management_render_links() {
     $sections = array(
         'محتوا و ظاهر سایت' => array(
             'ویرایش صفحه اصلی', 'برگه‌ها و موضوعات حقوقی', 'مقالات و اطلاعیه‌ها',
             'تصاویر و فایل‌ها', 'فهرست‌های سایت',
             'برگه‌های پیش‌نویس', 'مقالات پیش‌نویس',
+            'برگه‌های منتظر بازبینی', 'مقالات منتظر بازبینی',
         ),
         'درخواست‌ها و گفت‌وگوها' => array(
             'درخواست‌های حقوقی', 'صف بررسی درخواست‌ها', 'درخواست‌های منتظر بررسی',
@@ -209,9 +229,11 @@ function pvdak_management_render_links() {
         }
     }
     $secondary_routes = pvdak_management_secondary_queue_routes( $available );
+    $secondary_content_routes = pvdak_management_secondary_content_routes( $available );
     foreach ( $sections as $heading => $names ) {
         $cards = array();
         $secondary_cards = array();
+        $secondary_content_cards = array();
         foreach ( $links as $link ) {
             if ( ! in_array( $link[0], $names, true ) ||
                  ! isset( $available[ $link[3] ] ) ) { continue; }
@@ -231,6 +253,8 @@ function pvdak_management_render_links() {
                 esc_html( $label ) . '</strong><span style="color:#50575e">' . esc_html( $description ) . '</span></a>';
             if ( in_array( $link[3], $secondary_routes, true ) ) {
                 $secondary_cards[] = $card;
+            } elseif ( in_array( $link[3], $secondary_content_routes, true ) ) {
+                $secondary_content_cards[] = $card;
             } else {
                 $cards[] = $card;
             }
@@ -247,7 +271,13 @@ function pvdak_management_render_links() {
             echo implode( '', $secondary_cards );
             echo '</div></details>';
         }
-        echo '</section>';
+        if ( $secondary_content_cards ) {
+            echo '<details style="margin-top:12px;max-width:1050px"><summary>محتوای منتظر بازبینی</summary>';
+            echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;margin-top:12px">';
+            echo implode( '', $secondary_content_cards );
+            echo '</div></details>';
+        }
+        echo '</section';
     }
 }
 
@@ -267,6 +297,7 @@ function pvdak_management_daily_steps() {
         array( 'محتوای صفحه اصلی و پیش‌نویس‌ها را بازبینی کنید', array(
             'admin.php?page=pvdak-home-content', 'edit.php?post_type=page&post_status=draft',
             'edit.php?post_status=draft',
+            'edit.php?post_type=page&post_status=pending', 'edit.php?post_status=pending',
         ) ),
         array( 'صف درخواست‌ها، عضویت‌ها و پشتیبانی را پیگیری کنید',
             pvdak_management_primary_queue_routes( $available ) ),
