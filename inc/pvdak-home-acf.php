@@ -358,6 +358,16 @@ function pvdak_home_admin_landing() {
         return;
     }
     $page_id = pvdak_home_page_id();
+    if ( isset( $_GET['setup'] ) && is_string( $_GET['setup'] ) &&
+         'posts-conflict' === wp_unslash( $_GET['setup'] ) ) {
+        echo '<div class="notice notice-warning inline"><p>برگه صفحه اصلی نمی‌تواند هم‌زمان برگه فهرست نوشته‌ها باشد. ';
+        if ( current_user_can( 'manage_options' ) ) {
+            echo '<a href="' . esc_url( admin_url( 'options-reading.php' ) ) . '">انتخاب برگه جداگانه در تنظیمات خواندن</a>';
+        } else {
+            echo 'برای اصلاح تنظیمات با مدیر سایت هماهنگ کنید.';
+        }
+        echo '</p></div>';
+    }
     if ( ! $page_id ) {
         echo '<div class="notice notice-info inline"><p>صفحه اصلی وردپرس هنوز به یک برگه ثابت متصل نشده است. اگر برگه اختصاصی PVDak پیش‌نویس است، ابتدا آن را بازبینی و منتشر کنید؛ سپس دکمه راه‌اندازی را بزنید.</p></div>';
         $candidate = get_page_by_path( 'pvdak-home', OBJECT, 'page' );
@@ -454,7 +464,7 @@ function pvdak_home_prepare_page() {
         } else {
             $created = wp_insert_post( array(
                 'post_type'    => 'page',
-                'post_status'  => 'publish',
+                'post_status'  => 'draft',
                 'post_title'   => 'صفحه اصلی',
                 'post_name'    => 'pvdak-home',
                 'post_content' => '',
@@ -462,8 +472,20 @@ function pvdak_home_prepare_page() {
             if ( is_wp_error( $created ) ) {
                 wp_die( esc_html( $created->get_error_message() ) );
             }
-            $page_id = (int) $created;
+            // A new Page needs explicit editorial review; never publish it
+            // or change Reading settings during this setup request.
+            if ( ! is_int( $created ) || $created < 1 ) {
+                wp_die( 'ایجاد برگه صفحه اصلی انجام نشد؛ تنظیمات سایت تغییر نکرد.' );
+            }
+            wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=review' ) );
+            exit;
         }
+    }
+    // A Page must not be both the homepage and the posts index.
+    $posts_page_id = pvdak_home_configured_page_id( get_option( 'page_for_posts' ) );
+    if ( $posts_page_id && $posts_page_id === $page_id ) {
+        wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=posts-conflict' ) );
+        exit;
     }
     update_option( 'show_on_front', 'page' );
     update_option( 'page_on_front', $page_id );
