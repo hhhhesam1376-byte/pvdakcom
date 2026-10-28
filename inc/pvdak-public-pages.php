@@ -156,7 +156,7 @@ add_filter('wp_robots','pvdak_public_policy_noindex');
  * No Page, option, user role, comment or database record is created on deploy.
  */
 function pvdak_forum_enabled() {
-  return '1' === (string) get_option('pvdak_forum_enabled', '0') &&
+  return '1' === get_option('pvdak_forum_enabled', '0') &&
     (!function_exists('pvdak_maintenance_enabled') || !pvdak_maintenance_enabled());
 }
 function pvdak_forum_page_valid($page_id) {
@@ -398,8 +398,10 @@ function pvdak_forum_submit() {
       try {
         $hour_key = 'pvdak_forum_hour_' . $user_id;
         $cool_key = 'pvdak_forum_cool_' . $user_id;
-        $count = (int) get_transient($hour_key);
-        if ($count >= 3 || get_transient($cool_key)) {
+        $raw_count = get_transient($hour_key);
+        $count = false === $raw_count ? 0 :
+          ((is_int($raw_count) || (is_string($raw_count) && ctype_digit($raw_count))) ? (int) $raw_count : -1);
+        if ($count < 0 || $count >= 3 || get_transient($cool_key)) {
           $result = 'slow';
         } else {
           // Store no public account ID, email, URL, IP or user agent.
@@ -461,7 +463,7 @@ add_action('admin_post_pvdak_forum_submit', 'pvdak_forum_submit');
 
 /** Settings > General: an explicit OFF-by-default switch, never auto-enabled. */
 function pvdak_forum_sanitize_switch($value) {
-  return '1' === (string) $value ? '1' : '0';
+  return is_string($value) && '1' === $value ? '1' : '0';
 }
 function pvdak_forum_settings_field() {
   echo '<input type="hidden" name="pvdak_forum_enabled" value="0">';
