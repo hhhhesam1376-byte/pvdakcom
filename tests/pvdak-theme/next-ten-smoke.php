@@ -475,3 +475,14 @@ foreach ( $notification_switch_cases as $case ) {
     }
 }
 echo "PVDAK_D31_NOTIFICATION_STATUS_OK: 12/12 original-source PHP cases (not WordPress E2E).\n";
+
+/** D31 source-only regression: editors see guidance but no plugin-control link. */
+$management_source = $s['admin'];
+if ( strpos( $management_source, 'function pvdak_management_core_available()' ) === false ||
+     strpos( $management_source, "if ( ! pvdak_management_core_available() )") === false ||
+     strpos( $management_source, 'برای بررسی وضعیت نصب، با مدیر سایت هماهنگ کنید.' ) === false ||
+     strpos( $management_source, "if ( current_user_can( 'manage_options' ) ) {") === false ) {
+    fwrite( STDERR, "PVD_D31_CORE_GUIDANCE_FAIL: missing role-aware Core guidance\n" );
+    exit( 1 );
+}
+echo "PVDAK_D31_CORE_GUIDANCE_OK: source-only check (not WordPress E2E).\n";
