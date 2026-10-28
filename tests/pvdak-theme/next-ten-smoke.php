@@ -386,6 +386,8 @@ if ( ! function_exists( 'get_permalink' ) ) {
 }
 if ( ! function_exists( 'get_option' ) ) {
     function get_option( $key, $default = false ) {
+        if ( 'page_on_front' === $key ) { return $GLOBALS['pvdak_test_front_id'] ?? 0; }
+        if ( 'show_on_front' === $key ) { return $GLOBALS['pvdak_test_front_mode'] ?? 'posts'; }
         return 'pvdak_registration_enabled' === $key ?
             ( $GLOBALS['pvdak_test_signup_setting'] ?? '0' ) : $default;
     }
@@ -486,3 +488,76 @@ if ( strpos( $management_source, 'function pvdak_management_core_available()' ) 
     exit( 1 );
 }
 echo "PVDAK_D31_CORE_GUIDANCE_OK: source-only check (not WordPress E2E).\n";
+
+/**
+ * D31: exercise the actual homepage ACF resolver with fake WordPress options.
+ * No WordPress database, user records, post updates or real ACF calls.
+ */
+if ( ! function_exists( 'get_post_type' ) ) {
+    function get_post_type( $id ) { return $GLOBALS['pvdak_test_front_type'] ?? 'page'; }
+}
+if ( ! function_exists( 'get_field' ) ) {
+    function get_field( $name, $id ) {
+        $GLOBALS['pvdak_test_home_field_reads'][] = $id;
+        return 'متن آزمایشی';
+    }
+}
+require_once $root . '/inc/pvdak-home-acf.php';
+$home_id_cases = array(
+    array( 21, 21 ), array( '21', 21 ), array( '021', 0 ),
+    array( '21junk', 0 ), array( '-21', 0 ), array( -21, 0 ),
+    array( '21.0', 0 ), array( array( 21 ), 0 ),
+    array( true, 0 ), array( null, 0 ), array( 0, 0 ),
+    array( '0', 0 ), array( '999999999999999999999999', 0 ),
+);
+$home_checks = 0;
+foreach ( $home_id_cases as $case ) {
+    if ( pvdak_home_configured_page_id( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: noncanonical configured Page ID\n" );
+        exit( 1 );
+    }
+    $home_checks++;
+}
+$GLOBALS['pvdak_test_front_mode'] = 'page';
+$GLOBALS['pvdak_test_front_type'] = 'page';
+$GLOBALS['pvdak_test_front_id'] = '21';
+if ( 21 !== pvdak_home_page_id() ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: valid static Page\n" ); exit( 1 );
+}
+$home_checks++;
+$GLOBALS['pvdak_test_front_mode'] = 'posts';
+if ( 0 !== pvdak_home_page_id() ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: latest-posts mode\n" ); exit( 1 );
+}
+$home_checks++;
+$GLOBALS['pvdak_test_front_mode'] = 'page';
+$GLOBALS['pvdak_test_front_type'] = 'post';
+if ( 0 !== pvdak_home_page_id() ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: wrong content type\n" ); exit( 1 );
+}
+$home_checks++;
+$GLOBALS['pvdak_test_front_type'] = 'page';
+$GLOBALS['pvdak_test_front_id'] = '21junk';
+$GLOBALS['pvdak_test_home_field_reads'] = array();
+if ( 0 !== pvdak_home_page_id() ||
+     'fallback' !== pvdak_home_value( 'hero_title', 'fallback' ) ||
+     $GLOBALS['pvdak_test_home_field_reads'] ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: malformed option must not load another Page's ACF\n" );
+    exit( 1 );
+}
+$home_checks++;
+$GLOBALS['pvdak_test_front_id'] = '21';
+if ( 'متن آزمایشی' !== pvdak_home_value( 'hero_title', 'fallback' ) ||
+     $GLOBALS['pvdak_test_home_field_reads'] !== array( 21 ) ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: valid Page ACF read\n" ); exit( 1 );
+}
+$home_checks++;
+$GLOBALS['pvdak_test_front_mode'] = 'posts';
+$GLOBALS['pvdak_test_home_field_reads'] = array();
+if ( 'fallback' !== pvdak_home_value( 'hero_title', 'fallback' ) ||
+     $GLOBALS['pvdak_test_home_field_reads'] ) {
+    fwrite( STDERR, "PVD_D31_HOME_ID_FAIL: stale front-page ACF read in posts mode\n" );
+    exit( 1 );
+}
+$home_checks++;
+echo "PVDAK_D31_HOME_ID_OK: {$home_checks}/{$home_checks} original-source PHP cases (not WordPress E2E).\n";
