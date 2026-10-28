@@ -221,6 +221,72 @@ function pvdak_forum_consent_valid($comment_id) {
     $date->getTimestamp() >= 1577836800 &&
     $date->getTimestamp() <= time() + 300;
 }
+/**
+ * D28: Public exposure must be checked again after every moderator edit.
+ * Reject contact numbers even when separated by punctuation or Persian digits.
+ */
+function pvdak_forum_contains_contact_number($text) {
+  return is_string($text) &&
+    1 === preg_match('/(?<!\\p{N})(?:\\+?\\p{N}[\\s().\\-]*){9,}\\p{N}(?!\\p{N})/u', $text);
+}
+function pvdak_forum_public_entry_valid($entry) {
+  if (!$entry instanceof WP_Comment || !pvdak_forum_enabled() ||
+      !pvdak_forum_page_valid($entry->comment_post_ID) ||
+      '1' !== (string) $entry->comment_approved ||
+      'comment' !== (string) $entry->comment_type ||
+      0 !== (int) $entry->comment_parent || 0 !== (int) $entry->user_id ||
+      '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
+      !ctype_digit((string) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true)) ||
+      (int) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true) < 1 ||
+      'عضو جامعه' !== (string) $entry->comment_author ||
+      '' !== (string) $entry->comment_author_email ||
+      '' !== (string) $entry->comment_author_url ||
+      '' !== (string) $entry->comment_author_IP ||
+      '' !== (string) $entry->comment_agent ||
+      !pvdak_forum_consent_valid($entry->comment_ID) ||
+      !pvdak_forum_raw_text_valid($entry->comment_content, 6200) ||
+      '' === trim($entry->comment_content) ||
+      pvdak_public_text_length($entry->comment_content) > 1700 ||
+      pvdak_forum_contains_link_or_email($entry->comment_content) ||
+      pvdak_forum_contains_contact_number($entry->comment_content)) return false;
+  return true;
+}
+/** Revert an unsafe approval without deleting the comment or audit trail. */
+function pvdak_forum_guard_approval($new_status, $old_status, $comment) {
+  if (!in_array($new_status, array('approved', 'approve', '1'), true) ||
+      !$comment instanceof WP_Comment ||
+      !pvdak_forum_page_valid($comment->comment_post_ID)) return;
+  $fresh = get_comment($comment->comment_ID);
+  if (!$fresh instanceof WP_Comment || !pvdak_forum_public_entry_valid($fresh)) {
+    wp_set_comment_status($comment->comment_ID, 'hold');
+  }
+}
+add_action('transition_comment_status', 'pvdak_forum_guard_approval', 10, 3);
+/** REST can bypass shortcode rendering; keep invalid or disabled entries private. */
+function pvdak_forum_rest_prepare_comment($response, $comment, $request) {
+  if ($comment instanceof WP_Comment && pvdak_forum_page_valid($comment->comment_post_ID) &&
+      !current_user_can('moderate_comments') &&
+      !pvdak_forum_public_entry_valid($comment)) {
+    return new WP_Error('pvdak_forum_unavailable', 'پیام انجمن عمومی نیست.', array('status' => 404));
+  }
+  return $response;
+}
+add_filter('rest_prepare_comment', 'pvdak_forum_rest_prepare_comment', 10, 3);
+/** Exclude all forum-page comments from native feeds, including legacy records. */
+function pvdak_forum_exclude_comment_feed($where) {
+  global $wpdb;
+  if (!is_string($where) || !isset($wpdb->comments, $wpdb->posts) ||
+      !method_exists($wpdb, 'prepare') || !method_exists($wpdb, 'esc_like')) return $where;
+  return $where . $wpdb->prepare(
+    " AND NOT EXISTS (SELECT 1 FROM {$wpdb->posts} AS pvdak_forum_page
+      WHERE pvdak_forum_page.ID = {$wpdb->comments}.comment_post_ID
+      AND pvdak_forum_page.post_type = 'page'
+      AND pvdak_forum_page.post_content LIKE %s)",
+    '%' . $wpdb->esc_like('[pvdak_forum') . '%'
+  );
+}
+add_filter('comment_feed_where', 'pvdak_forum_exclude_comment_feed');
+
 /** Native moderation controls remain with WordPress administrators. */
 function pvdak_forum_shortcode() {
   $page_id = get_queried_object_id();
@@ -249,23 +315,8 @@ function pvdak_forum_shortcode() {
   ));
   $items = array();
   foreach (is_array($entries) ? $entries : array() as $entry) {
-    if (!$entry instanceof WP_Comment || (int) $entry->comment_post_ID !== (int) $page_id ||
-        '1' !== (string) $entry->comment_approved ||
-        'comment' !== (string) $entry->comment_type ||
-        0 !== (int) $entry->comment_parent || 0 !== (int) $entry->user_id ||
-        '1' !== (string) get_comment_meta($entry->comment_ID, '_pvdak_forum_entry', true) ||
-        !ctype_digit((string) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true)) ||
-        (int) get_comment_meta($entry->comment_ID, '_pvdak_forum_submitter', true) < 1 ||
-        'عضو جامعه' !== (string) $entry->comment_author ||
-        '' !== (string) $entry->comment_author_email ||
-        '' !== (string) $entry->comment_author_url ||
-        '' !== (string) $entry->comment_author_IP ||
-        '' !== (string) $entry->comment_agent ||
-        !pvdak_forum_consent_valid($entry->comment_ID) ||
-        !pvdak_forum_raw_text_valid($entry->comment_content, 6200) ||
-        '' === trim($entry->comment_content) ||
-        pvdak_public_text_length($entry->comment_content) > 1700 ||
-        pvdak_forum_contains_link_or_email($entry->comment_content)) continue;
+    if ((int) $entry->comment_post_ID !== (int) $page_id ||
+        !pvdak_forum_public_entry_valid($entry)) continue;
     $items[] = '<li class="pvdak-forum-entry"><p>' .
       nl2br(esc_html($entry->comment_content)) . '</p><small>عضو جامعه · ' .
       esc_html(get_comment_date('Y/m/d', $entry)) . '</small></li>';
@@ -327,7 +378,8 @@ function pvdak_forum_submit() {
     is_string($consent) && '1' === $consent &&
     pvdak_public_text_length($subject) >= 5 && pvdak_public_text_length($subject) <= 120 &&
     pvdak_public_text_length($message) >= 20 && pvdak_public_text_length($message) <= 1500 &&
-    !pvdak_forum_contains_link_or_email($subject . ' ' . $message);
+    !pvdak_forum_contains_link_or_email($subject . ' ' . $message) &&
+    !pvdak_forum_contains_contact_number($subject . ' ' . $message);
   $result = 'invalid';
   if ($valid) {
     global $wpdb;

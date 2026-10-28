@@ -249,6 +249,25 @@ pvdak_public_smoke_require(
  'D28 public rendering skips malformed, reidentified and unsafe moderated comments' );
 
 
+// D28: native moderation, REST and RSS must never publish a rejected entry.
+pvdak_public_smoke_require(
+ strpos( $code['pages'], 'function pvdak_forum_public_entry_valid(' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_public_entry_valid($entry)' ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_public_entry_valid($fresh)' ) !== false &&
+ strpos( $code['pages'], "add_action('transition_comment_status', 'pvdak_forum_guard_approval', 10, 3)" ) !== false &&
+ strpos( $code['pages'], "wp_set_comment_status(\$comment->comment_ID, 'hold')" ) !== false,
+ 'D28 rechecks consent, content and anonymity when a moderator approves' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "add_filter('rest_prepare_comment', 'pvdak_forum_rest_prepare_comment', 10, 3)" ) !== false &&
+ strpos( $code['pages'], "add_filter('comment_feed_where', 'pvdak_forum_exclude_comment_feed')" ) !== false &&
+ strpos( $code['pages'], "'pvdak_forum_unavailable'" ) !== false,
+ 'D28 guards public REST responses and excludes forum pages from native comment feeds' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], 'function pvdak_forum_contains_contact_number(' ) !== false &&
+ strpos( $code['pages'], "pvdak_forum_contains_contact_number(\$subject . ' ' . \$message)" ) !== false &&
+ strpos( $code['pages'], 'pvdak_forum_contains_contact_number($entry->comment_content)' ) !== false,
+ 'D28 contact numbers are rejected at submission and after moderator edits' );
+
 // D07: email verification must be readable, branded and linked only to the
 // short-lived existing hashed token. These are source checks, not mailbox tests.
 $registration_source = file_get_contents($root . '/inc/pvdak-registration.php');
