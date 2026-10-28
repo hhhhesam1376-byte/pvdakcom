@@ -197,6 +197,30 @@ foreach ( $draft_cases as $case ) {
 }
 echo "PVDAK_MANAGEMENT_DRAFT_ROUTES_OK: 5/5 isolated PHP cases (not WordPress E2E).\n";
 
+// D31: real original-source helper; only already-authorized editorial routes.
+$review_page = 'edit.php?post_type=page&post_status=pending';
+$review_post = 'edit.php?post_status=pending';
+$review_cases = array(
+    array( array( $review_page => 1, $review_post => 1 ), array( $review_page, $review_post ) ),
+    array( array( $review_post => 1 ), array( $review_post ) ),
+    array( array( $review_page => 1 ), array( $review_page ) ),
+    array( array( 'untrusted.php' => 1 ), array() ),
+    array( array(), array() ),
+);
+foreach ( $review_cases as $case ) {
+    if ( pvdak_management_secondary_content_routes( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_MANAGEMENT_FAIL: editorial review route allowlist\n" );
+        exit( 1 );
+    }
+}
+if ( strpos( $s['admin'], 'محتوای منتظر بازبینی' ) === false ||
+     strpos( $s['admin'], "'edit_pages', 'edit.php?post_type=page&post_status=pending'" ) === false ||
+     strpos( $s['admin'], "'edit_posts', 'edit.php?post_status=pending'" ) === false ) {
+    fwrite( STDERR, "PVD_MANAGEMENT_FAIL: pending editorial links and collapsed group\n" );
+    exit( 1 );
+}
+echo "PVDAK_MANAGEMENT_REVIEW_ROUTES_OK: 5/5 original-source PHP cases and 3 static route checks (not WP E2E).\n";
+
 $comment_cases = array(
     array( true, (object) array( 'moderated' => 0 ), 0 ),
     array( true, (object) array( 'moderated' => '0' ), 0 ),
