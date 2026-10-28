@@ -165,6 +165,8 @@ function pvdak_core_request_form( $atts ) {
     $html .= wp_nonce_field( 'pvdak_core_submit_request', '_pvdak_nonce', true, false );
     $html .= '<input type="hidden" name="action" value="pvdak_core_submit_request">';
     $html .= '<input type="hidden" name="pvdak_type" value="' . esc_attr( $type ) . '">';
+    // Quiet honeypot: hidden from people and assistive technology, checked server-side.
+    $html .= '<label aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden">وب‌سایت <input type="text" name="pvdak_website" tabindex="-1" autocomplete="off"></label>';
     $html .= '<label>عنوان کوتاه درخواست <input type="text" name="pvdak_title" required maxlength="140" autocomplete="off"></label>';
     $html .= '<label>موضوع حقوقی <select name="pvdak_landing_id" required><option value="">انتخاب موضوع</option>';
     foreach ( $landing_pages as $page ) {
@@ -200,7 +202,9 @@ function pvdak_core_handle_request() {
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error', 'pvdak_error_type' ), $destination );
     $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
-    if ( ! $consent || ! isset( $types[ $type ] ) || 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ||
+    $honeypot_filled = array_key_exists( 'pvdak_website', $_POST ) && '' !== $_POST['pvdak_website'];
+    if ( $honeypot_filled || ! $consent || ! isset( $types[ $type ] ) ||
+         'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ||
          ! pvdak_core_request_input_valid( $title, $description ) ) {
         wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'invalid', 'pvdak_error_type' => isset( $types[ $type ] ) ? $type : '' ), $destination ) );
         exit;
