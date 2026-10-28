@@ -45,20 +45,10 @@ function pvdak_auth_ip_attempt_key() {
   $remote=isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
   return 'pvdak_login_ip_'.substr(hash_hmac('sha256',$remote,wp_salt('nonce')),0,40);
 }
-/** Malformed counter values must not silently reset a brute-force limit. */
-function pvdak_auth_rate_reached($key, $limit) {
-  $raw=get_transient($key);
-  if (false===$raw) return false;
-  if (is_int($raw) && $raw>=0) return $raw >= $limit;
-  if (is_string($raw) && strlen($raw)<=8 && ctype_digit($raw)) return (int)$raw >= $limit;
-  return true;
-}
-function pvdak_auth_record_failure($key) {
-  // The registration helper uses a DB advisory lock for each counter.
-  // Failed storage/lock acquisition denies subsequent requests, never grants access.
-  pvdak_registration_rate_exceeded_key($key,20,15*MINUTE_IN_SECONDS);
-  pvdak_registration_rate_exceeded_key(pvdak_auth_ip_attempt_key(),30,15*MINUTE_IN_SECONDS);
-}
+/** All branded login attempts reserve slots before password verification.
+ * Success clears the identity slot; the IP ceiling still prevents username rotation.
+ * Missing transient storage or a contended DB lock denies login, not just failures.
+ */
 function pvdak_login_handle(){
   if('POST'!==($_SERVER['REQUEST_METHOD']??''))wp_die('Invalid method','',array('response'=>405));
   check_admin_referer('pvdak_login','_pvdak_login_nonce');
@@ -68,17 +58,16 @@ function pvdak_login_handle(){
   $identity=is_string($raw_identity)?trim($raw_identity):'';
   $pass=is_string($raw_pass)?$raw_pass:'';
   $key=pvdak_auth_attempt_key($identity);
-  if(pvdak_auth_rate_reached($key,6) || pvdak_auth_rate_reached(pvdak_auth_ip_attempt_key(),30)){
+  if(pvdak_registration_rate_exceeded_key($key,6,15*MINUTE_IN_SECONDS) ||
+     pvdak_registration_rate_exceeded_key(pvdak_auth_ip_attempt_key(),30,15*MINUTE_IN_SECONDS)){
     wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'slow','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   if(!$identity||!$pass||strlen($identity)>250||strlen($pass)>1024){
-    pvdak_auth_record_failure($key);
     wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'invalid','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   $user=wp_signon(array('user_login'=>$identity,'user_password'=>$pass,
      'remember'=>in_array($_POST['login_remember']??null,array('on','1'),true)),is_ssl());
   if(is_wp_error($user) || !($user instanceof WP_User)){
-    pvdak_auth_record_failure($key);
     wp_safe_redirect(add_query_arg(array('pvdak_login_error'=>'invalid','auth'=>'password'),pvdak_auth_login_url()));exit;
   }
   delete_transient($key);
