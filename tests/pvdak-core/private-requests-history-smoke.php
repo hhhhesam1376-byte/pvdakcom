@@ -44,6 +44,15 @@ $checks = array(
  'intake requires a positive decimal topic id rather than absint of forged input' =>
     strpos($requests, 'pvdak_core_request_positive_id( $raw_landing )') !== false &&
     strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'intake errors show safe reason-specific feedback' =>
+    strpos($requests, 'function pvdak_core_request_error_message(') !== false &&
+    strpos($requests, "'limit' =>") !== false &&
+    strpos($requests, "'closed' =>") !== false &&
+    strpos($requests, 'esc_html( pvdak_core_request_error_message( $error_code ) )') !== false &&
+    strpos($requests, "is_string( \$_GET['pvdak_error'] )") !== false,
+ 'private history and admin topic never remap malformed IDs' =>
+    strpos($requests, "pvdak_core_request_positive_id( get_post_meta( \$item->ID, '_pvdak_legal_landing_id', true ) )") !== false &&
+    strpos($requests, "pvdak_core_request_positive_id( get_post_meta( \$post->ID, '_pvdak_legal_landing_id', true ) )") !== false,
  'receipt and saved topic use strict positive ID validation' =>
     strpos($requests, 'pvdak_core_request_positive_id( $receipt[\'id\'] )') !== false &&
     strpos($requests, 'pvdak_core_request_positive_id( $owner_id )') !== false &&

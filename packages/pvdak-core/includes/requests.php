@@ -55,6 +55,18 @@ function pvdak_core_request_input_valid( $title, $description ) {
         $title_length <= 140 && $description_length <= 3000;
 }
 
+/** Fixed, non-sensitive feedback for intake failures; never echo GET input. */
+function pvdak_core_request_error_message( $code ) {
+    $messages = array(
+        'invalid' => 'اطلاعات فرم کامل یا معتبر نیست. عنوان، موضوع حقوقی، شرح و تأیید رضایت را بررسی کنید.',
+        'limit' => 'برای جلوگیری از ثبت تکراری، کمی بعد دوباره تلاش کنید.',
+        'closed' => 'پذیرش درخواست در حال حاضر بسته است. لطفاً بعداً دوباره بررسی کنید.',
+        'save' => 'درخواست ذخیره نشد. لطفاً کمی بعد دوباره تلاش کنید.',
+    );
+    return is_string( $code ) && isset( $messages[ $code ] ) ?
+        $messages[ $code ] : 'درخواست قابل ثبت نبود. لطفاً فرم را بررسی کنید.';
+}
+
 /** One-time receipt is scoped to the owner AND the submitted service type. */
 function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
@@ -108,7 +120,10 @@ function pvdak_core_request_form( $atts ) {
         }
     }
     if ( isset( $_GET['pvdak_error'] ) ) {
-        $html .= '<p class="pvdak-core-error" role="alert">اطلاعات ارسالی قابل ثبت نبود. فیلدها را بررسی کنید یا کمی بعد دوباره تلاش کنید.</p>';
+        $error_code = is_string( $_GET['pvdak_error'] ) ?
+            sanitize_key( wp_unslash( $_GET['pvdak_error'] ) ) : '';
+        $html .= '<p class="pvdak-core-error" role="alert">' .
+            esc_html( pvdak_core_request_error_message( $error_code ) ) . '</p>';
     }
     $html .= '<p>توضیحات لازم را کوتاه و بدون اطلاعات محرمانه اشخاص ثالث ثبت کنید. فعلاً امکان پیوست مدارک وجود ندارد.</p>';
     $html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="pvdak-core-form">';
@@ -343,7 +358,7 @@ function pvdak_core_my_requests() {
             $type = get_post_meta( $item->ID, '_pvdak_request_type', true );
             $state = get_post_meta( $item->ID, '_pvdak_request_state', true );
             $state_key = is_string( $state ) && isset( $statuses[$state] ) ? $state : 'unknown';
-            $topic_id = absint( get_post_meta( $item->ID, '_pvdak_legal_landing_id', true ) );
+            $topic_id = pvdak_core_request_positive_id( get_post_meta( $item->ID, '_pvdak_legal_landing_id', true ) );
             $topic = $topic_id && 'page' === get_post_type( $topic_id ) && 'publish' === get_post_status( $topic_id ) ?
                 get_the_title( $topic_id ) : '';
             $html .= '<li class="pvdak-core-request-card"><div class="pvdak-core-request-card-head"><strong>' .
@@ -443,7 +458,7 @@ function pvdak_core_request_metabox_html( $post ) {
         echo '<p class="notice notice-warning inline">نوع خدمت این پرونده نامعتبر است؛ تغییر وضعیت و یادداشت تا اصلاح داده توسط مدیر مسدود است.</p>';
         return;
     }
-    $landing_id = absint( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
+    $landing_id = pvdak_core_request_positive_id( get_post_meta( $post->ID, '_pvdak_legal_landing_id', true ) );
     $topic = pvdak_core_topic_resolution( $landing_id );
     echo '<p><strong>موضوع حقوقی:</strong> ' .
         ( 'ready' === $topic['status'] ? esc_html( $topic['title'] ) : esc_html( $topic['message'] ) ) . '</p>';
