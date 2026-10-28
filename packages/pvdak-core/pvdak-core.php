@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.49
+ * Version: 0.8.50
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,16 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.49' );
+define( 'PVDAK_CORE_VERSION', '0.8.50' );
+
+/**
+ * D24: Use one strict switch parser for the consent UI, admin checkbox,
+ * option sanitization and the actual send-time gate. Unexpected types
+ * (arrays/objects/floats) must not emit PHP warnings or enable delivery.
+ */
+function pvdak_core_notification_switch_enabled( $value ) {
+    return in_array( $value, array( '1', 1, true ), true );
+}
 
 /**
  * D24: A malformed post/user ID must not be remapped by absint() to
@@ -67,7 +76,7 @@ function pvdak_core_notification_consent_panel() {
     $mailbox = pvdak_core_notification_verified_mailbox( $owner );
     $record = get_user_meta( $owner, '_pvdak_notification_consent', true );
     $valid = pvdak_core_notification_consent_valid( $owner, $mailbox );
-    $enabled = '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' );
+    $enabled = pvdak_core_notification_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) );
     $html = '<div class="pvdak-unified-security-card"><div><h3>اعلان ایمیلی تغییر وضعیت</h3>';
     $html .= '<p>فقط یک پیام عمومی درباره تغییر در بخش خصوصی حساب ارسال می‌شود؛ جزئیات پرونده، تیکت و عضویت در ایمیل درج نمی‌شود. این قابلیت پیش‌فرض خاموش است.</p>';
     if ( $valid ) {
@@ -129,14 +138,14 @@ add_action( 'admin_post_pvdak_core_notification_consent', 'pvdak_core_notificati
 function pvdak_core_notification_settings_field() {
     echo '<input type="hidden" name="pvdak_core_email_notifications_enabled" value="0">';
     echo '<label><input type="checkbox" name="pvdak_core_email_notifications_enabled" value="1" ' .
-        checked( '1', get_option( 'pvdak_core_email_notifications_enabled', '0' ), false ) .
+        checked( true, pvdak_core_notification_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) ), false ) .
         '> مجوز ارسال اعلان عمومی فقط به حساب‌های دارای رضایت معتبر</label>';
     echo '<p class="description">پیش از فعال‌سازی، سیاست ارسال، آزمون ایمیل و حریم خصوصی باید تأیید شوند؛ این گزینه هیچ رضایتی برای کاربران ایجاد نمی‌کند.</p>';
 }
 function pvdak_core_notification_register_setting() {
     register_setting( 'general', 'pvdak_core_email_notifications_enabled', array(
         'type' => 'string', 'default' => '0',
-        'sanitize_callback' => function( $value ) { return '1' === (string) $value ? '1' : '0'; },
+        'sanitize_callback' => function( $value ) { return pvdak_core_notification_switch_enabled( $value ) ? '1' : '0'; },
     ) );
     add_settings_field( 'pvdak_core_email_notifications_enabled', 'اعلان‌های PVDak',
         'pvdak_core_notification_settings_field', 'general' );
@@ -145,7 +154,7 @@ add_action( 'admin_init', 'pvdak_core_notification_register_setting' );
 
 /** Only a generic message; no case title, tracking number, status or link. */
 function pvdak_core_notify_owner( $post_id, $kind ) {
-    if ( '1' !== (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ) ) { return false; }
+    if ( ! pvdak_core_notification_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) ) ) { return false; }
     $allowed = array( 'pvdak_request', 'pvdak_professional', 'pvdak_support_ticket' );
     if ( ! in_array( $kind, $allowed, true ) ) { return false; }
     $post_id = pvdak_core_notification_positive_id( $post_id );

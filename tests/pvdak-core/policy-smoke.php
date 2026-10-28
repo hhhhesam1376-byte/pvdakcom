@@ -986,6 +986,34 @@ foreach ( array( -21, '-21', '021', 21.0, array( 21 ) ) as $bad_author ) {
         ! $GLOBALS['pvdak_mock_sent_mail'], 'D24 malformed stored record author cannot trigger email' );
 }
 unset( $GLOBALS['pvdak_mock_notify_author'] );
+// D24: The administrator's opt-in switch must have identical semantics in
+// the user panel, the settings checkbox, sanitization and actual sending.
+// These are synthetic options: no WordPress settings or emails are changed.
+foreach ( array( array( '1' ), (object) array( 'value' => '1' ), '01',
+    '1junk', 1.0, -1, 'true', false, null ) as $bad_switch ) {
+    $GLOBALS['pvdak_mock_notify_enabled'] = $bad_switch;
+    pvdak_expect( ! pvdak_core_notification_switch_enabled( $bad_switch ),
+        'D24 malformed notification switch is off' );
+    ob_start();
+    pvdak_core_notification_settings_field();
+    $field = ob_get_clean();
+    pvdak_expect( false === strpos( $field, 'checked="checked"' ),
+        'D24 malformed switch is unchecked in administrator settings' );
+    pvdak_expect( ! pvdak_core_notify_owner( 901, 'pvdak_request' ) &&
+        0 === count( $GLOBALS['pvdak_mock_sent_mail'] ),
+        'D24 malformed switch cannot trigger an email' );
+}
+foreach ( array( '1', 1, true ) as $good_switch ) {
+    pvdak_expect( pvdak_core_notification_switch_enabled( $good_switch ),
+        'D24 canonical enabled values remain recognized' );
+    $GLOBALS['pvdak_mock_notify_enabled'] = $good_switch;
+    ob_start();
+    pvdak_core_notification_settings_field();
+    $field = ob_get_clean();
+    pvdak_expect( false !== strpos( $field, 'checked="checked"' ),
+        'D24 enabled option is checked in administrator settings' );
+}
+$GLOBALS['pvdak_mock_notify_enabled'] = '1';
 pvdak_expect( pvdak_core_notify_owner( 901, 'pvdak_request' ) && count( $GLOBALS['pvdak_mock_sent_mail'] ) === 1,
     'D24 sends a generic email only with explicit current-mailbox consent' );
 $GLOBALS['pvdak_mock_notify_verified_address'] = 'other@example.test';
