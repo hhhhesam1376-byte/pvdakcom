@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PVDak Core
  * Description: Private legal requests and independent professional data foundations; client intake disabled by default.
- * Version: 0.8.52
+ * Version: 0.8.53
  * Requires PHP: 7.4
  * Requires at least: 6.6
  * Author: PVDak
@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.52' );
+define( 'PVDAK_CORE_VERSION', '0.8.53' );
 
 /**
  * D24: Use one strict switch parser for the consent UI, admin checkbox,

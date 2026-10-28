@@ -42,8 +42,14 @@ $checks = array(
  'safe labels' => strpos($src, 'esc_html( get_the_title( $item->ID ) )') !== false,
  'request query object guard' => strpos($src, '$item instanceof WP_Post') !== false,
  'intake requires a positive decimal topic id rather than absint of forged input' =>
-    strpos($requests, 'ctype_digit( $raw_landing )') !== false &&
+    strpos($requests, 'pvdak_core_request_positive_id( $raw_landing )') !== false &&
     strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'receipt and saved topic use strict positive ID validation' =>
+    strpos($requests, 'pvdak_core_request_positive_id( $receipt[\'id\'] )') !== false &&
+    strpos($requests, 'pvdak_core_request_positive_id( $owner_id )') !== false &&
+    strpos($requests, 'pvdak_core_request_positive_id( get_post_meta( $id, \'_pvdak_legal_landing_id\', true ) )') !== false,
+ 'intake option cannot trigger array-to-string conversion' =>
+    strpos($requests, "in_array( get_option( 'pvdak_core_intake_enabled', '0' ), array( '1', 1, true ), true )") !== false,
  'history rejects malformed page numbers and oversized search inputs' =>
     strpos($requests, 'ctype_digit( (string) $raw_page )') !== false &&
     strpos($requests, 'strlen( $search_input ) <= 500') !== false,

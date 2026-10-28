@@ -146,6 +146,19 @@ function pvdak_management_primary_queue_routes( $available ) {
     return $selected;
 }
 
+/**
+ * Only show draft shortcuts already approved by the capability/CPT filter.
+ * Never query or display draft contents or authors in the dashboard.
+ */
+function pvdak_management_draft_routes( $available ) {
+    $routes = array( 'edit.php?post_type=page&post_status=draft', 'edit.php?post_status=draft' );
+    $selected = array();
+    foreach ( $routes as $route ) {
+        if ( isset( $available[ $route ] ) ) { $selected[] = $route; }
+    }
+    return $selected;
+}
+
 function pvdak_management_render_links() {
     $sections = array(
         'محتوا و ظاهر سایت' => array(
@@ -312,10 +325,15 @@ function pvdak_management_dashboard_widget() {
     echo '<p>برای مدیریت سایت از مسیرهای اصلی زیر استفاده کنید. امکانات حقوقی تا دریافت مجوز، خودکار فعال نمی‌شوند.</p>';
     echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=pvdak-management')) . '">ورود به مدیریت PVDak</a>';
     $links = pvdak_management_links();
-    if ( pvdak_management_link_available( $links[0] ) ) {
+    // Resolve by fixed route, not array position: reordered menu entries
+    // must never accidentally authorize a homepage edit shortcut.
+    foreach ( $links as $link ) {
+        if ( 'admin.php?page=pvdak-home-content' !== $link[3] ||
+             ! pvdak_management_link_available( $link ) ) { continue; }
         $home_label = function_exists( 'pvdak_home_page_id' ) && ! pvdak_home_page_id() ?
             'راه‌اندازی صفحه اصلی' : 'ویرایش صفحه اصلی';
-        echo ' <a class="button" href="' . esc_url(admin_url('admin.php?page=pvdak-home-content')) . '">' . esc_html( $home_label ) . '</a>';
+        echo ' <a class="button" href="' . esc_url( admin_url( $link[3] ) ) . '">' . esc_html( $home_label ) . '</a>';
+        break;
     }
     echo '</p>';
     if (current_user_can('moderate_comments')) {
@@ -339,6 +357,15 @@ function pvdak_management_dashboard_widget() {
     }
     if ( $queue_links ) {
         echo '<p><strong>پیگیری کارها:</strong> ' . implode( ' | ', $queue_links ) . '</p>';
+    }
+    $draft_links = array();
+    foreach ( pvdak_management_draft_routes( $available ) as $route ) {
+        $link = $available[ $route ];
+        $draft_links[] = '<a href="' . esc_url( admin_url( $route ) ) . '">' .
+            esc_html( $link[0] ) . '</a>';
+    }
+    if ( $draft_links ) {
+        echo '<p><strong>محتوای پیش‌نویس:</strong> ' . implode( ' | ', $draft_links ) . '</p>';
     }
     if (current_user_can('manage_options')) {
         echo '<p><a href="' . esc_url(admin_url('tools.php?page=pvdak-readiness')) . '">بررسی وضعیت راه‌اندازی</a></p>';

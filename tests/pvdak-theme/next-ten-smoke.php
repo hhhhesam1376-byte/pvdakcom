@@ -149,6 +149,23 @@ foreach ( $queue_cases as $case ) {
 }
 echo "PVDAK_MANAGEMENT_QUEUE_ROUTES_OK: 6/6 isolated PHP cases (not WordPress E2E).\n";
 
+$draft_page = 'edit.php?post_type=page&post_status=draft';
+$draft_post = 'edit.php?post_status=draft';
+$draft_cases = array(
+    array( array( $draft_page => 1, $draft_post => 1 ), array( $draft_page, $draft_post ) ),
+    array( array( $draft_post => 1 ), array( $draft_post ) ),
+    array( array( $draft_page => 1 ), array( $draft_page ) ),
+    array( array( 'untrusted.php' => 1 ), array() ),
+    array( array(), array() ),
+);
+foreach ( $draft_cases as $case ) {
+    if ( pvdak_management_draft_routes( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_MANAGEMENT_FAIL: draft shortcut allowlist\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_MANAGEMENT_DRAFT_ROUTES_OK: 5/5 isolated PHP cases (not WordPress E2E).\n";
+
 $comment_cases = array(
     array( true, (object) array( 'moderated' => 0 ), 0 ),
     array( true, (object) array( 'moderated' => '0' ), 0 ),

@@ -20,12 +20,23 @@ function pvdak_core_request_statuses() {
     );
 }
 
+/** Reject malformed request IDs instead of mapping them to another record. */
+function pvdak_core_request_positive_id( $value ) {
+    if ( is_int( $value ) ) { return $value > 0 ? $value : 0; }
+    if ( ! is_string( $value ) || '' === $value ||
+         strlen( $value ) > strlen( (string) PHP_INT_MAX ) ||
+         ! preg_match( '/^[1-9][0-9]*$/D', $value ) ||
+         ( strlen( $value ) === strlen( (string) PHP_INT_MAX ) &&
+           strcmp( $value, (string) PHP_INT_MAX ) > 0 ) ) { return 0; }
+    return (int) $value;
+}
+
 /** Kill switch: even when the plugin is active, intake requires explicit opt-in. */
 function pvdak_core_intake_open() {
     if ( defined( 'PVDAK_CORE_DISABLE_INTAKE' ) && PVDAK_CORE_DISABLE_INTAKE ) {
         return false;
     }
-    return '1' === (string) get_option( 'pvdak_core_intake_enabled', '0' );
+    return in_array( get_option( 'pvdak_core_intake_enabled', '0' ), array( '1', 1, true ), true );
 }
 
 /**
@@ -47,16 +58,16 @@ function pvdak_core_request_input_valid( $title, $description ) {
 /** One-time receipt is scoped to the owner AND the submitted service type. */
 function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
-        ! is_string( $receipt['type'] ) || ! is_scalar( $receipt['id'] ) ||
-        ! ctype_digit( (string) $receipt['id'] ) ||
-        $receipt['type'] !== $type || (int) $receipt['id'] < 1 ) {
-        return 0;
+         ! is_string( $receipt['type'] ) || $receipt['type'] !== $type ) { return 0; }
+    $id = pvdak_core_request_positive_id( $receipt['id'] );
+    if ( ! $id ) { return 0; }
+    if ( 0 !== $owner_id ) {
+        $owner = pvdak_core_request_positive_id( $owner_id );
+        if ( ! $owner || 'pvdak_request' !== get_post_type( $id ) ||
+             'private' !== get_post_status( $id ) ||
+             $owner !== pvdak_core_request_positive_id( get_post_field( 'post_author', $id ) ) ||
+             $type !== get_post_meta( $id, '_pvdak_request_type', true ) ) { return 0; }
     }
-    $id = absint( $receipt['id'] );
-    if ( $owner_id && ( 'pvdak_request' !== get_post_type( $id ) ||
-         'private' !== get_post_status( $id ) ||
-         (int) get_post_field( 'post_author', $id ) !== absint( $owner_id ) ||
-         $type !== get_post_meta( $id, '_pvdak_request_type', true ) ) ) { return 0; }
     return $id;
 }
 
@@ -133,8 +144,8 @@ function pvdak_core_handle_request() {
     // silently turn a forged negative ID into a different, valid topic.
     $raw_landing = isset( $_POST['pvdak_landing_id'] ) && is_string( $_POST['pvdak_landing_id'] ) ?
         wp_unslash( $_POST['pvdak_landing_id'] ) : '';
-    $landing_id = ctype_digit( $raw_landing ) && strlen( $raw_landing ) <= 10 ?
-        absint( $raw_landing ) : 0;
+    $landing_id = strlen( $raw_landing ) <= 10 ?
+        pvdak_core_request_positive_id( $raw_landing ) : 0;
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
     $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
@@ -182,7 +193,7 @@ function pvdak_core_handle_request() {
          'private' !== get_post_status( $id ) ||
          (int) get_post_field( 'post_author', $id ) !== $user_id ||
          $type !== get_post_meta( $id, '_pvdak_request_type', true ) ||
-         $landing_id !== absint( get_post_meta( $id, '_pvdak_legal_landing_id', true ) ) ||
+         $landing_id !== pvdak_core_request_positive_id( get_post_meta( $id, '_pvdak_legal_landing_id', true ) ) ||
          'submitted' !== get_post_meta( $id, '_pvdak_request_state', true ) ) {
         wp_delete_post( $id, true ); // Newly inserted incomplete request only.
         delete_transient( $rate_key );
