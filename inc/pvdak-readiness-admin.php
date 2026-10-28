@@ -213,6 +213,15 @@ function pvdak_management_daily_steps() {
     }
 }
 
+/**
+ * Interpret the administrator-facing notification switch without casting
+ * unexpected option values (arrays/objects) to strings or issuing warnings.
+ * This is a read-only status; the Core send-time gate remains authoritative.
+ */
+function pvdak_management_switch_enabled( $value ) {
+    return in_array( $value, array( '1', 1, true ), true );
+}
+
 function pvdak_management_render() {
     if (!current_user_can('edit_pages')) {
         wp_die('دسترسی مجاز نیست.','',array('response'=>403));
@@ -237,7 +246,7 @@ function pvdak_management_render() {
         $requests = $core_available && pvdak_core_intake_open();
         $members = $core_available && function_exists( 'pvdak_core_member_intake_open' ) && pvdak_core_member_intake_open();
         $directory = $core_available && function_exists( 'pvdak_core_directory_enabled' ) && pvdak_core_directory_enabled();
-        $notifications = $core_available && '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' );
+        $notifications = $core_available && pvdak_management_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) );
         echo '<h2 style="margin-top:30px">وضعیت دسترسی‌های عمومی</h2>';
         echo '<p>این بخش فقط وضعیت فعلی را نشان می‌دهد؛ هیچ خدمتی را به‌صورت خودکار فعال نمی‌کند.</p><ul style="list-style:disc;padding-right:20px">';
         echo '<li>حالت تعمیرات: <strong>' . ($maintenance ? 'فعال' : 'غیرفعال') . '</strong></li>';
@@ -261,7 +270,11 @@ function pvdak_management_dashboard_setup() {
     if (!current_user_can('edit_pages')) { return; }
     remove_meta_box('dashboard_quick_press', 'dashboard', 'side');
     remove_meta_box('dashboard_primary', 'dashboard', 'side');
-    remove_meta_box('dashboard_activity', 'dashboard', 'normal');
+    // Activity includes WordPress's native pending-comment moderation.
+    // Keep it for reviewers; only declutter it for non-moderating editors.
+    if ( ! current_user_can( 'moderate_comments' ) ) {
+        remove_meta_box('dashboard_activity', 'dashboard', 'normal');
+    }
     wp_add_dashboard_widget('pvdak_management_start', 'راهنمای مدیریت PVDak', 'pvdak_management_dashboard_widget');
 }
 add_action('wp_dashboard_setup','pvdak_management_dashboard_setup',50);

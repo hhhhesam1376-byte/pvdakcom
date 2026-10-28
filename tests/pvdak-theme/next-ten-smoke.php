@@ -112,7 +112,10 @@ if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', $root . '/' ); }
 if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
 // Count-only moderation mocks: never load comment authors, bodies or private cases.
 if ( ! function_exists( 'current_user_can' ) ) {
-    function current_user_can( $cap ) { return 'moderate_comments' === $cap && ! empty( $GLOBALS['pvdak_mock_moderate'] ); }
+    function current_user_can( $cap ) {
+        return ( 'moderate_comments' === $cap && ! empty( $GLOBALS['pvdak_mock_moderate'] ) ) ||
+            ( 'edit_pages' === $cap && ! empty( $GLOBALS['pvdak_mock_edit_pages'] ) );
+    }
 }
 if ( ! function_exists( 'wp_count_comments' ) ) {
     function wp_count_comments() { return $GLOBALS['pvdak_mock_comment_counts'] ?? null; }
@@ -348,3 +351,51 @@ foreach ( array(
     }
 }
 echo "PVDAK_PUBLIC_TEMPLATE_GATE_OK: 9/9 original-source PHP cases (not WordPress E2E).\n";
+
+
+// D31: exercise the original dashboard setup with stubbed WordPress APIs.
+// A reviewer must keep native Activity moderation; no production data is read.
+if ( ! function_exists( 'remove_meta_box' ) ) {
+    function remove_meta_box( $id, $screen, $context ) {
+        $GLOBALS['pvdak_mock_removed_boxes'][] = $id;
+    }
+}
+if ( ! function_exists( 'wp_add_dashboard_widget' ) ) {
+    function wp_add_dashboard_widget( $id, $title, $callback ) {
+        $GLOBALS['pvdak_mock_dashboard_widgets'][] = $id;
+    }
+}
+$dashboard_cases = array(
+    array( true, false, true, 3, 1 ),
+    array( true, true, false, 2, 1 ),
+    array( false, true, false, 0, 0 ),
+);
+foreach ( $dashboard_cases as $case ) {
+    $GLOBALS['pvdak_mock_edit_pages'] = $case[0];
+    $GLOBALS['pvdak_mock_moderate'] = $case[1];
+    $GLOBALS['pvdak_mock_removed_boxes'] = array();
+    $GLOBALS['pvdak_mock_dashboard_widgets'] = array();
+    pvdak_management_dashboard_setup();
+    if ( in_array( 'dashboard_activity', $GLOBALS['pvdak_mock_removed_boxes'], true ) !== $case[2] ||
+         count( $GLOBALS['pvdak_mock_removed_boxes'] ) !== $case[3] ||
+         count( $GLOBALS['pvdak_mock_dashboard_widgets'] ) !== $case[4] ) {
+        fwrite( STDERR, "PVD_D31_DASHBOARD_FAIL: native Activity or editor capability\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_D31_DASHBOARD_OK: 3/3 original-source PHP cases (not WordPress E2E).\n";
+
+$notification_switch_cases = array(
+    array( '1', true ), array( 1, true ), array( true, true ),
+    array( '0', false ), array( 0, false ), array( false, false ),
+    array( '', false ), array( '01', false ), array( '1junk', false ),
+    array( array( '1' ), false ), array( (object) array( 'value' => '1' ), false ),
+    array( null, false ),
+);
+foreach ( $notification_switch_cases as $case ) {
+    if ( pvdak_management_switch_enabled( $case[0] ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_NOTIFICATION_STATUS_FAIL: invalid switch interpretation\n" );
+        exit( 1 );
+    }
+}
+echo "PVDAK_D31_NOTIFICATION_STATUS_OK: 12/12 original-source PHP cases (not WordPress E2E).\n";
