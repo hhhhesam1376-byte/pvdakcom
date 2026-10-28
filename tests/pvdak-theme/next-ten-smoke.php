@@ -110,7 +110,40 @@ echo "PVDAK_NEXT_TEN_SOURCE_OK: {$count}/10 static assertions (runtime not teste
 // Hooks are stubbed; this does not bootstrap WordPress or read production data.
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', $root . '/' ); }
 if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
+// Count-only moderation mocks: never load comment authors, bodies or private cases.
+if ( ! function_exists( 'current_user_can' ) ) {
+    function current_user_can( $cap ) { return 'moderate_comments' === $cap && ! empty( $GLOBALS['pvdak_mock_moderate'] ); }
+}
+if ( ! function_exists( 'wp_count_comments' ) ) {
+    function wp_count_comments() { return $GLOBALS['pvdak_mock_comment_counts'] ?? null; }
+}
 require_once $root . '/inc/pvdak-readiness-admin.php';
+$comment_cases = array(
+    array( true, (object) array( 'moderated' => 0 ), 0 ),
+    array( true, (object) array( 'moderated' => '0' ), 0 ),
+    array( true, (object) array( 'moderated' => 12 ), 12 ),
+    array( true, (object) array( 'moderated' => '12' ), 12 ),
+    array( true, (object) array( 'moderated' => -12 ), 0 ),
+    array( true, (object) array( 'moderated' => '-12' ), 0 ),
+    array( true, (object) array( 'moderated' => '12junk' ), 0 ),
+    array( true, (object) array( 'moderated' => array( 12 ) ), 0 ),
+    array( true, (object) array( 'moderated' => 12.2 ), 0 ),
+    array( true, (object) array( 'moderated' => '012' ), 0 ),
+    array( true, (object) array( 'moderated' => '2147483648' ), 0 ),
+    array( true, (object) array(), 0 ),
+    array( true, array(), 0 ),
+    array( false, (object) array( 'moderated' => 5 ), 0 ),
+);
+foreach ( $comment_cases as $case ) {
+    $GLOBALS['pvdak_mock_moderate'] = $case[0];
+    $GLOBALS['pvdak_mock_comment_counts'] = $case[1];
+    if ( pvdak_management_pending_comments() !== $case[2] ) {
+        fwrite( STDERR, "PVD_MANAGEMENT_FAIL: malformed or unauthorized comment count\n" );
+        exit( 1 );
+    }
+}
+unset( $GLOBALS['pvdak_mock_moderate'], $GLOBALS['pvdak_mock_comment_counts'] );
+echo "PVDAK_MANAGEMENT_PENDING_COUNT_OK: 14/14 isolated PHP cases (not WordPress E2E).\n";
 $readiness_cases = array(
     array( false, '', '', 'missing' ),
     array( true, 'draft', '', 'unpublished' ),
