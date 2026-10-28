@@ -113,7 +113,7 @@ function get_post_field( $field, $id ) {
 function get_userdata( $id ) {
     if ( 10 === (int) $id && $GLOBALS['pvdak_mock_reviewer_exists'] ) { return (object) array( 'ID' => 10 ); }
     return in_array( (int) $id, array( 21, 22, 23 ), true ) ?
-        (object) array( 'ID' => (int) $id, 'user_email' => 'owner@example.test' ) : false;
+        (object) array( 'ID' => ( $GLOBALS['pvdak_mock_userdata_id'] ?? (int) $id ), 'user_email' => 'owner@example.test' ) : false;
 }
 function get_post( $id ) {
     if ( 900 === (int) $id ) { return new WP_Post( 900 ); }
@@ -917,6 +917,25 @@ pvdak_expect( 'owner@example.test' === pvdak_core_notification_verified_mailbox(
     'D24 canonical owner ID preserves valid verified mailbox' );
 pvdak_expect( pvdak_core_notification_consent_valid( '21', 'owner@example.test' ),
     'D24 canonical owner ID preserves valid explicit consent' );
+
+ // D24: WordPress normally supplies canonical IDs and timestamps, but malformed
+ // persisted verification metadata must never be coerced into valid proof.
+ foreach ( array( '21junk', '021', -21, 21.0, array( 21 ) ) as $bad_user_id ) {
+     $GLOBALS['pvdak_mock_userdata_id'] = $bad_user_id;
+     pvdak_expect( '' === pvdak_core_notification_verified_mailbox( 21 ),
+         'D24 rejects malformed returned WP_User identity' );
+ }
+ unset( $GLOBALS['pvdak_mock_userdata_id'] );
+ foreach ( array( '1770000000junk', '01770000000', -1770000000, 1770000000.0,
+     array( 1770000000 ), '0', '' ) as $bad_verified_at ) {
+     $GLOBALS['pvdak_mock_notify_verified_at'] = $bad_verified_at;
+     pvdak_expect( '' === pvdak_core_notification_verified_mailbox( 21 ),
+         'D24 rejects malformed persisted verification timestamp' );
+ }
+ $GLOBALS['pvdak_mock_notify_verified_at'] = '1770000000';
+ pvdak_expect( 'owner@example.test' === pvdak_core_notification_verified_mailbox( 21 ),
+     'D24 accepts canonical string timestamp from WordPress metadata' );
+ $GLOBALS['pvdak_mock_notify_verified_at'] = 1770000000;
 foreach ( array( -901, '-901', '0901', 901.0, array( 901 ), '2147483648' ) as $bad_post ) {
     pvdak_expect( ! pvdak_core_notify_owner( $bad_post, 'pvdak_request' ) &&
         ! $GLOBALS['pvdak_mock_sent_mail'], 'D24 malformed private record ID cannot trigger email' );
