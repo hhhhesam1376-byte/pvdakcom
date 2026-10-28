@@ -638,3 +638,25 @@ if ( strpos( $home_source, "wp_safe_redirect( admin_url( 'admin.php?page=pvdak-h
 }
 echo "PVDAK_D31_DRAFT_IMAGE_OK: {$draft_status_checks} status + " . count( $image_cases ) .
     " image original-source PHP cases; setup source-only guard (not WP E2E).\n";
+
+/** D31 setup regression: source-only guards; NOT a WordPress setup test. */
+if ( ! preg_match( '/\$created\s*=\s*wp_insert_post\(\s*array\((.*?)\)\s*,\s*true\s*\);/s', $home_source, $new_page_match ) ||
+     strpos( $new_page_match[1], "'post_status'  => 'draft'" ) === false ||
+     strpos( $new_page_match[1], "'post_status'  => 'publish'" ) !== false ||
+     strpos( $home_source, "if ( ! is_int( \$created ) || \$created < 1 )" ) === false ||
+     strpos( $home_source, "'posts-conflict' === wp_unslash( \$_GET['setup'] )" ) === false ||
+     strpos( $home_source, "pvdak_home_configured_page_id( get_option( 'page_for_posts' ) )" ) === false ) {
+    fwrite( STDERR, "PVD_D31_SETUP_DRAFT_FAIL: missing draft/invalid-result/posts-index guard\n" );
+    exit( 1 );
+}
+$draft_create_at = strpos( $home_source, "'post_status'  => 'draft'" );
+$review_redirect_at = strpos( $home_source, "wp_safe_redirect( admin_url( 'admin.php?page=pvdak-home-content&setup=review' ) );", $draft_create_at );
+$posts_conflict_at = strpos( $home_source, "if ( \$posts_page_id && \$posts_page_id === \$page_id )" );
+$reading_update_at = strpos( $home_source, "update_option( 'show_on_front', 'page' );" );
+if ( false === $review_redirect_at || false === $posts_conflict_at || false === $reading_update_at ||
+     ! ( $draft_create_at < $review_redirect_at && $review_redirect_at < $posts_conflict_at &&
+         $posts_conflict_at < $reading_update_at ) ) {
+    fwrite( STDERR, "PVD_D31_SETUP_ORDER_FAIL: setup can update Reading settings before review\n" );
+    exit( 1 );
+}
+echo "PVDAK_D31_SETUP_DRAFT_SOURCE_OK: source-only guards; WordPress E2E NOT_TESTED.\n";
