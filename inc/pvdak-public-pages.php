@@ -267,7 +267,10 @@ function pvdak_forum_rest_prepare_comment($response, $comment, $request) {
   if ($comment instanceof WP_Comment && pvdak_forum_page_valid($comment->comment_post_ID) &&
       !current_user_can('moderate_comments') &&
       !pvdak_forum_public_entry_valid($comment)) {
-    return new WP_Error('pvdak_forum_unavailable', 'پیام انجمن عمومی نیست.', array('status' => 404));
+    // A WP_Error here breaks the native REST comments collection renderer.
+    // Return a response object with no original comment data or links.
+    return new WP_REST_Response(array('code' => 'pvdak_forum_unavailable',
+      'message' => 'پیام انجمن عمومی نیست.'), 404);
   }
   return $response;
 }
