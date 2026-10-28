@@ -2,12 +2,17 @@
 /** Admin-controlled availability switch, default OFF. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/** Treat all administrator service switches as exact, fail-closed values. */
+function pvdak_core_admin_switch_value( $value ) {
+    return in_array( $value, array( '1', 1, true ), true ) ? '1' : '0';
+}
+
 function pvdak_core_register_settings() {
     register_setting( 'pvdak_core_pages_settings', 'pvdak_core_landing_parent_id', array(
         'type' => 'integer',
         'default' => 0,
         'sanitize_callback' => function( $value ) {
-            $page_id = absint( $value );
+            $page_id = pvdak_core_request_positive_id( $value );
             return ( $page_id && 'page' === get_post_type( $page_id ) ) ? $page_id : 0;
         },
     ) );
@@ -15,26 +20,26 @@ function pvdak_core_register_settings() {
         'type' => 'string',
         'default' => '0',
         'sanitize_callback' => function( $value ) {
-            return '1' === (string) $value ? '1' : '0';
+            return pvdak_core_admin_switch_value( $value );
         },
     ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_subscription_gate_enabled', array(
         'type'=>'string', 'default'=>'0',
-        'sanitize_callback'=>function($v){return '1'===(string)$v?'1':'0';}
+        'sanitize_callback'=>function($v){return pvdak_core_admin_switch_value($v);}
     ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_directory_enabled', array(
         'type' => 'string', 'default' => '0',
-        'sanitize_callback' => function( $v ) { return '1' === (string) $v ? '1' : '0'; },
+        'sanitize_callback' => function( $v ) { return pvdak_core_admin_switch_value( $v ); },
     ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_email_notifications_enabled', array(
         'type' => 'string', 'default' => '0',
-        'sanitize_callback' => function( $v ) { return '1' === (string) $v ? '1' : '0'; },
+        'sanitize_callback' => function( $v ) { return pvdak_core_admin_switch_value( $v ); },
     ) );
     register_setting( 'pvdak_core_settings', 'pvdak_core_member_intake_enabled', array(
         'type' => 'string',
         'default' => '0',
         'sanitize_callback' => function( $value ) {
-            return '1' === (string) $value ? '1' : '0';
+            return pvdak_core_admin_switch_value( $value );
         },
     ) );
 }
@@ -55,7 +60,7 @@ function pvdak_core_settings_page() {
     if ( ! current_user_can( 'manage_options' ) ) { return; }
     echo '<div class="wrap"><h1>تنظیمات خدمات حقوقی PVDak</h1>';
     echo '<p>از این صفحه می‌توانید برگه مادر حقوقی و کلیدهای پذیرش خدمات را مدیریت کنید. هیچ خدمتی با مشاهده این صفحه فعال نمی‌شود.</p>';
-    echo '<div class="notice notice-warning inline"><p><strong>نسخه آزمایشی:</strong> این افزونه شامل فرم خصوصیِ ثبت درخواست است، اما اعتبارسنجی وکلا، ارجاع خودکار، پرداخت، اشتراک، نظارت و حریم خصوصی نهایی هنوز پیاده‌سازی/تأیید نشده‌اند. روی سایت واقعی تا تکمیل تست‌ها پذیرش درخواست را روشن نکنید.</p></div>';
+    echo '<div class="notice notice-warning inline"><p><strong>پیش از فعال‌سازی خدمات:</strong> فرم درخواست، بررسی متخصص و کنترل‌های ارجاع داخلی در سامانه وجود دارند، اما آزمون عملیاتی، تأیید صلاحیت و مقررات حقوقی هنوز کامل نیست. پرداخت آنلاین نیز آماده نیست. تا تکمیل این موارد، کلیدهای پذیرش و اعلان را خاموش نگه دارید.</p></div>';
     echo '<details><summary>اطلاعات تکمیلی امکانات (فقط راهنما)</summary>';
     echo '<table class="widefat striped" style="max-width:840px"><tbody>';
     $items = array(
@@ -82,7 +87,7 @@ function pvdak_core_settings_page() {
     echo wp_dropdown_pages( array(
         'name' => 'pvdak_core_landing_parent_id',
         'id' => 'pvdak_core_landing_parent_id',
-        'selected' => absint( get_option( 'pvdak_core_landing_parent_id', 0 ) ),
+        'selected' => pvdak_core_request_positive_id( get_option( 'pvdak_core_landing_parent_id', 0 ) ),
         'show_option_none' => 'انتخاب برگه مادر',
         'option_none_value' => 0,
         'echo' => 0,
@@ -110,7 +115,7 @@ function pvdak_core_settings_page() {
     echo '<p>اعلان ایمیلی عمومی تغییر وضعیت (بدون اطلاعات پرونده یا متن گفتگو):</p>';
     echo '<input type="hidden" name="pvdak_core_email_notifications_enabled" value="0">';
     echo '<label><input type="checkbox" name="pvdak_core_email_notifications_enabled" value="1" ' .
-         checked( '1' === (string) get_option( 'pvdak_core_email_notifications_enabled', '0' ), true, false ) .
+         checked( pvdak_core_notification_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) ), true, false ) .
          '> فعال‌سازی پس از بررسی تنظیمات ایمیل و حریم خصوصی (پیش‌فرض خاموش)</label>';
     echo '<p class="description">فقط ایمیل مالک فعلی رکورد خصوصی، به‌جز حساب در انتظار تأیید ایمیل؛ wp_mail تحویل واقعی را تضمین نمی‌کند.</p>';
     echo '<p>فهرست عمومی اعضای حرفه‌ای، فقط با رضایت معتبر هر شخص و بررسی صلاحیت جاری:</p>';

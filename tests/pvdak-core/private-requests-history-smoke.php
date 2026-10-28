@@ -44,6 +44,12 @@ $checks = array(
  'intake requires a positive decimal topic id rather than absint of forged input' =>
     strpos($requests, 'pvdak_core_request_positive_id( $raw_landing )') !== false &&
     strpos($requests, 'strlen( $raw_landing ) <= 10') !== false,
+ 'intake errors are scoped to their submitted service' =>
+    strpos($requests, 'function pvdak_core_request_feedback_for_type(') !== false &&
+    strpos($requests, "'pvdak_error_type' =>") !== false &&
+    strpos($requests, 'pvdak_core_request_feedback_for_type( $feedback_type, $type )') !== false,
+ 'intake form enforces the same read permission as submit' =>
+    strpos($requests, "if ( ! current_user_can( 'read' ) )") !== false,
  'request shortcode rejects malformed non-string type' =>
     strpos($requests, "if ( ! is_string( \$atts['type'] ) ) { return ''; }") !== false,
  'intake errors show safe reason-specific feedback' =>

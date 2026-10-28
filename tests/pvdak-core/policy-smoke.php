@@ -1188,4 +1188,24 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
      'D17 valid specialty save can still grant reviewed internal clearance' );
  unset( $_POST, $GLOBALS['pvdak_mock_empty_specialty_pages'], $GLOBALS['pvdak_mock_specialty_ids'] );
 
+// D24/D23/D15: original Core helpers with synthetic values only.
+foreach ( array(
+    array( '1', '1' ), array( 1, '1' ), array( true, '1' ),
+    array( '0', '0' ), array( 0, '0' ), array( false, '0' ),
+    array( '01', '0' ), array( '1junk', '0' ), array( 1.0, '0' ),
+    array( array( '1' ), '0' ), array( (object) array( 'value' => '1' ), '0' ),
+) as $case ) {
+    pvdak_expect( $case[1] === pvdak_core_admin_switch_value( $case[0] ),
+        'D24 malformed admin service switch fails closed without a cast' );
+}
+foreach ( array( array( '21', 21 ), array( '021', 0 ), array( '21junk', 0 ),
+    array( -21, 0 ), array( array( '21' ), 0 ) ) as $case ) {
+    pvdak_expect( $case[1] === pvdak_core_request_positive_id( $case[0] ),
+        'D23 legal parent option cannot remap malformed IDs' );
+}
+foreach ( array( array( null, 'lawyer', true ), array( 'lawyer', 'lawyer', true ),
+    array( 'lawyer', 'question', false ), array( array( 'lawyer' ), 'lawyer', false ) ) as $case ) {
+    pvdak_expect( $case[2] === pvdak_core_request_feedback_for_type( $case[0], $case[1] ),
+        'D15 feedback is scoped to its submitted service' );
+}
 echo "CORE_POLICY_SMOKE_OK: {$checks} checks.\n";

@@ -67,6 +67,13 @@ function pvdak_core_request_error_message( $code ) {
         $messages[ $code ] : 'درخواست قابل ثبت نبود. لطفاً فرم را بررسی کنید.';
 }
 
+/** A failed submission on a page with three forms belongs only to its own form. */
+function pvdak_core_request_feedback_for_type( $feedback_type, $form_type ) {
+    // Null preserves older links that did not include the service type.
+    return null === $feedback_type ||
+        ( is_string( $feedback_type ) && ( '' === $feedback_type || $feedback_type === $form_type ) );
+}
+
 /** One-time receipt is scoped to the owner AND the submitted service type. */
 function pvdak_core_request_receipt_id( $receipt, $type, $owner_id = 0 ) {
     if ( ! is_array( $receipt ) || ! isset( $receipt['type'], $receipt['id'] ) ||
@@ -100,6 +107,10 @@ function pvdak_core_request_form( $atts ) {
     if ( ! is_user_logged_in() ) {
         return '<p class="pvdak-core-notice">برای ثبت و پیگیری درخواست باید وارد حساب خود شوید. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">ورود به حساب</a></p>';
     }
+    // The submit handler also requires this capability; do not show a form that must fail.
+    if ( ! current_user_can( 'read' ) ) {
+        return '<p class="pvdak-core-notice">این حساب مجوز ثبت درخواست ندارد.</p>';
+    }
     // Do not offer blank-title, moved or unpublished topics to applicants.
     $landing_pages = array_values( array_filter( pvdak_core_specialty_pages(), function ( $page ) {
         return $page instanceof WP_Post &&
@@ -121,7 +132,8 @@ function pvdak_core_request_form( $atts ) {
                 '">پیگیری در حساب کاربری</a></p>';
         }
     }
-    if ( isset( $_GET['pvdak_error'] ) ) {
+    $feedback_type = array_key_exists( 'pvdak_error_type', $_GET ) ? $_GET['pvdak_error_type'] : null;
+    if ( isset( $_GET['pvdak_error'] ) && pvdak_core_request_feedback_for_type( $feedback_type, $type ) ) {
         $error_code = is_string( $_GET['pvdak_error'] ) ?
             sanitize_key( wp_unslash( $_GET['pvdak_error'] ) ) : '';
         $html .= '<p class="pvdak-core-error" role="alert">' .
@@ -165,27 +177,27 @@ function pvdak_core_handle_request() {
         pvdak_core_request_positive_id( $raw_landing ) : 0;
     $source = wp_get_referer();
     $destination = $source ? wp_validate_redirect( $source, home_url( '/' ) ) : home_url( '/' );
-    $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error' ), $destination );
+    $destination = remove_query_arg( array( 'pvdak_sent', 'pvdak_error', 'pvdak_error_type' ), $destination );
     $consent = isset( $_POST['pvdak_consent'] ) && is_string( $_POST['pvdak_consent'] ) && '1' === wp_unslash( $_POST['pvdak_consent'] );
     if ( ! $consent || ! isset( $types[ $type ] ) || 'ready' !== pvdak_core_topic_resolution( $landing_id )['status'] ||
          ! pvdak_core_request_input_valid( $title, $description ) ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'invalid', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'invalid', 'pvdak_error_type' => isset( $types[ $type ] ) ? $type : '' ), $destination ) );
         exit;
     }
     $user_id = get_current_user_id();
     $rate_key = 'pvdak_intake_' . $user_id;
     if ( get_transient( $rate_key ) ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'limit', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'limit', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
     if ( ! set_transient( $rate_key, 1, 90 ) ) {
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'limit', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'limit', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
     // An administrator may close intake between form rendering and submission.
     if ( ! pvdak_core_intake_open() ) {
         delete_transient( $rate_key );
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'closed', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'closed', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
     $id = wp_insert_post( array(
@@ -202,7 +214,7 @@ function pvdak_core_handle_request() {
     ), true );
     if ( is_wp_error( $id ) || ! $id ) {
         delete_transient( $rate_key );
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'save', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
     $id = absint( $id );
@@ -214,7 +226,7 @@ function pvdak_core_handle_request() {
          'submitted' !== get_post_meta( $id, '_pvdak_request_state', true ) ) {
         wp_delete_post( $id, true ); // Newly inserted incomplete request only.
         delete_transient( $rate_key );
-        wp_safe_redirect( add_query_arg( 'pvdak_error', 'save', $destination ) );
+        wp_safe_redirect( add_query_arg( array( 'pvdak_error' => 'save', 'pvdak_error_type' => $type ), $destination ) );
         exit;
     }
     set_transient( 'pvdak_receipt_' . $user_id, array( 'type' => $type, 'id' => $id ), 300 );
