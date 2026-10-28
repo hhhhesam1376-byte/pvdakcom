@@ -116,12 +116,25 @@ function pvdak_home_brand_copy( $name, $value ) {
     }
     return $value;
 }
+/**
+ * Only a canonical positive decimal WordPress Page ID may be used as the
+ * homepage ACF source or the target of the admin preparation action.
+ * In particular, PHP casts must not turn "21junk", "-21" or "021" into 21.
+ */
+function pvdak_home_configured_page_id( $value ) {
+    if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]*$/D', $raw ) ) { return 0; }
+    $id = (int) $raw;
+    return $id > 0 && (string) $id === $raw ? $id : 0;
+}
+
 function pvdak_home_value( $name, $default = null ) {
     if ( null === $default ) {
         $defaults = pvdak_home_defaults();
         $default = isset( $defaults[$name] ) ? $defaults[$name] : '';
     }
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_page_id();
     if ( $page_id && function_exists( 'get_field' ) ) {
         $value = get_field( $name, $page_id );
         if ( false !== $value && null !== $value && '' !== $value ) { return pvdak_home_brand_copy( $name, $value ); }
@@ -290,7 +303,7 @@ function pvdak_home_add_admin_menu() {
 add_action( 'admin_menu', 'pvdak_home_add_admin_menu' );
 
 function pvdak_home_page_id() {
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_configured_page_id( get_option( 'page_on_front' ) );
     if ( 'page' !== get_option( 'show_on_front' ) || ! $page_id || 'page' !== get_post_type( $page_id ) ) {
         return 0;
     }
@@ -405,7 +418,7 @@ function pvdak_home_prepare_page() {
     }
     check_admin_referer( 'pvdak_prepare_home_page' );
 
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_configured_page_id( get_option( 'page_on_front' ) );
     if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
         $existing = get_page_by_path( 'pvdak-home', OBJECT, 'page' );
         if ( $existing && 'trash' !== $existing->post_status ) {
