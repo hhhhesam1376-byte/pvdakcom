@@ -51,6 +51,54 @@ function pvdak_sms_redirect($intent,$status) {
         pvdak_auth_login_url()));
     exit;
 }
+/**
+ * Reserve both the phone-wide hourly slot and cooldown under one DB lock.
+ * Parallel requests cannot send two OTPs by reading the same transient count.
+ * No phone number or code is stored in the advisory-lock name.
+ */
+function pvdak_sms_reserve_send($phone) {
+    $rate_key = pvdak_sms_key('phone-hourly', $phone);
+    $cooldown_key = pvdak_sms_key('cooldown', $phone);
+    return true === pvdak_registration_with_rate_lock($rate_key, static function() use ($rate_key, $cooldown_key) {
+        if (get_transient($cooldown_key)) { return false; }
+        $raw = get_transient($rate_key);
+        if (false === $raw) {
+            $count = 0;
+        } elseif (is_int($raw) && $raw >= 0) {
+            $count = $raw;
+        } elseif (is_string($raw) && strlen($raw) <= 8 && ctype_digit($raw)) {
+            $count = (int)$raw;
+        } else {
+            return false;
+        }
+        if ($count >= 5 || true !== set_transient($rate_key, $count + 1, HOUR_IN_SECONDS)) {
+            return false;
+        }
+        return true === set_transient($cooldown_key, 1, 90);
+    });
+}
+/** Consume a valid challenge once, including concurrent verify requests. */
+function pvdak_sms_claim_challenge($key, $code) {
+    return pvdak_registration_with_rate_lock($key, static function() use ($key, $code) {
+        $challenge = get_transient($key);
+        if (!is_array($challenge) || !isset($challenge['hash'], $challenge['expires'], $challenge['tries']) ||
+            !is_string($challenge['hash']) || '' === $challenge['hash'] ||
+            !is_int($challenge['expires']) || !is_int($challenge['tries']) ||
+            $challenge['tries'] < 0 || $challenge['expires'] < time() || $challenge['tries'] >= 5) {
+            return false;
+        }
+        $challenge['tries']++;
+        if (!wp_check_password($code, $challenge['hash'])) {
+            if ($challenge['tries'] >= 5 ||
+                true !== set_transient($key, $challenge, max(1, $challenge['expires'] - time()))) {
+                delete_transient($key);
+            }
+            return false;
+        }
+        // A failed delete cannot grant a second use.
+        return delete_transient($key) ? $challenge : false;
+    });
+}
 /** Send and verify are explicitly gated, rate-limited and require WordPress nonces. */
 function pvdak_sms_send() {
     if ('POST'!==($_SERVER['REQUEST_METHOD']??'')) { wp_die('Method not allowed','',array('response'=>405)); }
@@ -65,14 +113,9 @@ function pvdak_sms_send() {
     $phone=pvdak_sms_normalize_phone($raw);
     if (!$phone) { pvdak_sms_redirect($intent,'invalid'); }
     if (pvdak_registration_rate_exceeded('sms-send',12,HOUR_IN_SECONDS) ||
-        get_transient(pvdak_sms_key('cooldown',$phone))) {
+        !pvdak_sms_reserve_send($phone)) {
         pvdak_sms_redirect($intent,'slow');
     }
-    // The phone-wide ceiling applies across IPs to prevent SMS bombing.
-    $phone_rate_key=pvdak_sms_key('phone-hourly',$phone);
-    $phone_count=(int)get_transient($phone_rate_key);
-    if ($phone_count>=5) { pvdak_sms_redirect($intent,'slow'); }
-    set_transient($phone_rate_key,min(5,$phone_count+1),HOUR_IN_SECONDS);
     $role='client';
     if ($intent==='register') {
         $role=isset($_POST['sms_role']) && is_string($_POST['sms_role']) ?
@@ -87,7 +130,6 @@ function pvdak_sms_send() {
         if (!$user || '1'===(string)get_user_meta($user->ID,'_pvdak_email_verification_pending',true) ||
             user_can($user,'manage_options')) { pvdak_sms_redirect($intent,'sent'); }
     }
-    set_transient(pvdak_sms_key('cooldown',$phone),1,90);
     $code=(string)random_int(100000,999999);
     $delivered=apply_filters('pvdak_sms_otp_deliver',false,'+98'.substr($phone,1),$code,$intent);
     if (true!==$delivered) { pvdak_sms_redirect($intent,'unavailable'); }
@@ -116,21 +158,9 @@ function pvdak_sms_verify() {
         pvdak_sms_redirect($intent,'invalid');
     }
     $key=pvdak_sms_key('challenge-'.$intent,$phone);
-    $challenge=get_transient($key);
-    if (!is_array($challenge) || !isset($challenge['hash'],$challenge['expires'],$challenge['tries']) ||
-        !is_string($challenge['hash']) || $challenge['hash']==='' ||
-        !is_int($challenge['expires']) || !is_int($challenge['tries']) ||
-        $challenge['tries']<0 || $challenge['expires']<time() || $challenge['tries']>=5) {
-        pvdak_sms_redirect($intent,'invalid');
-    }
-    $challenge['tries']++;
-    if (!wp_check_password($code,$challenge['hash'])) {
-        if ($challenge['tries']>=5) { delete_transient($key); }
-        else { set_transient($key,$challenge,max(1,$challenge['expires']-time())); }
-        pvdak_sms_redirect($intent,'invalid');
-    }
-    // Single-use challenge; no password or OTP is saved to user metadata.
-    delete_transient($key);
+    $challenge=pvdak_sms_claim_challenge($key,$code);
+    if (!is_array($challenge)) { pvdak_sms_redirect($intent,'invalid'); }
+    // Challenge is consumed under the lock before any account operation.
     if ($intent==='bind') {
         if (!is_user_logged_in() ||
             (int)($challenge['user_id']??0)!==get_current_user_id() ||
