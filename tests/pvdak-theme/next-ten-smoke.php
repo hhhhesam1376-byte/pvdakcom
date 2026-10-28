@@ -97,7 +97,10 @@ $checks = array(
     strpos($s['admin'],'pvdak_readiness_required_totals( $audits )')!==false &&
     strpos($s['admin'],"'optional' => isset( $optional_pages[ $slug ] )")!==false &&
     strpos($s['admin'],"$"+"optional_pages = array(")!==false &&
-    strpos($s['admin'],"remove_menu_page('edit-comments.php')")===false,
+    strpos($s['admin'],"remove_menu_page('edit-comments.php')")===false &&
+    strpos($s['admin'],'pvdak-readiness-technical')!==false &&
+    strpos($s['admin'],'بازگشت به مدیریت روزمره')!==false &&
+    strpos($s['admin'],'$technical_facts = array(')!==false,
 );
 $count = 0;
 foreach ($checks as $label=>$passes) {

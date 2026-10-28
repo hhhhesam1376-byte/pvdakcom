@@ -473,6 +473,9 @@ function pvdak_readiness_render() {
     $optional_pages = array( 'account-register'=>'ثبت‌نام (برگه قدیمی)' );
     echo '<div class="wrap"><h1>آمادگی راه‌اندازی PVDak</h1>';
     echo '<p>این گزارش فقط خواندنی است و هیچ تنظیم یا اطلاعات کاربری را تغییر نمی‌دهد.</p>';
+    if ( current_user_can( 'edit_pages' ) ) {
+        echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=pvdak-management' ) ) . '">بازگشت به مدیریت روزمره</a></p>';
+    }
     $privacy_page = get_page_by_path( 'privacy-policy', OBJECT, 'page' );
     $privacy_expected_id = $privacy_page instanceof WP_Post ? (int) $privacy_page->ID : 0;
     $privacy_published = $privacy_page instanceof WP_Post &&
@@ -487,10 +490,14 @@ function pvdak_readiness_render() {
         'matched' => 'برگه PVDak انتخاب شده؛ تأیید حقوقی متن جداگانه لازم است',
     );
     $front_state = pvdak_readiness_front_page_snapshot();
+    // Keep installed-version diagnostics available, but out of the employer's
+    // default operational overview. No security controls or settings are hidden.
+    $technical_facts = array(
+        'نسخه قالب' => wp_get_theme()->get( 'Version' ),
+        'نسخه Core فعال' => defined( 'PVDAK_CORE_VERSION' ) ? PVDAK_CORE_VERSION : 'نصب یا فعال نشده',
+    );
     $facts=array(
-        'نسخه قالب'=>wp_get_theme()->get('Version'),
         'تنظیم صفحه اصلی'=>pvdak_readiness_front_page_status_label( $front_state ),
-        'نسخه Core فعال'=>defined('PVDAK_CORE_VERSION')?PVDAK_CORE_VERSION:'نصب یا فعال نشده',
         'برگه حریم خصوصی وردپرس'=>$privacy_labels[ $privacy_state ],
         'حالت تعمیرات'=>(function_exists('pvdak_maintenance_enabled')&&pvdak_maintenance_enabled())?'فعال':'غیرفعال',
         'ثبت‌نام عمومی'=>(function_exists('pvdak_registration_open')&&pvdak_registration_open())?'فعال — نیازمند بررسی':'بسته',
@@ -503,6 +510,12 @@ function pvdak_readiness_render() {
         echo '<tr><th scope="row">'.esc_html($name).'</th><td>'.esc_html((string)$value).'</td></tr>';
     }
     echo '</tbody></table>';
+    echo '<details class="pvdak-readiness-technical" style="margin-top:16px"><summary>جزئیات فنی نسخه‌های نصب‌شده</summary>';
+    echo '<table class="widefat striped"><tbody>';
+    foreach ( $technical_facts as $name => $value ) {
+        echo '<tr><th scope="row">' . esc_html( $name ) . '</th><td>' . esc_html( (string) $value ) . '</td></tr>';
+    }
+    echo '</tbody></table></details>';
     echo '<p><a href="' . esc_url( admin_url( 'options-reading.php' ) ) .
         '">بررسی تنظیمات خواندن و برگه صفحه اصلی</a> — این گزارش وضعیت برگه انتخاب‌شده را بررسی می‌کند، نه نمایش نهایی قالب front-page.php.</p>';
     echo '<p><a href="' . esc_url( admin_url( 'options-privacy.php' ) ) .
