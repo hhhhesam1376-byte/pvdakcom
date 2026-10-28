@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PVDAK_CORE_VERSION', '0.8.57' );
+define( 'PVDAK_CORE_VERSION', '0.8.58' );
 
 /**
  * D24: Use one strict switch parser for the consent UI, admin checkbox,

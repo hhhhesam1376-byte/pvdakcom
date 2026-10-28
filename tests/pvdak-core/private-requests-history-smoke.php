@@ -26,6 +26,15 @@ $checks = array(
  'search sanitized' => strpos($src, 'sanitize_text_field( $search_input )') !== false,
  'unicode search bound' => strpos($src, "preg_match_all( '/./us'") !== false,
  'sort allowlist' => strpos($src, "'asc' === \$raw_order ? 'ASC' : 'DESC'") !== false,
+ 'malformed type/status/order never broaden private query' =>
+    strpos($src, "pvdak_core_request_history_choice_valid( $_GET['request_type']") !== false &&
+    strpos($src, "pvdak_core_request_history_choice_valid( $_GET['request_status']") !== false &&
+    strpos($src, "pvdak_core_request_history_choice_valid( $_GET['request_order']") !== false,
+ 'malformed search and pagination fail before private query' =>
+    strpos($src, "strlen( $search_input ) > 500") !== false &&
+    strpos($src, "(int) $raw_page > 1000") !== false &&
+    strpos($src, "if ( $invalid_filters )") !== false &&
+    strpos($src, "فیلتر یا شماره صفحه معتبر نیست") !== false,
  'status filter' => strpos($src, "'_pvdak_request_state'") !== false,
  'type filter' => strpos($src, "'_pvdak_request_type'") !== false,
  'plain permalink route' => strpos($src, 'name="page_id"') !== false,

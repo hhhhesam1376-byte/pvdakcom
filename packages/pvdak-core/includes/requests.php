@@ -235,6 +235,12 @@ function pvdak_core_handle_request() {
 }
 add_action( 'admin_post_pvdak_core_submit_request', 'pvdak_core_handle_request' );
 
+/** Validate exact allowlisted GET choices before querying private history. */
+function pvdak_core_request_history_choice_valid( $input, $normalized, $allowed ) {
+    return is_string( $input ) && wp_unslash( $input ) === $normalized &&
+        ( '' === $normalized || in_array( $normalized, $allowed, true ) );
+}
+
 /**
  * Private, owner-scoped request history. Never render case descriptions,
  * attachments, internal notes or unpublished legal landing titles.
@@ -264,6 +270,31 @@ function pvdak_core_my_requests() {
         trim( sanitize_text_field( $search_input ) ) : '';
     $search_length = preg_match_all( '/./us', $raw_search );
     $search = false !== $search_length && $search_length <= 80 ? $raw_search : '';
+    // A malformed filter must never silently broaden a private search to all
+    // of the owner's records. Keep the reset route available without querying.
+    $invalid_filters =
+        ( array_key_exists( 'request_type', $_GET ) &&
+          ! pvdak_core_request_history_choice_valid( $_GET['request_type'], $raw_type, array_keys( $types ) ) ) ||
+        ( array_key_exists( 'request_status', $_GET ) &&
+          ! pvdak_core_request_history_choice_valid( $_GET['request_status'], $raw_status, array_keys( $statuses ) ) ) ||
+        ( array_key_exists( 'request_order', $_GET ) &&
+          ! pvdak_core_request_history_choice_valid( $_GET['request_order'], $raw_order, array( 'asc', 'desc' ) ) ) ||
+        ( array_key_exists( 'request_search', $_GET ) &&
+          ( ! is_string( $_GET['request_search'] ) || strlen( $search_input ) > 500 ||
+            false === $search_length || $search_length > 80 ||
+            ( '' !== trim( $search_input ) && '' === $search ) ) ) ||
+        ( array_key_exists( 'pvdak_page', $_GET ) &&
+          ( ! is_scalar( $_GET['pvdak_page'] ) ||
+            ! ctype_digit( (string) $raw_page ) ||
+            strlen( (string) $raw_page ) > 4 ||
+            (int) $raw_page < 1 || (int) $raw_page > 1000 ) );
+    if ( $invalid_filters ) {
+        return '<section id="pvdak-requests" class="pvdak-core-panel" aria-label="درخواست‌های من">' .
+            '<h2>درخواست‌های من</h2><p class="pvdak-core-notice" role="status">' .
+            'فیلتر یا شماره صفحه معتبر نیست. برای مشاهده سوابق، فیلترها را پاک کنید.</p>' .
+            '<p><a href="' . esc_url( get_permalink() . '#pvdak-requests' ) .
+            '">پاک‌کردن فیلترها</a></p></section>';
+    }
 
     $args = array(
         'post_type' => 'pvdak_request',
