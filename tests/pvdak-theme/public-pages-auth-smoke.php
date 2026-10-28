@@ -267,6 +267,12 @@ pvdak_public_smoke_require(
  strpos( $code['pages'], "pvdak_forum_contains_contact_number(\$subject . ' ' . \$message)" ) !== false &&
  strpos( $code['pages'], 'pvdak_forum_contains_contact_number($entry->comment_content)' ) !== false,
  'D28 contact numbers are rejected at submission and after moderator edits' );
+pvdak_public_smoke_require(
+ strpos( $code['pages'], "new WP_REST_Response(array('code' => 'pvdak_forum_unavailable'" ) !== false &&
+ strpos( $code['pages'], "current_user_can('moderate_comments')" ) !== false &&
+ strpos( $code['pages'], "pvdak_forum_page.post_content LIKE %s" ) !== false &&
+ strpos( $code['pages'], "!is_string(\$submitter)" ) !== false,
+ 'D28 REST collection returns safe response, moderator access stays available and feeds exclude forum pages' );
 
 // D07: email verification must be readable, branded and linked only to the
 // short-lived existing hashed token. These are source checks, not mailbox tests.
