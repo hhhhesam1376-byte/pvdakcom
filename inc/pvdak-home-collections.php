@@ -78,7 +78,12 @@ function pvdak_home_post_summary( $post, $words = 22 ) {
  * Reuse this one predicate in the public accordion and the admin checklist.
  */
 function pvdak_home_faq_answer_ready( $page ) {
-    if ( ! $page instanceof WP_Post ) { return false; }
+    // Never treat password-protected, unpublished or malformed content as
+    // a public answer. The staff readiness count uses this same predicate.
+    if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+         'publish' !== $page->post_status || ! isset( $page->post_password ) ||
+         '' !== $page->post_password ||
+         ! pvdak_home_configured_page_id( $page->ID ) ) { return false; }
     $title = trim( wp_strip_all_tags( (string) get_the_title( $page->ID ) ) );
     $body = trim( wp_strip_all_tags( strip_shortcodes( $page->post_content ) ) );
     // A visually blank answer may consist only of NBSP/zero-width markers.
@@ -97,8 +102,17 @@ function pvdak_home_faq_answer_ready( $page ) {
  * empty placeholders does not allocate every Page on each homepage request.
  * The management/readiness path still inspects the full source separately.
  */
+function pvdak_home_faq_public_candidate( $page, $parent_id ) {
+    return $page instanceof WP_Post && 'page' === $page->post_type &&
+        'publish' === $page->post_status &&
+        isset( $page->post_password ) && '' === $page->post_password &&
+        pvdak_home_configured_page_id( $page->ID ) > 0 &&
+        pvdak_home_configured_page_id( $page->post_parent ) === $parent_id;
+}
+
 function pvdak_home_faq_public_preview( $parent_id ) {
     $answered = array();
+    $seen = array();
     $batch_size = 40;
     $scan_limit = 240;
     for ( $offset = 0; $offset < $scan_limit; $offset += $batch_size ) {
@@ -106,20 +120,27 @@ function pvdak_home_faq_public_preview( $parent_id ) {
             'post_type'      => 'page',
             'post_status'    => 'publish',
             'post_parent'    => $parent_id,
+            'has_password'   => false,
             'posts_per_page' => $batch_size,
             'offset'         => $offset,
-            'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
+            'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
             'order'          => 'ASC',
+            'suppress_filters' => false,
             'no_found_rows'  => true,
             'update_post_meta_cache' => false,
             'update_post_term_cache' => false,
         ) );
         if ( ! is_array( $published ) ) { break; }
         foreach ( $published as $page ) {
-            if ( pvdak_home_faq_answer_ready( $page ) ) {
-                $answered[] = $page;
-                if ( count( $answered ) >= 12 ) { break 2; }
-            }
+            // Recheck the returned object: third-party query filters can
+            // bypass the SQL password/status/parent constraints.
+            if ( ! pvdak_home_faq_public_candidate( $page, $parent_id ) ||
+                 ! pvdak_home_faq_answer_ready( $page ) ) { continue; }
+            $id = pvdak_home_configured_page_id( $page->ID );
+            if ( isset( $seen[ $id ] ) ) { continue; }
+            $seen[ $id ] = true;
+            $answered[] = $page;
+            if ( count( $answered ) >= 12 ) { break 2; }
         }
         if ( count( $published ) < $batch_size ) { break; }
     }

@@ -75,4 +75,33 @@ $GLOBALS['d31_items'] = $original_items;
 $GLOBALS['d31_queries'] = array();
 d31_check( 49 === count( pvdak_legal_topic_pages( 10, 49 ) ), 'bounded topic preview' ); $checks++;
 d31_check( 49 === count( pvdak_legal_topic_pages( 10 ) ), 'default topic lookup remains bounded' ); $checks++;
+// D31 privacy regression: a published password Page must not leak its
+// raw post_content into the public FAQ accordion, even with a modified query.
+$public_ok = new WP_Post( 601 );
+$protected = new WP_Post( 602 ); $protected->post_password = 'secret';
+$draft = new WP_Post( 603 ); $draft->post_status = 'draft';
+$foreign = new WP_Post( 604 ); $foreign->post_parent = 11;
+$wrong_type = new WP_Post( 605 ); $wrong_type->post_type = 'post';
+$bad_id = new WP_Post( 606 ); $bad_id->ID = '0606';
+$public_next = new WP_Post( 607 );
+$GLOBALS['d31_items'] = array( $public_ok, $protected, $draft, $foreign,
+    $wrong_type, $bad_id, $public_ok, $public_next );
+$GLOBALS['d31_queries'] = array();
+$guarded = pvdak_home_faq_pages();
+d31_check( array( 601, 607 ) === array_map( static function ( $p ) { return $p->ID; }, $guarded ),
+    'public FAQ rejects password, draft, foreign, non-Page, malformed ID and duplicates' ); $checks++;
+d31_check( isset( $GLOBALS['d31_queries'][0]['has_password'] ) &&
+    false === $GLOBALS['d31_queries'][0]['has_password'] &&
+    false === $GLOBALS['d31_queries'][0]['suppress_filters'],
+    'FAQ query enforces public password filter without bypassing WP filters' ); $checks++;
+d31_check( ! pvdak_home_faq_answer_ready( $protected ) &&
+    ! pvdak_home_faq_answer_ready( $draft ) &&
+    ! pvdak_home_faq_answer_ready( $wrong_type ) &&
+    ! pvdak_home_faq_answer_ready( $bad_id ),
+    'shared FAQ readiness rejects private or invalid answers' ); $checks++;
+$GLOBALS['d31_items'] = array( $public_ok, $protected );
+$GLOBALS['d31_queries'] = array();
+$private_audit = pvdak_home_faq_audit_counts();
+d31_check( 2 === $private_audit['total'] && 1 === $private_audit['written'] &&
+    $private_audit['complete'], 'protected FAQ is counted for staff but not marked public-ready' ); $checks++;
 echo 'PVDAK_D31_PREVIEW_OK: ' . $checks . '/' . $checks . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";
