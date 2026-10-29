@@ -185,6 +185,11 @@ function pvdak_home_faq_parent_id() {
  */
 function pvdak_home_faq_audit_scan( $parent_id, $collect = false ) {
     $report = array( 'total' => 0, 'written' => 0, 'complete' => false, 'pages' => array() );
+    // This audit may include protected Pages and is never a public API.
+    // A denied audit stays incomplete rather than reporting false readiness.
+    if ( ! function_exists( 'current_user_can' ) || ! current_user_can( 'edit_pages' ) ) {
+        return $report;
+    }
     if ( ! $parent_id ) { $report['complete'] = true; return $report; }
     $tuple = null;
     // Bounded staff-only keyset scan: include password Pages in total, not written.
