@@ -13,6 +13,10 @@ class WP_Post {
 class WP_Term {}
 $GLOBALS['d31_items'] = array();
 $GLOBALS['d31_queries'] = array();
+$GLOBALS['d31_staff_cap'] = true;
+function current_user_can( $cap ) {
+    return 'edit_pages' === $cap && $GLOBALS['d31_staff_cap'];
+}
 class D31_Query {
     private $args;
     public function __construct( $args ) { $this->args = $args; }
@@ -160,4 +164,20 @@ d31_check( ! array_filter( $GLOBALS['d31_queries'], static function ( $q ) {
     return isset( $q['pvdak_legal_seek_scope'] ) &&
         ( empty( $q['no_found_rows'] ) || ! empty( $q['suppress_filters'] ) );
 } ), 'seek query is bounded and scoped' ); $checks++;
+// Staff-only audit must never enumerate protected Pages for an anonymous visitor.
+$GLOBALS['d31_staff_cap'] = false;
+$GLOBALS['d31_queries'] = array();
+$denied = pvdak_home_faq_audit_counts();
+d31_check( ! $denied['complete'] && 0 === $denied['total'] &&
+    0 === $denied['written'] && array() === $denied['pages'],
+    'unauthorized FAQ audit stays incomplete without private content' ); $checks++;
+d31_check( array() === pvdak_home_faq_pages( true ),
+    'unauthorized compatibility collector returns no private Pages' ); $checks++;
+d31_check( array() === pvdak_legal_seek_rows( 10, 81, null, 'after', true ),
+    'direct staff-only seek rejects missing edit_pages capability' ); $checks++;
+d31_check( array() === $GLOBALS['d31_queries'],
+    'denied staff audit/seek performs no SQL query' ); $checks++;
+d31_check( 1 === count( pvdak_home_faq_pages() ),
+    'public FAQ preview still works for visitors without staff capability' ); $checks++;
+$GLOBALS['d31_staff_cap'] = true;
 echo 'PVDAK_D31_PREVIEW_OK: ' . $checks . '/' . $checks . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";
