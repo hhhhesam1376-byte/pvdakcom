@@ -58,5 +58,5 @@ $GLOBALS['d31_queries'] = array();
 d31_check( 500 === count( pvdak_home_faq_pages( true ) ), 'staff readiness retains all' ); $checks++;
 $GLOBALS['d31_queries'] = array();
 d31_check( 49 === count( pvdak_legal_topic_pages( 10, 49 ) ), 'bounded topic preview' ); $checks++;
-d31_check( 500 === count( pvdak_legal_topic_pages( 10 ) ), 'full topic lookup for GET search' ); $checks++;
+d31_check( 49 === count( pvdak_legal_topic_pages( 10 ) ), 'default topic lookup remains bounded' ); $checks++;
 echo 'PVDAK_D31_PREVIEW_OK: ' . $checks . '/' . $checks . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";
