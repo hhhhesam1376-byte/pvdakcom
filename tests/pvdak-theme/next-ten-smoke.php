@@ -762,3 +762,31 @@ foreach ($d14_results as $name => $ok) {
 }
 echo 'PVDAK_D14_ORIGINAL_FUNCTIONS_OK: ' . count($d14_results) .
     " isolated cases, " . count($d14_guards) . " source checks; WP/MariaDB E2E NOT_TESTED.\n";
+
+
+/**
+ * D30: read-only source guards for recovery safety. These assertions do NOT
+ * restore a database, inspect live backups, or prove a successful rollback.
+ */
+$d30_installer = file_get_contents( $root . '/scripts/install-pvdak-core.sh' );
+$d30_status = file_get_contents( $root . '/scripts/pvdak-status.sh' );
+$d30_checks = array(
+    'upgrade version is dynamic' => strpos( $d30_installer, 'PVDAK_EXPECTED_CORE_VERSION="$NEW" wp eval' ) !== false &&
+        strpos( $d30_installer, 'PVDAK_CORE_VERSION !== "0.8.14"' ) === false &&
+        strpos( $d30_installer, '"$NEW" == "0.8.14"' ) === false,
+    'strict version header' => strpos( $d30_installer, 'malformed Core version headers' ) !== false,
+    'installed symlink denied' => strpos( $d30_installer, 'find "$DEST" -type l -print -quit' ) !== false,
+    'database backup required before swap' => strpos( $d30_installer, 'DB backup missing, empty or symlinked; Core unchanged' ) !== false,
+    'private backup candidates only' => strpos( $d30_status, 'd30_backup_candidate()' ) !== false &&
+        strpos( $d30_status, 'D30 SQL backup candidate' ) !== false,
+    'no restore claim' => strpos( $d30_status, 'D30 restore drill' ) !== false &&
+        strpos( $d30_status, 'NOT_TESTED (requires isolated database and restore evidence)' ) !== false,
+);
+foreach ( $d30_checks as $name => $ok ) {
+    if ( ! $ok ) {
+        fwrite( STDERR, "PVD_D30_SOURCE_FAIL: {$name}\n" );
+        exit( 1 );
+    }
+}
+echo 'PVDAK_D30_SOURCE_OK: ' . count( $d30_checks ) .
+    " source-only checks; actual restore NOT_TESTED.\n";
