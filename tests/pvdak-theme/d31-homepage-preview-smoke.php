@@ -56,7 +56,22 @@ d31_check( array() === pvdak_home_faq_pages(), 'do not display placeholders' ); 
 d31_check( 6 === count( $GLOBALS['d31_queries'] ), 'bounded to 240 scans' ); $checks++;
 d31_check( 40 === max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ), 'bounded batches' ); $checks++;
 $GLOBALS['d31_queries'] = array();
-d31_check( 500 === count( pvdak_home_faq_pages( true ) ), 'staff readiness retains all' ); $checks++;
+d31_check( 500 === count( pvdak_home_faq_pages( true ) ), 'compatibility audit returns all 500' ); $checks++;
+d31_check( 81 === max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ), 'staff queries bounded to 81' ); $checks++;
+$GLOBALS['d31_queries'] = array();
+$summary = pvdak_home_faq_audit_counts();
+d31_check( 500 === $summary['total'] && 0 === $summary['written'] && $summary['complete'],
+    'staff counts full 500 without collecting Pages' ); $checks++;
+d31_check( 7 === count( $GLOBALS['d31_queries'] ) && 0 === count( $summary['pages'] ),
+    'seven bounded queries and no staff Page collection' ); $checks++;
+$original_items = $GLOBALS['d31_items'];
+$GLOBALS['d31_items'] = array_map( static function ( $i ) { return new WP_Post( $i, '' ); }, range( 1, 10080 ) );
+$GLOBALS['d31_queries'] = array();
+$large = pvdak_home_faq_audit_counts();
+d31_check( 10000 === $large['total'] && ! $large['complete'] && 0 === count( $large['pages'] ),
+    'audit budget reports incomplete instead of false PASS' ); $checks++;
+d31_check( 125 === count( $GLOBALS['d31_queries'] ), 'audit query budget enforced' ); $checks++;
+$GLOBALS['d31_items'] = $original_items;
 $GLOBALS['d31_queries'] = array();
 d31_check( 49 === count( pvdak_legal_topic_pages( 10, 49 ) ), 'bounded topic preview' ); $checks++;
 d31_check( 49 === count( pvdak_legal_topic_pages( 10 ) ), 'default topic lookup remains bounded' ); $checks++;
