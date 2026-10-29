@@ -2,12 +2,19 @@
 /**
  * Template Name: فهرست لندینگ‌های حقوقی
  * Template Post Type: page
- * Description: Landing hub displaying all published child pages.
+ * Description: Paginated hub of published, public child landing pages.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 get_header();
 while ( have_posts() ) : the_post();
-    $children = pvdak_legal_topic_pages( get_the_ID() );
+    $topic_page = pvdak_legal_index_page_number();
+    $topic_window = pvdak_legal_index_window( get_the_ID(), $topic_page );
+    $children = $topic_window['pages'];
+    $topic_base_url = get_permalink( get_the_ID() );
+    $topic_prev_url = $topic_page > 1 ? ( 2 === $topic_page ? $topic_base_url :
+        add_query_arg( 'pvdak_topics_page', $topic_page - 1, $topic_base_url ) ) : '';
+    $topic_next_url = $topic_window['has_next'] ?
+        add_query_arg( 'pvdak_topics_page', $topic_page + 1, $topic_base_url ) : '';
 ?>
 <main id="main-content" class="pvdak-legal-landing pvdak-legal-index container" tabindex="-1">
     <nav class="pvdak-legal-breadcrumbs" aria-label="مسیر صفحه">
@@ -27,6 +34,7 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
     <?php if ( $children ): ?>
     <section class="pvdak-legal-index-items" aria-label="لندینگ‌های حقوقی">
+        <p role="status"><?php echo esc_html( 'صفحه ' . number_format_i18n( $topic_page ) . '، ' . number_format_i18n( count( $children ) ) . ' موضوع حقوقی' ); ?></p>
         <div class="pvdak-home-topics">
             <?php foreach ( $children as $child ): ?>
                 <a class="pvdak-home-topic" href="<?php echo esc_url( get_permalink( $child->ID ) ); ?>">
@@ -36,8 +44,23 @@ while ( have_posts() ) : the_post();
             <?php endforeach; ?>
         </div>
     </section>
+    <?php elseif ( $topic_page > 1 ) : ?>
+        <p role="status">در این صفحه موضوع منتشرشده‌ای پیدا نشد. می‌توانید به صفحه قبل برگردید.</p>
     <?php elseif ( current_user_can( 'edit_pages' ) ) : ?>
         <p class="pvdak-legal-admin-note">هنوز برگه فرزند منتشرشده‌ای برای این صفحه نداریم. از بخش برگه‌ها، لندینگ‌های مربوط را بسازید.</p>
+    <?php else : ?>
+        <p role="status">هنوز موضوع حقوقی منتشرشده‌ای در این بخش وجود ندارد.</p>
+    <?php endif; ?>
+    <?php if ( $topic_prev_url || $topic_next_url ) : ?>
+    <nav class="pvdak-topic-search-pagination" aria-label="صفحه‌بندی موضوعات حقوقی">
+        <?php if ( $topic_prev_url ) : ?>
+            <a href="<?php echo esc_url( $topic_prev_url ); ?>" rel="prev">← صفحه قبل</a>
+        <?php endif; ?>
+        <span aria-current="page"><?php echo esc_html( 'صفحه ' . number_format_i18n( $topic_page ) ); ?></span>
+        <?php if ( $topic_next_url ) : ?>
+            <a href="<?php echo esc_url( $topic_next_url ); ?>" rel="next">صفحه بعد ←</a>
+        <?php endif; ?>
+    </nav>
     <?php endif; ?>
 </main>
 <?php
