@@ -15,6 +15,8 @@
 
     function topicSetup() {
         var form = document.querySelector('.pvdak-home-search');
+        // A server-filtered result page holds only matching Pages, not the full corpus.
+        var serverFiltered = !!(form && form.getAttribute('data-pvdak-server-filtered') === '1');
         var field = document.getElementById('pvdak-topic-input');
         var section = document.getElementById('topics');
         var container = document.querySelector('[data-pvdak-swiper]');
@@ -159,12 +161,17 @@
         }
 
         function filterTopics() {
+            // Never live-filter a partial server result set: submit a new GET instead.
+            if (serverFiltered) { return; }
             var term = field ? normalize(field.value) : '';
             // Stop loop and restore original unmodified Page nodes before hiding.
             if (swiper) { stop(); }
             var found = 0;
             slides.forEach(function (slide) {
-                var okay = !term || normalize(slide.textContent).indexOf(term) !== -1;
+                // Search exactly the published title + full excerpt used by PHP,
+                // not the shortened decorative card caption or CTA text.
+                var searchable = slide.getAttribute('data-pvdak-topic-search');
+                var okay = !term || normalize(searchable === null ? slide.textContent : searchable).indexOf(term) !== -1;
                 slide.hidden = !okay;
                 if (okay) { found++; }
             });
@@ -191,17 +198,11 @@
                     field.focus();
                 });
             }
-            field.addEventListener('input', filterTopics);
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                filterTopics();
-                section.scrollIntoView({
-                    behavior: reduceMotion ? 'auto' : 'smooth',
-                    block: 'start'
-                });
-            });
-            var query = new URLSearchParams(window.location.search).get('pvdak_topic');
-            if (query) { field.value = query; }
+            if (!serverFiltered) {
+                field.addEventListener('input', filterTopics);
+            }
+            // Native GET submission searches ALL published Pages, works without
+            // JS, and yields a shareable URL; PHP sets the sanitized input value.
         }
 
         document.addEventListener('visibilitychange', updateAutoplay);
@@ -226,7 +227,13 @@
                 syncSwiper();
             });
         }
-        filterTopics();
+        if (serverFiltered) {
+            // The server already filtered this collection. No stale client
+            // result count or second filter should hide matching Pages.
+            if (!hasQuery()) { syncSwiper(); }
+        } else {
+            filterTopics();
+        }
         // WordPress declares Swiper as a script dependency, but a deferred
         // optimizer may still make the vendor arrive after DOMContentLoaded.
         // Retry once when all page resources have loaded; no polling loop.
