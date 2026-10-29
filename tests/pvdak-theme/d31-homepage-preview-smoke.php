@@ -4,6 +4,7 @@ if ( 'cli' !== PHP_SAPI ) { exit( 1 ); }
 define( 'ABSPATH', __DIR__ );
 class WP_Post {
     public $ID; public $post_title; public $post_excerpt; public $post_content; public $post_status;
+    public $post_type = 'page', $post_parent = 10, $post_password = '';
     public function __construct( $id, $content = 'A complete published answer for visitors.' ) {
         $this->ID = $id; $this->post_title = 'Question ' . $id;
         $this->post_excerpt = ''; $this->post_content = $content; $this->post_status = 'publish';

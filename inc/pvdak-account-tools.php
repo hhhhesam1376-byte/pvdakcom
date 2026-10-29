@@ -96,7 +96,11 @@ add_action( 'template_redirect', 'pvdak_account_cache_protection', 2 );
  * response uncacheable. Anonymous public REST responses are not altered.
  */
 function pvdak_account_private_rest_cache( $served, $result, $request, $server ) {
-    if ( is_user_logged_in() && ! headers_sent() ) {
+    if ( ! is_user_logged_in() ) { return $served; }
+    // The flag remains effective for cooperating caches even if a different
+    // plugin has already sent headers. Do not alter REST permissions or body.
+    if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
+    if ( ! headers_sent() ) {
         nocache_headers();
         header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
     }

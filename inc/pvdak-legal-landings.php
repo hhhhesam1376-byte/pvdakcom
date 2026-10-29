@@ -50,7 +50,7 @@ function pvdak_legal_topic_pages( $parent_id = 0, $limit = 49 ) {
          'publish' !== get_post_status( $parent_id ) ) {
         return array();
     }
-    return get_posts( array(
+    $rows = get_posts( array(
         'post_type'      => 'page',
         'post_status'    => 'publish',
         'post_parent'    => $parent_id,
@@ -59,11 +59,25 @@ function pvdak_legal_topic_pages( $parent_id = 0, $limit = 49 ) {
         'has_password'   => false,
         'update_post_meta_cache' => false,
         'update_post_term_cache' => false,
-        'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
+        'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
         'order'          => 'ASC',
         'suppress_filters' => false,
         'no_found_rows'  => true,
     ) );
+    // WP_Query filters may alter the result set. Never expose an unexpected
+    // draft, password-protected Page, foreign parent or non-Page in public cards.
+    if ( ! is_array( $rows ) ) { return array(); }
+    $safe = array();
+    foreach ( $rows as $page ) {
+        if ( ! $page instanceof WP_Post ||
+             'page' !== $page->post_type || 'publish' !== $page->post_status ||
+             pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
+             '' !== $page->post_password ||
+             ! pvdak_home_configured_page_id( $page->ID ) ) { continue; }
+        $safe[] = $page;
+        if ( count( $safe ) >= ( is_int( $limit ) && $limit > 0 ? min( 96, $limit ) : 49 ) ) { break; }
+    }
+    return $safe;
 }
 
 /**
@@ -91,8 +105,10 @@ function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
     // Filter even for an empty search: an accidental draft/object in a
     // caller-supplied collection must not become a public navigation card.
     $pages = array_values( array_filter( $pages, static function ( $page ) {
-        return $page instanceof WP_Post && 'publish' === $page->post_status &&
-            ( ! isset( $page->post_password ) || '' === $page->post_password );
+        return $page instanceof WP_Post && 'page' === $page->post_type &&
+            'publish' === $page->post_status &&
+            isset( $page->post_password ) && '' === $page->post_password &&
+            pvdak_home_configured_page_id( $page->ID ) > 0;
     } ) );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     if ( '' === $needle ) { return $pages; }
@@ -176,7 +192,7 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 )
  * Keep the clean homepage indexable and preserve other robots directives.
  */
 function pvdak_legal_search_robots( $robots ) {
-    if ( is_front_page() && isset( $_GET['pvdak_topic'] ) ) {
+    if ( is_front_page() && ( isset( $_GET['pvdak_topic'] ) || isset( $_GET['pvdak_topic_offset'] ) ) ) {
         $robots['noindex'] = true;
     }
     return $robots;

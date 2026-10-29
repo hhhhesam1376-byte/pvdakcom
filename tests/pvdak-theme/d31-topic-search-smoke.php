@@ -15,6 +15,7 @@ function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
 function get_posts( $args ) {
     $GLOBALS['d31_queries'][] = $args;
     if ( $args['posts_per_page'] > 41 || $args['offset'] < 0 ) { throw new RuntimeException( 'Unbounded query' ); }
+    if ( array_key_exists( 'd31_injected', $GLOBALS ) ) { return $GLOBALS['d31_injected']; }
     $rows = array_values( array_filter( $GLOBALS['d31_rows'], static function ( $page ) use ( $args ) {
         return $page->post_type === $args['post_type'] &&
             $page->post_status === $args['post_status'] &&
@@ -69,4 +70,25 @@ d31_check( 0 === pvdak_legal_topic_search_batch( 8, 'test' )['scanned'], 'invali
 $GLOBALS['d31_rows'] = array( d31_page( 1, 'خصوصی', 'publish', 'secret' ), d31_page( 2, 'خصوصی', 'draft' ), d31_page( 3, 'خصوصی' ) );
 $public = pvdak_legal_topic_search_batch( 7, 'خصوصی' );
 d31_check( 1 === count( $public['pages'] ) && 3 === $public['pages'][0]->ID, 'password/draft excluded' );
+// Deliberately simulate a WordPress query filter returning unsafe records.
+$foreign = d31_page( 91, 'بیگانه' ); $foreign->post_parent = 99;
+$wrong_type = d31_page( 92, 'نوشته' ); $wrong_type->post_type = 'post';
+$invalid_id = d31_page( 93, 'شناسه' ); $invalid_id->ID = -3;
+$GLOBALS['d31_injected'] = array(
+    d31_page( 1, 'منتشر', 'publish' ),
+    d31_page( 2, 'پیش‌نویس', 'draft' ),
+    d31_page( 3, 'رمزدار', 'publish', 'secret' ),
+    $foreign, $wrong_type, $invalid_id,
+);
+$preview = pvdak_legal_topic_pages( 7 );
+d31_check( 1 === count( $preview ) && 1 === $preview[0]->ID, 'filtered homepage preview excludes unsafe injected Pages' );
+d31_check( 2 === count( pvdak_legal_filter_topic_pages( $GLOBALS['d31_injected'], '' ) ), 'generic filter rejects draft/password/non-Page/invalid IDs but has no parent context' );
+$GLOBALS['d31_injected'] = false;
+d31_check( array() === pvdak_legal_topic_pages( 7 ), 'malformed query result fails closed' );
+unset( $GLOBALS['d31_injected'] );
+unset( $_GET['pvdak_topic'] );
+$_GET['pvdak_topic_offset'] = '240';
+d31_check( isset( pvdak_legal_search_robots( array() )['noindex'] ), 'cursor-only homepage URL noindex' );
+unset( $_GET['pvdak_topic_offset'] );
+d31_check( array() === pvdak_legal_search_robots( array() ), 'clean homepage remains indexable' );
 echo 'PVDAK_D31_SEARCH_OK: ' . $GLOBALS['d31_checks'] . '/' . $GLOBALS['d31_checks'] . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";
