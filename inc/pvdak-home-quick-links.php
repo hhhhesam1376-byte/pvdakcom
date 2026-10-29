@@ -13,6 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * The readiness panel uses this exact resolver, so it cannot falsely pass.
  */
 function pvdak_home_quick_link( $id ) {
+    // Never advertise draft, private or password-gated Pages in public shortcuts.
+    $id = pvdak_home_configured_page_id( $id );
+    $page = $id ? get_post( $id ) : null;
+    if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+         'publish' !== $page->post_status || ! isset( $page->post_password ) ||
+         '' !== $page->post_password ) { return null; }
     $title = get_the_title( $id );
     $url = get_permalink( $id );
     if ( ! is_string( $title ) || '' === trim( wp_strip_all_tags( $title ) ) ||
