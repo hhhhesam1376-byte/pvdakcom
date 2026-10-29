@@ -46,6 +46,44 @@ value "Theme source version" "$(safe_version "$THEME/style.css" 's/^[[:space:]]*
 value "Core bundled version" "$(safe_version "$CORE_SOURCE/pvdak-core.php" 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([0-9.]+).*/\1/p')"
 value "Core installed version" "$(safe_version "$CORE_INSTALLED/pvdak-core.php" 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([0-9.]+).*/\1/p')"
 
+# D30: report only whether structurally plausible private backup candidates
+# exist. Never print their paths, names, SQL contents, or personal information.
+# Presence is NOT proof of integrity or of a successful restoration.
+d30_backup_candidate() {
+  local kind="$1" base="$HOME/.pvdak-deploy/backups" candidate
+  [[ -d "$base" && ! -L "$base" ]] || { echo "NOT_VERIFIED"; return; }
+  case "$kind" in
+    theme)
+      for candidate in "$base"/????????T??????Z-????????????; do
+        if [[ -d "$candidate" && ! -L "$candidate" &&
+              -s "$candidate/style.css" && -s "$candidate/functions.php" &&
+              -s "$candidate/index.php" && -s "$candidate/header.php" &&
+              -s "$candidate/footer.php" &&
+              ! -L "$candidate/style.css" && ! -L "$candidate/functions.php" ]]; then
+          echo "CANDIDATE_FOUND (structure only)"; return
+        fi
+      done ;;
+    core)
+      for candidate in "$base"/old-core.*; do
+        if [[ -d "$candidate" && ! -L "$candidate" &&
+              -s "$candidate/pvdak-core.php" && ! -L "$candidate/pvdak-core.php" ]]; then
+          echo "CANDIDATE_FOUND (structure only)"; return
+        fi
+      done ;;
+    database)
+      for candidate in "$base"/pre-core-*.sql; do
+        if [[ -f "$candidate" && ! -L "$candidate" && -r "$candidate" && -s "$candidate" ]]; then
+          echo "CANDIDATE_FOUND (structure only)"; return
+        fi
+      done ;;
+  esac
+  echo "NOT_VERIFIED"
+}
+value "D30 theme backup candidate" "$(d30_backup_candidate theme)"
+value "D30 Core backup candidate" "$(d30_backup_candidate core)"
+value "D30 SQL backup candidate" "$(d30_backup_candidate database)"
+value "D30 restore drill" "NOT_TESTED (requires isolated database and restore evidence)"
+
 WP_AVAILABLE="NO"
 if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
   if wp core is-installed --path="$WP_ROOT" --skip-plugins --skip-themes >/dev/null 2>&1; then
