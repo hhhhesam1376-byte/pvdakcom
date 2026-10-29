@@ -192,6 +192,9 @@ function pvdak_home_faq_audit_scan( $parent_id, $collect = false ) {
     }
     if ( ! $parent_id ) { $report['complete'] = true; return $report; }
     $tuple = null;
+    // A modified query must not count the same FAQ twice, including across batches.
+    // Keep only integer IDs (bounded to 10,000), not duplicate Page objects.
+    $seen = array();
     // Bounded staff-only keyset scan: include password Pages in total, not written.
     // No deep OFFSET; at most 125 queries of 80 rows plus one look-ahead.
     for ( $scanned = 0; $scanned < 10000; $scanned += 80 ) {
@@ -205,6 +208,11 @@ function pvdak_home_faq_audit_scan( $parent_id, $collect = false ) {
                  null === pvdak_legal_seek_tuple( $page ) ) {
                 return $report; // Never report a modified/invalid query as complete.
             }
+            $id = pvdak_home_configured_page_id( $page->ID );
+            if ( isset( $seen[ $id ] ) ) {
+                return $report; // Duplicate rows must never make readiness pass.
+            }
+            $seen[ $id ] = true;
             ++$report['total'];
             if ( pvdak_home_faq_answer_ready( $page ) ) { ++$report['written']; }
             if ( $collect ) { $report['pages'][] = $page; }

@@ -151,6 +151,25 @@ $GLOBALS['d31_queries'] = array();
 $private_audit = pvdak_home_faq_audit_counts();
 d31_check( 2 === $private_audit['total'] && 1 === $private_audit['written'] &&
     $private_audit['complete'], 'protected FAQ is counted for staff but not marked public-ready' ); $checks++;
+// A plugin-modified result can repeat an ID on the next keyset batch.
+// Staff counts must not double-count that Page or claim a complete audit.
+$saved_audit_items = $GLOBALS['d31_items'];
+$duplicate_rows = array_map( static function ( $i ) { return new WP_Post( $i ); }, range( 1, 81 ) );
+$duplicate_rows[80]->ID = 1; // Valid ordering tuple, duplicate identity across batches.
+$GLOBALS['d31_items'] = $duplicate_rows;
+$GLOBALS['d31_queries'] = array();
+$duplicate_audit = pvdak_home_faq_audit_counts();
+d31_check( ! $duplicate_audit['complete'] && 80 === $duplicate_audit['total'] &&
+    80 === $duplicate_audit['written'] && 2 === count( $GLOBALS['d31_queries'] ),
+    'staff audit rejects duplicate Page IDs across seek batches' ); $checks++;
+$duplicate_rows = array( new WP_Post( 701 ), new WP_Post( 701 ) );
+$GLOBALS['d31_items'] = $duplicate_rows;
+$GLOBALS['d31_queries'] = array();
+$duplicate_audit = pvdak_home_faq_audit_counts();
+d31_check( ! $duplicate_audit['complete'] && 1 === $duplicate_audit['total'] &&
+    1 === count( $GLOBALS['d31_queries'] ),
+    'staff audit rejects duplicate Page IDs inside one batch' ); $checks++;
+$GLOBALS['d31_items'] = $saved_audit_items;
 $GLOBALS['d31_parent'] = new WP_Post( 10 );
 $GLOBALS['d31_parent']->post_password = 'secret';
 d31_check( array() === pvdak_home_faq_pages(), 'protected FAQ parent cannot publish children' ); $checks++;
