@@ -6,7 +6,7 @@ define( 'OBJECT', 'OBJECT' );
 class WP_Post {
     public $ID, $post_type = 'page', $post_status = 'publish', $post_password = '';
     public $post_name = '', $post_title = 'Public Page', $post_content = '[pvdak_request_form]';
-    public $page_template = 'page-templates/pvdak-login.php';
+    public $page_template = 'default';
     public function __construct( $id, $slug ) { $this->ID = $id; $this->post_name = $slug; }
 }
 class WP_Term { public $term_id = 1; }
@@ -68,6 +68,8 @@ $wrong_type = new WP_Post( 14, 'wrong-type' ); $wrong_type->post_type = 'post';
 $cta = new WP_Post( 15, 'public-cta' );
 $login = new WP_Post( 16, 'account-login' ); $login->post_password = 'secret';
 $login_public = new WP_Post( 17, 'other-login' );
+$login->page_template = 'page-templates/pvdak-login.php';
+$login_public->page_template = 'page-templates/pvdak-login.php';
 foreach ( array( $public, $protected, $draft, $wrong_type, $cta, $login, $login_public ) as $p ) {
     $GLOBALS['d31_nav_pages'][ $p->ID ] = $p;
 }
