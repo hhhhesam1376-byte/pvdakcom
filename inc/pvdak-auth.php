@@ -2,14 +2,14 @@
 /** WordPress-backed branded PVDak login; WP administrators retain their native access. */
 if(!defined('ABSPATH')){exit;}
 /**
- * The shared login/signup screen contains private result messages and nonces.
- * Never allow a public page cache to replay a previous visitor's ?state=received.
+ * Mark all private account templates non-cacheable at the earliest theme
+ * template_redirect priority. The shared account-tools guard sends the
+ * no-store, robots and no-referrer headers once at priority 2.
  */
 function pvdak_auth_disable_public_form_cache() {
-  if (!((is_page('account-login') && is_page_template('page-templates/pvdak-login.php')) ||
-        (is_page('account-register') && is_page_template('page-templates/pvdak-register.php')))) return;
+  if (!function_exists('pvdak_account_sensitive_screen') ||
+      !pvdak_account_sensitive_screen()) return;
   if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
-  nocache_headers();
 }
 add_action('template_redirect', 'pvdak_auth_disable_public_form_cache', 1);
 
