@@ -26,7 +26,7 @@ $legal_parent_id = pvdak_legal_topics_root_id();
 // Search scans a separate bounded cursor window, never an unbounded GET query.
 $all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id, 49 );
 $legal_preview_limited = ! $legal_server_filtered && count( $all_legal_pages ) > 48;
-$legal_search_cursor = $legal_server_filtered ? pvdak_legal_topic_search_cursor() : 0;
+$legal_search_cursor = $legal_server_filtered ? pvdak_legal_topic_search_cursor() : '';
 $legal_search_batch = $legal_server_filtered ?
     pvdak_legal_topic_search_batch( $legal_parent_id, $legal_search_term, $legal_search_cursor ) :
     array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
@@ -38,7 +38,7 @@ $legal_search_first_url = $legal_server_filtered ?
     add_query_arg( 'pvdak_topic', $legal_search_term, home_url( '/' ) ) . '#topics' : '';
 $legal_search_next_url = $legal_search_has_next ?
     add_query_arg( array( 'pvdak_topic' => $legal_search_term,
-        'pvdak_topic_offset' => $legal_search_batch['next_cursor'] ), home_url( '/' ) ) . '#topics' : '';
+        'pvdak_topic_after' => $legal_search_batch['next_cursor'] ), home_url( '/' ) ) . '#topics' : '';
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
 $faq_archive  = pvdak_public_page_url( 'legal-faq' );
@@ -204,13 +204,13 @@ $svg_icons = array(
     <?php endif; ?>
     <?php if ( $legal_server_filtered && $all_legal_pages ): ?>
       <nav class="pvdak-topic-search-pagination" aria-label="ادامه جست‌وجوی موضوعات حقوقی">
-        <?php if ( $legal_search_cursor > 0 ): ?>
+        <?php if ( '' !== $legal_search_cursor ): ?>
           <a href="<?php echo esc_url( $legal_search_first_url ); ?>">شروع دوباره جست‌وجو</a>
         <?php endif; ?>
         <?php if ( $legal_search_has_next ): ?>
           <a href="<?php echo esc_url( $legal_search_next_url ); ?>" rel="next">بررسی موضوعات بعدی ←</a>
         <?php endif; ?>
-        <?php if ( ! $legal_search_has_next && $legal_search_cursor > 0 ): ?>
+        <?php if ( ! $legal_search_has_next && '' !== $legal_search_cursor ): ?>
           <span role="status">پایان موضوعات منتشرشده برای این جست‌وجو</span>
         <?php endif; ?>
       </nav>
