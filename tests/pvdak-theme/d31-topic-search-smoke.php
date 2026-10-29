@@ -8,6 +8,7 @@ class WP_Post {
 }
 function add_filter() {}
 function add_action() {}
+function is_front_page() { return true; }
 function pvdak_home_configured_page_id( $id ) { return is_int( $id ) && $id > 0 ? $id : 0; }
 function get_post_type( $id ) { return 7 === $id ? 'page' : false; }
 function get_post_status( $id ) { return 7 === $id ? 'publish' : false; }
