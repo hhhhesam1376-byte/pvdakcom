@@ -40,7 +40,7 @@ function pvdak_legal_topics_root_id() {
         pvdak_home_configured_page_id( $fallback->ID ) : 0;
 }
 
-function pvdak_legal_topic_pages( $parent_id = 0, $limit = 0 ) {
+function pvdak_legal_topic_pages( $parent_id = 0, $limit = 49 ) {
     if ( 0 === $parent_id || '0' === $parent_id ) {
         $parent_id = pvdak_legal_topics_root_id();
     } else {
@@ -54,9 +54,9 @@ function pvdak_legal_topic_pages( $parent_id = 0, $limit = 0 ) {
         'post_type'      => 'page',
         'post_status'    => 'publish',
         'post_parent'    => $parent_id,
-        // The public homepage requests only a 49-item preview; other callers
-        // retain complete published-child lookup (notably server-side search).
-        'posts_per_page' => is_int( $limit ) && $limit > 0 ? min( 96, $limit ) : -1,
+        // All public callers are bounded; the GET search uses cursor batches.
+        'posts_per_page' => is_int( $limit ) && $limit > 0 ? min( 96, $limit ) : 49,
+        'has_password'   => false,
         'update_post_meta_cache' => false,
         'update_post_term_cache' => false,
         'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
@@ -91,7 +91,8 @@ function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
     // Filter even for an empty search: an accidental draft/object in a
     // caller-supplied collection must not become a public navigation card.
     $pages = array_values( array_filter( $pages, static function ( $page ) {
-        return $page instanceof WP_Post && 'publish' === $page->post_status;
+        return $page instanceof WP_Post && 'publish' === $page->post_status &&
+            ( ! isset( $page->post_password ) || '' === $page->post_password );
     } ) );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     if ( '' === $needle ) { return $pages; }
@@ -101,6 +102,73 @@ function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
         );
         return false !== strpos( $haystack, $needle );
     } ) );
+}
+
+/** Strict public cursor; invalid input restarts at the first window. */
+function pvdak_legal_topic_search_cursor() {
+    if ( ! isset( $_GET['pvdak_topic_offset'] ) || ! is_string( $_GET['pvdak_topic_offset'] ) ) { return 0; }
+    $raw = $_GET['pvdak_topic_offset'];
+    return preg_match( '/^(?:0|[1-9][0-9]{0,6})$/D', $raw ) ? (int) $raw : 0;
+}
+
+/**
+ * Search published direct children in bounded, deterministic windows.
+ * A cursor counts inspected source Pages, not matches. This deliberately
+ * avoids SQL LIKE/collation differences that can miss Persian variants.
+ * At most 240 Pages are inspected and 48 cards returned per HTTP request;
+ * even a window with zero matches offers continuation when more Pages exist.
+ */
+function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 ) {
+    $result = array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
+    $parent_id = pvdak_home_configured_page_id( $parent_id );
+    $needle = pvdak_legal_normalize_topic_text( $search_term );
+    if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
+         'publish' !== get_post_status( $parent_id ) || '' === $needle ) { return $result; }
+    $cursor = is_int( $cursor ) && $cursor >= 0 && $cursor <= 9999999 ? $cursor : 0;
+    $batch_size = 40;
+    $scan_limit = 240;
+    $result_limit = 48;
+    for ( $offset = 0; $offset < $scan_limit; $offset += $batch_size ) {
+        $published = get_posts( array(
+            'post_type' => 'page',
+            'post_status' => 'publish',
+            'post_parent' => $parent_id,
+            'has_password' => false,
+            'posts_per_page' => $batch_size + 1,
+            'offset' => $cursor + $result['scanned'],
+            'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
+            'no_found_rows' => true,
+            'suppress_filters' => false,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ) );
+        if ( ! is_array( $published ) ) { return $result; }
+        $window = array_slice( $published, 0, $batch_size );
+        foreach ( $window as $page ) {
+            ++$result['scanned'];
+            if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+                 'publish' !== $page->post_status || (int) $page->post_parent !== $parent_id ||
+                 '' !== $page->post_password ) { continue; }
+            $haystack = pvdak_legal_normalize_topic_text(
+                $page->post_title . ' ' . wp_strip_all_tags( $page->post_excerpt )
+            );
+            if ( false !== strpos( $haystack, $needle ) ) {
+                $result['pages'][] = $page;
+                if ( count( $result['pages'] ) === $result_limit ) {
+                    $more = $result['scanned'] < $offset + count( $window ) || count( $published ) > $batch_size;
+                    if ( $more && $cursor + $result['scanned'] <= 9999999 ) {
+                        $result['next_cursor'] = $cursor + $result['scanned'];
+                    }
+                    return $result;
+                }
+            }
+        }
+        if ( count( $published ) <= $batch_size ) { return $result; }
+    }
+    if ( $cursor + $result['scanned'] <= 9999999 ) {
+        $result['next_cursor'] = $cursor + $result['scanned'];
+    }
+    return $result;
 }
 
 /**
