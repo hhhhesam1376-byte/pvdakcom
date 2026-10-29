@@ -258,6 +258,8 @@ function pvdak_home_shortcode_page_url( $candidate, $tag ) {
     $page = $id ? get_post( $id ) : null;
     if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
          'publish' !== $page->post_status ||
+         ! isset( $page->post_password ) || '' !== $page->post_password ||
+         ! is_string( $page->post_content ) ||
          ! has_shortcode( $page->post_content, $tag ) ) { return ''; }
     return get_permalink( $page->ID );
 }
