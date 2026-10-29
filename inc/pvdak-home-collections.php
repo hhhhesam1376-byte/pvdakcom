@@ -114,6 +114,7 @@ function pvdak_home_faq_public_preview( $parent_id ) {
             'update_post_meta_cache' => false,
             'update_post_term_cache' => false,
         ) );
+        if ( ! is_array( $published ) ) { break; }
         foreach ( $published as $page ) {
             if ( pvdak_home_faq_answer_ready( $page ) ) {
                 $answered[] = $page;
@@ -125,37 +126,80 @@ function pvdak_home_faq_public_preview( $parent_id ) {
     return $answered;
 }
 
-/** Native hierarchical Pages are suitable for short informational FAQs. */
-function pvdak_home_faq_pages( $include_empty = false ) {
+/** Resolve the published FAQ parent once for both public and staff paths. */
+function pvdak_home_faq_parent_id() {
     $page_id = pvdak_home_collection_page_id();
     $value = $page_id && function_exists( 'get_field' ) ?
         get_field( 'faq_parent_page', $page_id ) : null;
     $id = pvdak_home_collection_selected_id( $value );
-    // The public FAQ Page already exists in WordPress. If ACF has not been
-    // configured, use its published children rather than hiding valid FAQs.
-    // Never replace an explicitly chosen (even invalid) editorial parent.
+    // An explicitly invalid editorial selection must never fall back.
     if ( ! $id && ! $value ) {
         $default_faq = get_page_by_path( 'legal-faq', OBJECT, 'page' );
         $id = $default_faq instanceof WP_Post && 'publish' === $default_faq->post_status ?
-            (int) $default_faq->ID : 0;
+            pvdak_home_configured_page_id( $default_faq->ID ) : 0;
     }
-    if ( ! $id || 'page' !== get_post_type( $id ) || 'publish' !== get_post_status( $id ) ) {
-        return array();
+    return $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ?
+        $id : 0;
+}
+
+/**
+ * D31: bounded staff FAQ audit. Count answers without allocating all Pages.
+ * The cap is deliberately visible as incomplete, never a false readiness PASS.
+ * A compatibility caller can request the collected Pages, but the readiness
+ * panel uses counts only. Neither path writes to the database.
+ */
+function pvdak_home_faq_audit_scan( $parent_id, $collect = false ) {
+    $report = array( 'total' => 0, 'written' => 0, 'complete' => false, 'pages' => array() );
+    if ( ! $parent_id ) { $report['complete'] = true; return $report; }
+    $batch_size = 80;
+    $max_scanned = 10000;
+    for ( $offset = 0; $offset < $max_scanned; $offset += $batch_size ) {
+        $rows = get_posts( array(
+            'post_type' => 'page',
+            'post_status' => 'publish',
+            'post_parent' => $parent_id,
+            'posts_per_page' => $batch_size + 1,
+            'offset' => $offset,
+            'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
+            'no_found_rows' => true,
+            'suppress_filters' => false,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ) );
+        if ( ! is_array( $rows ) ) { return $report; }
+        foreach ( array_slice( $rows, 0, $batch_size ) as $page ) {
+            if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+                 'publish' !== $page->post_status ||
+                 pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
+                 ! pvdak_home_configured_page_id( $page->ID ) ) {
+                $report['complete'] = false;
+                return $report; // A modified query must never report readiness.
+            }
+            ++$report['total'];
+            if ( pvdak_home_faq_answer_ready( $page ) ) { ++$report['written']; }
+            if ( $collect ) { $report['pages'][] = $page; }
+        }
+        if ( count( $rows ) <= $batch_size ) {
+            $report['complete'] = true;
+            return $report;
+        }
     }
-    // Only the staff audit requires every published source Page. The public
-    // accordion is bounded and still scans past early empty placeholders.
+    // More than 10,000 published FAQs: partial counts, never a readiness PASS.
+    return $report;
+}
+
+function pvdak_home_faq_audit_counts() {
+    return pvdak_home_faq_audit_scan( pvdak_home_faq_parent_id() );
+}
+
+/** Native hierarchical Pages are suitable for short informational FAQs. */
+function pvdak_home_faq_pages( $include_empty = false ) {
+    $id = pvdak_home_faq_parent_id();
+    if ( ! $id ) { return array(); }
     if ( ! $include_empty ) { return pvdak_home_faq_public_preview( $id ); }
-    $published = get_posts( array(
-        'post_type'      => 'page',
-        'post_status'    => 'publish',
-        'post_parent'    => $id,
-        'posts_per_page' => -1,
-        'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
-        'order'          => 'ASC',
-        'no_found_rows'  => true,
-    ) );
-    // Staff readiness needs all published source Pages, including placeholders.
-    return $published;
+    // Compatibility only; readiness must use the count-only API above.
+    $audit = pvdak_home_faq_audit_scan( $id, true );
+    return $audit['pages'];
 }
 
 /**
