@@ -54,6 +54,15 @@ function pvdak_account_sensitive_screen() {
     ) );
 }
 
+/**
+ * D31: User-specific HTML must never enter a shared page cache, even when
+ * a private Core shortcode is placed on an otherwise public Page. Anonymous
+ * ordinary Pages remain cacheable; robots policy stays route-specific.
+ */
+function pvdak_account_private_response_required() {
+    return pvdak_account_sensitive_screen() || is_user_logged_in();
+}
+
 function pvdak_account_noindex( $robots ) {
     if ( pvdak_account_sensitive_screen() ) {
         $robots['noindex'] = true;
@@ -65,18 +74,35 @@ add_filter( 'wp_robots', 'pvdak_account_noindex' );
 
 /** Protect private account HTML and reset-key URLs from public caches/referrers. */
 function pvdak_account_cache_protection() {
-    if ( ! pvdak_account_sensitive_screen() ) { return; }
+    $sensitive = pvdak_account_sensitive_screen();
+    if ( ! $sensitive && ! is_user_logged_in() ) { return; }
     if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
     // Headers may already have been sent by an unrelated plugin. Keep the
     // cache opt-out flag, but never emit PHP header warnings in that case.
     if ( headers_sent() ) { return; }
     nocache_headers();
-    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
-    // Reset links can carry one-time keys; private account URLs should never
-    // be forwarded as a Referer to external assets or destinations.
-    header( 'Referrer-Policy: no-referrer', true );
+    header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
+    if ( $sensitive ) {
+        header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+        // One-time reset keys must not be forwarded to third-party assets.
+        header( 'Referrer-Policy: no-referrer', true );
+    }
 }
 add_action( 'template_redirect', 'pvdak_account_cache_protection', 2 );
+
+/**
+ * D31: REST responses for signed-in users can contain personal portal data.
+ * WordPress/Core permission checks are unchanged; this only marks their
+ * response uncacheable. Anonymous public REST responses are not altered.
+ */
+function pvdak_account_private_rest_cache( $served, $result, $request, $server ) {
+    if ( is_user_logged_in() && ! headers_sent() ) {
+        nocache_headers();
+        header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
+    }
+    return $served;
+}
+add_filter( 'rest_pre_serve_request', 'pvdak_account_private_rest_cache', 10, 4 );
 function pvdak_profile_save() {
     if ( ! is_user_logged_in() ) { wp_die( 'ابتدا وارد حساب شوید.', '', array( 'response' => 403 ) ); }
     if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) { wp_die( 'Method not allowed', '', array( 'response' => 405 ) ); }

@@ -1006,3 +1006,38 @@ if ( ! defined( 'DONOTCACHEPAGE' ) || true !== DONOTCACHEPAGE ) {
 }
 pvdak_account_cache_protection(); // No live HTTP headers are asserted here.
 echo "PVDAK_D31_PRIVATE_TEMPLATES_OK: {$private_checks}/{$private_checks} original-source PHP route/robots cases; cache opt-out checked; HTTP headers/WP NOT_TESTED.\n";
+
+/**
+ * D31: execute the original cache classifier with anonymous/signed-in stubs.
+ * Header transmission and real REST/edge caches require WordPress HTTP tests.
+ */
+if ( ! function_exists( 'is_user_logged_in' ) ) {
+    function is_user_logged_in() {
+        return ! empty( $GLOBALS['pvdak_d31_cache_logged_in'] );
+    }
+}
+$cache_cases = array(
+    array( '', '', false, false ),
+    array( 'ordinary', '', false, false ),
+    array( 'account-login', '', false, true ),
+    array( 'renamed-dashboard', 'page-templates/pvdak-account.php', false, true ),
+    array( 'ordinary', '', true, true ),
+    array( 'renamed-dashboard', 'page-templates/pvdak-account.php', true, true ),
+);
+$cache_checks = 0;
+foreach ( $cache_cases as $case ) {
+    $GLOBALS['pvdak_d31_private_slug'] = $case[0];
+    $GLOBALS['pvdak_d31_private_template'] = $case[1];
+    $GLOBALS['pvdak_d31_cache_logged_in'] = $case[2];
+    $cache_required = pvdak_account_private_response_required();
+    $robots = pvdak_account_noindex( array() );
+    $expected_private = 'account-login' === $case[0] ||
+        'page-templates/pvdak-account.php' === $case[1];
+    if ( $cache_required !== $case[3] ||
+         isset( $robots['noindex'] ) !== $expected_private ) {
+        fwrite( STDERR, "PVD_D31_CACHE_FAIL: private response or public robots mismatch\n" );
+        exit( 1 );
+    }
+    $cache_checks++;
+}
+echo "PVDAK_D31_CACHE_CLASSIFIER_OK: {$cache_checks}/{$cache_checks} original-source PHP cases; HTTP/REST cache headers NOT_TESTED.\n";

@@ -7,8 +7,8 @@ if(!defined('ABSPATH')){exit;}
  * no-store, robots and no-referrer headers once at priority 2.
  */
 function pvdak_auth_disable_public_form_cache() {
-  if (!function_exists('pvdak_account_sensitive_screen') ||
-      !pvdak_account_sensitive_screen()) return;
+  if (!function_exists('pvdak_account_private_response_required') ||
+      !pvdak_account_private_response_required()) return;
   if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
 }
 add_action('template_redirect', 'pvdak_auth_disable_public_form_cache', 1);
