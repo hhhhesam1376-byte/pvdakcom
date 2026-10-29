@@ -18,7 +18,16 @@ function pvdak_home_value( $key, $default = 0 ) {
         $GLOBALS['quick_test_selection'][ $key ] : $default;
 }
 function absint( $v ) { return abs( (int) $v ); }
-function get_nav_menu_locations() { return array( 'pvdak_quick' => 21 ); }
+/** Exact production ID parser from pvdak-home-acf.php; the quick-links file is required below. */
+function pvdak_home_configured_page_id( $value ) {
+    if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
+    $raw = (string) $value;
+    if ( ! preg_match( '/^[1-9][0-9]*$/D', $raw ) ) { return 0; }
+    $id = (int) $raw;
+    return $id > 0 && (string) $id === $raw ? $id : 0;
+}
+$GLOBALS['quick_test_menu_id'] = 21;
+function get_nav_menu_locations() { return array( 'pvdak_quick' => $GLOBALS['quick_test_menu_id'] ); }
 function wp_get_nav_menu_items( $id ) { return $GLOBALS['quick_test_menu']; }
 function get_post_type( $id ) { return isset( $GLOBALS['quick_test_pages'][ $id ] ) ? 'page' : false; }
 function get_post_status( $id ) {
@@ -75,6 +84,36 @@ $GLOBALS['quick_test_selection'] = array();
 array_unshift( $GLOBALS['quick_test_menu'], (object) array( 'object' => 'custom', 'object_id' => 0 ) );
 pvdak_layout_expect( count( pvdak_home_quick_pages() ) === 4,
     'Custom menu links are ignored; four published Pages still used' );
+// D31: malformed ACF selections must not cast to a different published Page,
+// nor resurrect the legacy quick menu when an editor explicitly picked a slot.
+foreach ( array( '07', '7junk', '-7', '7e0', ' 7', true, array( 'ID' => 7 ), new WP_Post( '07' ) ) as $invalid ) {
+    $GLOBALS['quick_test_selection'] = array( 'quick_page_1' => $invalid );
+    pvdak_layout_expect( array_column( pvdak_home_quick_pages(), 'id' ) === array(),
+        'D31: invalid explicit ACF slot is not cast or replaced with legacy menu' );
+}
+$GLOBALS['quick_test_selection'] = array( 'quick_page_1' => '7', 'quick_page_2' => '07',
+    'quick_page_3' => '8junk', 'quick_page_4' => 9 );
+pvdak_layout_expect( array_column( pvdak_home_quick_pages(), 'id' ) === array( 7, 9 ),
+    'D31: valid slots remain ordered while malformed slots are rejected' );
+$GLOBALS['quick_test_selection'] = array();
+$GLOBALS['quick_test_menu_id'] = '21junk';
+pvdak_layout_expect( pvdak_home_quick_pages() === array(),
+    'D31: malformed menu location ID does not select a different menu' );
+$GLOBALS['quick_test_menu_id'] = 21;
+$GLOBALS['quick_test_menu'] = array(
+    (object) array( 'object' => 'page', 'object_id' => '-8' ),
+    (object) array( 'object' => 'page', 'object_id' => '08' ),
+    (object) array( 'object' => 'page', 'object_id' => '8junk' ),
+    (object) array( 'object' => 'page', 'object_id' => '8' ),
+    (object) array( 'object' => 'page', 'object_id' => 9 ),
+);
+pvdak_layout_expect( array_column( pvdak_home_quick_pages(), 'id' ) === array( 8, 9 ),
+    'D31: malformed native menu Page IDs never resolve to unrelated Pages' );
+$GLOBALS['quick_test_selection'] = array( 'quick_page_1' => '0' );
+pvdak_layout_expect( array_column( pvdak_home_quick_pages(), 'id' ) === array( 8, 9 ),
+    'D31: genuinely empty ACF slot preserves migration fallback' );
+$GLOBALS['quick_test_selection'] = array();
+
 $root = dirname( __DIR__, 2 );
 $front = file_get_contents( $root . '/front-page.php' );
 $js = file_get_contents( $root . '/assets/js/pvdak-home.js' );
@@ -528,6 +567,10 @@ pvdak_layout_expect(
 );
 
 $readiness_public_source = file_get_contents( $root . '/inc/pvdak-home-readiness.php' );
+pvdak_layout_expect(
+    false !== strpos( $readiness_public_source, "pvdak_home_configured_page_id( get_option( 'page_on_front' ) )" ),
+    'D31: readiness cannot falsely pass a malformed static front-page ID'
+);
 $public_pages_source = file_get_contents( $root . '/inc/pvdak-public-pages.php' );
 pvdak_layout_expect(
     false !== strpos( $readiness_public_source, 'موضوع نمونه برای تکمیل ساختار سایت' ) &&

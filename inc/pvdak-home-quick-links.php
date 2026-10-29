@@ -20,15 +20,23 @@ function pvdak_home_quick_link( $id ) {
     return array( 'title' => $title, 'url' => $url, 'id' => $id );
 }
 
+/** A malformed editor selection is still explicit; never reveal stale menu links. */
+function pvdak_home_quick_slot_configured( $value ) {
+    if ( $value instanceof WP_Post ) { return true; }
+    if ( is_string( $value ) ) { return '' !== trim( $value ) && '0' !== $value; }
+    if ( is_array( $value ) ) { return ! empty( $value ); }
+    return null !== $value && false !== $value && 0 !== $value;
+}
+
 function pvdak_home_quick_pages() {
     $slots = array();
     $any_explicit = false;
     $seen = array();
     for ( $i = 1; $i <= 4; $i++ ) {
         $value = pvdak_home_value( 'quick_page_' . $i, 0 );
+        if ( pvdak_home_quick_slot_configured( $value ) ) { $any_explicit = true; }
         if ( $value instanceof WP_Post ) { $value = $value->ID; }
-        $id = absint( $value );
-        if ( $id ) { $any_explicit = true; }
+        $id = pvdak_home_configured_page_id( $value );
         if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
             'publish' !== get_post_status( $id ) ) { continue; }
         $link = pvdak_home_quick_link( $id );
@@ -41,7 +49,8 @@ function pvdak_home_quick_pages() {
     }
 
     $locations = get_nav_menu_locations();
-    $menu_id = ! empty( $locations['pvdak_quick'] ) ? absint( $locations['pvdak_quick'] ) : 0;
+    $menu_id = isset( $locations['pvdak_quick'] ) ?
+        pvdak_home_configured_page_id( $locations['pvdak_quick'] ) : 0;
     if ( ! $menu_id ) { return array(); }
     $items = wp_get_nav_menu_items( $menu_id );
     if ( ! is_array( $items ) ) { return array(); }
@@ -49,7 +58,7 @@ function pvdak_home_quick_pages() {
         // Quick ribbon is for Pages only, not custom links or entire submenus.
         if ( ! isset( $item->object, $item->object_id ) ||
              'page' !== $item->object ) { continue; }
-        $id = absint( $item->object_id );
+        $id = pvdak_home_configured_page_id( $item->object_id );
         if ( ! $id || isset( $seen[ $id ] ) || 'page' !== get_post_type( $id ) ||
              'publish' !== get_post_status( $id ) ) { continue; }
         $link = pvdak_home_quick_link( $id );

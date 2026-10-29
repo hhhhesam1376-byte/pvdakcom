@@ -3,7 +3,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function pvdak_home_readiness_items() {
-    $front = (int) get_option( 'page_on_front' );
+    $front = pvdak_home_configured_page_id( get_option( 'page_on_front' ) );
     $has_front = $front > 0 && 'page' === get_option( 'show_on_front' ) &&
         'page' === get_post_type( $front ) && 'publish' === get_post_status( $front ) &&
         (bool) get_permalink( $front );
