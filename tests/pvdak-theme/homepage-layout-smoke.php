@@ -364,7 +364,7 @@ pvdak_layout_expect(
 // Diagnose exact source/host parity when this contract is reported missing.
 // Never turn a missing template gate into a passing test.
 $template_guards = array(
-    'native template resolver inspected' => false !== strpos( $readiness, "pvdak_public_template_page_url( $slug, $expected_template )" ),
+    'native template resolver inspected' => false !== strpos( $readiness, 'pvdak_public_template_page_url( $slug, $expected_template )' ),
     'all required published templates counted' => false !== strpos( $readiness, 'count( $public_templates ) === $public_ready' ),
     'account page uses its native template' => false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
 );
@@ -433,6 +433,15 @@ pvdak_layout_expect(
     count( pvdak_home_faq_pages( true ) ) === 3,
     'D08: public selector removes the empty FAQ while admin sees all published Pages'
 );
+$GLOBALS['pvdak_layout_staff_cap'] = false;
+$denied_audit = pvdak_home_faq_audit_counts();
+pvdak_layout_expect(
+    ! $denied_audit['complete'] && 0 === $denied_audit['total'] &&
+    array() === pvdak_home_faq_pages( true ) &&
+    2 === count( pvdak_home_faq_pages() ),
+    'D31: anonymous users cannot audit private FAQ but public preview stays available'
+);
+$GLOBALS['pvdak_layout_staff_cap'] = true;
 $GLOBALS['quick_test_selection']['service_1_url'] = 'https://example.invalid/manual-request';
 $GLOBALS['quick_test_selection']['community_url'] = 'https://example.invalid/manual-registration';
 pvdak_layout_expect(
