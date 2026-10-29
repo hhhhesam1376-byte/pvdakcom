@@ -1,63 +1,62 @@
 <?php
 /**
- * D31: bounded, accessible pagination for the published legal-topic index.
- * The homepage's 49-card preview is intentionally separate from this archive.
+ * D31: public legal-topic index, seek pagination without expensive SQL OFFSET.
+ * Preserve editorial menu_order/title/ID ordering and keep navigation stateless.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-/** Reject arrays, signed numbers and unbounded page offsets from public GET. */
-function pvdak_legal_index_page_number() {
-    if ( ! isset( $_GET['pvdak_topics_page'] ) ) { return 1; }
-    $raw = $_GET['pvdak_topics_page'];
-    return is_string( $raw ) && preg_match( '/^[1-9][0-9]{0,3}$/D', $raw ) ? (int) $raw : 1;
+function pvdak_legal_index_request() {
+    $after = isset( $_GET['pvdak_topics_after'] ) ? $_GET['pvdak_topics_after'] : '';
+    $before = isset( $_GET['pvdak_topics_before'] ) ? $_GET['pvdak_topics_before'] : '';
+    // An ambiguous or malformed query always returns the first window.
+    if ( ( '' !== $after && '' !== $before ) ||
+         ( ! is_string( $after ) || ! is_string( $before ) ) ) {
+        return array( 'token' => '', 'direction' => 'after' );
+    }
+    return '' !== $before ? array( 'token' => $before, 'direction' => 'before' ) :
+        array( 'token' => $after, 'direction' => 'after' );
 }
 
-/**
- * Return at most 24 public child Pages, plus a lookahead for the next link.
- * Do not request a count of all Pages or load the full tree into memory.
- * A deterministic ID tie-breaker prevents duplicates within a static dataset.
- */
-function pvdak_legal_index_window( $parent_id, $page = 1 ) {
-    $result = array( 'pages' => array(), 'has_next' => false );
+function pvdak_legal_index_window( $parent_id, $token = '', $direction = 'after' ) {
+    $result = array( 'pages' => array(), 'next_cursor' => '', 'prev_cursor' => '', 'active' => false );
     $parent_id = pvdak_home_configured_page_id( $parent_id );
     if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
-         'publish' !== get_post_status( $parent_id ) ||
-         ! is_int( $page ) || $page < 1 || $page > 9999 ) { return $result; }
-    $size = 24;
-    $rows = get_posts( array(
-        'post_type' => 'page',
-        'post_status' => 'publish',
-        'post_parent' => $parent_id,
-        'has_password' => false,
-        'posts_per_page' => $size + 1,
-        'offset' => ( $page - 1 ) * $size,
-        'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
-        'order' => 'ASC',
-        'no_found_rows' => true,
-        'suppress_filters' => false,
-        'update_post_meta_cache' => false,
-        'update_post_term_cache' => false,
-    ) );
-    if ( ! is_array( $rows ) ) { return $result; }
-    $result['has_next'] = count( $rows ) > $size && $page < 9999;
+         'publish' !== get_post_status( $parent_id ) ) { return $result; }
+    $context = 'index:' . $parent_id;
+    $tuple = '' !== $token ? pvdak_legal_seek_decode( $token, $context ) : null;
+    $result['active'] = null !== $tuple;
+    $reverse = $result['active'] && 'before' === $direction;
+    $rows = pvdak_legal_seek_rows( $parent_id, 25, $tuple, $reverse ? 'before' : 'after' );
+    $has_more = count( $rows ) > 24;
+    $visible = array_slice( $rows, 0, 24 );
+    if ( $reverse ) { $visible = array_reverse( $visible ); }
     $seen = array();
-    foreach ( array_slice( $rows, 0, $size ) as $post ) {
+    foreach ( $visible as $post ) {
         if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ||
              'publish' !== $post->post_status ||
              pvdak_home_configured_page_id( $post->post_parent ) !== $parent_id ||
-             ! isset( $post->post_password ) || '' !== $post->post_password ) { continue; }
+             ! isset( $post->post_password ) || '' !== $post->post_password ||
+             null === pvdak_legal_seek_tuple( $post ) ) { continue; }
         $id = pvdak_home_configured_page_id( $post->ID );
         if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
         $seen[ $id ] = true;
         $result['pages'][] = $post;
     }
+    if ( ! $result['pages'] ) { return $result; }
+    $first = reset( $result['pages'] );
+    $last = end( $result['pages'] );
+    $result['prev_cursor'] = ( $reverse ? $has_more : $result['active'] ) ?
+        pvdak_legal_seek_encode( $first, $context ) : '';
+    $result['next_cursor'] = ( $reverse ? true : $has_more ) ?
+        pvdak_legal_seek_encode( $last, $context ) : '';
     return $result;
 }
 
-/** Query-string archive pages are navigable but not duplicate SEO landings. */
+/** Cursor/legacy query URLs are navigable but not separate SEO landings. */
 function pvdak_legal_index_robots( $robots ) {
-    if ( isset( $_GET['pvdak_topics_page'] ) &&
-         is_page_template( 'page-templates/legal-topics-index.php' ) ) {
+    if ( is_page_template( 'page-templates/legal-topics-index.php' ) &&
+         ( isset( $_GET['pvdak_topics_after'] ) || isset( $_GET['pvdak_topics_before'] ) ||
+           isset( $_GET['pvdak_topics_page'] ) ) ) {
         $robots['noindex'] = true;
     }
     return $robots;
