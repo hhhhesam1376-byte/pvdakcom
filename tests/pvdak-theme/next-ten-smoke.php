@@ -833,6 +833,16 @@ $d30_checks = array(
         strpos( $d30_drill, 'D30_SQL_RESTORE_NOT_TESTED' ) !== false &&
         strpos( $d30_drill, '--files-only' ) !== false &&
         strpos( $d30_drill, 'run as an unprivileged account' ) !== false,
+    'file-only drill independent from SQL' =>
+        strpos( $d30_drill, '(( FILES_ONLY )) || [[ -n "$SQL" ]] || usage' ) !== false &&
+        strpos( $d30_drill, 'if [[ -n "$SQL" ]]; then SQL=' ) !== false,
+    'no special backup entries or unsafe scratch' =>
+        strpos( $d30_drill, '! -type f ! -type d -print -quit' ) !== false &&
+        strpos( $d30_drill, 'temporary directory overlaps web or backup storage' ) !== false,
+    'restored WordPress schema required' =>
+        strpos( $d30_drill, 'TABLE_NAMES=' ) !== false &&
+        strpos( $d30_drill, 'WP_SCHEMA_READY=0' ) !== false &&
+        strpos( $d30_drill, 'incomplete WordPress table family' ) !== false,
     'upgrade version is dynamic' => strpos( $d30_installer, 'PVDAK_EXPECTED_CORE_VERSION="$NEW" wp eval' ) !== false &&
         strpos( $d30_installer, 'PVDAK_CORE_VERSION !== "0.8.14"' ) === false &&
         strpos( $d30_installer, '"$NEW" == "0.8.14"' ) === false,
