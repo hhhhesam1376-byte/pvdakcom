@@ -2,6 +2,44 @@
 /** D31 search: original-source signed seek cursor regression without WP/DB/network. */
 require __DIR__ . '/d31-seek-stub.php';
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-legal-landings.php';
+// D31: seek is a shared boundary. Reject malformed internal inputs before
+// WP_Query can coerce a different parent, cursor, direction or query limit.
+$bad_seek_cases = array(
+    'lossy parent' => array( '7junk', 41 ),
+    'zero parent' => array( 0, 41 ),
+    'lossy limit' => array( 7, '41' ),
+    'zero limit' => array( 7, 0 ),
+    'unknown direction' => array( 7, 41, null, 'sideways' ),
+    'sparse tuple' => array( 7, 41, array( 0 => 0, 2 => 9 ) ),
+    'string order' => array( 7, 41, array( '0', 'A', 9 ) ),
+    'oversized title' => array( 7, 41, array( 0, str_repeat( 'a', 1025 ), 9 ) ),
+    'invalid UTF-8' => array( 7, 41, array( 0, "\xFF", 9 ) ),
+    'zero tuple ID' => array( 7, 41, array( 0, 'A', 0 ) ),
+    'oversized menu order' => array( 7, 41, array( 10000000000, 'A', 9 ) ),
+);
+foreach ( $bad_seek_cases as $label => $args ) {
+    $query_count = count( $GLOBALS['d31_queries'] );
+    d31_check( array() === pvdak_legal_seek_rows( ...$args ) &&
+        $query_count === count( $GLOBALS['d31_queries'] ),
+        'invalid seek rejected without SQL: ' . $label );
+}
+$GLOBALS['d31_rows'] = array( d31_page( 1, 'A' ), d31_page( 2, 'B' ), d31_page( 3, 'C' ) );
+$seek_first = pvdak_legal_seek_rows( 7, 2 );
+d31_check( array( 1, 2 ) === array_column( $seek_first, 'ID' ),
+    'valid bounded seek still returns first two Pages' );
+$seek_token = pvdak_legal_seek_encode( $seek_first[1], 'seek-contract:7' );
+$seek_tuple = pvdak_legal_seek_decode( $seek_token, 'seek-contract:7' );
+d31_check( is_array( $seek_tuple ) && 2 === $seek_tuple[2] &&
+    null === pvdak_legal_seek_decode( $seek_token, 'other-parent' ),
+    'signed tuple remains usable and scoped' );
+d31_check( array( 3 ) === array_column( pvdak_legal_seek_rows( 7, 2, $seek_tuple ), 'ID' ),
+    'forward seek preserved' );
+d31_check( array( 1 ) === array_column( pvdak_legal_seek_rows( 7, 2, $seek_tuple, 'before' ), 'ID' ),
+    'reverse seek preserved' );
+d31_check( empty( $GLOBALS['d31_filters']['posts_where'] ),
+    'seek SQL filter always detached' );
+$GLOBALS['d31_rows'] = array();
+$GLOBALS['d31_queries'] = array();
 for ( $i = 0; $i < 600; ++$i ) {
     $GLOBALS['d31_rows'][] = d31_page( $i + 1, $i < 120 ? 'حقوق شرکت' : 'كسب و كار' );
 }
