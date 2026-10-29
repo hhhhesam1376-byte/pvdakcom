@@ -160,11 +160,16 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 )
         ) );
         if ( ! is_array( $published ) ) { return $result; }
         $window = array_slice( $published, 0, $batch_size );
+        $seen = array();
         foreach ( $window as $page ) {
             ++$result['scanned'];
             if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
-                 'publish' !== $page->post_status || (int) $page->post_parent !== $parent_id ||
-                 '' !== $page->post_password ) { continue; }
+                 'publish' !== $page->post_status ||
+                 pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
+                 ! isset( $page->post_password ) || '' !== $page->post_password ) { continue; }
+            $id = pvdak_home_configured_page_id( $page->ID );
+            if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
+            $seen[ $id ] = true;
             $haystack = pvdak_legal_normalize_topic_text(
                 $page->post_title . ' ' . wp_strip_all_tags( $page->post_excerpt )
             );

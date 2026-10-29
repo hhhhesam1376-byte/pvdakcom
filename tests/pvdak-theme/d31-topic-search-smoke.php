@@ -86,6 +86,13 @@ d31_check( 1 === count( $preview ) && 1 === $preview[0]->ID, 'filtered homepage 
 d31_check( 2 === count( pvdak_legal_filter_topic_pages( $GLOBALS['d31_injected'], '' ) ), 'generic filter rejects draft/password/non-Page/invalid IDs but has no parent context' );
 $GLOBALS['d31_injected'] = false;
 d31_check( array() === pvdak_legal_topic_pages( 7 ), 'malformed query result fails closed' );
+$bad_search_id = d31_page( 97, 'منتشر' ); $bad_search_id->ID = '097';
+$bad_search_parent = d31_page( 98, 'منتشر' ); $bad_search_parent->post_parent = '7junk';
+$valid_search = d31_page( 99, 'منتشر' );
+$GLOBALS['d31_injected'] = array( $bad_search_id, $bad_search_parent, $valid_search, $valid_search );
+$guarded_search = pvdak_legal_topic_search_batch( 7, 'منتشر' );
+d31_check( 1 === count( $guarded_search['pages'] ) && 99 === $guarded_search['pages'][0]->ID,
+    'search excludes malformed IDs and parents, and deduplicates a filtered batch' );
 unset( $GLOBALS['d31_injected'] );
 unset( $_GET['pvdak_topic'] );
 $_GET['pvdak_topic_offset'] = '240';

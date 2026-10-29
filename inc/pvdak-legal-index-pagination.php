@@ -40,12 +40,16 @@ function pvdak_legal_index_window( $parent_id, $page = 1 ) {
     ) );
     if ( ! is_array( $rows ) ) { return $result; }
     $result['has_next'] = count( $rows ) > $size && $page < 9999;
+    $seen = array();
     foreach ( array_slice( $rows, 0, $size ) as $post ) {
-        if ( $post instanceof WP_Post && 'page' === $post->post_type &&
-             'publish' === $post->post_status && (int) $post->post_parent === $parent_id &&
-             '' === $post->post_password ) {
-            $result['pages'][] = $post;
-        }
+        if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ||
+             'publish' !== $post->post_status ||
+             pvdak_home_configured_page_id( $post->post_parent ) !== $parent_id ||
+             ! isset( $post->post_password ) || '' !== $post->post_password ) { continue; }
+        $id = pvdak_home_configured_page_id( $post->ID );
+        if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
+        $seen[ $id ] = true;
+        $result['pages'][] = $post;
     }
     return $result;
 }

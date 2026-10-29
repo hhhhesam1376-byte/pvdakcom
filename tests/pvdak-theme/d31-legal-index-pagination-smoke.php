@@ -16,6 +16,7 @@ function get_post_status( $id ) { return 7 === $id ? 'publish' : false; }
 function is_page_template( $slug ) { return $GLOBALS['index_template'] && 'page-templates/legal-topics-index.php' === $slug; }
 function get_posts( $args ) {
     $GLOBALS['queries'][] = $args;
+    if ( array_key_exists( 'injected', $GLOBALS ) ) { return $GLOBALS['injected']; }
     if ( $args['posts_per_page'] > 25 || $args['offset'] < 0 ) { throw new RuntimeException( 'Unbounded query' ); }
     $rows = array_values( array_filter( $GLOBALS['rows'], static function ( $p ) use ( $args ) {
         return $p->post_type === $args['post_type'] && $p->post_status === $args['post_status'] &&
@@ -63,4 +64,16 @@ check_d31( array( 'follow' => true ) === pvdak_legal_index_robots( array( 'follo
 unset( $_GET['pvdak_topics_page'] );
 $GLOBALS['index_template'] = true;
 check_d31( array( 'follow' => true ) === pvdak_legal_index_robots( array( 'follow' => true ) ), 'clean archive indexable' );
+// A third-party query filter must not inject a foreign Page, malformed ID or duplicate.
+$valid = new WP_Post(); $valid->ID = 77;
+$bad_id = clone $valid; $bad_id->ID = '077';
+$bad_parent = clone $valid; $bad_parent->post_parent = '7junk';
+$duplicate = clone $valid;
+$GLOBALS['injected'] = array( $valid, $bad_id, $bad_parent, $duplicate );
+$guarded = pvdak_legal_index_window( 7, 1 );
+check_d31( 1 === count( $guarded['pages'] ) && 77 === $guarded['pages'][0]->ID,
+    'post-query validation excludes malformed IDs, foreign parents and duplicates' );
+$GLOBALS['injected'] = false;
+check_d31( array() === pvdak_legal_index_window( 7, 1 )['pages'], 'non-array query fails closed' );
+unset( $GLOBALS['injected'] );
 echo 'PVDAK_D31_INDEX_OK: ' . $GLOBALS['checks'] . '/' . $GLOBALS['checks'] . " original-source PHP cases; WP/HTTP/host NOT_TESTED.\n";
