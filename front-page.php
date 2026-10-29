@@ -19,6 +19,8 @@ if ( ! $news_feature && $news_other ) {
     $news_feature = $news_other[0];
 }
 $legal_search_term = pvdak_legal_topic_search_term();
+// GET results are a subset: never live-search them as the complete collection.
+$legal_server_filtered = isset( $_GET['pvdak_topic'] );
 $legal_parent_id = pvdak_legal_topics_root_id();
 $all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
 $legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
@@ -56,11 +58,17 @@ $svg_icons = array(
       <p class="pvdak-home-eyebrow"><?php echo esc_html(pvdak_home_value('hero_label')); ?></p>
       <h1 id="hero-title"><?php echo esc_html(pvdak_home_value('hero_title')); ?></h1>
       <p class="pvdak-home-lead"><?php echo esc_html(pvdak_home_value('hero_description')); ?></p>
-      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( $all_legal_pages ? home_url( '/#topics' ) : home_url( '/' ) ); ?>" role="search" aria-label="<?php echo esc_attr( $all_legal_pages ? 'جست‌وجوی موضوعات حقوقی' : 'جست‌وجوی مطالب حقوقی سایت' ); ?>">
+      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( $all_legal_pages ? home_url( '/#topics' ) : home_url( '/' ) ); ?>" data-pvdak-server-filtered="<?php echo $legal_server_filtered ? '1' : '0'; ?>" role="search" aria-label="<?php echo esc_attr( $all_legal_pages ? 'جست‌وجوی موضوعات حقوقی' : 'جست‌وجوی مطالب حقوقی سایت' ); ?>">
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
         <label class="screen-reader-text" for="pvdak-topic-input"><?php echo $all_legal_pages ? 'موضوع حقوقی' : 'جست‌وجوی مطالب سایت'; ?></label>
         <input id="pvdak-topic-input" type="search" name="<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>" value="<?php echo esc_attr( $all_legal_pages ? $legal_search_term : get_search_query() ); ?>" maxlength="100" placeholder="<?php echo esc_attr( $all_legal_pages ? pvdak_home_value( 'hero_search_label' ) : 'جست‌وجو در مطالب حقوقی سایت…' ); ?>" required>
-        <?php if ( $all_legal_pages ): ?><button type="button" class="pvdak-home-clear-search" data-pvdak-clear-search hidden aria-label="پاک کردن جست‌وجوی موضوع">پاک کردن ×</button><?php endif; ?>
+        <?php if ( $all_legal_pages ): ?>
+          <?php if ( $legal_server_filtered ): ?>
+            <a class="pvdak-home-clear-search" href="<?php echo esc_url( home_url( '/#topics' ) ); ?>" aria-label="پاک کردن جست‌وجوی موضوع">پاک کردن ×</a>
+          <?php else: ?>
+            <button type="button" class="pvdak-home-clear-search" data-pvdak-clear-search hidden aria-label="پاک کردن جست‌وجوی موضوع">پاک کردن ×</button>
+          <?php endif; ?>
+        <?php endif; ?>
         <button type="submit"><?php echo $all_legal_pages ? 'جست‌وجوی موضوع' : 'جست‌وجوی مطالب'; ?></button>
       </form>
       <p class="pvdak-home-process-hint"><span aria-hidden="true">✓</span> <?php echo esc_html(pvdak_home_value('hero_hint')); ?></p>
@@ -159,7 +167,7 @@ $svg_icons = array(
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
       <div id="pvdak-topics-track" class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>
-          <a class="pvdak-home-topic swiper-slide pvdak-topic-tone-<?php echo esc_attr( ( $topic_index % 6 ) + 1 ); ?>" data-pvdak-topic href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
+          <a class="pvdak-home-topic swiper-slide pvdak-topic-tone-<?php echo esc_attr( ( $topic_index % 6 ) + 1 ); ?>" data-pvdak-topic data-pvdak-topic-search="<?php echo esc_attr( pvdak_legal_normalize_topic_text( $legal_page->post_title . ' ' . wp_strip_all_tags( $legal_page->post_excerpt ) ) ); ?>" href="<?php echo esc_url( get_permalink( $legal_page->ID ) ); ?>">
             <span class="pvdak-topic-card__icon" aria-hidden="true"><?php echo pvdak_topic_card_svg( $legal_page ); ?></span>
             <span class="pvdak-topic-card__title"><?php echo esc_html( get_the_title( $legal_page->ID ) ); ?></span>
             <span class="pvdak-topic-card__caption"><?php echo esc_html( pvdak_topic_card_caption( $legal_page ) ); ?></span>
