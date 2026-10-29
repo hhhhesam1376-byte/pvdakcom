@@ -395,6 +395,16 @@ if ( ! class_exists( 'WP_Post' ) ) {
     }
 }
 if ( ! function_exists( 'sanitize_title' ) ) { function sanitize_title( $slug ) { return $slug; } }
+if ( ! function_exists( 'get_posts' ) ) {
+    function get_posts( $args ) {
+        if ( '_wp_page_template' === ( $args['meta_key'] ?? '' ) ) {
+            $GLOBALS['pvdak_test_template_query'] = $args;
+            return $GLOBALS['pvdak_test_public_template_candidates'] ?? array();
+        }
+        $GLOBALS['pvdak_d31_collection_query'] = $args;
+        return array();
+    }
+}
 if ( ! function_exists( 'get_page_by_path' ) ) {
     function get_page_by_path( $slug, $output = null, $type = null ) {
         return $GLOBALS['pvdak_test_public_page'] ?? null;
@@ -456,6 +466,39 @@ foreach ( array(
     }
 }
 echo "PVDAK_PUBLIC_TEMPLATE_GATE_OK: 9/9 original-source PHP cases (not WordPress E2E).\n";
+// D31: original-source route resolver with synthetic WordPress Page records.
+$GLOBALS['pvdak_test_template_installed'] = true;
+$GLOBALS['pvdak_test_template_slug'] = 'page-templates/pvdak-login.php';
+$route_cases = array(
+    array( null, array(), false ),
+    array( null, array( new WP_Post( 201 ) ), true ),
+    array( null, array( new WP_Post( 201 ), new WP_Post( 202 ) ), false ),
+    array( null, array( new WP_Post( 201, 'draft' ) ), false ),
+    array( new WP_Post( 100 ), array( new WP_Post( 201 ) ), true ),
+    array( new WP_Post( 100, 'draft' ), array( new WP_Post( 201 ) ), false ),
+);
+$route_count = 0;
+foreach ( $route_cases as $case ) {
+    $GLOBALS['pvdak_test_public_page'] = $case[0];
+    $GLOBALS['pvdak_test_public_template_candidates'] = $case[1];
+    $found = pvdak_public_template_page_url( 'account-login', 'page-templates/pvdak-login.php' );
+    if ( ( '' !== $found ) !== $case[2] ) {
+        fwrite( STDERR, "PVD_D31_RENAMED_ROUTE_FAIL: unsafe or missing account destination\n" ); exit( 1 );
+    }
+    $route_count++;
+}
+$GLOBALS['pvdak_test_public_template_candidates'] = array( new WP_Post( 201, 'draft' ) );
+if ( 1 !== count( pvdak_public_account_template_pages( 'page-templates/pvdak-login.php', true ) ) ||
+     'page' !== $GLOBALS['pvdak_test_template_query']['post_type'] ||
+     2 !== $GLOBALS['pvdak_test_template_query']['posts_per_page'] ||
+     pvdak_public_account_template_pages( 'page-templates/pvdak-information.php', true ) ) {
+    fwrite( STDERR, "PVD_D31_RENAMED_ROUTE_FAIL: bootstrap candidate or allowlist\n" ); exit( 1 );
+}
+$route_count++;
+$GLOBALS['pvdak_test_public_page'] = new WP_Post( 100 );
+$GLOBALS['pvdak_test_public_template_candidates'] = array();
+echo "PVDAK_D31_RENAMED_ACCOUNT_ROUTE_OK: {$route_count}/{$route_count} original-source PHP cases (WP/host NOT_TESTED).\n";
+
 
 
 // D31: exercise the original dashboard setup with stubbed WordPress APIs.
@@ -813,12 +856,6 @@ if ( ! function_exists( 'get_post' ) ) {
         $post = new WP_Post( $id, 'publish' );
         $post->post_type = 'post';
         return $post;
-    }
-}
-if ( ! function_exists( 'get_posts' ) ) {
-    function get_posts( $args ) {
-        $GLOBALS['pvdak_d31_collection_query'] = $args;
-        return array();
     }
 }
 require_once $root . '/inc/pvdak-home-collections.php';
