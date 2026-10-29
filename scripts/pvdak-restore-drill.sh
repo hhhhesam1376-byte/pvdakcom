@@ -8,7 +8,7 @@ umask 077
 [[ "$(id -u)" -ne 0 ]] || { echo "D30_STOP: run as an unprivileged account" >&2; exit 1; }
 
 usage() {
-  echo 'USAGE: bash scripts/pvdak-restore-drill.sh --theme DIR --core DIR --sql FILE [--files-only]' >&2
+  echo 'USAGE: bash scripts/pvdak-restore-drill.sh --theme DIR --core DIR [--sql FILE] [--files-only]' >&2
   exit 2
 }
 THEME='' CORE='' SQL='' FILES_ONLY=0
@@ -26,7 +26,10 @@ while (( $# )); do
     *) usage ;;
   esac
 done
-[[ -n "$THEME" && -n "$CORE" && -n "$SQL" ]] || usage
+# File-only rehearsals must not need an unrelated SQL dump. Full rehearsals
+# require SQL explicitly and cannot quietly downgrade to file-only mode.
+[[ -n "$THEME" && -n "$CORE" ]] || usage
+(( FILES_ONLY )) || [[ -n "$SQL" ]] || usage
 for cmd in realpath mktemp cp diff find rm; do
   command -v "$cmd" >/dev/null || { echo "D30_STOP: required command unavailable" >&2; exit 1; }
 done
@@ -53,15 +56,23 @@ check_candidate() {
     [[ -d "$resolved" && -r "$resolved" && ! -L "$resolved" ]] || {
       echo "D30_STOP: $kind backup invalid" >&2; exit 1;
     }
-    [[ -z "$(find "$resolved" -type l -print -quit)" ]] || {
-      echo "D30_STOP: $kind contains symlink" >&2; exit 1;
+    # Refuse symlinks, FIFOs, sockets and devices: cp -a must not copy an
+    # unexpected object or block forever on a malicious/incomplete snapshot.
+    local unsafe
+    unsafe="$(find "$resolved" ! -type f ! -type d -print -quit 2>/dev/null)" || {
+      echo "D30_STOP: $kind tree unreadable" >&2; exit 1;
     }
+    [[ -z "$unsafe" ]] || { echo "D30_STOP: $kind contains symlink or unsafe entry" >&2; exit 1; }
+    unsafe="$(find "$resolved" \( -type f ! -readable -o -type d ! -readable -o -type d ! -executable \) -print -quit 2>/dev/null)" || {
+      echo "D30_STOP: $kind tree unreadable" >&2; exit 1;
+    }
+    [[ -z "$unsafe" ]] || { echo "D30_STOP: $kind contains unreadable entry" >&2; exit 1; }
   fi
   printf '%s' "$resolved"
 }
 THEME="$(check_candidate "$THEME" theme)"
 CORE="$(check_candidate "$CORE" core)"
-SQL="$(check_candidate "$SQL" sql)"
+if [[ -n "$SQL" ]]; then SQL="$(check_candidate "$SQL" sql)"; fi
 for file in style.css functions.php index.php header.php footer.php; do
   [[ -s "$THEME/$file" && -f "$THEME/$file" ]] || { echo "D30_STOP: incomplete theme ($file)" >&2; exit 1; }
 done
@@ -69,7 +80,19 @@ for file in pvdak-core.php includes/requests.php includes/professionals.php; do
   [[ -s "$CORE/$file" && -f "$CORE/$file" ]] || { echo "D30_STOP: incomplete Core ($file)" >&2; exit 1; }
 done
 
-SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/pvdak-d30.XXXXXXXX")"
+# A caller-controlled TMPDIR must never make the drill write into the
+# public site or its private backup snapshots. mktemp itself is mode 0700.
+SCRATCH_BASE="${TMPDIR:-/tmp}"
+[[ -d "$SCRATCH_BASE" && ! -L "$SCRATCH_BASE" && -w "$SCRATCH_BASE" ]] || {
+  echo 'D30_STOP: unsafe temporary directory' >&2; exit 1;
+}
+SCRATCH_BASE="$(realpath -e -- "$SCRATCH_BASE")"
+for forbidden in "$WEB_ROOT" "$BACKUP_ROOT"; do
+  [[ "$SCRATCH_BASE" != "$forbidden" && "$SCRATCH_BASE" != "$forbidden/"* ]] || {
+    echo 'D30_STOP: temporary directory overlaps web or backup storage' >&2; exit 1;
+  }
+done
+SCRATCH="$(mktemp -d "$SCRATCH_BASE/pvdak-d30.XXXXXXXX")"
 DB_PID=''
 cleanup() {
   local rc=$?
@@ -141,4 +164,29 @@ mariadb --no-defaults --binary-mode --local-infile=0 --protocol=socket --socket=
 TABLES="$(mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
   --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB' AND table_type='BASE TABLE'")"
 [[ "$TABLES" =~ ^[1-9][0-9]*$ ]] || { echo 'D30_SQL_RESTORE_FAILED: no restored tables' >&2; exit 1; }
-echo "D30_SQL_RESTORE_OK: isolated socket-only MariaDB, tables=$TABLES; WordPress boot NOT_TESTED"
+# A successful SQL exit code and a nonzero table count can still describe a
+# completely unrelated dump. Verify the minimum coherent WordPress schema,
+# without reading rows, users, credentials, site URLs or private case data.
+TABLE_NAMES="$(mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
+  --batch --skip-column-names -e "SELECT table_name FROM information_schema.tables WHERE table_schema='$DB' AND table_type='BASE TABLE'")" || {
+  echo 'D30_SQL_RESTORE_FAILED: cannot inspect isolated schema' >&2; exit 1;
+}
+declare -A RESTORED_TABLES=()
+while IFS= read -r table; do
+  [[ -n "$table" ]] && RESTORED_TABLES["$table"]=1
+done <<< "$TABLE_NAMES"
+WP_SCHEMA_READY=0
+for table in "${!RESTORED_TABLES[@]}"; do
+  if [[ "$table" =~ ^([a-zA-Z0-9_]+)options$ ]]; then
+    prefix="${BASH_REMATCH[1]}"
+    if [[ -n "${RESTORED_TABLES[${prefix}posts]:-}" &&
+          -n "${RESTORED_TABLES[${prefix}postmeta]:-}" &&
+          -n "${RESTORED_TABLES[${prefix}users]:-}" &&
+          -n "${RESTORED_TABLES[${prefix}usermeta]:-}" ]]; then
+      WP_SCHEMA_READY=1
+      break
+    fi
+  fi
+done
+(( WP_SCHEMA_READY )) || { echo 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' >&2; exit 1; }
+echo "D30_SQL_RESTORE_OK: isolated socket-only MariaDB, tables=$TABLES, WordPress schema present; WordPress boot NOT_TESTED"
