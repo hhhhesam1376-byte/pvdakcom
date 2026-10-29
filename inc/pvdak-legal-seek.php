@@ -47,6 +47,12 @@ function pvdak_legal_seek_decode( $token, $context ) {
  */
 function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 'after', $include_password_for_staff_audit = false ) {
     global $wpdb;
+    // Staff audit counts password-protected FAQ Pages. Never expose this mode
+    // to callers without the WordPress capability to edit Pages.
+    if ( $include_password_for_staff_audit &&
+         ( ! function_exists( 'current_user_can' ) || ! current_user_can( 'edit_pages' ) ) ) {
+        return array();
+    }
     $scope = new stdClass();
     $reverse = 'before' === $direction;
     $op = $reverse ? '<' : '>';
