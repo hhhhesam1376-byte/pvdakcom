@@ -47,9 +47,15 @@ function pvdak_legal_index_window( $parent_id, $token = '', $direction = 'after'
     if ( ! $result['pages'] ) { return $result; }
     $first = reset( $result['pages'] );
     $last = end( $result['pages'] );
-    $result['prev_cursor'] = ( $reverse ? $has_more : $result['active'] ) ?
+    // Do not link back to the identical signed boundary when a query filter
+    // replays the current window instead of honoring the keyset predicate.
+    $first_tuple = pvdak_legal_seek_tuple( $first );
+    $last_tuple = pvdak_legal_seek_tuple( $last );
+    $result['prev_cursor'] = ( $reverse ? $has_more : $result['active'] ) &&
+        ( ! $result['active'] || $first_tuple !== $tuple ) ?
         pvdak_legal_seek_encode( $first, $context ) : '';
-    $result['next_cursor'] = ( $reverse ? true : $has_more ) ?
+    $result['next_cursor'] = ( $reverse ? true : $has_more ) &&
+        ( ! $result['active'] || $last_tuple !== $tuple ) ?
         pvdak_legal_seek_encode( $last, $context ) : '';
     return $result;
 }

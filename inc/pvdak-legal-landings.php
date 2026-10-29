@@ -154,6 +154,9 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' 
         $published = pvdak_legal_seek_rows( $parent_id, 41, $tuple );
         $window = array_slice( $published, 0, 40 );
         if ( ! $window ) { return $result; }
+        // A plugin can return the same rows despite a scoped seek predicate.
+        // Require progress in every batch, or stop rather than emit a replay cursor.
+        $batch_last_scanned = null;
         foreach ( $window as $position => $page ) {
             ++$result['scanned'];
             if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
@@ -162,6 +165,7 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' 
                  ! isset( $page->post_password ) || '' !== $page->post_password ||
                  null === pvdak_legal_seek_tuple( $page ) ) { continue; }
             $last_scanned = $page;
+            $batch_last_scanned = $page;
             $id = pvdak_home_configured_page_id( $page->ID );
             if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
             $seen[ $id ] = true;
@@ -178,9 +182,12 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' 
                 }
             }
         }
-        if ( null === $last_scanned || count( $published ) <= 40 ) { return $result; }
-        $tuple = pvdak_legal_seek_tuple( $last_scanned );
-        if ( null === $tuple ) { return $result; }
+        if ( null === $batch_last_scanned || count( $published ) <= 40 ) { return $result; }
+        $next_tuple = pvdak_legal_seek_tuple( $batch_last_scanned );
+        if ( null === $next_tuple || ( null !== $tuple && $next_tuple === $tuple ) ) {
+            return $result; // Non-advancing plugin result must not create an endless next link.
+        }
+        $tuple = $next_tuple;
     }
     if ( null !== $last_scanned ) {
         $result['next_cursor'] = pvdak_legal_seek_encode( $last_scanned, $context ) ?: null;

@@ -58,6 +58,9 @@ function get_posts( $args ) {
         $filter( '', new D31_Query( $args ) );
     }
     $rows = $GLOBALS['d31_items'];
+    if ( ! empty( $GLOBALS['d31_replay'] ) ) {
+        return array_slice( $rows, 0, $args['posts_per_page'] );
+    }
     if ( null !== $GLOBALS['d31_seek'] ) {
         $tuple = $GLOBALS['d31_seek']['tuple'];
         $op = $GLOBALS['d31_seek']['op'];
@@ -85,6 +88,16 @@ $GLOBALS['d31_items'] = array();
 $GLOBALS['d31_queries'] = array();
 d31_check( array() === pvdak_home_faq_pages(), 'empty FAQ' ); $checks++;
 d31_check( 1 === count( $GLOBALS['d31_queries'] ), 'empty one batch' ); $checks++;
+// Replayed public FAQ query must stop at the first non-advancing cursor.
+$GLOBALS['d31_items'] = array_map( static function ( $i ) {
+    return new WP_Post( $i, 1 === $i ? 'A complete published answer for visitors.' : '' );
+}, range( 1, 41 ) );
+$GLOBALS['d31_replay'] = true;
+$GLOBALS['d31_queries'] = array();
+$replayed_faq = pvdak_home_faq_pages();
+d31_check( 1 === count( $replayed_faq ) && 2 === count( $GLOBALS['d31_queries'] ),
+    'replayed public FAQ batch stops after two bounded queries' ); $checks++;
+unset( $GLOBALS['d31_replay'] );
 $GLOBALS['d31_items'] = array_map( static function ( $i ) { return new WP_Post( $i ); }, range( 1, 4 ) );
 $GLOBALS['d31_queries'] = array();
 d31_check( 4 === count( pvdak_home_faq_pages() ), 'four valid FAQs' ); $checks++;

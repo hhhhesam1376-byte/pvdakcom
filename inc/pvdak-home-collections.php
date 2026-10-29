@@ -152,8 +152,11 @@ function pvdak_home_faq_public_preview( $parent_id ) {
         }
         if ( count( $published ) <= 40 ) { break; }
         // A malformed final row must not become a public cursor.
-        $tuple = pvdak_legal_seek_tuple( end( $window ) );
-        if ( null === $tuple ) { break; }
+        $next_tuple = pvdak_legal_seek_tuple( end( $window ) );
+        if ( null === $next_tuple || ( null !== $tuple && $next_tuple === $tuple ) ) {
+            break; // Do not rescan a plugin-replayed FAQ window six times.
+        }
+        $tuple = $next_tuple;
     }
     return $answered;
 }

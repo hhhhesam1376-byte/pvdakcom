@@ -57,5 +57,17 @@ $GLOBALS['d31_parent'] = d31_page( 7, 'Protected parent', 'publish', 'secret' );
 d31_check( array() === pvdak_legal_index_window( 7 )['pages'],
     'password-protected root blocks public index' );
 unset( $GLOBALS['d31_parent'] );
+// A plugin that ignores the seek predicate must not produce a link to
+// the same signed boundary in either direction.
+$stale_page = d31_page( 900, 'Repeated topic' );
+$GLOBALS['d31_injected'] = array_fill( 0, 25, $stale_page );
+$stale_token = pvdak_legal_seek_encode( $stale_page, 'index:7' );
+$stale_forward = pvdak_legal_index_window( 7, $stale_token );
+$stale_backward = pvdak_legal_index_window( 7, $stale_token, 'before' );
+d31_check( 1 === count( $stale_forward['pages'] ) &&
+    '' === $stale_forward['next_cursor'] && '' === $stale_forward['prev_cursor'] &&
+    '' === $stale_backward['next_cursor'] && '' === $stale_backward['prev_cursor'],
+    'replayed index window cannot generate looping forward/backward cursors' );
+unset( $GLOBALS['d31_injected'] );
 echo 'PVDAK_D31_INDEX_OK: ' . $GLOBALS['d31_checks'] . '/' . $GLOBALS['d31_checks'] .
     " original-source seek cases; WordPress/DB/HTTP NOT_TESTED.\n";

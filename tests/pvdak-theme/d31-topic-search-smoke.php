@@ -60,6 +60,19 @@ $guarded = pvdak_legal_topic_search_batch( 7, 'منتشر' );
 d31_check( 1 === count( $guarded['pages'] ) && 99 === $guarded['pages'][0]->ID,
     'search rejects malformed and duplicate filtered rows' );
 unset( $GLOBALS['d31_injected'] );
+// A third-party posts filter may ignore the cursor and replay the same
+// 41-row window. Stop after detecting the repeated boundary, not after
+// exhausting six identical SQL calls or emitting an endless next link.
+$replayed = array( d31_page( 901, 'منتشر' ) );
+for ( $i = 0; $i < 40; ++$i ) {
+    $replayed[] = d31_page( 1000 + $i, 'پیش‌نویس', 'draft' );
+}
+$GLOBALS['d31_injected'] = $replayed;
+$GLOBALS['d31_queries'] = array();
+$stalled = pvdak_legal_topic_search_batch( 7, 'منتشر' );
+d31_check( 1 === count( $stalled['pages'] ) && null === $stalled['next_cursor'] &&
+    2 === count( $GLOBALS['d31_queries'] ), 'replayed search window terminates without a looping cursor' );
+unset( $GLOBALS['d31_injected'] );
 $_GET = array( 'pvdak_topic_after' => $first['next_cursor'] );
 d31_check( $first['next_cursor'] === pvdak_legal_topic_search_cursor(),
     'GET token retained as opaque string' );
