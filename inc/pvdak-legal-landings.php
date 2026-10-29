@@ -8,37 +8,52 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * A nonempty ACF selection is authoritative, even when corrupt or unpublished.
+ * Do not silently replace a deliberate editorial choice with an old fallback.
+ */
+function pvdak_legal_topic_selection_configured( $value ) {
+    if ( $value instanceof WP_Post ) { return true; }
+    if ( is_string( $value ) ) { return '' !== trim( $value ) && '0' !== $value; }
+    if ( is_array( $value ) ) { return ! empty( $value ); }
+    return null !== $value && false !== $value && 0 !== $value;
+}
+
 function pvdak_legal_topics_root_id() {
-    $id = 0;
-    $front_id = (int) get_option( 'page_on_front' );
-    if ( $front_id && function_exists( 'get_field' ) ) {
+    // Use the same validated static front Page as the public ACF homepage.
+    $front_id = pvdak_home_page_id();
+    if ( $front_id && 'publish' === get_post_status( $front_id ) && function_exists( 'get_field' ) ) {
         $selected = get_field( 'legal_topics_parent_page', $front_id );
-        if ( $selected instanceof WP_Post ) {
-            $id = (int) $selected->ID;
-        } elseif ( is_numeric( $selected ) ) {
-            $id = (int) $selected;
+        if ( pvdak_legal_topic_selection_configured( $selected ) ) {
+            $raw = $selected instanceof WP_Post ? $selected->ID : $selected;
+            $id = pvdak_home_configured_page_id( $raw );
+            return $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ?
+                $id : 0;
         }
     }
-    if ( $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) {
-        return $id;
-    }
 
-    // Helpful when a site is first set up; an explicitly selected page wins.
+    // Only a genuinely blank selection may use the legacy published root.
     $fallback = get_page_by_path( 'legal-topics', OBJECT, 'page' );
-    return ( $fallback && 'publish' === $fallback->post_status ) ? (int) $fallback->ID : 0;
+    return $fallback instanceof WP_Post &&
+        'page' === get_post_type( $fallback->ID ) &&
+        'publish' === $fallback->post_status ?
+        pvdak_home_configured_page_id( $fallback->ID ) : 0;
 }
 
 function pvdak_legal_topic_pages( $parent_id = 0 ) {
-    if ( ! $parent_id ) {
+    if ( 0 === $parent_id || '0' === $parent_id ) {
         $parent_id = pvdak_legal_topics_root_id();
+    } else {
+        $parent_id = pvdak_home_configured_page_id( $parent_id );
     }
-    if ( ! $parent_id ) {
+    if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
+         'publish' !== get_post_status( $parent_id ) ) {
         return array();
     }
     return get_posts( array(
         'post_type'      => 'page',
         'post_status'    => 'publish',
-        'post_parent'    => (int) $parent_id,
+        'post_parent'    => $parent_id,
         'posts_per_page' => -1,
         'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
         'order'          => 'ASC',
@@ -69,16 +84,32 @@ function pvdak_legal_normalize_topic_text( $value ) {
 
 function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
     if ( ! is_array( $pages ) ) { return array(); }
+    // Filter even for an empty search: an accidental draft/object in a
+    // caller-supplied collection must not become a public navigation card.
+    $pages = array_values( array_filter( $pages, static function ( $page ) {
+        return $page instanceof WP_Post && 'publish' === $page->post_status;
+    } ) );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     if ( '' === $needle ) { return $pages; }
     return array_values( array_filter( $pages, function ( $page ) use ( $needle ) {
-        if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ) { return false; }
         $haystack = pvdak_legal_normalize_topic_text(
             $page->post_title . ' ' . wp_strip_all_tags( $page->post_excerpt )
         );
         return false !== strpos( $haystack, $needle );
     } ) );
 }
+
+/**
+ * Search-result query URLs are transient filters, not separate SEO landings.
+ * Keep the clean homepage indexable and preserve other robots directives.
+ */
+function pvdak_legal_search_robots( $robots ) {
+    if ( is_front_page() && isset( $_GET['pvdak_topic'] ) ) {
+        $robots['noindex'] = true;
+    }
+    return $robots;
+}
+add_filter( 'wp_robots', 'pvdak_legal_search_robots', 20 );
 
 function pvdak_legal_topic_icon( $post_id ) {
     $choices = array( 'family', 'property', 'criminal', 'contract', 'work', 'finance', 'inheritance', 'business' );
