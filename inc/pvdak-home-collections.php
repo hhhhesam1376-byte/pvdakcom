@@ -134,36 +134,26 @@ function pvdak_home_faq_public_candidate( $page, $parent_id ) {
 function pvdak_home_faq_public_preview( $parent_id ) {
     $answered = array();
     $seen = array();
-    $batch_size = 40;
-    $scan_limit = 240;
-    for ( $offset = 0; $offset < $scan_limit; $offset += $batch_size ) {
-        $published = get_posts( array(
-            'post_type'      => 'page',
-            'post_status'    => 'publish',
-            'post_parent'    => $parent_id,
-            'has_password'   => false,
-            'posts_per_page' => $batch_size,
-            'offset'         => $offset,
-            'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
-            'order'          => 'ASC',
-            'suppress_filters' => false,
-            'no_found_rows'  => true,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-        ) );
-        if ( ! is_array( $published ) ) { break; }
-        foreach ( $published as $page ) {
-            // Recheck the returned object: third-party query filters can
-            // bypass the SQL password/status/parent constraints.
+    $tuple = null;
+    // Seek by the last scanned row, not by OFFSET; scan at most 240 public FAQs.
+    for ( $scanned = 0; $scanned < 240; $scanned += 40 ) {
+        $published = pvdak_legal_seek_rows( $parent_id, 41, $tuple );
+        $window = array_slice( $published, 0, 40 );
+        if ( ! $window ) { break; }
+        foreach ( $window as $page ) {
+            // WP_Query may be modified by plugins: never trust a returned row.
             if ( ! pvdak_home_faq_public_candidate( $page, $parent_id ) ||
                  ! pvdak_home_faq_answer_ready( $page ) ) { continue; }
             $id = pvdak_home_configured_page_id( $page->ID );
             if ( isset( $seen[ $id ] ) ) { continue; }
             $seen[ $id ] = true;
             $answered[] = $page;
-            if ( count( $answered ) >= 12 ) { break 2; }
+            if ( count( $answered ) >= 12 ) { return $answered; }
         }
-        if ( count( $published ) < $batch_size ) { break; }
+        if ( count( $published ) <= 40 ) { break; }
+        // A malformed final row must not become a public cursor.
+        $tuple = pvdak_legal_seek_tuple( end( $window ) );
+        if ( null === $tuple ) { break; }
     }
     return $answered;
 }
@@ -196,38 +186,30 @@ function pvdak_home_faq_parent_id() {
 function pvdak_home_faq_audit_scan( $parent_id, $collect = false ) {
     $report = array( 'total' => 0, 'written' => 0, 'complete' => false, 'pages' => array() );
     if ( ! $parent_id ) { $report['complete'] = true; return $report; }
-    $batch_size = 80;
-    $max_scanned = 10000;
-    for ( $offset = 0; $offset < $max_scanned; $offset += $batch_size ) {
-        $rows = get_posts( array(
-            'post_type' => 'page',
-            'post_status' => 'publish',
-            'post_parent' => $parent_id,
-            'posts_per_page' => $batch_size + 1,
-            'offset' => $offset,
-            'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
-            'no_found_rows' => true,
-            'suppress_filters' => false,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-        ) );
-        if ( ! is_array( $rows ) ) { return $report; }
-        foreach ( array_slice( $rows, 0, $batch_size ) as $page ) {
+    $tuple = null;
+    // Bounded staff-only keyset scan: include password Pages in total, not written.
+    // No deep OFFSET; at most 125 queries of 80 rows plus one look-ahead.
+    for ( $scanned = 0; $scanned < 10000; $scanned += 80 ) {
+        $rows = pvdak_legal_seek_rows( $parent_id, 81, $tuple, 'after', true );
+        $window = array_slice( $rows, 0, 80 );
+        foreach ( $window as $page ) {
             if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
                  'publish' !== $page->post_status ||
                  pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
-                 ! pvdak_home_configured_page_id( $page->ID ) ) {
-                $report['complete'] = false;
-                return $report; // A modified query must never report readiness.
+                 ! pvdak_home_configured_page_id( $page->ID ) ||
+                 null === pvdak_legal_seek_tuple( $page ) ) {
+                return $report; // Never report a modified/invalid query as complete.
             }
             ++$report['total'];
             if ( pvdak_home_faq_answer_ready( $page ) ) { ++$report['written']; }
             if ( $collect ) { $report['pages'][] = $page; }
         }
-        if ( count( $rows ) <= $batch_size ) {
+        if ( count( $rows ) <= 80 ) {
             $report['complete'] = true;
             return $report;
         }
+        $tuple = pvdak_legal_seek_tuple( end( $window ) );
+        if ( null === $tuple ) { return $report; }
     }
     // More than 10,000 published FAQs: partial counts, never a readiness PASS.
     return $report;

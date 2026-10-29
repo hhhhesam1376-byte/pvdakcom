@@ -45,7 +45,7 @@ function pvdak_legal_seek_decode( $token, $context ) {
  * only to this exact query object and always detach the filter afterward.
  * The same collation and menu_order/title/ID order are used for seek and sort.
  */
-function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 'after' ) {
+function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 'after', $include_password_for_staff_audit = false ) {
     global $wpdb;
     $scope = new stdClass();
     $reverse = 'before' === $direction;
@@ -60,13 +60,13 @@ function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 
         );
     };
     if ( null !== $tuple ) { add_filter( 'posts_where', $filter, 20, 2 ); }
-    try {
-        $rows = get_posts( array(
+    // Public callers stay capped at 41; the staff-only FAQ audit reads 80 + 1.
+    $max_rows = $include_password_for_staff_audit ? 81 : 41;
+    $args = array(
             'post_type' => 'page',
             'post_status' => 'publish',
             'post_parent' => $parent_id,
-            'has_password' => false,
-            'posts_per_page' => max( 1, min( 41, (int) $limit ) ),
+            'posts_per_page' => max( 1, min( $max_rows, (int) $limit ) ),
             'orderby' => array( 'menu_order' => $reverse ? 'DESC' : 'ASC',
                 'title' => $reverse ? 'DESC' : 'ASC', 'ID' => $reverse ? 'DESC' : 'ASC' ),
             'no_found_rows' => true,
@@ -74,7 +74,10 @@ function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 
             'update_post_meta_cache' => false,
             'update_post_term_cache' => false,
             'pvdak_legal_seek_scope' => $scope,
-        ) );
+    );
+    if ( ! $include_password_for_staff_audit ) { $args['has_password'] = false; }
+    try {
+        $rows = get_posts( $args );
     } finally {
         if ( null !== $tuple ) { remove_filter( 'posts_where', $filter, 20 ); }
     }

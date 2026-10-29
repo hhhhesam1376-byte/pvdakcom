@@ -4,16 +4,40 @@ if ( 'cli' !== PHP_SAPI ) { exit( 1 ); }
 define( 'ABSPATH', __DIR__ );
 class WP_Post {
     public $ID; public $post_title; public $post_excerpt; public $post_content; public $post_status;
-    public $post_type = 'page', $post_parent = 10, $post_password = '';
+    public $post_type = 'page', $post_parent = 10, $post_password = '', $menu_order = 0;
     public function __construct( $id, $content = 'A complete published answer for visitors.' ) {
-        $this->ID = $id; $this->post_title = 'Question ' . $id;
+        $this->ID = $id; $this->menu_order = $id; $this->post_title = 'Question ' . $id;
         $this->post_excerpt = ''; $this->post_content = $content; $this->post_status = 'publish';
     }
 }
 class WP_Term {}
 $GLOBALS['d31_items'] = array();
 $GLOBALS['d31_queries'] = array();
-function add_filter() {}
+class D31_Query {
+    private $args;
+    public function __construct( $args ) { $this->args = $args; }
+    public function get( $key ) { return $this->args[ $key ] ?? null; }
+}
+class D31_DB {
+    public $posts = 'wp_posts';
+    public function prepare( $sql, ...$values ) {
+        $GLOBALS['d31_seek'] = array(
+            'op' => false !== strpos( $sql, 'menu_order < %d' ) ? '<' : '>',
+            'tuple' => array( $values[0], $values[2], $values[4] ),
+        );
+        return $sql;
+    }
+}
+$GLOBALS['wpdb'] = new D31_DB();
+$GLOBALS['d31_filters'] = array();
+function add_filter( $name, $callback, $priority = 10, $accepted = 1 ) {
+    $GLOBALS['d31_filters'][ $name ][ $priority ] = $callback;
+}
+function remove_filter( $name, $callback, $priority = 10 ) {
+    if ( ( $GLOBALS['d31_filters'][ $name ][ $priority ] ?? null ) === $callback ) {
+        unset( $GLOBALS['d31_filters'][ $name ][ $priority ] );
+    }
+}
 function pvdak_home_page_id() { return 1; }
 function pvdak_home_configured_page_id( $id ) { return is_int( $id ) ? $id : 0; }
 function get_post( $id ) {
@@ -25,13 +49,28 @@ function get_post_type() { return 'page'; }
 function get_field( $field ) { return 'faq_parent_page' === $field ? 10 : null; }
 function get_posts( $args ) {
     $GLOBALS['d31_queries'][] = $args;
-    $offset = isset( $args['offset'] ) ? $args['offset'] : 0;
-    $limit = $args['posts_per_page'];
-    return array_slice( $GLOBALS['d31_items'], $offset, -1 === $limit ? null : $limit );
+    $GLOBALS['d31_seek'] = null;
+    foreach ( $GLOBALS['d31_filters']['posts_where'] ?? array() as $filter ) {
+        $filter( '', new D31_Query( $args ) );
+    }
+    $rows = $GLOBALS['d31_items'];
+    if ( null !== $GLOBALS['d31_seek'] ) {
+        $tuple = $GLOBALS['d31_seek']['tuple'];
+        $op = $GLOBALS['d31_seek']['op'];
+        $rows = array_values( array_filter( $rows, static function ( $page ) use ( $tuple, $op ) {
+            if ( ! $page instanceof WP_Post ) { return false; }
+            $cmp = $page->menu_order <=> $tuple[0];
+            if ( 0 === $cmp ) { $cmp = strcmp( $page->post_title, $tuple[1] ); }
+            if ( 0 === $cmp ) { $cmp = $page->ID <=> $tuple[2]; }
+            return '<' === $op ? $cmp < 0 : $cmp > 0;
+        } ) );
+    }
+    return array_slice( $rows, 0, $args['posts_per_page'] );
 }
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
 function strip_shortcodes( $value ) { return $value; }
 function get_the_title( $id ) { return 'Question ' . $id; }
+require_once dirname( __DIR__, 2 ) . '/inc/pvdak-legal-seek.php';
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-legal-landings.php';
 function d31_check( $condition, $message ) {
@@ -58,7 +97,7 @@ $GLOBALS['d31_items'] = array_map( static function ( $i ) { return new WP_Post( 
 $GLOBALS['d31_queries'] = array();
 d31_check( array() === pvdak_home_faq_pages(), 'do not display placeholders' ); $checks++;
 d31_check( 6 === count( $GLOBALS['d31_queries'] ), 'bounded to 240 scans' ); $checks++;
-d31_check( 40 === max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ), 'bounded batches' ); $checks++;
+d31_check( 41 === max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ), 'bounded seek batches' ); $checks++;
 $GLOBALS['d31_queries'] = array();
 d31_check( 500 === count( pvdak_home_faq_pages( true ) ), 'compatibility audit returns all 500' ); $checks++;
 d31_check( 81 === max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ), 'staff queries bounded to 81' ); $checks++;
@@ -113,4 +152,12 @@ $GLOBALS['d31_parent']->post_password = 'secret';
 d31_check( array() === pvdak_home_faq_pages(), 'protected FAQ parent cannot publish children' ); $checks++;
 d31_check( array() === pvdak_legal_topic_pages( 10 ), 'protected topic parent cannot list children' ); $checks++;
 unset( $GLOBALS['d31_parent'] );
+d31_check( ! array_filter( $GLOBALS['d31_queries'], static function ( $q ) {
+    return isset( $q['offset'] );
+} ), 'no deep SQL OFFSET in FAQ scans' ); $checks++;
+d31_check( empty( $GLOBALS['d31_filters']['posts_where'] ), 'all seek filters detached' ); $checks++;
+d31_check( ! array_filter( $GLOBALS['d31_queries'], static function ( $q ) {
+    return isset( $q['pvdak_legal_seek_scope'] ) &&
+        ( empty( $q['no_found_rows'] ) || ! empty( $q['suppress_filters'] ) );
+} ), 'seek query is bounded and scoped' ); $checks++;
 echo 'PVDAK_D31_PREVIEW_OK: ' . $checks . '/' . $checks . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";
