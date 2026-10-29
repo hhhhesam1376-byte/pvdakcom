@@ -27,7 +27,7 @@ flock -w 120 9 || { echo "STOP: deployment lock busy" >&2; exit 1; }
 [[ -f "$WP/wp-load.php" && -f "$SOURCE/pvdak-core.php" && -f "$DEST/pvdak-core.php" && -f "$ACCEPT" ]] || {
   echo "STOP: WordPress, plugin or private audit is missing" >&2; exit 1;
 }
-[[ ! -L "$SOURCE" && ! -L "$DEST" && -z "$(find "$SOURCE" -type l -print -quit)" ]] || {
+[[ ! -L "$SOURCE" && ! -L "$DEST" && -z "$(find "$SOURCE" -type l -print -quit)" && -z "$(find "$DEST" -type l -print -quit)" ]] || {
   echo "STOP: symlinked plugin source/destination is not allowed" >&2; exit 1;
 }
 SITE="$(wp option get siteurl --path="$WP" --skip-plugins --skip-themes)"
@@ -45,7 +45,7 @@ wp eval '
 ' --path="$WP"
 NEW="$(sed -n 's/^ \* Version: //p' "$SOURCE/pvdak-core.php" | head -1)"
 OLD="$(sed -n 's/^ \* Version: //p' "$DEST/pvdak-core.php" | head -1)"
-[[ "$NEW" == "0.8.14" && -n "$OLD" ]] || { echo "STOP: unexpected Core versions" >&2; exit 1; }
+[[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$OLD" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "STOP: malformed Core version headers" >&2; exit 1; }
 if diff -qr "$SOURCE" "$DEST" >/dev/null; then
   echo "CORE_ALREADY_MATCHES_BUNDLE version=$NEW"; exit 0
 fi
@@ -62,8 +62,9 @@ echo "CORE_UPGRADE_PREFLIGHT_OK installed=$OLD new=$NEW"
 [[ "$MODE" == "--upgrade" ]] || exit 0
 DB="$STATE/backups/pre-core-$(date -u +%Y%m%dT%H%M%SZ)-${BASHPID}.sql"
 wp db export "$DB" --path="$WP" --quiet
-[[ -s "$DB" ]] || { echo "STOP: DB backup failed" >&2; exit 1; }
+[[ -f "$DB" && ! -L "$DB" && -s "$DB" ]] || { echo "STOP: DB backup missing, empty or symlinked; Core unchanged" >&2; exit 1; }
 chmod 600 "$DB"
+[[ -r "$DB" && -s "$DB" ]] || { echo "STOP: DB backup unreadable; Core unchanged" >&2; exit 1; }
 STAGE="$(mktemp -d "$WP/wp-content/plugins/.pvdak-new.XXXXXXXX")"
 cp -a "$SOURCE/." "$STAGE/"
 find "$STAGE" -type d -exec chmod 755 {} +
@@ -91,8 +92,10 @@ STAGE=""
 diff -qr "$SOURCE" "$DEST" >/dev/null || { echo "STOP: installed copy mismatch" >&2; exit 1; }
 wp plugin is-active pvdak-core --path="$WP" --skip-plugins --skip-themes
 wp eval-file "$ACCEPT" --path="$WP"
-wp eval '
-  if (!defined("PVDAK_CORE_VERSION") || PVDAK_CORE_VERSION !== "0.8.14") WP_CLI::error("Version mismatch");
+PVDAK_EXPECTED_CORE_VERSION="$NEW" wp eval '
+  $expected = getenv("PVDAK_EXPECTED_CORE_VERSION");
+  if (!is_string($expected) || !preg_match("/\\A[0-9]+\\.[0-9]+\\.[0-9]+\\z/D", $expected) ||
+      !defined("PVDAK_CORE_VERSION") || PVDAK_CORE_VERSION !== $expected) WP_CLI::error("Version mismatch");
   if (!pvdak_maintenance_enabled() || pvdak_core_intake_open() || pvdak_core_member_intake_open() || pvdak_core_subscription_gate_on()) WP_CLI::error("Safety gate changed");
   WP_CLI::line("PVDAK_POST_RELEASE_GATES_CLOSED");
 ' --path="$WP"
