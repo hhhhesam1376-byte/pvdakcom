@@ -70,6 +70,7 @@ require_once get_template_directory() . '/pvdak-maintenance.php';
 /* Homepage content and editor (ACF Free-compatible). */
 require_once get_template_directory() . '/inc/pvdak-home-acf.php';
 require_once get_template_directory() . '/inc/pvdak-home-quick-links.php';
+require_once get_template_directory() . '/inc/pvdak-legal-seek.php';
 require_once get_template_directory() . '/inc/pvdak-legal-landings.php';
 require_once get_template_directory() . '/inc/pvdak-legal-index-pagination.php';
 require_once get_template_directory() . '/inc/pvdak-topic-card.php';
