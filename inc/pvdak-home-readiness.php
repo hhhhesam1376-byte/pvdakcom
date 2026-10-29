@@ -65,14 +65,10 @@ function pvdak_home_readiness_items() {
     $quick_count = count( $quick_pages );
     // Audit the unfiltered published Pages; the public renderer deliberately
     // omits empty answers, which otherwise made this check always PASS.
-    $faq_pages = pvdak_home_faq_pages( true );
-    $faq_count = count( $faq_pages );
-    $faq_written = 0;
-    foreach ( $faq_pages as $faq_page ) {
-        if ( $faq_page instanceof WP_Post && pvdak_home_faq_answer_ready( $faq_page ) ) {
-            $faq_written++;
-        }
-    }
+    $faq_audit = pvdak_home_faq_audit_counts();
+    $faq_count = $faq_audit['total'];
+    $faq_written = $faq_audit['written'];
+    $faq_audit_complete = $faq_audit['complete'];
     // Distinguish source delivery, actual plugin installation and safe activation.
     $core_source = get_template_directory() . '/packages/pvdak-core/pvdak-core.php';
     $core_plugin = WP_PLUGIN_DIR . '/pvdak-core/pvdak-core.php';
@@ -183,11 +179,11 @@ function pvdak_home_readiness_items() {
         array( 'مقالات نمونه یا کوتاه مجله', $magazine_count > 0 && 0 === $magazine_sample_count,
             $magazine_sample_count . ' مقاله نمونه یا کوتاه در حداکثر ۱۲ نوشته اخیر تشخیص داده شد؛ محتوای واقعی را جایگزین کنید', admin_url( 'edit.php' ) ),
         array( 'اطلاعیه‌های PVDak', $notice_term > 0 && $notice_count > 0, $notice_count ? 'دارای اطلاعیه منتشرشده' : 'دسته اطلاعیه و نوشته منتشرشده لازم است', admin_url( 'edit.php' ) ),
-        array( 'پرسش‌های متداول', $faq_written > 0, $faq_written . ' پاسخ دارای عنوان و متن غیرنمونه از ' . $faq_count . ' برگه منتشرشده', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'پرسش‌های متداول', $faq_audit_complete && $faq_written > 0, $faq_written . ' پاسخ دارای عنوان و متن غیرنمونه از ' . $faq_count . ' برگه بررسی‌شده' . ( $faq_audit_complete ? '' : '؛ ممیزی ناقص است و تأیید نمی‌شود' ), admin_url( 'edit.php?post_type=page' ) ),
         array( 'چهار دسترسی سریع منتشرشده', 4 === $quick_count,
             $quick_count . ' از ۴ برگه معتبر انتخاب شده؛ برگه تکراری یا پیش‌نویس پذیرفته نمی‌شود', admin_url( 'admin.php?page=pvdak-home-content' ) ),
-        array( 'پاسخ‌های واقعی در FAQ', $faq_count > 0 && $faq_written === $faq_count,
-            $faq_written . ' از ' . $faq_count . ' پاسخ منتشرشده دارای متن است؛ تأیید تخصصی محتوا جداگانه لازم است', admin_url( 'edit.php?post_type=page' ) ),
+        array( 'پاسخ‌های واقعی در FAQ', $faq_audit_complete && $faq_count > 0 && $faq_written === $faq_count,
+            $faq_written . ' از ' . $faq_count . ' پاسخ بررسی‌شده دارای متن است؛ ' . ( $faq_audit_complete ? 'تأیید تخصصی محتوا جداگانه لازم است' : 'ممیزی ناقص است؛ هیچ تأییدی صادر نمی‌شود' ), admin_url( 'edit.php?post_type=page' ) ),
         array( 'مسیرهای اصلی و قالب برگه‌ها', count( $public_templates ) === $public_ready,
             $public_ready . ' از ' . count( $public_templates ) . ' برگه ورود، ثبت‌نام، بازیابی رمز، پنل، تماس، حریم خصوصی و قوانین با قالب صحیح منتشر شده‌اند', admin_url( 'edit.php?post_type=page' ) ),
         array( 'فهرست اصلی', has_nav_menu( 'primary' ), has_nav_menu( 'primary' ) ? 'فهرست اختصاص داده شده' : 'فهرست سایت را اختصاص دهید', admin_url( 'nav-menus.php' ) ),
