@@ -9,7 +9,9 @@ function pvdak_public_text_length( $value ) {
 }
 function pvdak_public_page_url($slug) {
   $p = get_page_by_path(sanitize_title($slug), OBJECT, 'page');
-  return $p && 'publish' === $p->post_status ? get_permalink($p->ID) : '';
+  return $p instanceof WP_Post && 'page' === $p->post_type &&
+    'publish' === $p->post_status && isset($p->post_password) &&
+    '' === $p->post_password ? get_permalink($p->ID) : '';
 }
 /**
  * Resolve a branded route only when the published Page actually uses its
@@ -52,7 +54,9 @@ function pvdak_public_template_page_url( $slug, $template ) {
     $page = 1 === count( $candidates ) ? $candidates[0] : null;
   }
   // A canonical Page with a wrong template or draft status cannot be bypassed.
-  if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ||
+  if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+       'publish' !== $page->post_status ||
+       ! isset( $page->post_password ) || '' !== $page->post_password ||
        $template !== get_page_template_slug( $page->ID ) ) { return ''; }
   return get_permalink( $page->ID );
 }
