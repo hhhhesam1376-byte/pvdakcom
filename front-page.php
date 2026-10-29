@@ -22,13 +22,23 @@ $legal_search_term = pvdak_legal_topic_search_term();
 // GET results are a subset: never live-search them as the complete collection.
 $legal_server_filtered = isset( $_GET['pvdak_topic'] ) && '' !== $legal_search_term;
 $legal_parent_id = pvdak_legal_topics_root_id();
-// The unfiltered homepage is a 48-card preview; the 49th detects overflow.
-// A nonempty GET search still examines all published direct children so a
-// matching Page outside the preview is never falsely reported as absent.
-$all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id, $legal_server_filtered ? 0 : 49 );
+// A bounded preview determines whether the homepage has published topics.
+// Search scans a separate bounded cursor window, never an unbounded GET query.
+$all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id, 49 );
 $legal_preview_limited = ! $legal_server_filtered && count( $all_legal_pages ) > 48;
-$legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
+$legal_search_cursor = $legal_server_filtered ? pvdak_legal_topic_search_cursor() : 0;
+$legal_search_batch = $legal_server_filtered ?
+    pvdak_legal_topic_search_batch( $legal_parent_id, $legal_search_term, $legal_search_cursor ) :
+    array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
+$legal_pages = $legal_server_filtered ? $legal_search_batch['pages'] :
+    pvdak_legal_filter_topic_pages( $all_legal_pages, '' );
 if ( $legal_preview_limited ) { $legal_pages = array_slice( $legal_pages, 0, 48 ); }
+$legal_search_has_next = $legal_server_filtered && null !== $legal_search_batch['next_cursor'];
+$legal_search_first_url = $legal_server_filtered ?
+    add_query_arg( 'pvdak_topic', $legal_search_term, home_url( '/' ) ) . '#topics' : '';
+$legal_search_next_url = $legal_search_has_next ?
+    add_query_arg( array( 'pvdak_topic' => $legal_search_term,
+        'pvdak_topic_offset' => $legal_search_batch['next_cursor'] ), home_url( '/' ) ) . '#topics' : '';
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
 $faq_archive  = pvdak_public_page_url( 'legal-faq' );
@@ -168,7 +178,7 @@ $svg_icons = array(
     </div>
 
     <?php if ( $legal_pages ): ?>
-    <p class="pvdak-home-section-caption" data-pvdak-topic-count role="status" aria-live="polite"><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
+    <p class="pvdak-home-section-caption" data-pvdak-topic-count role="status" aria-live="polite"><?php echo $legal_server_filtered ? 'در این بخش از جست‌وجو، ' : ''; ?><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
     <?php if ( $legal_preview_limited ): ?>
       <p class="pvdak-home-section-caption">این بخش پیش‌نمایش ۴۸ موضوع نخست است. برای جست‌وجوی همه موضوعات، عبارت را در فرم بالا وارد کنید و دکمه جست‌وجو را بزنید.</p>
     <?php endif; ?>
@@ -187,9 +197,23 @@ $svg_icons = array(
     <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status" hidden>موضوعی با این عبارت پیدا نشد.</p>
     <?php elseif ( '' !== $legal_search_term && $all_legal_pages ): ?>
       <p id="pvdak-search-empty" class="pvdak-home-search-empty" role="status">
-        موضوعی مطابق «<?php echo esc_html( $legal_search_term ); ?>» پیدا نشد.
-        <a href="<?php echo esc_url( home_url( '/#topics' ) ); ?>">نمایش همه موضوعات</a>
+        <?php echo $legal_search_has_next ?
+            'در این بخش از جست‌وجو نتیجه‌ای نبود؛ برای بررسی موضوعات بعدی ادامه دهید.' :
+            'موضوعی مطابق عبارت واردشده در این بخش پیدا نشد.'; ?>
       </p>
+    <?php endif; ?>
+    <?php if ( $legal_server_filtered && $all_legal_pages ): ?>
+      <nav class="pvdak-topic-search-pagination" aria-label="ادامه جست‌وجوی موضوعات حقوقی">
+        <?php if ( $legal_search_cursor > 0 ): ?>
+          <a href="<?php echo esc_url( $legal_search_first_url ); ?>">شروع دوباره جست‌وجو</a>
+        <?php endif; ?>
+        <?php if ( $legal_search_has_next ): ?>
+          <a href="<?php echo esc_url( $legal_search_next_url ); ?>" rel="next">بررسی موضوعات بعدی ←</a>
+        <?php endif; ?>
+        <?php if ( ! $legal_search_has_next && $legal_search_cursor > 0 ): ?>
+          <span role="status">پایان موضوعات منتشرشده برای این جست‌وجو</span>
+        <?php endif; ?>
+      </nav>
     <?php endif; ?>
   </section>
   <?php endif; ?>
