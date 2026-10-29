@@ -35,26 +35,46 @@ function pvdak_account_tool_url( $slug ) {
     if ( $page ) { return $page; }
     return home_url( '/' . $slug . '/' );
 }
-function pvdak_account_noindex( $robots ) {
+/**
+ * D31: Private account screens must stay private even when an editor renames
+ * a seeded Page slug. Recognize the five shipped templates as well as the
+ * legacy canonical slugs; unrelated Pages remain publicly cacheable.
+ */
+function pvdak_account_sensitive_screen() {
+    if ( ! is_page() ) { return false; }
     if ( is_page( array( 'account-login', 'account-profile', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
+        return true;
+    }
+    return is_page_template( array(
+        'page-templates/pvdak-login.php',
+        'page-templates/pvdak-profile.php',
+        'page-templates/pvdak-recovery.php',
+        'page-templates/pvdak-register.php',
+        'page-templates/pvdak-account.php',
+    ) );
+}
+
+function pvdak_account_noindex( $robots ) {
+    if ( pvdak_account_sensitive_screen() ) {
         $robots['noindex'] = true;
         $robots['nofollow'] = true;
     }
     return $robots;
 }
 add_filter( 'wp_robots', 'pvdak_account_noindex' );
+
+/** Protect private account HTML and reset-key URLs from public caches/referrers. */
 function pvdak_account_cache_protection() {
-    if ( is_page( array( 'account-login', 'account-profile', 'account-recovery', 'account-register', 'my-pvdak-account' ) ) ) {
-        // Recovery links carry WordPress reset keys: never cache or forward the
-        // URL in a Referer header to analytics, CDNs or third-party assets.
-        if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
-        nocache_headers();
-        header( 'X-Robots-Tag: noindex, nofollow', true );
-        // The canonical login screen now receives one-time reset keys too.
-        if ( is_page( array( 'account-login', 'account-recovery' ) ) ) {
-            header( 'Referrer-Policy: no-referrer', true );
-        }
-    }
+    if ( ! pvdak_account_sensitive_screen() ) { return; }
+    if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
+    // Headers may already have been sent by an unrelated plugin. Keep the
+    // cache opt-out flag, but never emit PHP header warnings in that case.
+    if ( headers_sent() ) { return; }
+    nocache_headers();
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+    // Reset links can carry one-time keys; private account URLs should never
+    // be forwarded as a Referer to external assets or destinations.
+    header( 'Referrer-Policy: no-referrer', true );
 }
 add_action( 'template_redirect', 'pvdak_account_cache_protection', 2 );
 function pvdak_profile_save() {
