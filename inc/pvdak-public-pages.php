@@ -16,15 +16,44 @@ function pvdak_public_page_url($slug) {
  * expected PHP template. Editors may change templates after the initial seed;
  * a published URL alone does not guarantee a functioning account screen.
  */
-function pvdak_public_template_page_url( $slug, $template ) {
-  $page = get_page_by_path( sanitize_title( $slug ), OBJECT, 'page' );
-  if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ||
-       $template !== get_page_template_slug( $page->ID ) ||
-       // A matching stored slug does not prove the PHP template was deployed.
-       // Fail closed rather than advertising a broken login/account route.
-       ! locate_template( $template, false, false ) ) {
-    return '';
+/** D31: only unique account templates can resolve a renamed Page. */
+function pvdak_public_account_template_pages( $template, $include_unpublished = false ) {
+  $allowed = array(
+    'page-templates/pvdak-login.php', 'page-templates/pvdak-register.php',
+    'page-templates/pvdak-recovery.php', 'page-templates/pvdak-profile.php',
+    'page-templates/pvdak-account.php',
+  );
+  if ( ! in_array( $template, $allowed, true ) ) { return array(); }
+  $statuses = $include_unpublished ? array( 'publish', 'draft', 'pending', 'private', 'future' ) : 'publish';
+  $found = get_posts( array(
+    'post_type' => 'page', 'post_status' => $statuses,
+    'posts_per_page' => 2, 'meta_key' => '_wp_page_template',
+    'meta_value' => $template, 'orderby' => 'ID', 'order' => 'ASC',
+    'no_found_rows' => true, 'suppress_filters' => true,
+  ) );
+  if ( ! is_array( $found ) ) { return array(); }
+  $pages = array();
+  foreach ( $found as $page ) {
+    if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+         ! in_array( $page->post_status, (array) $statuses, true ) ||
+         $template !== get_page_template_slug( $page->ID ) ) { continue; }
+    $pages[] = $page;
   }
+  return $pages;
+}
+function pvdak_public_template_page_url( $slug, $template ) {
+  // A Page with a missing PHP template is not a usable account destination.
+  if ( ! locate_template( $template, false, false ) ) { return ''; }
+  $page = get_page_by_path( sanitize_title( $slug ), OBJECT, 'page' );
+  if ( ! $page instanceof WP_Post ) {
+    // A renamed account Page is usable only with one published template match.
+    // Never guess between duplicates or select an unrelated information Page.
+    $candidates = pvdak_public_account_template_pages( $template );
+    $page = 1 === count( $candidates ) ? $candidates[0] : null;
+  }
+  // A canonical Page with a wrong template or draft status cannot be bypassed.
+  if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ||
+       $template !== get_page_template_slug( $page->ID ) ) { return ''; }
   return get_permalink( $page->ID );
 }
 function pvdak_public_page_seeds() {
@@ -53,10 +82,20 @@ function pvdak_public_create_missing_pages() {
        ! current_user_can('manage_options') || ! current_user_can('publish_pages') ) { return; }
   // A previous one-time completion flag may be stale: Pages can disappear
   // later, or a partial import can leave them unpublished. Always reconcile.
-  // Only absent slugs are created; existing Pages are never overwritten.
+  // Only absent routes are created; renamed account templates are preserved.
   $complete = true;
   foreach(pvdak_public_page_seeds() as $slug=>$p) {
     $existing = get_page_by_path($slug,OBJECT,'page');
+    if ( ! $existing ) {
+      // Do not auto-publish a duplicate account Page after an editor renames
+      // or unpublishes the original. Leave the existing Page untouched.
+      $template_pages = pvdak_public_account_template_pages( $p[1], true );
+      if ( $template_pages ) {
+        if ( 1 !== count( $template_pages ) ||
+             'publish' !== $template_pages[0]->post_status ) { $complete = false; }
+        continue;
+      }
+    }
     if ($existing) {
       // Do not alter editor-authored Pages. Only upgrade the exact original
       // boilerplate published by our own earlier PVDak page bootstrap.
