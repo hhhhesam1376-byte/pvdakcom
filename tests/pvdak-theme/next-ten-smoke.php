@@ -813,7 +813,26 @@ echo 'PVDAK_D14_ORIGINAL_FUNCTIONS_OK: ' . count($d14_results) .
  */
 $d30_installer = file_get_contents( $root . '/scripts/install-pvdak-core.sh' );
 $d30_status = file_get_contents( $root . '/scripts/pvdak-status.sh' );
+$d30_drill = file_get_contents( $root . '/scripts/pvdak-restore-drill.sh' );
 $d30_checks = array(
+    'isolated backup restore rehearsal available' => is_string( $d30_drill ) &&
+        strpos( $d30_drill, 'D30_FILES_RESTORE_OK' ) !== false &&
+        strpos( $d30_drill, 'diff -qr -- "$THEME" "$SCRATCH/theme"' ) !== false &&
+        strpos( $d30_drill, 'diff -qr -- "$CORE" "$SCRATCH/core"' ) !== false,
+    'private backup path and symlink controls' =>
+        strpos( $d30_drill, '"$resolved" == "$BACKUP_ROOT/"*' ) !== false &&
+        strpos( $d30_drill, 'contains symlink' ) !== false &&
+        strpos( $d30_drill, 'backup root is inside public web tree' ) !== false,
+    'no live SQL connection' =>
+        strpos( $d30_drill, '--skip-networking' ) !== false &&
+        strpos( $d30_drill, '--no-defaults' ) !== false &&
+        strpos( $d30_drill, '--binary-mode --local-infile=0' ) !== false &&
+        strpos( $d30_drill, '--secure-file-priv=' ) !== false &&
+        strpos( $d30_drill, 'wp db import' ) === false,
+    'no misleading SQL PASS in files-only mode' =>
+        strpos( $d30_drill, 'D30_SQL_RESTORE_NOT_TESTED' ) !== false &&
+        strpos( $d30_drill, '--files-only' ) !== false &&
+        strpos( $d30_drill, 'run as an unprivileged account' ) !== false,
     'upgrade version is dynamic' => strpos( $d30_installer, 'PVDAK_EXPECTED_CORE_VERSION="$NEW" wp eval' ) !== false &&
         strpos( $d30_installer, 'PVDAK_CORE_VERSION !== "0.8.14"' ) === false &&
         strpos( $d30_installer, '"$NEW" == "0.8.14"' ) === false,
