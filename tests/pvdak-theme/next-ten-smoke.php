@@ -882,3 +882,61 @@ if ( 0 !== pvdak_home_selected_category( 'magazine_category' ) ||
 $d31_collection_checks++;
 echo 'PVDAK_D31_COLLECTIONS_OK: ' . $d31_collection_checks .
     "/$d31_collection_checks original-source PHP cases (not WordPress E2E).\n";
+
+/**
+ * D31: exercise the original private-screen classifier and robots callback.
+ * No WordPress bootstrap, user data, cache plugin, or HTTP server is used.
+ * The actual response headers still require a WordPress/browser test.
+ */
+if ( ! function_exists( 'is_page' ) ) {
+    function is_page( $pages = null ) {
+        $slug = $GLOBALS['pvdak_d31_private_slug'] ?? '';
+        return null === $pages ? '' !== $slug : in_array( $slug, (array) $pages, true );
+    }
+}
+if ( ! function_exists( 'is_page_template' ) ) {
+    function is_page_template( $templates = '' ) {
+        return in_array( $GLOBALS['pvdak_d31_private_template'] ?? '', (array) $templates, true );
+    }
+}
+require_once $root . '/inc/pvdak-account-tools.php';
+require_once $root . '/inc/pvdak-auth.php';
+$private_cases = array(
+    array( 'account-login', '', true ),
+    array( 'account-profile', '', true ),
+    array( 'account-recovery', '', true ),
+    array( 'account-register', '', true ),
+    array( 'my-pvdak-account', '', true ),
+    array( 'renamed-login', 'page-templates/pvdak-login.php', true ),
+    array( 'renamed-profile', 'page-templates/pvdak-profile.php', true ),
+    array( 'renamed-recovery', 'page-templates/pvdak-recovery.php', true ),
+    array( 'renamed-register', 'page-templates/pvdak-register.php', true ),
+    array( 'renamed-dashboard', 'page-templates/pvdak-account.php', true ),
+    array( 'ordinary', 'page-templates/pvdak-information.php', false ),
+    array( 'ordinary', '', false ),
+    array( '', 'page-templates/pvdak-account.php', false ),
+);
+$private_checks = 0;
+foreach ( $private_cases as $case ) {
+    $GLOBALS['pvdak_d31_private_slug'] = $case[0];
+    $GLOBALS['pvdak_d31_private_template'] = $case[1];
+    $actual = pvdak_account_sensitive_screen();
+    $robots = pvdak_account_noindex( array( 'max-image-preview' => 'large' ) );
+    if ( $actual !== $case[2] ||
+         isset( $robots['noindex'] ) !== $case[2] ||
+         isset( $robots['nofollow'] ) !== $case[2] ||
+         'large' !== $robots['max-image-preview'] ) {
+        fwrite( STDERR, "PVD_D31_PRIVATE_TEMPLATE_FAIL: unexpected privacy route or robots result\n" );
+        exit( 1 );
+    }
+    $private_checks++;
+}
+$GLOBALS['pvdak_d31_private_slug'] = 'renamed-dashboard';
+$GLOBALS['pvdak_d31_private_template'] = 'page-templates/pvdak-account.php';
+pvdak_auth_disable_public_form_cache();
+if ( ! defined( 'DONOTCACHEPAGE' ) || true !== DONOTCACHEPAGE ) {
+    fwrite( STDERR, "PVD_D31_PRIVATE_TEMPLATE_FAIL: early cache opt-out missing\n" );
+    exit( 1 );
+}
+pvdak_account_cache_protection(); // No live HTTP headers are asserted here.
+echo "PVDAK_D31_PRIVATE_TEMPLATES_OK: {$private_checks}/{$private_checks} original-source PHP route/robots cases; cache opt-out checked; HTTP headers/WP NOT_TESTED.\n";
