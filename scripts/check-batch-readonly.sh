@@ -33,6 +33,7 @@ PVDAK_PRIVATE_SCRIPTS="$ROOT/scripts" php "$ROOT/tests/pvdak-theme/homepage-layo
 php "$ROOT/tests/pvdak-theme/editor-bootstrap-smoke.php"
 # D31 guards are part of the canonical read-only release gate, not orphan tests.
 php "$ROOT/tests/pvdak-theme/d31-homepage-preview-smoke.php"
+php "$ROOT/tests/pvdak-theme/d31-public-post-privacy-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-topic-search-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-legal-index-pagination-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-account-privacy-smoke.php"

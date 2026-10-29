@@ -73,5 +73,9 @@ d31_check( ! array_filter( $GLOBALS['d31_queries'], static function ( $q ) {
 } ), 'all search and preview queries bounded with no OFFSET' );
 d31_check( count( $GLOBALS['d31_filters']['posts_where'] ?? array() ) === 0,
     'no leaked SQL filter after searches' );
+$GLOBALS['d31_parent'] = d31_page( 7, 'Protected parent', 'publish', 'secret' );
+d31_check( array() === pvdak_legal_topic_search_batch( 7, 'منتشر' )['pages'],
+    'password-protected root blocks public search' );
+unset( $GLOBALS['d31_parent'] );
 echo 'PVDAK_D31_SEARCH_OK: ' . $GLOBALS['d31_checks'] . '/' . $GLOBALS['d31_checks'] .
     " original-source seek cases; WordPress/DB/HTTP NOT_TESTED.\n";

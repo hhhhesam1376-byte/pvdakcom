@@ -33,13 +33,22 @@ function pvdak_home_selected_category( $field ) {
 }
 
 /** Featured post selector is an editorial override, not a duplicate article. */
+/** D31: never expose protected/draft posts through editorial selections or summaries. */
+function pvdak_home_public_post_candidate( $post ) {
+    return $post instanceof WP_Post &&
+        isset( $post->post_type, $post->post_status, $post->post_password, $post->ID ) &&
+        'post' === $post->post_type && 'publish' === $post->post_status &&
+        '' === $post->post_password &&
+        pvdak_home_configured_page_id( $post->ID ) > 0;
+}
+
 function pvdak_home_selected_post( $field ) {
     $page_id = pvdak_home_collection_page_id();
     if ( ! $page_id || ! function_exists( 'get_field' ) ) { return null; }
     $selected = get_field( $field, $page_id );
     $id = pvdak_home_collection_selected_id( $selected );
     $post = $id ? get_post( $id ) : null;
-    if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) { return null; }
+    if ( ! pvdak_home_public_post_candidate( $post ) ) { return null; }
     // Featured override must belong to the matching selected category.
     $category_field = 'magazine_featured_post' === $field ? 'magazine_category' :
         ( 'news_featured_post' === $field ? 'news_category' : '' );
@@ -52,23 +61,35 @@ function pvdak_home_selected_post( $field ) {
 
 function pvdak_home_category_posts( $field, $limit = 3, $exclude = array() ) {
     $term_id = pvdak_home_selected_category( $field );
-    if ( ! $term_id ) { return array(); } // Never show unrelated posts.
-    return get_posts( array(
-        'post_type'              => 'post',
-        'post_status'            => 'publish',
-        'cat'                    => $term_id,
-        'posts_per_page'         => max( 1, min( 12, (int) $limit ) ),
-        'post__not_in'           => array_map( 'absint', $exclude ),
-        'orderby'                => 'date',
-        'order'                  => 'DESC',
-        'ignore_sticky_posts'    => true,
-        'suppress_filters'       => false,
-        'no_found_rows'         => true,
+    if ( ! $term_id ) { return array(); }
+    $limit = max( 1, min( 12, (int) $limit ) );
+    $excluded = array_map( 'absint', is_array( $exclude ) ? $exclude : array() );
+    $rows = get_posts( array(
+        'post_type' => 'post', 'post_status' => 'publish',
+        'has_password' => false, 'cat' => $term_id,
+        'posts_per_page' => $limit, 'post__not_in' => $excluded,
+        'orderby' => 'date', 'order' => 'DESC',
+        'ignore_sticky_posts' => true, 'suppress_filters' => false,
+        'no_found_rows' => true, 'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
     ) );
+    if ( ! is_array( $rows ) ) { return array(); }
+    $safe = array();
+    $seen = array_fill_keys( $excluded, true );
+    foreach ( $rows as $post ) {
+        if ( ! pvdak_home_public_post_candidate( $post ) ||
+             ! has_category( $term_id, $post ) ) { continue; }
+        $id = pvdak_home_configured_page_id( $post->ID );
+        if ( isset( $seen[ $id ] ) ) { continue; }
+        $seen[ $id ] = true;
+        $safe[] = $post;
+        if ( count( $safe ) >= $limit ) { break; }
+    }
+    return $safe;
 }
 
 function pvdak_home_post_summary( $post, $words = 22 ) {
-    if ( ! $post instanceof WP_Post ) { return ''; }
+    if ( ! pvdak_home_public_post_candidate( $post ) ) { return ''; }
     $text = has_excerpt( $post ) ? get_the_excerpt( $post ) : $post->post_content;
     return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $text ) ), $words, '…' );
 }
@@ -156,11 +177,14 @@ function pvdak_home_faq_parent_id() {
     // An explicitly invalid editorial selection must never fall back.
     if ( ! $id && ! $value ) {
         $default_faq = get_page_by_path( 'legal-faq', OBJECT, 'page' );
-        $id = $default_faq instanceof WP_Post && 'publish' === $default_faq->post_status ?
+        $id = $default_faq instanceof WP_Post && 'publish' === $default_faq->post_status &&
+            isset( $default_faq->post_password ) && '' === $default_faq->post_password ?
             pvdak_home_configured_page_id( $default_faq->ID ) : 0;
     }
-    return $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ?
-        $id : 0;
+    $parent = $id ? get_post( $id ) : null;
+    return $parent instanceof WP_Post && 'page' === $parent->post_type &&
+        'publish' === $parent->post_status && isset( $parent->post_password ) &&
+        '' === $parent->post_password ? $id : 0;
 }
 
 /**

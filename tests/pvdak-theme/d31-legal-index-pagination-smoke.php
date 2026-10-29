@@ -53,5 +53,9 @@ d31_check( max( array_column( $GLOBALS['d31_queries'], 'posts_per_page' ) ) === 
     'bounded queries without SQL OFFSET' );
 d31_check( false !== strpos( implode( ' ', $GLOBALS['d31_where'] ), 'wp_posts.post_title' ),
     'prepared compound WHERE applied' );
+$GLOBALS['d31_parent'] = d31_page( 7, 'Protected parent', 'publish', 'secret' );
+d31_check( array() === pvdak_legal_index_window( 7 )['pages'],
+    'password-protected root blocks public index' );
+unset( $GLOBALS['d31_parent'] );
 echo 'PVDAK_D31_INDEX_OK: ' . $GLOBALS['d31_checks'] . '/' . $GLOBALS['d31_checks'] .
     " original-source seek cases; WordPress/DB/HTTP NOT_TESTED.\n";

@@ -16,6 +16,10 @@ $GLOBALS['d31_queries'] = array();
 function add_filter() {}
 function pvdak_home_page_id() { return 1; }
 function pvdak_home_configured_page_id( $id ) { return is_int( $id ) ? $id : 0; }
+function get_post( $id ) {
+    if ( 10 !== $id ) { return null; }
+    return isset( $GLOBALS['d31_parent'] ) ? $GLOBALS['d31_parent'] : new WP_Post( 10 );
+}
 function get_post_status() { return 'publish'; }
 function get_post_type() { return 'page'; }
 function get_field( $field ) { return 'faq_parent_page' === $field ? 10 : null; }
@@ -104,4 +108,9 @@ $GLOBALS['d31_queries'] = array();
 $private_audit = pvdak_home_faq_audit_counts();
 d31_check( 2 === $private_audit['total'] && 1 === $private_audit['written'] &&
     $private_audit['complete'], 'protected FAQ is counted for staff but not marked public-ready' ); $checks++;
+$GLOBALS['d31_parent'] = new WP_Post( 10 );
+$GLOBALS['d31_parent']->post_password = 'secret';
+d31_check( array() === pvdak_home_faq_pages(), 'protected FAQ parent cannot publish children' ); $checks++;
+d31_check( array() === pvdak_legal_topic_pages( 10 ), 'protected topic parent cannot list children' ); $checks++;
+unset( $GLOBALS['d31_parent'] );
 echo 'PVDAK_D31_PREVIEW_OK: ' . $checks . '/' . $checks . " source-level PHP cases; WP/HTTP/host NOT_TESTED.\n";

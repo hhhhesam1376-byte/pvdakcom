@@ -27,8 +27,10 @@ function pvdak_legal_topics_root_id() {
         if ( pvdak_legal_topic_selection_configured( $selected ) ) {
             $raw = $selected instanceof WP_Post ? $selected->ID : $selected;
             $id = pvdak_home_configured_page_id( $raw );
-            return $id && 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ?
-                $id : 0;
+            $parent = $id ? get_post( $id ) : null;
+            return $parent instanceof WP_Post && 'page' === $parent->post_type &&
+                'publish' === $parent->post_status && isset( $parent->post_password ) &&
+                '' === $parent->post_password ? $id : 0;
         }
     }
 
@@ -36,7 +38,8 @@ function pvdak_legal_topics_root_id() {
     $fallback = get_page_by_path( 'legal-topics', OBJECT, 'page' );
     return $fallback instanceof WP_Post &&
         'page' === get_post_type( $fallback->ID ) &&
-        'publish' === $fallback->post_status ?
+        'publish' === $fallback->post_status &&
+        isset( $fallback->post_password ) && '' === $fallback->post_password ?
         pvdak_home_configured_page_id( $fallback->ID ) : 0;
 }
 
@@ -46,8 +49,10 @@ function pvdak_legal_topic_pages( $parent_id = 0, $limit = 49 ) {
     } else {
         $parent_id = pvdak_home_configured_page_id( $parent_id );
     }
-    if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
-         'publish' !== get_post_status( $parent_id ) ) {
+    $parent = $parent_id ? get_post( $parent_id ) : null;
+    if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type ||
+         'publish' !== $parent->post_status || ! isset( $parent->post_password ) ||
+         '' !== $parent->post_password ) {
         return array();
     }
     $rows = get_posts( array(
@@ -136,8 +141,10 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' 
     $result = array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
     $parent_id = pvdak_home_configured_page_id( $parent_id );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
-    if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
-         'publish' !== get_post_status( $parent_id ) || '' === $needle ) { return $result; }
+    $parent = $parent_id ? get_post( $parent_id ) : null;
+    if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type ||
+         'publish' !== $parent->post_status || ! isset( $parent->post_password ) ||
+         '' !== $parent->post_password || '' === $needle ) { return $result; }
     $context = 'search:' . $parent_id . ':' . hash( 'sha256', $needle );
     $tuple = is_string( $cursor ) && '' !== $cursor ?
         pvdak_legal_seek_decode( $cursor, $context ) : null;

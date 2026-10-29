@@ -41,6 +41,11 @@ function add_action() {}
 function wp_salt() { return 'isolated-d31-test-key'; }
 function wp_json_encode( $value, $flags = 0 ) { return json_encode( $value, $flags ); }
 function pvdak_home_configured_page_id( $id ) { return is_int( $id ) && $id > 0 ? $id : 0; }
+function get_post( $id ) {
+    if ( 7 !== $id ) { return null; }
+    if ( isset( $GLOBALS['d31_parent'] ) ) { return $GLOBALS['d31_parent']; }
+    $parent = new WP_Post(); $parent->ID = 7; return $parent;
+}
 function get_post_type( $id ) { return 7 === $id ? 'page' : false; }
 function get_post_status( $id ) { return 7 === $id ? 'publish' : false; }
 function is_page_template( $slug ) { return ! empty( $GLOBALS['d31_index_template'] ) && 'page-templates/legal-topics-index.php' === $slug; }

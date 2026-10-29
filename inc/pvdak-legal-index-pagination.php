@@ -20,8 +20,10 @@ function pvdak_legal_index_request() {
 function pvdak_legal_index_window( $parent_id, $token = '', $direction = 'after' ) {
     $result = array( 'pages' => array(), 'next_cursor' => '', 'prev_cursor' => '', 'active' => false );
     $parent_id = pvdak_home_configured_page_id( $parent_id );
-    if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
-         'publish' !== get_post_status( $parent_id ) ) { return $result; }
+    $parent = $parent_id ? get_post( $parent_id ) : null;
+    if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type ||
+         'publish' !== $parent->post_status || ! isset( $parent->post_password ) ||
+         '' !== $parent->post_password ) { return $result; }
     $context = 'index:' . $parent_id;
     $tuple = '' !== $token ? pvdak_legal_seek_decode( $token, $context ) : null;
     $result['active'] = null !== $tuple;
