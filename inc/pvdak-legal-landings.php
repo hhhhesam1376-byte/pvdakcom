@@ -40,7 +40,7 @@ function pvdak_legal_topics_root_id() {
         pvdak_home_configured_page_id( $fallback->ID ) : 0;
 }
 
-function pvdak_legal_topic_pages( $parent_id = 0 ) {
+function pvdak_legal_topic_pages( $parent_id = 0, $limit = 0 ) {
     if ( 0 === $parent_id || '0' === $parent_id ) {
         $parent_id = pvdak_legal_topics_root_id();
     } else {
@@ -54,7 +54,11 @@ function pvdak_legal_topic_pages( $parent_id = 0 ) {
         'post_type'      => 'page',
         'post_status'    => 'publish',
         'post_parent'    => $parent_id,
-        'posts_per_page' => -1,
+        // The public homepage requests only a 49-item preview; other callers
+        // retain complete published-child lookup (notably server-side search).
+        'posts_per_page' => is_int( $limit ) && $limit > 0 ? min( 96, $limit ) : -1,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
         'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
         'order'          => 'ASC',
         'suppress_filters' => false,

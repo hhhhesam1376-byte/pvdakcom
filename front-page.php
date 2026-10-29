@@ -20,10 +20,15 @@ if ( ! $news_feature && $news_other ) {
 }
 $legal_search_term = pvdak_legal_topic_search_term();
 // GET results are a subset: never live-search them as the complete collection.
-$legal_server_filtered = isset( $_GET['pvdak_topic'] );
+$legal_server_filtered = isset( $_GET['pvdak_topic'] ) && '' !== $legal_search_term;
 $legal_parent_id = pvdak_legal_topics_root_id();
-$all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id );
+// The unfiltered homepage is a 48-card preview; the 49th detects overflow.
+// A nonempty GET search still examines all published direct children so a
+// matching Page outside the preview is never falsely reported as absent.
+$all_legal_pages = pvdak_legal_topic_pages( $legal_parent_id, $legal_server_filtered ? 0 : 49 );
+$legal_preview_limited = ! $legal_server_filtered && count( $all_legal_pages ) > 48;
 $legal_pages = pvdak_legal_filter_topic_pages( $all_legal_pages, $legal_search_term );
+if ( $legal_preview_limited ) { $legal_pages = array_slice( $legal_pages, 0, 48 ); }
 $notice_posts = pvdak_home_category_posts( 'notice_category', 3 );
 $faq_pages    = pvdak_home_faq_pages();
 $faq_archive  = pvdak_public_page_url( 'legal-faq' );
@@ -58,7 +63,7 @@ $svg_icons = array(
       <p class="pvdak-home-eyebrow"><?php echo esc_html(pvdak_home_value('hero_label')); ?></p>
       <h1 id="hero-title"><?php echo esc_html(pvdak_home_value('hero_title')); ?></h1>
       <p class="pvdak-home-lead"><?php echo esc_html(pvdak_home_value('hero_description')); ?></p>
-      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( $all_legal_pages ? home_url( '/#topics' ) : home_url( '/' ) ); ?>" data-pvdak-server-filtered="<?php echo $legal_server_filtered ? '1' : '0'; ?>" role="search" aria-label="<?php echo esc_attr( $all_legal_pages ? 'جست‌وجوی موضوعات حقوقی' : 'جست‌وجوی مطالب حقوقی سایت' ); ?>">
+      <form class="pvdak-home-search" method="get" action="<?php echo esc_url( $all_legal_pages ? home_url( '/#topics' ) : home_url( '/' ) ); ?>" data-pvdak-server-filtered="<?php echo ( $legal_server_filtered || $legal_preview_limited ) ? '1' : '0'; ?>" role="search" aria-label="<?php echo esc_attr( $all_legal_pages ? 'جست‌وجوی موضوعات حقوقی' : 'جست‌وجوی مطالب حقوقی سایت' ); ?>">
         <span class="pvdak-home-search-info" aria-hidden="true">?</span>
         <label class="screen-reader-text" for="pvdak-topic-input"><?php echo $all_legal_pages ? 'موضوع حقوقی' : 'جست‌وجوی مطالب سایت'; ?></label>
         <input id="pvdak-topic-input" type="search" name="<?php echo $all_legal_pages ? 'pvdak_topic' : 's'; ?>" value="<?php echo esc_attr( $all_legal_pages ? $legal_search_term : get_search_query() ); ?>" maxlength="100" placeholder="<?php echo esc_attr( $all_legal_pages ? pvdak_home_value( 'hero_search_label' ) : 'جست‌وجو در مطالب حقوقی سایت…' ); ?>" required>
@@ -164,6 +169,9 @@ $svg_icons = array(
 
     <?php if ( $legal_pages ): ?>
     <p class="pvdak-home-section-caption" data-pvdak-topic-count role="status" aria-live="polite"><?php echo esc_html( number_format_i18n( count( $legal_pages ) ) ); ?> موضوع حقوقی قابل مشاهده است.</p>
+    <?php if ( $legal_preview_limited ): ?>
+      <p class="pvdak-home-section-caption">این بخش پیش‌نمایش ۴۸ موضوع نخست است. برای جست‌وجوی همه موضوعات، عبارت را در فرم بالا وارد کنید و دکمه جست‌وجو را بزنید.</p>
+    <?php endif; ?>
     <div class="pvdak-topics-swiper swiper" data-pvdak-swiper role="region" aria-roledescription="اسلایدر" aria-label="موضوعات حقوقی">
       <div id="pvdak-topics-track" class="pvdak-home-topics swiper-wrapper" data-pvdak-swiper-track>
         <?php foreach ( $legal_pages as $topic_index => $legal_page ): ?>

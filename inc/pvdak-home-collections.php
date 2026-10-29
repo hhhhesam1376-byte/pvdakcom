@@ -91,6 +91,40 @@ function pvdak_home_faq_answer_ready( $page ) {
         false === strpos( $body, 'پاسخ نمونه برای تکمیل' );
 }
 
+/**
+ * Public homepage FAQ is a 12-answer PREVIEW, not a full FAQ archive.
+ * Fetch published children in bounded batches so a large collection of
+ * empty placeholders does not allocate every Page on each homepage request.
+ * The management/readiness path still inspects the full source separately.
+ */
+function pvdak_home_faq_public_preview( $parent_id ) {
+    $answered = array();
+    $batch_size = 40;
+    $scan_limit = 240;
+    for ( $offset = 0; $offset < $scan_limit; $offset += $batch_size ) {
+        $published = get_posts( array(
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'post_parent'    => $parent_id,
+            'posts_per_page' => $batch_size,
+            'offset'         => $offset,
+            'orderby'        => array( 'menu_order' => 'ASC', 'title' => 'ASC' ),
+            'order'          => 'ASC',
+            'no_found_rows'  => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ) );
+        foreach ( $published as $page ) {
+            if ( pvdak_home_faq_answer_ready( $page ) ) {
+                $answered[] = $page;
+                if ( count( $answered ) >= 12 ) { break 2; }
+            }
+        }
+        if ( count( $published ) < $batch_size ) { break; }
+    }
+    return $answered;
+}
+
 /** Native hierarchical Pages are suitable for short informational FAQs. */
 function pvdak_home_faq_pages( $include_empty = false ) {
     $page_id = pvdak_home_collection_page_id();
@@ -108,6 +142,9 @@ function pvdak_home_faq_pages( $include_empty = false ) {
     if ( ! $id || 'page' !== get_post_type( $id ) || 'publish' !== get_post_status( $id ) ) {
         return array();
     }
+    // Only the staff audit requires every published source Page. The public
+    // accordion is bounded and still scans past early empty placeholders.
+    if ( ! $include_empty ) { return pvdak_home_faq_public_preview( $id ); }
     $published = get_posts( array(
         'post_type'      => 'page',
         'post_status'    => 'publish',
@@ -117,17 +154,8 @@ function pvdak_home_faq_pages( $include_empty = false ) {
         'order'          => 'ASC',
         'no_found_rows'  => true,
     ) );
-    // Read all published direct children before filtering. A fixed 30-item
-    // query silently hid valid answers after older placeholders.
-    // Admin readiness must also see the published-but-empty source Pages;
-    // the public homepage keeps using only the answered subset.
-    if ( $include_empty ) { return $published; }
-    // D08/D10: a published empty FAQ Page should never become a blank
-    // accordion in the employer demo. Keep the source Page untouched.
-    $answered = array_values( array_filter( $published, static function( $page ) {
-        return pvdak_home_faq_answer_ready( $page );
-    } ) );
-    return array_slice( $answered, 0, 12 );
+    // Staff readiness needs all published source Pages, including placeholders.
+    return $published;
 }
 
 /**
