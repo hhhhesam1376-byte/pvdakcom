@@ -54,7 +54,7 @@ function d31_cmp( $a, $b ) {
 }
 function get_posts( $args ) {
     $GLOBALS['d31_queries'][] = $args;
-    if ( ! empty( $args['offset'] ) || $args['posts_per_page'] > 41 ||
+    if ( ! empty( $args['offset'] ) || $args['posts_per_page'] > 49 ||
          ! empty( $args['suppress_filters'] ) ) { throw new RuntimeException( 'Unbounded or unfiltered query' ); }
     $GLOBALS['d31_seek'] = null;
     $where = '';
