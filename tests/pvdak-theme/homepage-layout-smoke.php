@@ -2,7 +2,11 @@
 /** No WP/DB: privacy-safe tests for hero, four editor-picked Pages & topics carousel. */
 define( 'ABSPATH', __DIR__ );
 define( 'OBJECT', 'OBJECT' ); // WordPress constant for the no-WP CTA fixture.
-class WP_Post { public $ID; public $post_content = ''; function __construct( $id ) { $this->ID = $id; } }
+class WP_Post {
+    public $ID, $post_content = '', $post_type = 'page', $post_status = 'publish';
+    public $post_password = '', $post_parent = 20, $post_title = '', $menu_order = 0;
+    function __construct( $id ) { $this->ID = $id; $this->post_title = 'Question ' . $id; }
+}
 $GLOBALS['quick_test_selection'] = array();
 $GLOBALS['quick_test_menu'] = array();
 $GLOBALS['quick_test_pages'] = array();
@@ -18,6 +22,11 @@ function pvdak_home_value( $key, $default = 0 ) {
         $GLOBALS['quick_test_selection'][ $key ] : $default;
 }
 function absint( $v ) { return abs( (int) $v ); }
+function pvdak_home_page_id() { return 1; }
+$GLOBALS['pvdak_layout_staff_cap'] = true;
+function current_user_can( $cap ) {
+    return 'edit_pages' === $cap && $GLOBALS['pvdak_layout_staff_cap'];
+}
 /** Exact production ID parser from pvdak-home-acf.php; the quick-links file is required below. */
 function pvdak_home_configured_page_id( $value ) {
     if ( ! is_int( $value ) && ! is_string( $value ) ) { return 0; }
@@ -330,7 +339,7 @@ pvdak_layout_expect(
 );
 pvdak_layout_expect(
     false !== strpos( $css, '.pvdak-home-community .pvdak-community-illustration' ) &&
-    preg_match( '/Version:\s*0[.]8[.](?:3[6-9]|[4-9][0-9])/', $css ) === 1,
+    preg_match( '/Version:\s*0[.]8[.](?:3[6-9]|[4-9][0-9]|[1-9][0-9]{2,})\\b/', $css ) === 1,
     'Theme version and responsive community vector styles exist'
 );
 // D08: Confirm admin checks the same published quick links and substantive FAQ.
@@ -341,7 +350,8 @@ pvdak_layout_expect(
     false !== strpos( $readiness, "'چهار دسترسی سریع منتشرشده'" ),
     'Admin readiness requires four real published quick Pages' );
 pvdak_layout_expect(
-    false !== strpos( $readiness, 'strip_shortcodes( $faq_page->post_content )' ) &&
+    false !== strpos( $readiness, 'pvdak_home_faq_audit_counts()' ) &&
+    false !== strpos( $readiness, '$faq_audit_complete' ) &&
     false !== strpos( $readiness, '$faq_written === $faq_count' ),
     'Admin readiness rejects empty FAQ answers, without writing content' );
 
@@ -354,7 +364,7 @@ pvdak_layout_expect(
 // Diagnose exact source/host parity when this contract is reported missing.
 // Never turn a missing template gate into a passing test.
 $template_guards = array(
-    'template slug inspected' => false !== strpos( $readiness, "get_page_template_slug( \$page->ID )" ),
+    'native template resolver inspected' => false !== strpos( $readiness, "pvdak_public_template_page_url( $slug, $expected_template )" ),
     'all required published templates counted' => false !== strpos( $readiness, 'count( $public_templates ) === $public_ready' ),
     'account page uses its native template' => false !== strpos( $readiness, "'my-pvdak-account' => 'page-templates/pvdak-account.php'" ),
 );
@@ -368,13 +378,14 @@ pvdak_layout_expect(
     'D05: required public Pages must be published with their actual native templates' );
 
 pvdak_layout_expect(
-    false !== strpos( $readiness, 'pvdak_home_faq_pages( true )' ) &&
+    false !== strpos( $readiness, 'pvdak_home_faq_audit_counts()' ) &&
+    false !== strpos( $readiness, '$faq_audit_complete && $faq_written > 0' ) &&
     false !== strpos( $readiness, '$faq_written > 0' ) &&
     false !== strpos( $readiness, '$faq_written === $faq_count' ),
     'D08: admin readiness counts published blank FAQ Pages as incomplete'
 );
 pvdak_layout_expect(
-    false !== strpos( file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' ), 'if ( $include_empty ) { return $published; }' ),
+    false !== strpos( file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' ), 'pvdak_home_faq_audit_scan( $id, true )' ),
     'D08: FAQ public and admin source selection remain distinct'
 );
 
@@ -396,13 +407,26 @@ function get_field( $name, $page_id ) {
     return 'faq_parent_page' === $name && 1 === (int) $page_id &&
         empty( $GLOBALS['pvdak_test_faq_unset'] ) ? 20 : null;
 }
-function get_posts( $args ) { return $GLOBALS['pvdak_faq_fixture']; }
+function get_posts( $args ) { return $GLOBALS['pvdak_faq_fixture'] ?? array(); }
+// Layout smoke uses bounded fake rows; D31 preview smoke exercises the real
+// SQL-scoped seek function against a dedicated WordPress stub.
+function pvdak_legal_seek_rows( $parent_id, $limit, $tuple = null, $direction = 'after', $staff = false ) {
+    if ( $staff && ! current_user_can( 'edit_pages' ) ) { return array(); }
+    return array_slice( get_posts( array() ), 0, $limit );
+}
+function pvdak_legal_seek_tuple( $page ) {
+    return $page instanceof WP_Post && pvdak_home_configured_page_id( $page->ID ) ?
+        array( $page->menu_order, $page->post_title, $page->ID ) : null;
+}
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
 function strip_shortcodes( $value ) { return preg_replace( '/\\[[^\\]]+\\]/', '', $value ); }
 $GLOBALS['quick_test_pages'][20] = 'publish';
-$faq_a = new WP_Post( 21 ); $faq_a->post_content = '<p>پاسخ واقعی اول</p>';
+$GLOBALS['pvdak_cta_pages'][20] = array(
+    'slug' => 'legal-faq', 'content' => '<p>برگه مادر FAQ</p>', 'state' => 'publish'
+);
+$faq_a = new WP_Post( 21 ); $faq_a->post_content = '<p>پاسخ واقعی اول برای بازدیدکنندگان</p>';
 $faq_b = new WP_Post( 22 ); $faq_b->post_content = '   ';
-$faq_c = new WP_Post( 23 ); $faq_c->post_content = '<p>پاسخ دوم</p>';
+$faq_c = new WP_Post( 23 ); $faq_c->post_content = '<p>پاسخ دوم کامل برای بازدیدکنندگان</p>';
 $GLOBALS['pvdak_faq_fixture'] = array( $faq_a, $faq_b, $faq_c );
 pvdak_layout_expect(
     count( pvdak_home_faq_pages() ) === 2 &&
@@ -432,7 +456,12 @@ $GLOBALS['pvdak_cta_pages'] = array(
 );
 function get_post( $id ) {
     $d = $GLOBALS['pvdak_cta_pages'][ $id ] ?? null;
-    if ( ! $d ) { return null; }
+    if ( ! $d ) {
+        if ( ! isset( $GLOBALS['quick_test_pages'][ $id ] ) ) { return null; }
+        $post = new WP_Post( $id );
+        $post->post_status = $GLOBALS['quick_test_pages'][ $id ];
+        return $post;
+    }
     $post = new WP_Post( $id );
     $post->post_type = 'page';
     $post->post_status = $d['state'];
@@ -445,10 +474,7 @@ function get_page_by_path( $slug, $output = OBJECT, $type = 'page' ) {
     }
     return null;
 }
-// D08: the real published FAQ parent is used when homepage ACF is unset.
-$GLOBALS['pvdak_cta_pages'][20] = array(
-    'slug' => 'legal-faq', 'content' => '<p>برگه مادر FAQ</p>', 'state' => 'publish'
-);
+// D08: the same published FAQ parent is used when homepage ACF is unset.
 $GLOBALS['pvdak_test_faq_unset'] = true;
 pvdak_layout_expect(
     count( pvdak_home_faq_pages() ) === 2 &&
@@ -508,9 +534,9 @@ $GLOBALS['pvdak_test_member_open'] = false;
 
 $collection_source = file_get_contents( dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php' );
 pvdak_layout_expect(
-    false !== strpos( $collection_source, "array_filter( \$published" ) &&
-    false !== strpos( $collection_source, 'strip_shortcodes( $page->post_content )' ) &&
-    false !== strpos( $collection_source, 'array_slice( $answered, 0, 12 )' ),
+    false !== strpos( $collection_source, 'pvdak_home_faq_public_candidate( $page, $parent_id )' ) &&
+    false !== strpos( $collection_source, 'pvdak_home_faq_answer_ready( $page )' ) &&
+    false !== strpos( $collection_source, 'count( $answered ) >= 12' ),
     'Published but empty FAQ Pages cannot appear as blank public accordions'
 );
 
@@ -603,8 +629,8 @@ $info_source = file_get_contents( $root . '/page-templates/pvdak-information.php
 pvdak_layout_expect(
     false !== strpos( $collection_source, 'function pvdak_home_faq_answer_ready' ) &&
     false !== strpos( $collection_source, "get_the_title( \$page->ID )" ) &&
-    false !== strpos( $collection_source, 'return pvdak_home_faq_answer_ready( $page );' ) &&
-    false !== strpos( $readiness_public_source, 'pvdak_home_faq_answer_ready( $faq_page )' ),
+    false !== strpos( $collection_source, '! pvdak_home_faq_answer_ready( $page )' ) &&
+    false !== strpos( $readiness_public_source, 'pvdak_home_faq_audit_counts()' ),
     'D08: blank-title/placeholder FAQ Pages cannot appear in accordion or pass admin readiness' );
 pvdak_layout_expect(
     false !== strpos( $info_source, "is_page( 'legal-faq' )" ) &&
@@ -619,7 +645,8 @@ pvdak_layout_expect(
     false !== strpos( $readiness_public_source, 'else { $magazine_sample_count++; }' ),
     'D09: zero items and short published placeholders cannot falsely pass editorial readiness' );
 pvdak_layout_expect(
-    false !== strpos( $collection_source, "'posts_per_page' => -1" ) &&
+    false !== strpos( $collection_source, 'for ( $scanned = 0; $scanned < 10000; $scanned += 80 )' ) &&
+    false !== strpos( $collection_source, 'pvdak_legal_seek_rows( $parent_id, 81, $tuple' ) &&
     false !== strpos( $collection_source, "stripos( \$body, 'lorem ipsum' )" ) &&
     false !== strpos( $collection_source, "preg_replace( '/[\\\\x{00A0}" ) &&
     false !== strpos( $readiness_public_source, '$privacy_length >= 200' ) &&
