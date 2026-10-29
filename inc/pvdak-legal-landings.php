@@ -120,53 +120,41 @@ function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
     } ) );
 }
 
-/** Strict public cursor; invalid input restarts at the first window. */
+/** Signed seek cursor from GET. Legacy numeric offsets are intentionally ignored. */
 function pvdak_legal_topic_search_cursor() {
-    if ( ! isset( $_GET['pvdak_topic_offset'] ) || ! is_string( $_GET['pvdak_topic_offset'] ) ) { return 0; }
-    $raw = $_GET['pvdak_topic_offset'];
-    return preg_match( '/^(?:0|[1-9][0-9]{0,6})$/D', $raw ) ? (int) $raw : 0;
+    $raw = isset( $_GET['pvdak_topic_after'] ) ? $_GET['pvdak_topic_after'] : '';
+    return is_string( $raw ) && strlen( $raw ) <= 1865 ? $raw : '';
 }
 
 /**
- * Search published direct children in bounded, deterministic windows.
- * A cursor counts inspected source Pages, not matches. This deliberately
- * avoids SQL LIKE/collation differences that can miss Persian variants.
- * At most 240 Pages are inspected and 48 cards returned per HTTP request;
- * even a window with zero matches offers continuation when more Pages exist.
+ * Inspect at most 240 public Pages and return at most 48 matches per request.
+ * Compound keyset navigation preserves menu_order/title/ID and avoids deep
+ * SQL OFFSET. A signed token is bound to parent and normalized search term.
+ * Empty result windows may still link to later published topics.
  */
-function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 ) {
+function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' ) {
     $result = array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
     $parent_id = pvdak_home_configured_page_id( $parent_id );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     if ( ! $parent_id || 'page' !== get_post_type( $parent_id ) ||
          'publish' !== get_post_status( $parent_id ) || '' === $needle ) { return $result; }
-    $cursor = is_int( $cursor ) && $cursor >= 0 && $cursor <= 9999999 ? $cursor : 0;
-    $batch_size = 40;
-    $scan_limit = 240;
-    $result_limit = 48;
-    for ( $offset = 0; $offset < $scan_limit; $offset += $batch_size ) {
-        $published = get_posts( array(
-            'post_type' => 'page',
-            'post_status' => 'publish',
-            'post_parent' => $parent_id,
-            'has_password' => false,
-            'posts_per_page' => $batch_size + 1,
-            'offset' => $cursor + $result['scanned'],
-            'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC', 'ID' => 'ASC' ),
-            'no_found_rows' => true,
-            'suppress_filters' => false,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-        ) );
-        if ( ! is_array( $published ) ) { return $result; }
-        $window = array_slice( $published, 0, $batch_size );
-        $seen = array();
-        foreach ( $window as $page ) {
+    $context = 'search:' . $parent_id . ':' . hash( 'sha256', $needle );
+    $tuple = is_string( $cursor ) && '' !== $cursor ?
+        pvdak_legal_seek_decode( $cursor, $context ) : null;
+    $seen = array();
+    $last_scanned = null;
+    for ( $offset = 0; $offset < 240; $offset += 40 ) {
+        $published = pvdak_legal_seek_rows( $parent_id, 41, $tuple );
+        $window = array_slice( $published, 0, 40 );
+        if ( ! $window ) { return $result; }
+        foreach ( $window as $position => $page ) {
             ++$result['scanned'];
             if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
                  'publish' !== $page->post_status ||
                  pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
-                 ! isset( $page->post_password ) || '' !== $page->post_password ) { continue; }
+                 ! isset( $page->post_password ) || '' !== $page->post_password ||
+                 null === pvdak_legal_seek_tuple( $page ) ) { continue; }
+            $last_scanned = $page;
             $id = pvdak_home_configured_page_id( $page->ID );
             if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
             $seen[ $id ] = true;
@@ -175,19 +163,20 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 )
             );
             if ( false !== strpos( $haystack, $needle ) ) {
                 $result['pages'][] = $page;
-                if ( count( $result['pages'] ) === $result_limit ) {
-                    $more = $result['scanned'] < $offset + count( $window ) || count( $published ) > $batch_size;
-                    if ( $more && $cursor + $result['scanned'] <= 9999999 ) {
-                        $result['next_cursor'] = $cursor + $result['scanned'];
+                if ( count( $result['pages'] ) === 48 ) {
+                    if ( $position + 1 < count( $window ) || count( $published ) > 40 ) {
+                        $result['next_cursor'] = pvdak_legal_seek_encode( $last_scanned, $context ) ?: null;
                     }
                     return $result;
                 }
             }
         }
-        if ( count( $published ) <= $batch_size ) { return $result; }
+        if ( null === $last_scanned || count( $published ) <= 40 ) { return $result; }
+        $tuple = pvdak_legal_seek_tuple( $last_scanned );
+        if ( null === $tuple ) { return $result; }
     }
-    if ( $cursor + $result['scanned'] <= 9999999 ) {
-        $result['next_cursor'] = $cursor + $result['scanned'];
+    if ( null !== $last_scanned ) {
+        $result['next_cursor'] = pvdak_legal_seek_encode( $last_scanned, $context ) ?: null;
     }
     return $result;
 }
@@ -197,7 +186,7 @@ function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = 0 )
  * Keep the clean homepage indexable and preserve other robots directives.
  */
 function pvdak_legal_search_robots( $robots ) {
-    if ( is_front_page() && ( isset( $_GET['pvdak_topic'] ) || isset( $_GET['pvdak_topic_offset'] ) ) ) {
+    if ( is_front_page() && ( isset( $_GET['pvdak_topic'] ) || isset( $_GET['pvdak_topic_offset'] ) || isset( $_GET['pvdak_topic_after'] ) ) ) {
         $robots['noindex'] = true;
     }
     return $robots;
