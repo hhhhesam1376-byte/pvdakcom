@@ -12,7 +12,10 @@ function pvdak_legal_seek_tuple( $post ) {
          ! preg_match( '/^-?(?:0|[1-9][0-9]{0,9})$/D', (string) $post->menu_order ) ) { return null; }
     $id = pvdak_home_configured_page_id( $post->ID );
     if ( ! $id ) { return null; }
-    return array( (int) $post->menu_order, $post->post_title, $id );
+    // Encode and decode must share the same contract: a malformed title must
+    // never create an unusable signed cursor or a broken next-page link.
+    $tuple = array( (int) $post->menu_order, $post->post_title, $id );
+    return pvdak_legal_seek_tuple_valid( $tuple ) ? $tuple : null;
 }
 
 function pvdak_legal_seek_encode( $post, $context ) {

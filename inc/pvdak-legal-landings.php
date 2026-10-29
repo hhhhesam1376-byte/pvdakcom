@@ -73,12 +73,15 @@ function pvdak_legal_topic_pages( $parent_id = 0, $limit = 49 ) {
     // draft, password-protected Page, foreign parent or non-Page in public cards.
     if ( ! is_array( $rows ) ) { return array(); }
     $safe = array();
+    $seen = array();
     foreach ( $rows as $page ) {
         if ( ! $page instanceof WP_Post ||
              'page' !== $page->post_type || 'publish' !== $page->post_status ||
              pvdak_home_configured_page_id( $page->post_parent ) !== $parent_id ||
-             '' !== $page->post_password ||
-             ! pvdak_home_configured_page_id( $page->ID ) ) { continue; }
+             ! isset( $page->post_password ) || '' !== $page->post_password ) { continue; }
+        $id = pvdak_home_configured_page_id( $page->ID );
+        if ( ! $id || isset( $seen[ $id ] ) ) { continue; }
+        $seen[ $id ] = true;
         $safe[] = $page;
         if ( count( $safe ) >= ( is_int( $limit ) && $limit > 0 ? min( 96, $limit ) : 49 ) ) { break; }
     }
@@ -109,11 +112,15 @@ function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
     if ( ! is_array( $pages ) ) { return array(); }
     // Filter even for an empty search: an accidental draft/object in a
     // caller-supplied collection must not become a public navigation card.
-    $pages = array_values( array_filter( $pages, static function ( $page ) {
-        return $page instanceof WP_Post && 'page' === $page->post_type &&
-            'publish' === $page->post_status &&
-            isset( $page->post_password ) && '' === $page->post_password &&
-            pvdak_home_configured_page_id( $page->ID ) > 0;
+    $seen = array();
+    $pages = array_values( array_filter( $pages, static function ( $page ) use ( &$seen ) {
+        if ( ! $page instanceof WP_Post || 'page' !== $page->post_type ||
+             'publish' !== $page->post_status ||
+             ! isset( $page->post_password ) || '' !== $page->post_password ) { return false; }
+        $id = pvdak_home_configured_page_id( $page->ID );
+        if ( ! $id || isset( $seen[ $id ] ) ) { return false; }
+        $seen[ $id ] = true;
+        return true;
     } ) );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     if ( '' === $needle ) { return $pages; }

@@ -27,6 +27,15 @@ $GLOBALS['d31_rows'] = array( d31_page( 1, 'A' ), d31_page( 2, 'B' ), d31_page( 
 $seek_first = pvdak_legal_seek_rows( 7, 2 );
 d31_check( array( 1, 2 ) === array_column( $seek_first, 'ID' ),
     'valid bounded seek still returns first two Pages' );
+// D31: generated cursors must satisfy the same tuple constraints as decoding.
+$long_title = d31_page( 88, str_repeat( 'x', 1025 ) );
+$bad_utf8_title = d31_page( 89, "\xFF" );
+d31_check( null === pvdak_legal_seek_tuple( $long_title ) &&
+    '' === pvdak_legal_seek_encode( $long_title, 'seek-contract:7' ),
+    'oversized post title never creates an unusable signed cursor' );
+d31_check( null === pvdak_legal_seek_tuple( $bad_utf8_title ) &&
+    '' === pvdak_legal_seek_encode( $bad_utf8_title, 'seek-contract:7' ),
+    'invalid UTF-8 title cannot become a cursor' );
 $seek_token = pvdak_legal_seek_encode( $seek_first[1], 'seek-contract:7' );
 $seek_tuple = pvdak_legal_seek_decode( $seek_token, 'seek-contract:7' );
 d31_check( is_array( $seek_tuple ) && 2 === $seek_tuple[2] &&
@@ -97,6 +106,13 @@ $GLOBALS['d31_injected'] = array( $bad_id, $bad_parent, $valid, $valid );
 $guarded = pvdak_legal_topic_search_batch( 7, 'منتشر' );
 d31_check( 1 === count( $guarded['pages'] ) && 99 === $guarded['pages'][0]->ID,
     'search rejects malformed and duplicate filtered rows' );
+// The unfiltered homepage preview and generic filter must not display
+// duplicate Page cards when a WordPress posts filter replays a row.
+$GLOBALS['d31_injected'] = array( $valid, $valid );
+d31_check( array( 99 ) === array_column( pvdak_legal_topic_pages( 7 ), 'ID' ),
+    'homepage topic preview deduplicates injected Page IDs' );
+d31_check( array( 99 ) === array_column( pvdak_legal_filter_topic_pages( array( $valid, $valid ), '' ), 'ID' ),
+    'generic topic filter deduplicates even with empty search' );
 unset( $GLOBALS['d31_injected'] );
 // A third-party posts filter may ignore the cursor and replay the same
 // 41-row window. Stop after detecting the repeated boundary, not after
