@@ -790,3 +790,95 @@ foreach ( $d30_checks as $name => $ok ) {
 }
 echo 'PVDAK_D30_SOURCE_OK: ' . count( $d30_checks ) .
     " source-only checks; actual restore NOT_TESTED.\n";
+
+
+/**
+ * D31: exercise original homepage collection selectors with synthetic ACF
+ * values. This is a PHP fixture against repository functions, not WP E2E.
+ */
+if ( ! class_exists( 'WP_Term' ) ) {
+    class WP_Term {
+        public $term_id;
+        public function __construct( $id ) { $this->term_id = $id; }
+    }
+}
+if ( ! function_exists( 'get_term' ) ) {
+    function get_term( $id, $taxonomy ) { return new WP_Term( $id ); }
+}
+if ( ! function_exists( 'is_wp_error' ) ) {
+    function is_wp_error( $value ) { return false; }
+}
+if ( ! function_exists( 'get_post' ) ) {
+    function get_post( $id ) {
+        $post = new WP_Post( $id, 'publish' );
+        $post->post_type = 'post';
+        return $post;
+    }
+}
+if ( ! function_exists( 'get_posts' ) ) {
+    function get_posts( $args ) {
+        $GLOBALS['pvdak_d31_collection_query'] = $args;
+        return array();
+    }
+}
+require_once $root . '/inc/pvdak-home-collections.php';
+$GLOBALS['pvdak_test_front_id'] = '21';
+$GLOBALS['pvdak_test_front_mode'] = 'page';
+$GLOBALS['pvdak_test_front_type'] = 'page';
+$GLOBALS['pvdak_test_front_status'] = 'publish';
+$d31_collection_checks = 0;
+foreach ( array(
+    array( 42, 42 ), array( '42', 42 ), array( new WP_Term( 42 ), 42 ),
+    array( '042', 0 ), array( '42junk', 0 ), array( '-42', 0 ),
+    array( true, 0 ), array( array( 'ID' => 42 ), 0 ),
+) as $case ) {
+    $GLOBALS['pvdak_test_home_field_value'] = $case[0];
+    if ( pvdak_home_selected_category( 'magazine_category' ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: category ID must be canonical\n" ); exit( 1 );
+    }
+    $d31_collection_checks++;
+}
+foreach ( array(
+    array( 17, 17 ), array( '17', 17 ), array( new WP_Post( 17 ), 17 ),
+    array( '017', 0 ), array( '17junk', 0 ), array( array( 'ID' => 17 ), 0 ),
+) as $case ) {
+    $GLOBALS['pvdak_test_home_field_value'] = $case[0];
+    $selected = pvdak_home_selected_post( 'featured_override' );
+    if ( ( $selected instanceof WP_Post ? $selected->ID : 0 ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: featured Post ID must be canonical\n" ); exit( 1 );
+    }
+    $d31_collection_checks++;
+}
+foreach ( array(
+    array( '31', 31 ), array( new WP_Post( 31 ), 31 ),
+    array( '031', 0 ), array( '31junk', 0 ),
+) as $case ) {
+    $GLOBALS['pvdak_test_home_field_value'] = $case[0];
+    unset( $GLOBALS['pvdak_d31_collection_query'] );
+    pvdak_home_faq_pages( true );
+    if ( ( $GLOBALS['pvdak_d31_collection_query']['post_parent'] ?? 0 ) !== $case[1] ) {
+        fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: FAQ parent must be canonical\n" ); exit( 1 );
+    }
+    $d31_collection_checks++;
+}
+foreach ( array( 'draft', 'private', 'trash' ) as $status ) {
+    $GLOBALS['pvdak_test_front_status'] = $status;
+    $GLOBALS['pvdak_test_home_field_reads'] = array();
+    $GLOBALS['pvdak_test_home_field_value'] = '42';
+    if ( 0 !== pvdak_home_selected_category( 'magazine_category' ) ||
+         null !== pvdak_home_selected_post( 'featured_override' ) ||
+         $GLOBALS['pvdak_test_home_field_reads'] ) {
+        fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: unpublished front Page read\n" ); exit( 1 );
+    }
+    $d31_collection_checks++;
+}
+$GLOBALS['pvdak_test_front_status'] = 'publish';
+$GLOBALS['pvdak_test_front_mode'] = 'posts';
+$GLOBALS['pvdak_test_home_field_reads'] = array();
+if ( 0 !== pvdak_home_selected_category( 'magazine_category' ) ||
+     $GLOBALS['pvdak_test_home_field_reads'] ) {
+    fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: latest-posts mode ACF read\n" ); exit( 1 );
+}
+$d31_collection_checks++;
+echo 'PVDAK_D31_COLLECTIONS_OK: ' . $d31_collection_checks .
+    "/$d31_collection_checks original-source PHP cases (not WordPress E2E).\n";

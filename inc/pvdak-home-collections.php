@@ -6,21 +6,38 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /** ACF Free taxonomy-select stores term IDs (but accepts object return too). */
+/**
+ * Homepage collections must read ACF from the same published static Page
+ * as the public homepage. Draft/private Pages and malformed Reading options
+ * must never leak an unrelated editorial selection into public sections.
+ */
+function pvdak_home_collection_page_id() {
+    $page_id = pvdak_home_page_id();
+    return $page_id && 'publish' === get_post_status( $page_id ) ? $page_id : 0;
+}
+
+/** ACF ID, WP_Post and WP_Term return formats; reject lossy PHP casts. */
+function pvdak_home_collection_selected_id( $value ) {
+    if ( $value instanceof WP_Post ) { $value = $value->ID; }
+    elseif ( $value instanceof WP_Term ) { $value = $value->term_id; }
+    return pvdak_home_configured_page_id( $value );
+}
+
 function pvdak_home_selected_category( $field ) {
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_collection_page_id();
     if ( ! $page_id || ! function_exists( 'get_field' ) ) { return 0; }
     $value = get_field( $field, $page_id );
-    $id = $value instanceof WP_Term ? (int) $value->term_id : absint( $value );
+    $id = pvdak_home_collection_selected_id( $value );
     $term = $id ? get_term( $id, 'category' ) : null;
     return ( $term && ! is_wp_error( $term ) ) ? $id : 0;
 }
 
 /** Featured post selector is an editorial override, not a duplicate article. */
 function pvdak_home_selected_post( $field ) {
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_collection_page_id();
     if ( ! $page_id || ! function_exists( 'get_field' ) ) { return null; }
     $selected = get_field( $field, $page_id );
-    $id = $selected instanceof WP_Post ? (int) $selected->ID : absint( $selected );
+    $id = pvdak_home_collection_selected_id( $selected );
     $post = $id ? get_post( $id ) : null;
     if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) { return null; }
     // Featured override must belong to the matching selected category.
@@ -76,10 +93,10 @@ function pvdak_home_faq_answer_ready( $page ) {
 
 /** Native hierarchical Pages are suitable for short informational FAQs. */
 function pvdak_home_faq_pages( $include_empty = false ) {
-    $page_id = (int) get_option( 'page_on_front' );
+    $page_id = pvdak_home_collection_page_id();
     $value = $page_id && function_exists( 'get_field' ) ?
         get_field( 'faq_parent_page', $page_id ) : null;
-    $id = $value instanceof WP_Post ? (int) $value->ID : absint( $value );
+    $id = pvdak_home_collection_selected_id( $value );
     // The public FAQ Page already exists in WordPress. If ACF has not been
     // configured, use its published children rather than hiding valid FAQs.
     // Never replace an explicitly chosen (even invalid) editorial parent.
