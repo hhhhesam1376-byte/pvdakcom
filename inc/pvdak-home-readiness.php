@@ -109,9 +109,9 @@ function pvdak_home_readiness_items() {
     );
     $public_ready = 0;
     foreach ( $public_templates as $slug => $expected_template ) {
-        $page = get_page_by_path( $slug, OBJECT, 'page' );
-        if ( $page instanceof WP_Post && 'publish' === $page->post_status &&
-             $expected_template === get_page_template_slug( $page->ID ) ) {
+        // Use the exact public resolver: a unique renamed account Page is
+        // ready, but drafts, missing PHP templates and duplicates are not.
+        if ( pvdak_public_template_page_url( $slug, $expected_template ) ) {
             $public_ready++;
         }
     }
