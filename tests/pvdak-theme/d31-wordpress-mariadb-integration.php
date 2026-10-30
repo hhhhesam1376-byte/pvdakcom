@@ -89,5 +89,33 @@ $check( array() === pvdak_legal_seek_rows( $parent, 10, null, 'after', true ),
 wp_set_current_user( $admin_id );
 $staff = pvdak_legal_seek_rows( $parent, 81, null, 'after', true );
 $check( 61 === count( $staff ), 'authorized staff audit includes password Page, excludes draft' );
+// Real WordPress roles: subscriber may navigate public Pages, but cannot
+// invoke the staff-only password-protected FAQ audit. Editor may audit.
+$subscriber_id = wp_create_user( 'ci_d31_subscriber', wp_generate_password( 32 ), 'ci-d31-subscriber@example.test' );
+$editor_id = wp_create_user( 'ci_d31_editor', wp_generate_password( 32 ), 'ci-d31-editor@example.test' );
+if ( is_wp_error( $subscriber_id ) || is_wp_error( $editor_id ) ) {
+    throw new RuntimeException( 'D31_WP_FAIL: create isolated test roles' );
+}
+( new WP_User( $subscriber_id ) )->set_role( 'subscriber' );
+( new WP_User( $editor_id ) )->set_role( 'editor' );
+wp_set_current_user( $subscriber_id );
+$check( array() === pvdak_legal_seek_rows( $parent, 10, null, 'after', true ),
+    'real subscriber cannot perform staff-only FAQ audit' );
+$check( 24 === count( pvdak_legal_index_window( $parent )['pages'] ),
+    'real subscriber can read public index without private Pages' );
+wp_set_current_user( $editor_id );
+$check( 61 === count( pvdak_legal_seek_rows( $parent, 81, null, 'after', true ) ),
+    'real editor can perform authorized staff audit' );
+$check( 48 === count( pvdak_legal_topic_search_batch( $parent, 'Topic' )['pages'] ),
+    'real editor search still excludes private Pages' );
+wp_set_current_user( $admin_id );
+
+// Configure a disposable HTTP fixture for the same WordPress/MariaDB instance.
+// This never runs outside the strictly guarded pvdak_ci database.
+update_post_meta( $parent, '_wp_page_template', 'page-templates/legal-topics-index.php' );
+$front_id = $make_page( 'CI D31 homepage' );
+update_option( 'show_on_front', 'page' );
+update_option( 'page_on_front', $front_id );
+echo 'PVDAK_D31_HTTP_PARENT_ID=' . $parent . "\n";
 echo 'PVDAK_D31_WP_MARIADB_OK: ' . $checks . '/' . $checks .
     " real WordPress/MariaDB checks on disposable CI DB; HTTP/browser/deploy NOT_TESTED.\n";
