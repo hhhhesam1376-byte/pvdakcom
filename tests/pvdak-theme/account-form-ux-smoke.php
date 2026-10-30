@@ -93,8 +93,9 @@ $checks = array(
     strpos($s['sms'],"check_admin_referer('pvdak_sms_send'")!==false &&
     strpos($s['sms'],"check_admin_referer('pvdak_sms_verify'")!==false &&
     strpos($s['sms'],'wp_hash_password($code)')!==false &&
-    strpos($s['sms'],'wp_check_password($code,$challenge')!==false &&
-    strpos($s['sms'],'$challenge[\'tries\']>=5')!==false &&
+     strpos($s['sms'],"wp_check_password(\\$code, \\$challenge['hash'])")!==false &&
+     strpos($s['sms'],"\\$challenge['tries'] >= 5")!==false &&
+     strpos($s['sms'],'pvdak_sms_claim_challenge(')!==false &&
     strpos($s['sms'],'delete_transient($key)')!==false,
   'SMS signup never assigns lawyer roles from self-report' =>
     strpos($s['sms'],"'role'=>get_role('pvdak_client')?'pvdak_client':'subscriber'")!==false &&
