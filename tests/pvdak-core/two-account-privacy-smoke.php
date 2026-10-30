@@ -185,7 +185,7 @@ pvdak_privacy_assert(
     false === strpos( pvdak_core_professional_dashboard(), 'BETA_CITY_ONLY' ),
     'Anonymous professional dashboard contains no private profile'
 );
-$GLOBALS['poison_query'] = true;
+$GLOBALS['poison_query'] = false;
 foreach ( array( 11, 22 ) as $id ) {
     $GLOBALS['viewer_id'] = $id;
     $self = 11 === $id ? 'ALPHA_CASE_ONLY' : 'BETA_CASE_ONLY';
@@ -203,6 +203,16 @@ foreach ( array( 11, 22 ) as $id ) {
     pvdak_privacy_assert( false !== strpos( $professional, $self_city ), 'Own professional status visible' );
     pvdak_privacy_assert( false === strpos( $professional, $other_city ), 'Foreign professional metadata hidden' );
     pvdak_privacy_assert( false === strpos( $professional, $other ), 'Professional dashboard exposes no client case titles' );
+    // A third-party query returning foreign private rows must fail closed,
+    // even if that means withholding the otherwise valid own rows.
+    $GLOBALS['poison_query'] = true;
+    $poisoned_list = pvdak_core_my_requests();
+    pvdak_privacy_assert( false === strpos( $poisoned_list, $self ) &&
+        false === strpos( $poisoned_list, $other ), 'Poisoned private request query shows neither account' );
+    $poisoned_dashboard = pvdak_core_dashboard();
+    pvdak_privacy_assert( false === strpos( $poisoned_dashboard, $self ) &&
+        false === strpos( $poisoned_dashboard, $other ), 'Poisoned dashboard fails closed' );
+    $GLOBALS['poison_query'] = false;
 }
 $GLOBALS['viewer_id'] = 33;
 $GLOBALS['poison_member_query'] = true;
@@ -213,6 +223,6 @@ pvdak_privacy_assert( $GLOBALS['write_attempts'] === 0, 'Read-only simulated vie
 pvdak_privacy_assert( '2026-10-23' === get_the_date( 'Y-m-d', 1101 ) &&
     '2026/10/23' === get_the_date( 'Y/m/d', 2202 ),
     'Date formatting mock covers both dashboard date formats' );
-$expected = 25; // 4 anonymous + 8 per user + 4 forged/write/date/foreign-query + 1 exact-count check.
+$expected = 29; // 4 anonymous + 10 per user + 4 forged/write/date/foreign-query + 1 exact-count check.
 pvdak_privacy_assert( $checks + 1 === $expected, 'Exact synthetic assertion count executed' );
-echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=25 (synthetic; no real accounts, data or writes)\n";
+echo "PVDAK_TWO_ACCOUNT_PRIVACY_OK: checks=" . $checks . " expected=29 (synthetic; no real accounts, data or writes)\n";
