@@ -138,7 +138,8 @@ $checks = array(
     strpos($v['portal'],"do_shortcode( '[pvdak_account_dashboard]' )")!==false &&
     strpos($v['portal'],"do_shortcode( '[pvdak_support_tickets]' )")!==false,
   '098-20 Theme version, local-only UI and safe fallback all present' =>
-    preg_match('/Version:\\s*0[.]8[.](?:3[8-9]|[4-9][0-9])/', $v['css'])===1 &&
+    preg_match('/Version:\\s*([0-9]+(?:[.][0-9]+){2})/', $v['css'], $theme_version)===1 &&
+    version_compare($theme_version[1], '0.8.38', '>=') &&
     strpos($v['css'],'WORK_BATCH_098')!==false &&
     strpos($v['javascript'],'fetch(')===false,
 
