@@ -1255,6 +1255,7 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
  ob_start();
  pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
  $empty_catalog_html = ob_get_clean();
+ fwrite( STDERR, 'D23_DIAGNOSTIC empty_catalog_html=' . substr( preg_replace( '/\\s+/', ' ', $empty_catalog_html ), 0, 450 ) . "\\n" );
  // A valid saved Page remains selectable even if the base catalog is empty.
  pvdak_expect( false !== strpos( $empty_catalog_html, 'value="11"' ) &&
      false !== strpos( $empty_catalog_html, 'value="18"' ),
