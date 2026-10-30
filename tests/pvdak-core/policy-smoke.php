@@ -1255,8 +1255,18 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
  ob_start();
  pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
  $empty_catalog_html = ob_get_clean();
- pvdak_expect( false !== strpos( $empty_catalog_html, 'name="pvdak_specialty_catalog_unavailable" value="1"' ),
-     'D23 empty specialty catalog marks the rendered form as lacking choices' );
+ // A valid saved Page remains selectable even if the base catalog is empty.
+ pvdak_expect( false !== strpos( $empty_catalog_html, 'value="11"' ) &&
+     false !== strpos( $empty_catalog_html, 'value="18"' ),
+     'D23 valid selected topics survive an empty base catalog' );
+ // Exercise the genuinely empty-checkbox form and concurrent save separately.
+ $GLOBALS['pvdak_mock_specialty_ids'] = array();
+ ob_start();
+ pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
+ $no_choices_html = ob_get_clean();
+ pvdak_expect( false !== strpos( $no_choices_html, 'name="pvdak_specialty_catalog_unavailable" value="1"' ),
+     'D23 no-checkbox form marks the catalog unavailable' );
+ $GLOBALS['pvdak_mock_specialty_ids'] = array( 11, 18 );
  $GLOBALS['pvdak_mock_empty_specialty_pages'] = false;
  $_POST = array( '_pvdak_specialties_nonce' => 'test', 'pvdak_specialty_catalog_unavailable' => '1' );
  pvdak_core_save_specialties( 501 );
