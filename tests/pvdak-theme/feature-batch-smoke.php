@@ -43,11 +43,12 @@ $checks = array(
         false === strpos($data['front'],'از کدام مسیر وارد می‌شوید؟'),
     'Auth is based on WordPress credentials, no parallel login database' =>
         false !== strpos($data['login'],'wp_signon(') && false !== strpos($data['login'],'check_admin_referer('),
-    'Recovery validates expiring WordPress token and never emails the password' =>
+    'Recovery uses WordPress one-use key and verifies saved password' =>
         false !== strpos($data['tools'],'retrieve_password(') &&
         false !== strpos($data['tools'],'check_password_reset_key(') &&
         false !== strpos($data['tools'],'reset_password(') &&
-        false !== strpos($data['tools'],'get_transient('),
+        false !== strpos($data['tools'],'wp_check_password(') &&
+        false !== strpos($data['tools'],'is_wp_error( check_password_reset_key( $key, $login ) )'),
     'Profile edit uses logged-in ID and nonce' =>
         false !== strpos($data['tools'],'wp_update_user(') &&
         false !== strpos($data['tools'],"get_current_user_id()") &&
