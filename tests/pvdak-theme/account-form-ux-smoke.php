@@ -298,7 +298,7 @@ $checks = array(
   'D31 daily guide exposes every permitted destination without disclosing records' =>
     strpos($s['admin-management'], '$destinations = array();') !== false &&
     strpos($s['admin-management'], "implode( '، ', \$destinations )") !== false &&
-    strpos($s['admin-management'], "pvdak_management_link_available( $link )") !== false &&
+    strpos($s['admin-management'], "pvdak_management_link_available( \$link )") !== false &&
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_support_ticket'") !== false &&
     strpos($s['admin-management'], "'edit-comments.php?comment_status=moderated'") !== false,
   'D31 missing homepage setup stays admin-only and Core absence is visible' =>
