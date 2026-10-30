@@ -483,7 +483,8 @@ function get_page_by_path( $slug, $output = OBJECT, $type = 'page' ) {
     }
     return null;
 }
-// D08: the same published FAQ parent is used when homepage ACF is unset.
+// D08: restore the published FAQ fixture after the service-CTA map reset.
+$GLOBALS['pvdak_cta_pages'][20] = array( 'slug' => 'legal-faq', 'content' => '<p>برگه مادر FAQ</p>', 'state' => 'publish' );
 $GLOBALS['pvdak_test_faq_unset'] = true;
 pvdak_layout_expect(
     count( pvdak_home_faq_pages() ) === 2 &&
