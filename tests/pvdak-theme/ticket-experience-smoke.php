@@ -106,7 +106,7 @@ $checks=array(
   substr_count($s['support'],'pvdak_support_ticket_unlock($lock);')===3,
  'followup ownership and closure rechecked under lock'=>strpos($s['support'],'$current=get_post($id);')!==false &&
   strpos($s['support'],'(int)$current->post_author===get_current_user_id()')!==false &&
-  strpos($s['support'],"'closed'!==get_post_meta(\$id,'_pvdak_support_status',true)")!==false,
+  strpos($s['support'],"in_array(get_post_meta(\$id,'_pvdak_support_status',true),array('open','answered'),true)")!==false,
  'staff rejects stale status and nonprivate tickets'=>strpos($s['support'],'name="pvdak_support_previous_state"')!==false &&
   strpos($s['support'],'$previous!==$expected_state')!==false &&
   strpos($s['support'],"'private'!==get_post_status(\$post_id)")!==false,
