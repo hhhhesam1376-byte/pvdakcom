@@ -7,7 +7,7 @@ import os
 import sys
 from html.parser import HTMLParser
 from urllib.parse import quote, urljoin, urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request, HTTPRedirectHandler, ProxyHandler, build_opener
 
 HOST = "http://127.0.0.1:8080"
 PARENT = os.environ.get("PVDAK_CI_D31_PARENT_ID", "")
@@ -49,13 +49,36 @@ def loopback_only(url):
     return parsed.scheme == "http" and parsed.netloc == "127.0.0.1:8080"
 
 
+class LoopbackRedirectHandler(HTTPRedirectHandler):
+    """Validate every redirect hop; urllib otherwise follows remote Location URLs."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not loopback_only(newurl):
+            raise AssertionError("D31_HTTP_ABORT: off-loopback redirect URL")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+# Ignore ambient HTTP_PROXY/HTTPS_PROXY settings on CI runners.
+opener = build_opener(ProxyHandler({}), LoopbackRedirectHandler())
+
+
+def redirect_rejected(target):
+    try:
+        LoopbackRedirectHandler().redirect_request(
+            Request(HOST + "/"), None, 302, "Found", {}, target
+        )
+    except AssertionError:
+        return True
+    return False
+
+
 def fetch(path):
     url = urljoin(HOST, path)
     # Pagination hrefs come from HTML. Never follow a remote or alternate-port
     # URL, even if a permalink/plugin configuration is unexpectedly wrong.
     if not loopback_only(url):
         raise AssertionError("D31_HTTP_ABORT: off-loopback navigation URL")
-    with urlopen(Request(url, headers={"User-Agent": "PVDak-D31-Isolated-CI"}), timeout=15) as response:
+    with opener.open(Request(url, headers={"User-Agent": "PVDak-D31-Isolated-CI"}), timeout=15) as response:
         if response.status != 200 or "text/html" not in response.headers.get("Content-Type", ""):
             raise AssertionError(f"HTTP response not HTML 200: {url}")
         data = response.read(2_000_000)
@@ -82,6 +105,16 @@ check(not loopback_only("http://127.0.0.1:8081/"),
       "alternate localhost port rejected")
 check(not loopback_only("https://127.0.0.1:8080/"),
       "unexpected HTTPS origin rejected")
+check(redirect_rejected("http://example.invalid/"),
+      "redirect handler blocks external Location")
+check(redirect_rejected("//example.invalid/"),
+      "redirect handler blocks protocol-relative external Location")
+check(redirect_rejected("http://127.0.0.1:8081/"),
+      "redirect handler blocks alternate-port Location")
+check(redirect_rejected("https://127.0.0.1:8080/"),
+      "redirect handler blocks unexpected HTTPS Location")
+check(redirect_rejected("http://user@127.0.0.1:8080/"),
+      "redirect handler blocks userinfo origin confusion")
 first = fetch(index_url)
 check(len(first.topic_links) == 24, "first HTTP index has 24 public topic links")
 check("Topic 001" in first.body_text and "Topic 025" not in first.body_text,
