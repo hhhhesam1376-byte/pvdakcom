@@ -130,9 +130,6 @@ if ( ! function_exists( 'wp_count_comments' ) ) {
 require_once $root . '/inc/pvdak-readiness-admin.php';
 
 // D31: a handler without its Page resolver cannot authorize a home shortcut.
-if ( ! function_exists( 'pvdak_home_admin_landing' ) ) {
-    function pvdak_home_admin_landing() {}
-}
 $GLOBALS['pvdak_mock_edit_pages'] = true;
 if ( pvdak_management_link_available( array(
     'ویرایش صفحه اصلی', '', 'edit_pages', 'admin.php?page=pvdak-home-content'
