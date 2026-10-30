@@ -97,8 +97,19 @@ $_GET['pvdak_topic'] = ' ملکی ';
 pvdak_topic_expect( pvdak_legal_topic_search_term() === 'ملکی', 'GET search term sanitized and trimmed' );
 $_GET['pvdak_topic'] = array( 'bad' );
 pvdak_topic_expect( pvdak_legal_topic_search_term() === '', 'Array query parameter rejected' );
+pvdak_topic_expect( pvdak_legal_topic_search_requested(), 'Malformed array GET remains an explicit search' );
+$_GET['pvdak_topic'] = "\xC3\x28";
+pvdak_topic_expect( '' === pvdak_legal_topic_search_term() &&
+    pvdak_legal_topic_search_requested(), 'Malformed UTF-8 GET does not become homepage preview' );
+$_GET['pvdak_topic'] = '<b></b>';
+pvdak_topic_expect( '' === pvdak_legal_topic_search_term() &&
+    pvdak_legal_topic_search_requested(), 'Sanitized-empty nonblank GET stays a filtered request' );
+$_GET['pvdak_topic'] = '   ';
+pvdak_topic_expect( ! pvdak_legal_topic_search_requested(),
+    'Whitespace-only GET still shows homepage preview' );
 unset( $_GET['pvdak_topic'] );
-pvdak_topic_expect( pvdak_legal_topic_search_term() === '', 'Unspecified query is empty' );
+pvdak_topic_expect( pvdak_legal_topic_search_term() === '' &&
+    ! pvdak_legal_topic_search_requested(), 'Unspecified query is empty and not requested' );
 
 // D31: exercise original-source root resolver, parent query and robots rules.
 // These are WordPress stubs, NOT a live database or HTTP response test.
