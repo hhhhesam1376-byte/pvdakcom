@@ -10,6 +10,10 @@ class WP_Post {
     public $post_title;
     public $post_excerpt;
     public $post_status;
+    public $post_type = 'page';
+    public $post_password = '';
+    public $post_parent = 25;
+    public $menu_order = 0;
     public function __construct( $title, $excerpt = '', $status = 'publish', $id = 0 ) {
         $this->ID = $id;
         $this->post_title = $title;
@@ -31,7 +35,15 @@ function get_field( $name, $id ) {
     $GLOBALS['pvdak_topic_mock_field_reads']++;
     return $GLOBALS['pvdak_topic_mock_selected'];
 }
-function get_page_by_path( $slug, $output, $type ) { return new WP_Post( 'موضوعات حقوقی', '', 'publish', 25 ); }
+function get_post( $id ) {
+    if ( ! in_array( $id, array( 12, 25, 26, 27, 28 ), true ) ) { return null; }
+    $post = new WP_Post( 'برگه آزمایشی', '', 27 === $id ? 'draft' : 'publish', $id );
+    if ( 28 === $id ) { $post->post_type = 'post'; }
+    return $post;
+}
+function get_page_by_path( $slug, $output, $type ) {
+    return 'legal-topics' === $slug && 'page' === $type ? get_post( 25 ) : null;
+}
 function get_posts( $args ) { $GLOBALS['pvdak_topic_mock_query'] = $args; return array(); }
 function is_front_page() { return $GLOBALS['pvdak_topic_mock_front']; }
 function wp_strip_all_tags( $text ) { return strip_tags( $text ); }
@@ -52,10 +64,10 @@ function pvdak_topic_expect( $condition, $description ) {
     echo "PASS: {$description}\n";
 }
 $pages = array(
-    new WP_Post( 'حقوق خانواده', 'طلاق و مسائل خانوادگی' ),
-    new WP_Post( 'دعاوی ملکی', 'مالکیت و املاک' ),
-    new WP_Post( 'قراردادها', 'تعهدات' ),
-    new WP_Post( 'حقوق کار', '', 'draft' ),
+    new WP_Post( 'حقوق خانواده', 'طلاق و مسائل خانوادگی', 'publish', 101 ),
+    new WP_Post( 'دعاوی ملکی', 'مالکیت و املاک', 'publish', 102 ),
+    new WP_Post( 'قراردادها', 'تعهدات', 'publish', 103 ),
+    new WP_Post( 'حقوق کار', '', 'draft', 104 ),
 );
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, 'خانواده' ) ) === 1, 'Persian title matches one Page' );
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, 'خانواده‌' ) ) === 1, 'Trailing half-space normalized' );
@@ -65,6 +77,21 @@ pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, 'حقوق' ) 
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, 'غیرموجود' ) ) === 0, 'Unmatched query produces no results' );
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $pages, '' ) ) === 3, 'Empty query also excludes draft Page' );
 pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( null, 'test' ) ) === 0, 'Unexpected source is safely ignored' );
+// Preserve current D31 fail-closed public Page guards in the older search smoke.
+$password = new WP_Post( 'حقوق خانواده', '', 'publish', 105 );
+$password->post_password = 'private';
+$wrong_type = new WP_Post( 'حقوق خانواده', '', 'publish', 106 );
+$wrong_type->post_type = 'post';
+$malformed = new WP_Post( 'حقوق خانواده', '', 'publish', '0107' );
+$duplicates = array_merge( $pages, array( $pages[0], $password, $wrong_type, $malformed ) );
+pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $duplicates, '' ) ) === 3,
+    'Empty search excludes duplicate, password, non-Page and malformed ID' );
+pvdak_topic_expect( count( pvdak_legal_filter_topic_pages( $duplicates, 'خانواده' ) ) === 1,
+    'Filtered search does not leak protected or duplicate Page' );
+pvdak_topic_expect( array() === pvdak_legal_filter_topic_pages( array( $password ), '' ),
+    'Password-protected Page never appears in public cards' );
+pvdak_topic_expect( array() === pvdak_legal_filter_topic_pages( array( $malformed ), '' ),
+    'Noncanonical Page ID is rejected before rendering' );
 
 $_GET['pvdak_topic'] = ' ملکی ';
 pvdak_topic_expect( pvdak_legal_topic_search_term() === 'ملکی', 'GET search term sanitized and trimmed' );
