@@ -21,18 +21,19 @@ $check = static function ( $ok, $label ) use ( &$checks ) {
     if ( ! $ok ) { throw new RuntimeException( 'D31_WP_FAIL: ' . $label ); }
     ++$checks;
 };
-$make_page = static function ( $title, $parent = 0, $status = 'publish', $password = '' ) {
+$make_page = static function ( $title, $parent = 0, $status = 'publish', $password = '', $slug = '' ) {
     $id = wp_insert_post( array(
         'post_type' => 'page', 'post_status' => $status,
         'post_parent' => $parent, 'post_title' => $title,
         'post_password' => $password, 'post_content' => 'CI-only topic',
+        'post_name' => $slug,
     ), true );
     if ( is_wp_error( $id ) || ! $id ) {
         throw new RuntimeException( 'D31_WP_FAIL: fixture insert' );
     }
     return (int) $id;
 };
-$parent = $make_page( 'CI D31 topics root' );
+$parent = $make_page( 'CI D31 topics root', 0, 'publish', '', 'legal-topics' );
 $foreign = $make_page( 'CI D31 other root' );
 $ids = array();
 for ( $i = 1; $i <= 60; ++$i ) {
@@ -116,6 +117,8 @@ update_post_meta( $parent, '_wp_page_template', 'page-templates/legal-topics-ind
 $front_id = $make_page( 'CI D31 homepage' );
 update_option( 'show_on_front', 'page' );
 update_option( 'page_on_front', $front_id );
+$check( pvdak_legal_topics_root_id() === $parent,
+    'homepage resolves the published canonical legal-topics root' );
 echo 'PVDAK_D31_HTTP_PARENT_ID=' . $parent . "\n";
 echo 'PVDAK_D31_WP_MARIADB_OK: ' . $checks . '/' . $checks .
     " real WordPress/MariaDB checks on disposable CI DB; HTTP/browser/deploy NOT_TESTED.\n";
