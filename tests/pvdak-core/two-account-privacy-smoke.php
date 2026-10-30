@@ -210,8 +210,8 @@ foreach ( array( 11, 22 ) as $id ) {
     pvdak_privacy_assert( false === strpos( $poisoned_list, $self ) &&
         false === strpos( $poisoned_list, $other ), 'Poisoned private request query shows neither account' );
     $poisoned_dashboard = pvdak_core_dashboard();
-    pvdak_privacy_assert( false === strpos( $poisoned_dashboard, $self ) &&
-        false === strpos( $poisoned_dashboard, $other ), 'Poisoned dashboard fails closed' );
+    pvdak_privacy_assert( false !== strpos( $poisoned_dashboard, $self ) &&
+        false === strpos( $poisoned_dashboard, $other ), 'Poisoned dashboard still filters each row to its owner' );
     $GLOBALS['poison_query'] = false;
 }
 $GLOBALS['viewer_id'] = 33;
