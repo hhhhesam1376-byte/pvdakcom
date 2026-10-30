@@ -15,6 +15,7 @@ function register_activation_hook() {}
 function register_deactivation_hook() {}
 function get_option( $name, $default = false ) { return $default; }
 function absint( $v ) { return abs( (int) $v ); }
+function sanitize_text_field( $value ) { return is_string( $value ) ? trim( strip_tags( $value ) ) : ''; }
 function esc_html( $v ) { return htmlspecialchars( (string) $v, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $v ) { return esc_html( $v ); }
 function esc_url( $v ) { return esc_html( $v ); }
