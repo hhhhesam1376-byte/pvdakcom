@@ -10,7 +10,8 @@ function pvdak_legal_index_request() {
     $before = isset( $_GET['pvdak_topics_before'] ) ? $_GET['pvdak_topics_before'] : '';
     // An ambiguous or malformed query always returns the first window.
     if ( ( '' !== $after && '' !== $before ) ||
-         ( ! is_string( $after ) || ! is_string( $before ) ) ) {
+         ! is_string( $after ) || ! is_string( $before ) ||
+         strlen( $after ) > 1865 || strlen( $before ) > 1865 ) {
         return array( 'token' => '', 'direction' => 'after' );
     }
     return '' !== $before ? array( 'token' => $before, 'direction' => 'before' ) :

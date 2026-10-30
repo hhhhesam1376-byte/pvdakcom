@@ -39,6 +39,9 @@ foreach ( array( array( 'pvdak_topics_after' => array( 'x' ) ),
     $_GET = $bad;
     d31_check( '' === pvdak_legal_index_request()['token'], 'ambiguous GET rejected' );
 }
+$_GET = array( 'pvdak_topics_after' => str_repeat( 'x', 1866 ) );
+d31_check( '' === pvdak_legal_index_request()['token'],
+    'oversized public cursor is discarded before decode' );
 $_GET = array( 'pvdak_topics_before' => $third['prev_cursor'] );
 d31_check( 'before' === pvdak_legal_index_request()['direction'], 'backward GET parsed' );
 d31_check( isset( pvdak_legal_index_robots( array() )['noindex'] ), 'cursor archive noindex' );

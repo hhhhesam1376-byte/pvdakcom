@@ -23,6 +23,31 @@ foreach ( $bad_seek_cases as $label => $args ) {
         $query_count === count( $GLOBALS['d31_queries'] ),
         'invalid seek rejected without SQL: ' . $label );
 }
+// Malformed public search input must not turn into an empty match-all or warn.
+$visible_page = d31_page( 90, 'حقوق شرکت' );
+$warning_handler = static function ( $severity, $message ) {
+    throw new ErrorException( $message, 0, $severity );
+};
+set_error_handler( $warning_handler );
+try {
+    d31_check( array() === pvdak_legal_filter_topic_pages( array( $visible_page ), "\xFF" ) &&
+        array() === pvdak_legal_filter_topic_pages( array( $visible_page ), array( 'حقوق' ) ),
+        'invalid Unicode and array search terms fail closed' );
+    $query_count = count( $GLOBALS['d31_queries'] );
+    d31_check( array() === pvdak_legal_topic_search_batch( 7, "\xFF" )['pages'] &&
+        $query_count === count( $GLOBALS['d31_queries'] ),
+        'invalid Unicode cannot start a database search' );
+    // Signed but malformed outer JSON is not a positional cursor envelope.
+    $bad_json = wp_json_encode( array(
+        'kind' => 1, 'scope' => 'seek-contract:7', 'tuple' => array( 0, 'A', 1 ),
+    ) );
+    $bad_payload = rtrim( strtr( base64_encode( $bad_json ), '+/', '-_' ), '=' );
+    $bad_token = $bad_payload . '.' . hash_hmac( 'sha256', $bad_payload, wp_salt( 'auth' ) );
+    d31_check( null === pvdak_legal_seek_decode( $bad_token, 'seek-contract:7' ),
+        'malformed signed envelope rejected without PHP warnings' );
+} finally {
+    restore_error_handler();
+}
 $GLOBALS['d31_rows'] = array( d31_page( 1, 'A' ), d31_page( 2, 'B' ), d31_page( 3, 'C' ) );
 $seek_first = pvdak_legal_seek_rows( 7, 2 );
 d31_check( array( 1, 2 ) === array_column( $seek_first, 'ID' ),

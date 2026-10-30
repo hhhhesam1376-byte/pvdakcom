@@ -102,14 +102,20 @@ function pvdak_legal_topic_search_term() {
 }
 
 function pvdak_legal_normalize_topic_text( $value ) {
-    $value = strtr( (string) $value, array( 'ي' => 'ی', 'ك' => 'ک', '‌' => ' ' ) );
+    // Malformed Unicode must not be coerced into an empty, match-all search.
+    if ( ! is_string( $value ) || 1 !== preg_match( '//u', $value ) ) { return ''; }
+    $value = strtr( $value, array( 'ي' => 'ی', 'ك' => 'ک', '‌' => ' ' ) );
     $value = preg_replace( '/[\x{064B}-\x{065F}\x{0670}]/u', '', $value );
+    if ( ! is_string( $value ) ) { return ''; }
     $value = preg_replace( '/\s+/u', ' ', $value );
+    if ( ! is_string( $value ) ) { return ''; }
     return trim( function_exists( 'mb_strtolower' ) ? mb_strtolower( $value, 'UTF-8' ) : strtolower( $value ) );
 }
 
 function pvdak_legal_filter_topic_pages( $pages, $search_term ) {
-    if ( ! is_array( $pages ) ) { return array(); }
+    // An invalid explicit search must fail closed, not become an empty match-all.
+    if ( ! is_array( $pages ) || ! is_string( $search_term ) ||
+         1 !== preg_match( '//u', $search_term ) ) { return array(); }
     // Filter even for an empty search: an accidental draft/object in a
     // caller-supplied collection must not become a public navigation card.
     $seen = array();
@@ -146,6 +152,9 @@ function pvdak_legal_topic_search_cursor() {
  */
 function pvdak_legal_topic_search_batch( $parent_id, $search_term, $cursor = '' ) {
     $result = array( 'pages' => array(), 'next_cursor' => null, 'scanned' => 0 );
+    if ( ! is_string( $search_term ) || 1 !== preg_match( '//u', $search_term ) ) {
+        return $result;
+    }
     $parent_id = pvdak_home_configured_page_id( $parent_id );
     $needle = pvdak_legal_normalize_topic_text( $search_term );
     $parent = $parent_id ? get_post( $parent_id ) : null;

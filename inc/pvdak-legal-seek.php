@@ -44,7 +44,7 @@ function pvdak_legal_seek_decode( $token, $context ) {
          ! hash_equals( hash_hmac( 'sha256', $parts[1], wp_salt( 'auth' ) ), $parts[2] ) ) { return null; }
     $raw = base64_decode( strtr( $parts[1], '-_', '+/' ), true );
     $decoded = is_string( $raw ) ? json_decode( $raw, true ) : null;
-    if ( ! is_array( $decoded ) || 3 !== count( $decoded ) ||
+    if ( ! is_array( $decoded ) || array_keys( $decoded ) !== array( 0, 1, 2 ) ||
          1 !== $decoded[0] || $context !== $decoded[1] ||
          ! is_array( $decoded[2] ) || 3 !== count( $decoded[2] ) ) { return null; }
     $tuple = $decoded[2];
