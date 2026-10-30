@@ -32,7 +32,7 @@ $checks = array(
     strpos($src, "pvdak_core_request_history_choice_valid( \$_GET['request_order']") !== false,
  'malformed search and pagination fail before private query' =>
     strpos($src, "strlen( \$search_input ) > 500") !== false &&
-    strpos($src, "(int) $raw_page > 1000") !== false &&
+    strpos($src, "(int) \$raw_page > 1000") !== false &&
     strpos($src, "if ( $invalid_filters )") !== false &&
     strpos($src, "فیلتر یا شماره صفحه معتبر نیست") !== false,
  'status filter' => strpos($src, "'_pvdak_request_state'") !== false,
