@@ -305,7 +305,7 @@ pvdak_public_smoke_require(
     strpos($verification_source, 'wp_hash_password($token)') !== false &&
     strpos($verification_source, 'DAY_IN_SECONDS') !== false &&
     strpos($verification_source, 'wp_check_password($token, $hash, $user_id)') !== false &&
-    strpos($verification_source, "delete_user_meta($user_id, '_pvdak_email_verification_token_hash')") !== false &&
+    strpos($verification_source, "delete_user_meta(\$user_id, '_pvdak_email_verification_token_hash')") !== false &&
     strpos($verification_source, 'remove_action(') !== false,
     'D07 verification token remains hashed, time-bound and one-use'
 );
