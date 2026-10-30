@@ -212,7 +212,8 @@ $checks = array(
     strpos($v['css'],'@media(prefers-reduced-motion:reduce)')!==false,
   '097-20 No fake data or new frontend request for UI' =>
     strpos($v['javascript'],'fetch(')===false &&
-    preg_match('/Version:\s*0[.]8[.](?:3[8-9]|[4-9][0-9])/', $v['css'])===1,
+    preg_match('/Version:\\s*([0-9]+(?:[.][0-9]+){2})/', $v['css'], $current_version)===1 &&
+    version_compare($current_version[1], '0.8.38', '>='),
 
   '01 Global branding with scales icon' =>
     strpos($v['header'],'pvdak-profile-brand-scale')!==false &&
