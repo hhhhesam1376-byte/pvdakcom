@@ -26,7 +26,8 @@ $checks=array(
  'D22 repeated followup gets rate feedback'=>strpos($s['support'],"\$result_state=\$ok?'followup_sent':(!\$valid_body?'invalid':(get_transient(\$key)?'slow':'failed'));")!==false,
  'D22 malformed audit entries are scalar-guarded'=>strpos($s['support'],"is_string(\$event['at'])")!==false,
  'status badges'=>strpos($s['support'],'pvdak-ticket-status--')!==false,
- 'creation date'=>strpos($s['support'],"get_the_date('j F Y'")!==false,
+ 'creation date'=>strpos($s['support'],"get_post_time('U'")!==false &&
+  strpos($s['support'],'pvdak_support_jalali_date(')!==false,
  'conversation count'=>strpos($s['support'],'number_format_i18n($message_count)')!==false,
  'private table with closed-by-default details'=>strpos($s['support'],'<table class="pvdak-ticket-table"')!==false &&
   strpos($s['support'],'class="pvdak-ticket-detail-row"')!==false &&
