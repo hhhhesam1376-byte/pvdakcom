@@ -317,8 +317,8 @@ $checks = array(
     strpos($s['admin-management'], "'edit_pvdak_professionals', 'edit.php?post_type=pvdak_professional'") !== false &&
     strpos($s['admin-management'], "current_user_can( \$object->cap->edit_posts )") !== false,
   'D31 native moderation remains visible to administrators' =>
-    strpos($s['admin-management'], "! current_user_can('manage_options')") !== false &&
-    strpos($s['admin-management'], "remove_menu_page('edit-comments.php')") !== false,
+    strpos($s['admin-management'], "current_user_can('moderate_comments')") !== false &&
+    strpos($s['admin-management'], "'moderate_comments', 'edit-comments.php'") !== false,
   'D31 dashboard shortcuts reuse the permission-checked queue allowlist' =>
     strpos($s['admin-management'], '$queue_routes = array(') !== false &&
     strpos($s['admin-management'], 'pvdak_management_link_available( $link )') !== false &&
