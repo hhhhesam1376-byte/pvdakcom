@@ -115,6 +115,7 @@ echo "PVDAK_NEXT_TEN_SOURCE_OK: {$count}/10 static assertions (runtime not teste
 // Execute the real, read-only readiness helpers in an isolated PHP fixture.
 // Hooks are stubbed; this does not bootstrap WordPress or read production data.
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', $root . '/' ); }
+if ( ! defined( 'OBJECT' ) ) { define( 'OBJECT', 'OBJECT' ); }
 if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
 // Count-only moderation mocks: never load comment authors, bodies or private cases.
 if ( ! function_exists( 'current_user_can' ) ) {
