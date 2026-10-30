@@ -101,6 +101,17 @@ function pvdak_legal_topic_search_term() {
     return is_array( $chars ) ? implode( '', array_slice( $chars, 0, 100 ) ) : '';
 }
 
+/**
+ * Distinguish an absent/blank homepage search from a malformed explicit GET.
+ * An array or invalid UTF-8 that sanitizes to an empty term must not silently
+ * fall back to the full topic preview.
+ */
+function pvdak_legal_topic_search_requested() {
+    if ( ! isset( $_GET['pvdak_topic'] ) ) { return false; }
+    if ( ! is_string( $_GET['pvdak_topic'] ) ) { return true; }
+    return '' !== trim( wp_unslash( $_GET['pvdak_topic'] ) );
+}
+
 function pvdak_legal_normalize_topic_text( $value ) {
     // Malformed Unicode must not be coerced into an empty, match-all search.
     if ( ! is_string( $value ) || 1 !== preg_match( '//u', $value ) ) { return ''; }
