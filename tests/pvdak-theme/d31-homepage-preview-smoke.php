@@ -34,6 +34,7 @@ class D31_DB {
 }
 $GLOBALS['wpdb'] = new D31_DB();
 $GLOBALS['d31_filters'] = array();
+function add_action( $name, $callback, $priority = 10, $accepted = 1 ) {}
 function add_filter( $name, $callback, $priority = 10, $accepted = 1 ) {
     $GLOBALS['d31_filters'][ $name ][ $priority ] = $callback;
 }
