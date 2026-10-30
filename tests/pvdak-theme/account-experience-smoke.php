@@ -174,9 +174,10 @@ $checks = array(
     strpos($v['portal'],"do_shortcode( '[pvdak_support_tickets]' )")!==false &&
     strpos($v['ticketcss'],'.pvdak-ticket-conversation')!==false &&
     strpos($v['ticketcss'],'WORK_BATCH_097')!==false,
-  '097-10 One sidebar supports keyboard accessible tabs' =>
+  '097-10 Workspace anchor navigation preserves keyboard focus' =>
     strpos($v['portal'],'data-pvdak-workspace')!==false &&
-    strpos($v['javascript'],"event.key !== 'Escape'")!==false &&
+    strpos($v['javascript'],"window.addEventListener('hashchange'")!==false &&
+    strpos($v['javascript'],"link.setAttribute('aria-current', 'location')")!==false &&
     strpos($v['javascript'],"destination.focus({ preventScroll: true })")!==false,
   '097-11 Login retains secure submit and simple separate registration link' =>
     strpos($v['login'],"wp_nonce_field('pvdak_login'")!==false &&
