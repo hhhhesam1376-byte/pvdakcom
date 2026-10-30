@@ -53,7 +53,7 @@ $checks = array(
   'Homepage readiness checks live preview and complete account routes' =>
     strpos($s['readiness'],"'account-register' => 'page-templates/pvdak-register.php'")===false &&
     strpos($s['readiness'],"'account-recovery' => 'page-templates/pvdak-recovery.php'")!==false &&
-    strpos($s['readiness'],"'دسترسی نمایشی بازدیدکننده بدون تعمیرات', ! $maintenance_on")!==false,
+    strpos($s['readiness'],"'دسترسی نمایشی بازدیدکننده بدون تعمیرات', ! \$maintenance_on")!==false,
   'Login screen owns both sign-in and sign-up with email and SMS modes' =>
     strpos($s['login'],'name="action" value="pvdak_login"')!==false &&
     strpos($s['login'],'data-pvdak-auth-tab="password"')!==false &&
@@ -139,7 +139,7 @@ $checks = array(
   'Account scripts available on profile and contact' => strpos( $s['functions'], "'account-profile', 'contact-us'" ) !== false,
   'Active navigation recognizes JS location marker' => strpos( $s['css'], '.pvdak-account-menu a[aria-current]{' ) !== false,
   'SMS registration redirect is visible without JavaScript' =>
-    strpos( $s['login'], "'sms-register'===$auth_value" ) !== false &&
+    strpos( $s['login'], "'sms-register'===\$auth_value" ) !== false &&
     strpos( $s['login'], 'data-pvdak-auth-pane="sms-register" <?php echo ($register_selected' ) !== false,
   'Both signup methods link to the published legal policies' =>
     substr_count( $s['login'], 'esc_url($terms)' ) === 2 &&
@@ -161,7 +161,7 @@ $checks = array(
     strpos($s['register'],"'_pvdak_email_verification_pending',true")!==false,
   'D13 verified email requires a persisted positive marker' =>
     strpos($s['verification'],"'_pvdak_email_verified_at'")!==false &&
-    strpos($s['verification'],"delete_user_meta($user_id, '_pvdak_email_verification_pending')")!==false,
+    strpos($s['verification'],"delete_user_meta(\$user_id, '_pvdak_email_verification_pending')")!==false,
   'D13 concurrent verification cannot erase a successfully confirmed mailbox' =>
     strpos($s['verification'], "if (!\$valid && '1' === (string)get_user_meta(\$user_id, '_pvdak_email_verification_pending', true))") !== false &&
     strpos($s['verification'], "delete_user_meta(\$user_id, '_pvdak_email_verified_at')") !== false &&
@@ -234,9 +234,9 @@ $checks = array(
     strpos($s['tools'],'wp_check_password( $password, $fresh->user_pass, $fresh->ID )')!==false &&
     strpos($s['tools'],'is_wp_error( check_password_reset_key( $key, $login ) )')!==false &&
     strpos($s['tools'],"'status', 'failed'")!==false &&
-    strpos($s['recovery'],"if($status==='failed')")!==false,
+    strpos($s['recovery'],"if(\$status==='failed')")!==false,
   'D13 reset refuses all-whitespace passwords' =>
-    strpos($s['tools'],"'' === trim( $password )")!==false,
+    strpos($s['tools'],"'' === trim( \$password )")!==false,
 
   'D07 recovery token and password bounded on GET, POST and in the form' =>
     strpos($s['recovery'],'strlen($key)<=64')!==false &&
@@ -295,7 +295,7 @@ $checks = array(
     strpos($s['admin-management'], 'get_comments(') === false,
   'D31 daily guide exposes every permitted destination without disclosing records' =>
     strpos($s['admin-management'], '$destinations = array();') !== false &&
-    strpos($s['admin-management'], "implode( '، ', $destinations )") !== false &&
+    strpos($s['admin-management'], "implode( '، ', \$destinations )") !== false &&
     strpos($s['admin-management'], "pvdak_management_link_available( $link )") !== false &&
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_support_ticket'") !== false &&
     strpos($s['admin-management'], "'edit-comments.php?comment_status=moderated'") !== false,
