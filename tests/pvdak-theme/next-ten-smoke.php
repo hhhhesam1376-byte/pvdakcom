@@ -389,7 +389,7 @@ if ( ! function_exists( 'add_filter' ) ) { function add_filter() {} }
 if ( ! function_exists( 'add_shortcode' ) ) { function add_shortcode() {} }
 if ( ! class_exists( 'WP_Post' ) ) {
     class WP_Post {
-        public $ID, $post_status, $post_type;
+        public $ID, $post_status, $post_type, $post_password = '';
         public function __construct( $id, $status = 'publish' ) {
             $this->ID = $id; $this->post_status = $status; $this->post_type = 'page';
         }
