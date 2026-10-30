@@ -64,8 +64,8 @@ pvdak_public_smoke_require(
 $support_source = file_get_contents( $root . '/inc/pvdak-support-tickets.php' );
 pvdak_public_smoke_require(
  false !== strpos( $code['login'], 'id="pvdak-login-result"' ) &&
- false !== strpos( $code['login'], 'اطلاعات ورود تأیید نشد' ) &&
- false !== strpos( $code['auth'], "add_query_arg('error','1',pvdak_auth_login_url())" ),
+ false !== strpos( $code['login'], 'نام کاربری یا رمز عبور اشتباه است' ) &&
+ false !== strpos( $code['auth'], "'pvdak_login_error'=>'invalid'" ),
  'D07 password failure must return a generic visible error on the branded login page' );
 pvdak_public_smoke_require(
  false !== strpos( $support_source, "pvdak_auth_account_url() . '#pvdak-support'" ) &&
