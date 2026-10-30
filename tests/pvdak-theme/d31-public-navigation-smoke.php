@@ -16,6 +16,10 @@ $GLOBALS['d31_nav_menu'] = array();
 $GLOBALS['d31_nav_checks'] = 0;
 function add_action() {}
 function add_filter() {}
+$GLOBALS['d31_nav_shortcodes'] = array();
+function add_shortcode( $tag, $callback ) {
+    $GLOBALS['d31_nav_shortcodes'][ $tag ] = $callback;
+}
 function pvdak_home_configured_page_id( $v ) {
     return is_int( $v ) && $v > 0 ? $v : 0;
 }
@@ -61,6 +65,11 @@ function d31_nav_check( $condition, $message ) {
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-public-pages.php';
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-home-collections.php';
 require_once dirname( __DIR__, 2 ) . '/inc/pvdak-home-quick-links.php';
+d31_nav_check(
+    isset( $GLOBALS['d31_nav_shortcodes']['pvdak_forum'] ) &&
+    is_callable( $GLOBALS['d31_nav_shortcodes']['pvdak_forum'] ),
+    'Public Pages shortcode registration survives isolated WordPress bootstrap'
+);
 $public = new WP_Post( 11, 'public-quick' );
 $protected = new WP_Post( 12, 'protected-quick' ); $protected->post_password = 'secret';
 $draft = new WP_Post( 13, 'draft-quick' ); $draft->post_status = 'draft';
