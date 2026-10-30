@@ -74,4 +74,28 @@ jobs:
           PVDAK_CI_D31_ISOLATED: '1'
         run: |
           set -Eeuo pipefail
-          php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" --user=ciadmin eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-wordpress-mariadb-integration.php"
+          php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" --user=ciadmin eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-wordpress-mariadb-integration.php" | tee "$RUNNER_TEMP/pvdak-d31-wp-result.log"
+      - name: Check real localhost HTTP pagination, privacy and robots
+        shell: bash
+        env:
+          PVDAK_CI_D31_ISOLATED: '1'
+        run: |
+          set -Eeuo pipefail
+          export PVDAK_CI_D31_PARENT_ID
+          PVDAK_CI_D31_PARENT_ID="$(sed -n 's/^PVDAK_D31_HTTP_PARENT_ID=//p' "$RUNNER_TEMP/pvdak-d31-wp-result.log" | tail -n 1)"
+          [[ "$PVDAK_CI_D31_PARENT_ID" =~ ^[1-9][0-9]*$ ]] || { echo "FAIL: missing disposable D31 parent"; exit 1; }
+          php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/pvdak-wp" >"$RUNNER_TEMP/pvdak-d31-http-server.log" 2>&1 &
+          server_pid=$!
+          cleanup() {
+            rc=$?
+            if (( rc != 0 )); then tail -n 100 "$RUNNER_TEMP/pvdak-d31-http-server.log" || true; fi
+            kill "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          ready=0
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:8080/?page_id=$PVDAK_CI_D31_PARENT_ID" >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          [[ "$ready" == 1 ]] || { echo "FAIL: local WordPress HTTP did not start"; exit 1; }
+          python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-http-integration.py"
