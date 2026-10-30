@@ -41,9 +41,9 @@ check_ops( 'matched_missing' === $f['pvdak_case_consistency'], 'consistency allo
 check_ops( 'older30' === $f['pvdak_case_modified'], 'modified allowlist' );
 $_GET = array( 'pvdak_case_assignment' => array( 'assigned' ), 'pvdak_case_consistency' => 'fake', 'pvdak_case_modified' => 'older999' );
 $f = pvdak_core_case_ops_filters();
-check_ops( '' === $f['pvdak_case_assignment'], 'reject array' );
-check_ops( '' === $f['pvdak_case_consistency'], 'reject fake consistency' );
-check_ops( '' === $f['pvdak_case_modified'], 'reject fake modified' );
+check_ops( '-1' === $f['pvdak_case_assignment'], 'reject array with fail-closed sentinel' );
+check_ops( '-1' === $f['pvdak_case_consistency'], 'reject fake consistency with fail-closed sentinel' );
+check_ops( '-1' === $f['pvdak_case_modified'], 'reject fake modified with fail-closed sentinel' );
 check_ops( 'REGEXP' === pvdak_core_case_ops_assigned_condition( true )['compare'], 'assigned numeric regexp' );
 $unassigned = pvdak_core_case_ops_assigned_condition( false );
 check_ops( 'OR' === $unassigned['relation'], 'unassigned includes missing' );
