@@ -55,6 +55,7 @@ function pvdak_public_template_page_url($slug,$template) {
 function home_url($path) {return 'https://example.invalid'.$path;}
 function add_query_arg($args,$url) {return $url.'?'.http_build_query($args);}
 function esc_url_raw($url) {return $url;}
+function is_email($email) { return is_string($email) && false !== filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : false; }
 function wp_mail($email,$subject,$body) {$GLOBALS['mock_mail'][]=array($email,$subject,$body);return true;}
 require dirname(__DIR__,2).'/inc/pvdak-email-verification.php';
 $count=0;
