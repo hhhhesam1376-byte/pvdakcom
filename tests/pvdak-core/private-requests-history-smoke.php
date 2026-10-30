@@ -88,7 +88,8 @@ $checks = array(
     strpos($src, '$status_filter === get_post_meta( $item->ID,') !== false,
  'history fails closed on malformed query rows or impossible totals' =>
     strpos($src, '! is_array( $query->posts )') !== false &&
-    strpos($src, '! is_numeric( $query->found_posts )') !== false,
+    strpos($src, '$found_valid = is_numeric( $query->found_posts )') !== false &&
+    strpos($src, 'if ( ! $found_valid || ! $pages_valid') !== false,
  'history rejects impossible page totals and more than ten filtered rows' =>
     strpos($src, 'ctype_digit( (string) $query->found_posts )') !== false &&
     strpos($src, 'ctype_digit( (string) $query->max_num_pages )') !== false &&
