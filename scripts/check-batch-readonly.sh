@@ -35,6 +35,9 @@ php "$ROOT/tests/pvdak-theme/editor-bootstrap-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-homepage-preview-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-public-post-privacy-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-public-navigation-smoke.php"
+# Keep the older ACF/parent/robots regression in the same canonical runner.
+# It now uses canonical WP_Post fixtures and fails closed for private Pages.
+php "$ROOT/tests/pvdak-theme/legal-topic-search-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-topic-search-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-legal-index-pagination-smoke.php"
 php "$ROOT/tests/pvdak-theme/d31-account-privacy-smoke.php"
