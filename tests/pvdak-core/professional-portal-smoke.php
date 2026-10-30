@@ -19,7 +19,7 @@ $checks = array(
  'status allowlist' => strpos($src, 'pvdak_core_professional_visible_state(') !== false &&
      strpos($src, 'isset( $statuses[ $state ] )') !== false,
  'unknown status does not impersonate pending' => strpos($src, "return 'unknown';") !== false &&
-     strpos($src, "'unknown' === $status ? 'نیازمند بررسی مدیر'") !== false,
+     strpos($src, "'unknown' === \$status ? 'نیازمند بررسی مدیر'") !== false,
  'unknown membership category fails closed' => strpos($src, "isset( \$types[ \$type ] )") !== false &&
      strpos($src, 'نوع همکاری نامعتبر؛ نیازمند بررسی مدیر') !== false,
  'draft approval is not presented as accepted' => strpos($src, "'draft' === \$visibility && 'approved' === \$state") !== false,
