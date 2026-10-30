@@ -20,7 +20,7 @@ if ( ! $news_feature && $news_other ) {
 }
 $legal_search_term = pvdak_legal_topic_search_term();
 // GET results are a subset: never live-search them as the complete collection.
-$legal_server_filtered = isset( $_GET['pvdak_topic'] ) && '' !== $legal_search_term;
+$legal_server_filtered = pvdak_legal_topic_search_requested();
 $legal_parent_id = pvdak_legal_topics_root_id();
 // A bounded preview determines whether the homepage has published topics.
 // Search scans a separate bounded cursor window, never an unbounded GET query.
