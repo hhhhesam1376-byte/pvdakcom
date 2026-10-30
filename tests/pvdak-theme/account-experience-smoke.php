@@ -206,7 +206,7 @@ $checks = array(
     strpos($v['contact'],'pvdak-contact-result')!==false,
   '097-18 Footer links remain existing real WordPress pages' =>
     strpos($v['footer'],'pvdak-footer-bottom-mark')!==false &&
-    strpos($v['footer'],"pvdak_public_page_url( 'contact-us' )")!==false,
+    strpos($v['footer'],"pvdak_public_template_page_url( 'contact-us', 'page-templates/pvdak-contact.php' )")!==false,
   '097-19 Design tokens and reduced-motion support' =>
     strpos($v['css'],'--pvdak-97-navy')!==false &&
     strpos($v['css'],'@media(prefers-reduced-motion:reduce)')!==false,
