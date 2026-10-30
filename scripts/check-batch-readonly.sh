@@ -18,35 +18,54 @@ if [[ "$linted" -lt 40 ]]; then
   exit 1
 fi
 echo "PVDAK_BATCH_PHP_LINT_OK: files=$linted"
-php "$ROOT/tests/pvdak-theme/feature-batch-smoke.php"
-php "$ROOT/tests/pvdak-theme/account-experience-smoke.php"
-php "$ROOT/tests/pvdak-theme/account-form-ux-smoke.php"
-php "$ROOT/tests/pvdak-theme/ticket-experience-smoke.php"
-php "$ROOT/tests/pvdak-theme/next-phase-smoke.php"
-php "$ROOT/tests/pvdak-theme/next-ten-smoke.php"
-php "$ROOT/tests/pvdak-theme/post-core-audit-smoke.php"
-php "$ROOT/tests/pvdak-theme/public-pages-auth-smoke.php"
-php "$ROOT/tests/pvdak-theme/page-bootstrap-regression.php"
-PVDAK_THEME_SOURCE="$ROOT" php "$ROOT/tests/pvdak-theme/navigation-smoke.php"
-php "$ROOT/tests/pvdak-theme/navigation-version-regression.php"
-PVDAK_PRIVATE_SCRIPTS="$ROOT/scripts" php "$ROOT/tests/pvdak-theme/homepage-layout-smoke.php"
-php "$ROOT/tests/pvdak-theme/editor-bootstrap-smoke.php"
+# Run every independent read-only smoke even when an earlier one fails.
+# Report all failures in one checkout; never treat a partial pass as release PASS.
+failed=0
+run_smoke() {
+  if "$@"; then
+    return 0
+  else
+    local rc=$?
+    printf 'PVDAK_SMOKE_FAILED: exit=%s command=' "$rc" >&2
+    printf '%q ' "$@" >&2
+    printf '\n' >&2
+    failed=$((failed+1))
+    return 0
+  fi
+}
+run_smoke php "$ROOT/tests/pvdak-theme/feature-batch-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/account-experience-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/account-form-ux-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/ticket-experience-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/next-phase-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/next-ten-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/post-core-audit-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/public-pages-auth-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/page-bootstrap-regression.php"
+PVDAK_THEME_SOURCE="$ROOT" run_smoke php "$ROOT/tests/pvdak-theme/navigation-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/navigation-version-regression.php"
+PVDAK_PRIVATE_SCRIPTS="$ROOT/scripts" run_smoke php "$ROOT/tests/pvdak-theme/homepage-layout-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/editor-bootstrap-smoke.php"
 # D31 guards are part of the canonical read-only release gate, not orphan tests.
-php "$ROOT/tests/pvdak-theme/d31-homepage-preview-smoke.php"
-php "$ROOT/tests/pvdak-theme/d31-public-post-privacy-smoke.php"
-php "$ROOT/tests/pvdak-theme/d31-public-navigation-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-homepage-preview-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-public-post-privacy-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-public-navigation-smoke.php"
 # Keep the older ACF/parent/robots regression in the same canonical runner.
 # It now uses canonical WP_Post fixtures and fails closed for private Pages.
-php "$ROOT/tests/pvdak-theme/legal-topic-search-smoke.php"
-php "$ROOT/tests/pvdak-theme/d31-topic-search-smoke.php"
-php "$ROOT/tests/pvdak-theme/d31-legal-index-pagination-smoke.php"
-php "$ROOT/tests/pvdak-theme/d31-account-privacy-smoke.php"
-php "$ROOT/tests/pvdak-core/private-requests-history-smoke.php"
-php "$ROOT/tests/pvdak-core/professional-portal-smoke.php"
-php "$ROOT/tests/pvdak-core/professional-admin-smoke.php"
-php "$ROOT/tests/pvdak-core/request-admin-smoke.php"
-php -d display_errors=1 "$ROOT/tests/pvdak-core/request-ops-smoke.php"
-php "$ROOT/tests/pvdak-core/triage-overview-smoke.php"
-php "$ROOT/tests/pvdak-core/policy-smoke.php"
-PVDAK_CORE_SOURCE="$ROOT/packages/pvdak-core/pvdak-core.php" php "$ROOT/tests/pvdak-core/two-account-privacy-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/legal-topic-search-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-topic-search-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-legal-index-pagination-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-theme/d31-account-privacy-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/private-requests-history-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/professional-portal-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/professional-admin-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/request-admin-smoke.php"
+run_smoke php -d display_errors=1 "$ROOT/tests/pvdak-core/request-ops-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/triage-overview-smoke.php"
+run_smoke php "$ROOT/tests/pvdak-core/policy-smoke.php"
+PVDAK_CORE_SOURCE="$ROOT/packages/pvdak-core/pvdak-core.php" run_smoke php "$ROOT/tests/pvdak-core/two-account-privacy-smoke.php"
+if (( failed > 0 )); then
+  echo "PVDAK_BATCH_SMOKE_FAILURES: $failed (full runner NOT_PASS)" >&2
+  exit 1
+fi
 echo "PVDAK_BATCH_PREFLIGHT_OK: code checks only. No database/browser/mail tests performed."
