@@ -104,7 +104,7 @@ test_check(!pvdak_registration_open(), 'Missing published login Page blocks sign
 $GLOBALS['mock_registration_page']=true;
 test_check(false!==strpos($registration,"get_option('pvdak_registration_enabled', '0')") &&
     false!==strpos($registration,"function pvdak_native_registration_guard(") &&
-    false!==strpos($registration,"'role'=>$role"),
+    false!==strpos($registration,"'role'=>\$role"),
     'Manager signup policy retains native bypass guard and least-privilege WordPress role');
 // D14: source-level guardrails; this does not replace a real multi-client WP test.
 $auth=file_get_contents($root.'/inc/pvdak-auth.php');
@@ -116,8 +116,8 @@ test_check(false!==strpos($registration, "pvdak_registration_rate_exceeded('sign
     false!==strpos($registration, "'REMOTE_ADDR'"),
     'D14 signup IP limiter runs before honeypot and field validation with salted key');
 test_check(false!==strpos($auth, 'pvdak_auth_ip_attempt_key()') &&
-    false!==strpos($auth, 'set_transient($ip_key,$ip_attempts,15*MINUTE_IN_SECONDS)') &&
-    false!==strpos($auth, 'get_transient(pvdak_auth_ip_attempt_key())>=30'),
+    false!==strpos($auth, 'pvdak_registration_rate_exceeded_key($key,6,15*MINUTE_IN_SECONDS)') &&
+    false!==strpos($auth, 'pvdak_registration_rate_exceeded_key(pvdak_auth_ip_attempt_key(),30,15*MINUTE_IN_SECONDS)'),
     'D14 login IP limiter is enforced across identity rotation');
 test_check(false!==strpos($verification, "pvdak_registration_rate_exceeded('verify-resend', 12, HOUR_IN_SECONDS)") &&
     strpos($verification, "pvdak_registration_rate_exceeded('verify-resend'") < strpos($verification, 'if (is_email($email))') &&
