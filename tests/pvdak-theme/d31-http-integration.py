@@ -6,7 +6,7 @@ This test never contacts production, logs in to production, or writes to a live 
 import os
 import sys
 from html.parser import HTMLParser
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 HOST = "http://127.0.0.1:8080"
@@ -44,8 +44,17 @@ class Page(HTMLParser):
         return " ".join(self.text)
 
 
+def loopback_only(url):
+    parsed = urlsplit(url)
+    return parsed.scheme == "http" and parsed.netloc == "127.0.0.1:8080"
+
+
 def fetch(path):
     url = urljoin(HOST, path)
+    # Pagination hrefs come from HTML. Never follow a remote or alternate-port
+    # URL, even if a permalink/plugin configuration is unexpectedly wrong.
+    if not loopback_only(url):
+        raise AssertionError("D31_HTTP_ABORT: off-loopback navigation URL")
     with urlopen(Request(url, headers={"User-Agent": "PVDak-D31-Isolated-CI"}), timeout=15) as response:
         if response.status != 200 or "text/html" not in response.headers.get("Content-Type", ""):
             raise AssertionError(f"HTTP response not HTML 200: {url}")
@@ -66,6 +75,13 @@ def check(condition, label):
 
 
 index_url = "/?page_id=" + quote(PARENT)
+check(loopback_only(urljoin(HOST, index_url)), "fixture URL is on isolated loopback")
+check(not loopback_only(urljoin(HOST, "//example.invalid/path")),
+      "protocol-relative external pagination URL rejected")
+check(not loopback_only("http://127.0.0.1:8081/"),
+      "alternate localhost port rejected")
+check(not loopback_only("https://127.0.0.1:8080/"),
+      "unexpected HTTPS origin rejected")
 first = fetch(index_url)
 check(len(first.topic_links) == 24, "first HTTP index has 24 public topic links")
 check("Topic 001" in first.body_text and "Topic 025" not in first.body_text,
@@ -92,6 +108,11 @@ check(len(bad.topic_links) == 24 and "Topic 001" in bad.body_text,
       "invalid HTTP cursor safely resets to public first window")
 check(any("noindex" in directive for directive in bad.robots),
       "invalid cursor URL remains noindex")
+malformed_search = fetch("/?pvdak_topic%5B%5D=Topic")
+check(len(malformed_search.topic_links) == 0,
+      "array-valued GET search cannot fall back to public topic preview")
+check(any("noindex" in directive for directive in malformed_search.robots),
+      "malformed GET search remains noindex")
 home_search = fetch("/?pvdak_topic=Topic")
 check(len(home_search.topic_links) == 48 and "Topic 001" in home_search.body_text,
       "homepage GET search returns the first 48 real published child topics")
