@@ -52,7 +52,7 @@ $checks = array(
     strpos($s['professional'],"'lawyer' === ")!==false,
   'Private support and closed status' =>
     strpos($s['tickets'],'pvdak_support_followup()')!==false &&
-    strpos($s['tickets'],"!in_array(get_post_meta($id,'_pvdak_support_status',true),array('open','answered'),true)")!==false &&
+    strpos($s['tickets'],"!in_array(get_post_meta(\$id,'_pvdak_support_status',true),array('open','answered'),true)")!==false &&
     strpos($s['tickets'],"'private'!==")!==false,
   'Admin ticket columns and state' =>
     strpos($s['tickets'],'manage_pvdak_support_ticket_posts_columns')!==false &&
