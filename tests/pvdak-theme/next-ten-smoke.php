@@ -98,8 +98,8 @@ $checks = array(
     strpos($s['public'],'! locate_template( $template, false, false )')!==false &&
     strpos($s['admin'],"'account-register'=>'ثبت‌نام (برگه قدیمی)'")!==false &&
     strpos($s['admin'],'pvdak_readiness_required_totals( $audits )')!==false &&
-    strpos($s['admin'],"'optional' => isset( $optional_pages[ $slug ] )")!==false &&
-    strpos($s['admin'],"$"+"optional_pages = array(")!==false &&
+    strpos($s['admin'],"'optional' => isset( " . '$optional_pages[ $slug ]' . " )")!==false &&
+    strpos($s['admin'],'$optional_pages = array(')!==false &&
     strpos($s['admin'],"remove_menu_page('edit-comments.php')")===false &&
     strpos($s['admin'],'pvdak-readiness-technical')!==false &&
     strpos($s['admin'],'بازگشت به مدیریت روزمره')!==false &&
