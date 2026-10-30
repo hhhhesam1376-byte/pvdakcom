@@ -355,7 +355,7 @@ $checks = array(
   'Primary and footer links come from published Pages' =>
     substr_count($v['header'],'pvdak_default_navigation_links()')===2 &&
     strpos($v['footer'],'pvdak_default_navigation_links()')!==false &&
-    strpos($v['footer'],"pvdak_public_page_url( 'account-login' )")!==false &&
+    strpos($v['footer'],'pvdak_auth_login_url()')!==false &&
     strpos($v['nav'],'pvdak_public_page_url( $slug )')!==false &&
     strpos($v['nav'],'get_term_link(')!==false,
   'Interaction script is locally scoped and layouts responsive' =>
