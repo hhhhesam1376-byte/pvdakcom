@@ -1,0 +1,26 @@
+name: PVDak read-only PHP batch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pvdak-batch-readonly.yml'
+      - 'scripts/check-batch-readonly.sh'
+      - 'tests/**'
+      - 'inc/pvdak-legal-*.php'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  batch-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full repository
+        uses: actions/checkout@v4
+      - name: Show PHP CLI runtime
+        run: php -v
+      - name: Run canonical read-only PHP batch
+        run: bash scripts/check-batch-readonly.sh
