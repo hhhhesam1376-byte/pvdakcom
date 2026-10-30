@@ -881,7 +881,7 @@ if ( ! function_exists( 'is_wp_error' ) ) {
 if ( ! function_exists( 'get_post' ) ) {
     function get_post( $id ) {
         $post = new WP_Post( $id, 'publish' );
-        $post->post_type = 'post';
+        $post->post_type = 31 === (int) $id ? 'page' : 'post';
         return $post;
     }
 }
@@ -918,9 +918,9 @@ foreach ( array(
     array( '031', 0 ), array( '31junk', 0 ),
 ) as $case ) {
     $GLOBALS['pvdak_test_home_field_value'] = $case[0];
-    unset( $GLOBALS['pvdak_d31_collection_query'] );
-    pvdak_home_faq_pages( true );
-    if ( ( $GLOBALS['pvdak_d31_collection_query']['post_parent'] ?? 0 ) !== $case[1] ) {
+    // FAQ audit now uses bounded keyset seek, not get_posts(). Check the
+    // actual canonical parent resolver; D31 seek smoke covers SQL windows.
+    if ( pvdak_home_faq_parent_id() !== $case[1] ) {
         fwrite( STDERR, "PVD_D31_COLLECTION_FAIL: FAQ parent must be canonical\n" ); exit( 1 );
     }
     $d31_collection_checks++;
