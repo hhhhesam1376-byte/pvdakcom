@@ -93,8 +93,21 @@ check(len(bad.topic_links) == 24 and "Topic 001" in bad.body_text,
 check(any("noindex" in directive for directive in bad.robots),
       "invalid cursor URL remains noindex")
 home_search = fetch("/?pvdak_topic=Topic")
+check(len(home_search.topic_links) == 48 and "Topic 001" in home_search.body_text,
+      "homepage GET search returns the first 48 real published child topics")
+check("next" in home_search.links,
+      "homepage GET search exposes a signed continuation link")
 check(any("noindex" in directive for directive in home_search.robots),
       "homepage GET search emits robots noindex")
 check("Topic password-protected" not in home_search.body_text and "Topic draft" not in home_search.body_text,
       "homepage search does not leak protected/draft topic titles")
+home_search_next = fetch(home_search.links["next"])
+check(len(home_search_next.topic_links) == 12 and "Topic 049" in home_search_next.body_text,
+      "homepage search continuation returns the final 12 public topics")
+check("next" not in home_search_next.links,
+      "homepage search stops at the final window without a cursor loop")
+check(any("noindex" in directive for directive in home_search_next.robots),
+      "homepage continuation URL remains noindex")
+check("Topic password-protected" not in home_search_next.body_text and "Topic draft" not in home_search_next.body_text,
+      "homepage continuation never exposes protected or draft topics")
 print(f"PVDAK_D31_HTTP_OK: {checks}/{checks} actual localhost HTTP checks; browser, live cache, production deploy NOT_TESTED.")
