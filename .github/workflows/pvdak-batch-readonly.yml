@@ -7,7 +7,7 @@ on:
       - '.github/workflows/pvdak-batch-readonly.yml'
       - 'scripts/check-batch-readonly.sh'
       - 'tests/**'
-      - 'inc/pvdak-legal-*.php'
+      - '**/*.php'
   workflow_dispatch:
 
 permissions:
