@@ -47,7 +47,9 @@ function get_page_by_path( $slug, $output, $type ) {
 function get_posts( $args ) { $GLOBALS['pvdak_topic_mock_query'] = $args; return array(); }
 function is_front_page() { return $GLOBALS['pvdak_topic_mock_front']; }
 function wp_strip_all_tags( $text ) { return strip_tags( $text ); }
-function sanitize_text_field( $text ) { return trim( strip_tags( $text ) ); }
+function sanitize_text_field( $text ) {
+    return is_string( $text ) && 1 === preg_match( '//u', $text ) ? trim( strip_tags( $text ) ) : '';
+}
 function wp_unslash( $text ) { return stripslashes( $text ); }
 
 require dirname( __DIR__, 2 ) . '/inc/pvdak-home-acf.php';
