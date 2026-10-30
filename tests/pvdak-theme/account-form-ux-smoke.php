@@ -260,7 +260,7 @@ $checks = array(
     strpos($s['admin-management'],"'edit_pages'")!==false &&
     strpos($s['admin-management'],"add_management_page('آمادگی راه‌اندازی PVDak'")!==false &&
     strpos($s['admin-management'],"current_user_can('manage_options')")!==false,
-  'D31 comments are hidden from primary menu but still available for moderators' =>
+  'D31 moderator comment queue remains accessible through staff management' =>
     strpos($s['admin-management'],"'moderate_comments', 'edit-comments.php'")!==false &&
     strpos($s['admin-management'],"'moderate_comments', 'edit-comments.php'")!==false &&
     strpos($s['admin-management'],"current_user_can('moderate_comments')")!==false &&
