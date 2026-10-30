@@ -46,6 +46,7 @@ echo 'PVDAK_PROF_ADMIN_SOURCE_OK: ' . count( $checks ) . " static checks; not WP
 // This is a unit test of repository code, NOT a database or WP integration test.
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', $root . '/' ); }
 function add_action( $hook, $callback, $priority = 10, $args = 1 ) {}
+function add_filter( $hook, $callback, $priority = 10, $args = 1 ) {}
 function pvdak_core_member_types() { return array( 'lawyer' => 'وکیل', 'student' => 'دانشجو' ); }
 function pvdak_core_member_states() { return array( 'pending' => 'ثبت‌شده', 'approved' => 'تأیید' ); }
 function pvdak_core_review_methods() { return array( 'manual' => 'دستی' ); }
