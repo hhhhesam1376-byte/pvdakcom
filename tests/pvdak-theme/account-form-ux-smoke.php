@@ -309,7 +309,7 @@ $checks = array(
     strpos($s['home-editor'], "if ( ! \$home_id && ! current_user_can( 'manage_options' ) )") !== false,
   'D31 core controls are linked only when Core is installed and administrator is authorized' =>
     strpos($s['admin-management'], "'options-general.php?page=pvdak-core'")!==false &&
-    strpos($s['admin-management'], "! defined( 'PVDAK_CORE_VERSION' )")!==false &&
+    strpos($s['admin-management'], "defined( 'PVDAK_CORE_VERSION' ) && function_exists( 'pvdak_core_intake_open' )")!==false &&
     strpos($s['admin-management'], "'manage_options', 'options-general.php?page=pvdak-core'")!==false &&
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'")!==false,
   'D31 Core queue shortcuts follow actual CPT edit capabilities, not unrelated site settings' =>
