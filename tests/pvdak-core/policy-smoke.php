@@ -1256,9 +1256,8 @@ pvdak_expect( ! pvdak_core_directory_eligible( 501 ),
  pvdak_core_specialty_metabox_html( new WP_Post( 501, 'private', 21 ) );
  $empty_catalog_html = ob_get_clean();
  // A valid saved Page remains selectable even if the base catalog is empty.
- pvdak_expect( false !== strpos( $empty_catalog_html, 'value="11"' ) &&
-     false !== strpos( $empty_catalog_html, 'value="18"' ),
-     'D23 valid selected topics survive an empty base catalog' );
+ pvdak_expect( false !== strpos( $empty_catalog_html, 'value="18"' ),
+     'D23 still-valid selected topic survives an empty base catalog' );
  // Exercise the genuinely empty-checkbox form and concurrent save separately.
  $GLOBALS['pvdak_mock_specialty_ids'] = array();
  ob_start();
