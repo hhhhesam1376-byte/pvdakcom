@@ -52,7 +52,8 @@ pvdak_public_smoke_require(
  false !== strpos( $code['pages'], 'get_page_template_slug( $page->ID )' ) &&
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('account-login', 'page-templates/pvdak-login.php')" ) &&
  false !== strpos( $code['auth'], "pvdak_public_template_page_url('my-pvdak-account', 'page-templates/pvdak-account.php')" ) &&
- false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-recovery', 'page-templates/pvdak-recovery.php' )" ) &&
+ false !== strpos( $tools_source, "pvdak_public_template_page_url( 'account-login', 'page-templates/pvdak-login.php' )" ) &&
+  false !== strpos( $tools_source, "add_query_arg( 'auth', 'recover', \$login )" ) &&
  false !== strpos( $code['login'], 'data-pvdak-auth-go="register-email"' ) &&
  false !== strpos( $code['login'], 'name="action" value="pvdak_register"' ) &&
  false !== strpos( $code['login'], 'ثبت‌نام در PVDak' ),
