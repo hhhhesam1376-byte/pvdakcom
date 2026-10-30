@@ -228,7 +228,8 @@ $checks = array(
   'D13 recovery URLs are not cached or sent as third-party referrers' =>
     strpos($s['tools'], "if ( ! defined( 'DONOTCACHEPAGE' ) )") !== false &&
     strpos($s['tools'], "header( 'Referrer-Policy: no-referrer', true );") !== false &&
-    strpos($s['tools'], "if ( is_page( array( 'account-login', 'account-recovery' ) ) )") !== false,
+    strpos($s['tools'], 'pvdak_account_sensitive_screen()') !== false &&
+     strpos($s['tools'], 'if ( $sensitive )') !== false,
   'D13 reset cannot falsely claim success without persisted hash and spent key' =>
     strpos($s['tools'],'reset_password( $user, $password );')!==false &&
     strpos($s['tools'],'$fresh = get_userdata( $user->ID );')!==false &&
