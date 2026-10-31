@@ -8,7 +8,7 @@ $dashboard = file_get_contents( $root . '/inc/pvdak-management-dashboard.php' );
 $entry = file_get_contents( $root . '/inc/pvdak-readiness-admin.php' );
 $css = file_get_contents( $root . '/assets/css/pvdak-management.css' );
 $checks = array(
-    'UI module loaded' => strpos( $entry, "require_once get_template_directory() . '/inc/pvdak-management-dashboard.php';" ) !== false,
+    'UI module loaded' => strpos( file_get_contents( $root . '/functions.php' ), "require_once get_template_directory() . '/inc/pvdak-management-dashboard.php';" ) !== false,
     'existing menu delegates to new UI' => strpos( $entry, 'pvdak_management_v2_render();' ) !== false,
     'old allowlist retained' => strpos( $entry, 'function pvdak_management_link_available(' ) !== false,
     'links still permission checked' => strpos( $dashboard, 'pvdak_management_link_available( $link )' ) !== false,
