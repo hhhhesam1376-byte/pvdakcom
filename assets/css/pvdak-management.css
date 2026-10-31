@@ -1,0 +1,81 @@
+/*
+ * PVDak Management Dashboard — isolated wp-admin presentation only.
+ * Inherits the WordPress sidebar/admin-bar; never replaces their layout.
+ */
+.pvdak-management-app.wrap{direction:rtl;max-width:none;width:auto;margin:20px 0 24px 20px;color:#172239;font-family:inherit}
+.pvdak-management-app *{box-sizing:border-box}
+.pvdak-management-app a{text-decoration:none}
+.pvdak-management-app a:focus-visible,.pvdak-management-app summary:focus-visible{outline:3px solid #7da7ff;outline-offset:3px}
+.pvdak-management-app .pvdak-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:28px 30px;border:1px solid #dfe7f2;border-radius:16px;background:linear-gradient(115deg,#eff5ff 0%,#fff 67%);box-shadow:0 5px 20px rgba(24,50,99,.05)}
+.pvdak-management-app .pvdak-eyebrow{display:inline-block;margin:0 0 10px;color:#315bc6;font-weight:700;font-size:12px}
+.pvdak-management-app .pvdak-hero h1{color:#122144;font-size:28px;line-height:1.5;margin:0 0 8px;font-weight:800}
+.pvdak-management-app .pvdak-hero p{color:#5d6b82;font-size:14px;line-height:1.9;margin:0;max-width:720px}
+.pvdak-management-app .pvdak-hero-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;flex-shrink:0}
+.pvdak-management-app .pvdak-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 16px;border:1px solid #ccd9ed;border-radius:9px;color:#1945a5;background:#fff;font-size:13px;font-weight:700;transition:background .18s,transform .18s,border-color .18s}
+.pvdak-management-app .pvdak-button:hover{background:#eff5ff;border-color:#82a3ef;color:#133b95;transform:translateY(-1px)}
+.pvdak-management-app .pvdak-button--primary{background:#2958d6;border-color:#2958d6;color:#fff}
+.pvdak-management-app .pvdak-button--primary:hover{background:#1947bd;border-color:#1947bd;color:#fff}
+.pvdak-management-app .pvdak-button .dashicons{font-size:17px;width:18px;height:18px}
+.pvdak-management-app .pvdak-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}
+.pvdak-management-app .pvdak-metric{display:flex;align-items:center;gap:16px;padding:18px 19px;min-width:0;border:1px solid #e2e8f0;border-radius:13px;background:#fff;color:#172239;transition:box-shadow .18s,border-color .18s,transform .18s}
+.pvdak-management-app .pvdak-metric:hover{border-color:#91afe8;box-shadow:0 7px 24px rgba(31,76,149,.09);transform:translateY(-2px)}
+.pvdak-management-app .pvdak-metric-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:12px;color:#2b57bb;background:#edf3ff}
+.pvdak-management-app .pvdak-metric-icon .dashicons{font-size:23px;width:23px;height:23px}
+.pvdak-management-app .pvdak-metric-number{display:block;font-size:27px;line-height:1.25;font-weight:800;color:#172239}
+.pvdak-management-app .pvdak-metric-label{display:block;margin-top:5px;color:#61718b;font-size:12px;line-height:1.7}
+.pvdak-management-app .pvdak-section{margin-top:25px;padding:24px;border:1px solid #e0e6f0;border-radius:14px;background:#fff}
+.pvdak-management-app .pvdak-section-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:19px}
+.pvdak-management-app .pvdak-section-title{display:flex;align-items:center;gap:10px;margin:0;color:#192849;font-size:19px;font-weight:800;line-height:1.6}
+.pvdak-management-app .pvdak-section-title>.dashicons{display:grid;place-items:center;width:36px;height:36px;font-size:20px;background:#edf3ff;border-radius:10px;color:#2b57bb}
+.pvdak-management-app .pvdak-section-desc{margin:4px 0 0;color:#718096;font-size:13px;line-height:1.8}
+.pvdak-management-app .pvdak-card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.pvdak-management-app .pvdak-card{position:relative;display:flex;align-items:flex-start;gap:13px;min-height:112px;padding:17px 16px;border:1px solid #e4e9f2;border-radius:12px;color:#1b2c4d;background:#fbfcff;transition:border-color .18s,background .18s,box-shadow .18s,transform .18s}
+.pvdak-management-app .pvdak-card:hover{color:#153f9f;background:#fff;border-color:#9bb8ef;box-shadow:0 8px 22px rgba(24,57,114,.07);transform:translateY(-2px)}
+.pvdak-management-app .pvdak-card-icon{flex:0 0 37px;width:37px;height:37px;display:grid;place-items:center;border-radius:10px;background:#eaf1ff;color:#2857ba}
+.pvdak-management-app .pvdak-card-icon .dashicons{font-size:20px;width:20px;height:20px}
+.pvdak-management-app .pvdak-card-content{display:block;min-width:0;flex:1}
+.pvdak-management-app .pvdak-card-title{display:block;font-weight:750;font-size:14px;line-height:1.75;color:#152b52}
+.pvdak-management-app .pvdak-card-desc{display:block;color:#68768d;font-size:12px;line-height:1.85;margin-top:5px}
+.pvdak-management-app .pvdak-card-arrow{position:absolute;left:12px;bottom:12px;color:#a0b0c7;font-size:14px}
+.pvdak-management-app .pvdak-details{margin-top:16px;padding:0;border:1px solid #e2e8f2;border-radius:11px;background:#fbfcff}
+.pvdak-management-app .pvdak-details>summary{cursor:pointer;padding:15px 18px;color:#2b52aa;font-size:13px;font-weight:700;list-style:revert}
+.pvdak-management-app .pvdak-details[open]>summary{border-bottom:1px solid #e2e8f2}
+.pvdak-management-app .pvdak-details .pvdak-card-grid{padding:14px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.pvdak-management-app .pvdak-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pvdak-management-app .pvdak-status{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e5eaf2;border-radius:10px;padding:13px 15px;background:#fbfcff}
+.pvdak-management-app .pvdak-status-label{color:#526179;font-size:13px}
+.pvdak-management-app .pvdak-status-value{font-size:12px;font-weight:700;white-space:normal;text-align:left;color:#254caa}
+.pvdak-management-app .pvdak-status-value--muted{color:#637188}
+.pvdak-management-app .pvdak-status-value--attention{color:#a86211}
+.pvdak-management-app .pvdak-readonly{margin:15px 0 0;color:#67758c;font-size:12px;line-height:1.9}
+.pvdak-management-app .pvdak-alert{margin:17px 0 0;padding:14px 16px;border:1px solid #f3d3a1;border-right:4px solid #df9818;border-radius:10px;background:#fffaf1;color:#754b11;font-size:13px;line-height:2}
+.pvdak-management-app .pvdak-alert a{font-weight:700}
+.pvdak-management-app .pvdak-guide{margin-top:18px;border-radius:13px;border:1px solid #dfe7f2;background:#fff}
+.pvdak-management-app .pvdak-guide>summary{cursor:pointer;padding:20px 22px;color:#284b9a;font-size:15px;font-weight:750}
+.pvdak-management-app .pvdak-guide ol{padding:0 25px 0 15px;margin:0 0 22px;line-height:2.3;color:#45566d}
+.pvdak-management-app .pvdak-guide li{margin-bottom:7px}
+.pvdak-management-app .pvdak-guide a{color:#275acc}
+.pvdak-management-app .pvdak-footnote{margin:15px 2px 0;color:#8290a3;font-size:12px}
+@media(max-width:1450px){
+ .pvdak-management-app .pvdak-card-grid,.pvdak-management-app .pvdak-details .pvdak-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:1150px){
+ .pvdak-management-app .pvdak-hero{align-items:flex-start;flex-direction:column}
+ .pvdak-management-app .pvdak-hero-actions{justify-content:flex-start}
+ .pvdak-management-app .pvdak-metrics,.pvdak-management-app .pvdak-card-grid,.pvdak-management-app .pvdak-details .pvdak-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pvdak-management-app .pvdak-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+ .pvdak-management-app.wrap{margin:12px 10px 25px}
+ .pvdak-management-app .pvdak-hero{padding:20px 17px}
+ .pvdak-management-app .pvdak-hero h1{font-size:22px}
+ .pvdak-management-app .pvdak-hero-actions{width:100%;justify-content:stretch}
+ .pvdak-management-app .pvdak-hero-actions .pvdak-button{flex:1}
+ .pvdak-management-app .pvdak-section{padding:16px}
+ .pvdak-management-app .pvdak-metrics,.pvdak-management-app .pvdak-card-grid,.pvdak-management-app .pvdak-details .pvdak-card-grid,.pvdak-management-app .pvdak-status-grid{grid-template-columns:minmax(0,1fr)}
+ .pvdak-management-app .pvdak-card{min-height:95px}
+ .pvdak-management-app .pvdak-metric{padding:13px 15px}
+}
+@media(prefers-reduced-motion:reduce){
+ .pvdak-management-app .pvdak-card,.pvdak-management-app .pvdak-metric,.pvdak-management-app .pvdak-button{transition:none;transform:none!important}
+}

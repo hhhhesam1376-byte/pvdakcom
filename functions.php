@@ -87,6 +87,8 @@ require_once get_template_directory() . '/inc/pvdak-home-collections.php';
 require_once get_template_directory() . '/inc/pvdak-navigation-links.php';
 require_once get_template_directory() . '/inc/pvdak-home-readiness.php';
 require_once get_template_directory() . '/inc/pvdak-readiness-admin.php';
+// Keep the dashboard renderer separate so offline readiness helpers remain testable.
+require_once get_template_directory() . '/inc/pvdak-management-dashboard.php';
 /**
  * Display-only compatibility for wording embedded in the already installed
  * PVDak Core 0.8.14 shortcodes. Keep the plugin's byte-for-byte release

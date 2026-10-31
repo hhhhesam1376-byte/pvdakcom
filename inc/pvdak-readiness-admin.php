@@ -342,53 +342,8 @@ function pvdak_management_switch_enabled( $value ) {
 }
 
 function pvdak_management_render() {
-    if (!current_user_can('edit_pages')) {
-        wp_die('دسترسی مجاز نیست.','',array('response'=>403));
-    }
-    echo '<div class="wrap"><h1>مدیریت سایت PVDak</h1>';
-    echo '<p>از اینجا کارهای روزمره سایت را انجام دهید. هر بخش مستقیماً به ابزار اصلی وردپرس متصل است و اطلاعات شما را جابه‌جا نمی‌کند.</p>';
-    echo '<p><a class="button" href="' . esc_url( home_url( '/' ) ) . '" target="_blank" rel="noopener noreferrer">مشاهده سایت</a></p>';
-    echo '<p class="description">ابتدا محتوای سایت را ویرایش کنید، سپس درخواست‌ها و گفت‌وگوها را بررسی کنید. بخش‌هایی که نصب یا مجوز لازم ندارند در این راهنما نمایش داده نمی‌شوند؛ دسترسی مستقیم و تنظیمات امنیتی وردپرس تغییری نمی‌کنند.</p>';
-    // Give managers an actionable explanation when Core queues are absent;
-    // do not activate plugins, change permissions or read private case data.
-    if ( ! pvdak_management_core_available() ) {
-        echo '<div class="notice notice-warning inline"><p>ابزارهای درخواست حقوقی و عضویت متخصصان در این نصب در دسترس نیستند. ';
-        if ( current_user_can( 'manage_options' ) ) {
-            echo 'مدیر می‌تواند وضعیت <a href="' . esc_url( admin_url( 'plugins.php' ) ) .
-                '">افزونه‌های نصب‌شده</a> را بررسی کند.';
-        } else {
-            echo 'برای بررسی وضعیت نصب، با مدیر سایت هماهنگ کنید.';
-        }
-        echo ' این راهنما هیچ افزونه یا خدمتی را فعال نمی‌کند.</p></div>';
-    }
-    pvdak_management_daily_steps();
-    pvdak_management_render_links();
-    if (current_user_can('manage_options')) {
-        $front_state = pvdak_readiness_front_page_snapshot();
-        if ( 'ready' !== $front_state ) {
-            echo '<div class="notice notice-warning inline"><p><strong>تنظیم صفحه اصلی:</strong> ' .
-                esc_html( pvdak_readiness_front_page_status_label( $front_state ) ) .
-                ' — <a href="' . esc_url( admin_url( 'options-reading.php' ) ) .
-                '">بررسی تنظیمات خواندن</a>. هیچ تنظیمی از این راهنما تغییر نمی‌کند.</p></div>';
-        }
-        $maintenance = function_exists('pvdak_maintenance_enabled') && pvdak_maintenance_enabled();
-        $signup = function_exists('pvdak_registration_open') && pvdak_registration_open();
-        $core_available = pvdak_management_core_available();
-        $requests = $core_available && pvdak_core_intake_open();
-        $members = $core_available && function_exists( 'pvdak_core_member_intake_open' ) && pvdak_core_member_intake_open();
-        $directory = $core_available && function_exists( 'pvdak_core_directory_enabled' ) && pvdak_core_directory_enabled();
-        $notifications = $core_available && pvdak_management_switch_enabled( get_option( 'pvdak_core_email_notifications_enabled', '0' ) );
-        echo '<h2 style="margin-top:30px">وضعیت دسترسی‌های عمومی</h2>';
-        echo '<p>این بخش فقط وضعیت فعلی را نشان می‌دهد؛ هیچ خدمتی را به‌صورت خودکار فعال نمی‌کند.</p><ul style="list-style:disc;padding-right:20px">';
-        echo '<li>حالت تعمیرات: <strong>' . ($maintenance ? 'فعال' : 'غیرفعال') . '</strong></li>';
-        echo '<li>ثبت‌نام عمومی: <strong>' . ($signup ? 'فعال' : 'بسته') . '</strong></li>';
-        echo '<li>پذیرش درخواست حقوقی: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $requests ? 'فعال' : 'بسته' ) ) . '</strong></li>';
-        echo '<li>پذیرش همکاری متخصصان: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $members ? 'فعال' : 'بسته' ) ) . '</strong></li>';
-        echo '<li>فهرست عمومی متخصصان: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $directory ? 'کلید فعال است؛ رضایت فردی لازم است' : 'بسته' ) ) . '</strong></li>';
-        echo '<li>اعلان ایمیلی: <strong>' . ( ! $core_available ? 'افزونه Core فعال نیست' : ( $notifications ? 'کلید فعال است؛ رضایت فردی لازم است' : 'خاموش' ) ) . '</strong></li>';
-        echo '</ul><p>پیش از فعال‌سازی خدمات جدید، مقررات و تأییدهای لازم را بررسی کنید.</p>';
-    }
-    echo '</div>';
+    // The full-width, capability-aware interface is kept in a dedicated file.
+    pvdak_management_v2_render();
 }
 
 /**
