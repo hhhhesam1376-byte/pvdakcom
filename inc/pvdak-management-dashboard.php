@@ -261,7 +261,7 @@ function pvdak_management_v2_render() {
         if ( current_user_can( 'manage_options' ) ) {
             echo '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">بررسی افزونه‌های نصب‌شده</a>';
         } else {
-            echo 'برای بررسی نصب، با مدیر سایت هماهنگ کنید.';
+            echo 'برای بررسی وضعیت نصب، با مدیر سایت هماهنگ کنید.';
         }
         echo '</p>';
     }
