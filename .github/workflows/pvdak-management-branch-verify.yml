@@ -1,0 +1,27 @@
+name: Temporary PVDak management branch syntax gate
+
+on:
+  push:
+    branches:
+      - feature/pvdak-management-dashboard-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  php-syntax-and-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax of edited files
+        run: |
+          php -l inc/pvdak-management-dashboard.php
+          php -l inc/pvdak-readiness-admin.php
+          php -l tests/pvdak-theme/next-ten-smoke.php
+          php -l tests/pvdak-theme/management-dashboard-smoke.php
+      - name: Management source regression
+        run: php tests/pvdak-theme/management-dashboard-smoke.php
+      - name: Existing admin guards
+        run: php tests/pvdak-theme/next-ten-smoke.php
