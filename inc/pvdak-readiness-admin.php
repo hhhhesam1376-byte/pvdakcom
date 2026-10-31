@@ -685,6 +685,3 @@ function pvdak_readiness_render() {
     echo '</tbody></table><p><strong>پیش از افتتاح:</strong> سیاست حریم خصوصی، قوانین، ایمیل‌های سیستمی، مجوزهای دو حساب مستقل و نسخه فعال Core باید عملاً بررسی شوند.</p>';
     echo '</div>';
 }
-
-// Isolated management UI: loaded after the original route and permission helpers.
-require_once get_template_directory() . '/inc/pvdak-management-dashboard.php';
