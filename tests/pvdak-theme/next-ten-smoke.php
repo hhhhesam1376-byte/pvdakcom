@@ -547,7 +547,7 @@ foreach ( $notification_switch_cases as $case ) {
 echo "PVDAK_D31_NOTIFICATION_STATUS_OK: 12/12 original-source PHP cases (not WordPress E2E).\n";
 
 /** D31 source-only regression: editors see guidance but no plugin-control link. */
-$management_source = $s['admin'];
+$management_source = $s['admin'] . file_get_contents( $root . '/inc/pvdak-management-dashboard.php' );
 if ( strpos( $management_source, 'function pvdak_management_core_available()' ) === false ||
      strpos( $management_source, "if ( ! pvdak_management_core_available() )") === false ||
      strpos( $management_source, 'برای بررسی وضعیت نصب، با مدیر سایت هماهنگ کنید.' ) === false ||
