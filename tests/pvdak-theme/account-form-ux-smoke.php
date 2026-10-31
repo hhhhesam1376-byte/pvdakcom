@@ -21,6 +21,7 @@ $paths = array(
   'verification' => 'inc/pvdak-email-verification.php',
   'readiness' => 'inc/pvdak-home-readiness.php',
   'admin-management' => 'inc/pvdak-readiness-admin.php',
+  'admin-dashboard' => 'inc/pvdak-management-dashboard.php',
   'home-editor' => 'inc/pvdak-home-acf.php',
 
 );
@@ -29,6 +30,8 @@ foreach ( $paths as $name => $path ) {
   if ( ! is_readable( $root . '/' . $path ) ) { fwrite( STDERR, "ACCOUNT_FORM_FAIL: missing $path\n" ); exit( 2 ); }
   $s[ $name ] = file_get_contents( $root . '/' . $path );
 }
+// The management screen is now split between existing auth routes and UI.
+$s['admin-management'] .= $s['admin-dashboard'];
 $checks = array(
   'Private profile allows name editing but not role, email or owner changes' =>
     strpos($s['portal'],'name="first_name"')!==false &&
@@ -278,7 +281,7 @@ $checks = array(
     strpos($s['admin-management'], "'edit.php?post_type=pvdak_professional'") !== false &&
     strpos($s['admin-management'], "'moderate_comments', 'edit-comments.php?comment_status=moderated'") !== false &&
     strpos($s['admin-management'], "'محتوا و ظاهر سایت'") !== false &&
-    strpos($s['admin-management'], "'درخواست‌ها و گفت‌وگوها'") !== false &&
+    strpos($s['admin-management'], "'درخواست‌ها و پیگیری‌ها'") !== false &&
     strpos($s['admin-management'], "esc_url( home_url( '/' ) )") !== false,
   'D31 homepage entry respects per-post permission and previews drafts' =>
     strpos($s['admin-management'], "current_user_can( 'edit_post', \$home_id )")!==false &&
@@ -305,7 +308,7 @@ $checks = array(
     strpos($s['admin-management'], "if ( ! \$home_id ) { return current_user_can( 'manage_options' ); }") !== false &&
     strpos($s['admin-management'], "'راه‌اندازی صفحه اصلی'") !== false &&
     strpos($s['admin-management'], "defined( 'PVDAK_CORE_VERSION' )") !== false &&
-    strpos($s['admin-management'], "'افزونه Core فعال نیست'") !== false &&
+    strpos($s['admin-management'], "'Core در دسترس نیست'") !== false &&
     strpos($s['home-editor'], "if ( ! \$home_id && ! current_user_can( 'manage_options' ) )") !== false,
   'D31 core controls are linked only when Core is installed and administrator is authorized' =>
     strpos($s['admin-management'], "'options-general.php?page=pvdak-core'")!==false &&
