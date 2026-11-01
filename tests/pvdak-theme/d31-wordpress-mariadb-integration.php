@@ -92,13 +92,17 @@ $staff = pvdak_legal_seek_rows( $parent, 81, null, 'after', true );
 $check( 61 === count( $staff ), 'authorized staff audit includes password Page, excludes draft' );
 // Real WordPress roles: subscriber may navigate public Pages, but cannot
 // invoke the staff-only password-protected FAQ audit. Editor may audit.
-$subscriber_id = wp_create_user( 'ci_d31_subscriber', wp_generate_password( 32 ), 'ci-d31-subscriber@example.test' );
-$editor_id = wp_create_user( 'ci_d31_editor', wp_generate_password( 32 ), 'ci-d31-editor@example.test' );
+$subscriber_id = wp_create_user( 'ci_d31_subscriber', 'pvdak_ci_subscriber_disposable_2026', 'ci-d31-subscriber@example.test' );
+$editor_id = wp_create_user( 'ci_d31_editor', 'pvdak_ci_editor_disposable_2026', 'ci-d31-editor@example.test' );
 if ( is_wp_error( $subscriber_id ) || is_wp_error( $editor_id ) ) {
     throw new RuntimeException( 'D31_WP_FAIL: create isolated test roles' );
 }
 ( new WP_User( $subscriber_id ) )->set_role( 'subscriber' );
 ( new WP_User( $editor_id ) )->set_role( 'editor' );
+$named_subscriber = wp_update_user( array( 'ID' => $subscriber_id, 'display_name' => 'D31_CI_SUBSCRIBER_PRIVATE' ) );
+$named_editor = wp_update_user( array( 'ID' => $editor_id, 'display_name' => 'D31_CI_EDITOR_PRIVATE' ) );
+$check( ! is_wp_error( $named_subscriber ) && ! is_wp_error( $named_editor ),
+    'two isolated HTTP identities have distinct private display names' );
 wp_set_current_user( $subscriber_id );
 $check( array() === pvdak_legal_seek_rows( $parent, 10, null, 'after', true ),
     'real subscriber cannot perform staff-only FAQ audit' );
@@ -125,6 +129,11 @@ $login_page = $make_page( 'CI D31 login', 0, 'publish', '', 'account-login' );
 update_post_meta( $login_page, '_wp_page_template', 'page-templates/pvdak-login.php' );
 $check( 'page-templates/pvdak-login.php' === get_page_template_slug( $login_page ),
     'isolated private login Page uses the account template' );
+$account_page = $make_page( 'CI D31 account', 0, 'publish', '', 'my-pvdak-account' );
+update_post_meta( $account_page, '_wp_page_template', 'page-templates/pvdak-account.php' );
+$check( 'page-templates/pvdak-account.php' === get_page_template_slug( $account_page ),
+    'isolated account Page uses private per-user dashboard template' );
+echo 'PVDAK_D31_HTTP_ACCOUNT_ID=' . $account_page . "\n";
 echo 'PVDAK_D31_HTTP_LOGIN_ID=' . $login_page . "\n";
 echo 'PVDAK_D31_HTTP_PARENT_ID=' . $parent . "\n";
 echo 'PVDAK_D31_WP_MARIADB_OK: ' . $checks . '/' . $checks .
