@@ -133,6 +133,62 @@ $account_page = $make_page( 'CI D31 account', 0, 'publish', '', 'my-pvdak-accoun
 update_post_meta( $account_page, '_wp_page_template', 'page-templates/pvdak-account.php' );
 $check( 'page-templates/pvdak-account.php' === get_page_template_slug( $account_page ),
     'isolated account Page uses private per-user dashboard template' );
+// Medium-scale SQL regression on the same disposable WordPress/MariaDB DB.
+// This is NOT a production-scale latency benchmark or a host acceptance test.
+$load_parent = $make_page( 'CI D31 SQL load root', 0, 'publish', '', 'ci-d31-sql-load' );
+$load_ids = array();
+$load_fixture_start = microtime( true );
+for ( $i = 1; $i <= 1200; ++$i ) {
+    $load_ids[] = $make_page( 'Load ' . str_pad( (string) $i, 5, '0', STR_PAD_LEFT ), $load_parent );
+}
+$load_fixture_ms = round( ( microtime( true ) - $load_fixture_start ) * 1000 );
+$check( 1200 === count( $load_ids ), '1200 disposable published SQL-load Pages inserted' );
+$load_first = pvdak_legal_index_window( $load_parent );
+$check( 24 === count( $load_first['pages'] ) && '' !== $load_first['next_cursor'] &&
+    (int) $load_first['pages'][0]->ID === $load_ids[0],
+    '1200-Page index starts at first 24 with a signed next cursor' );
+$load_boundary = get_post( $load_ids[999] );
+$load_cursor = pvdak_legal_seek_encode( $load_boundary, 'index:' . $load_parent );
+$load_tuple = pvdak_legal_seek_decode( $load_cursor, 'index:' . $load_parent );
+$check( '' !== $load_cursor && is_array( $load_tuple ),
+    'deep 1000th-row keyset boundary is signed and decodes' );
+$load_queries = array();
+$load_capture = static function ( $sql, $query ) use ( &$load_queries ) {
+    if ( $query->get( 'pvdak_legal_seek_scope' ) ) { $load_queries[] = $sql; }
+    return $sql;
+};
+add_filter( 'posts_request', $load_capture, 10, 2 );
+$load_query_start = microtime( true );
+try {
+    $load_rows = pvdak_legal_seek_rows( $load_parent, 25, $load_tuple );
+} finally {
+    remove_filter( 'posts_request', $load_capture, 10 );
+}
+$load_query_ms = round( ( microtime( true ) - $load_query_start ) * 1000, 2 );
+$check( $load_ids && array_slice( $load_ids, 1000, 25 ) === array_map(
+    static function ( $post ) { return (int) $post->ID; }, $load_rows ),
+    'deep keyset query returns exact next 25 IDs without repetition' );
+$load_sql = end( $load_queries );
+$check( is_string( $load_sql ) &&
+    false === stripos( $load_sql, ' OFFSET ' ) &&
+    1 === preg_match( '/\\bLIMIT\\s+(?:0\\s*,\\s*)?25\\b/i', $load_sql ) &&
+    false !== strpos( $load_sql, 'menu_order >' ),
+    'deep generated SQL uses bounded keyset predicate and LIMIT 25, no OFFSET' );
+$load_explain = $wpdb->get_results( 'EXPLAIN ' . $load_sql, ARRAY_A );
+$check( is_array( $load_explain ) && count( $load_explain ) > 0 &&
+    '' === $wpdb->last_error, 'MariaDB EXPLAIN succeeds for deep 1200-Page keyset query' );
+$load_back = pvdak_legal_index_window( $load_parent, $load_cursor, 'before' );
+$check( array_slice( $load_ids, 975, 24 ) === array_map(
+    static function ( $post ) { return (int) $post->ID; }, $load_back['pages'] ),
+    'deep reverse keyset returns exact preceding 24 IDs' );
+$load_plan = implode( ',', array_map( static function ( $row ) {
+    return isset( $row['type'] ) ? (string) $row['type'] : '?';
+}, $load_explain ) );
+echo 'PVDAK_D31_SQL_LOAD_DIAGNOSTIC: fixture_rows=1200 boundary=1000 fixture_ms=' .
+    $load_fixture_ms . ' deep_query_ms=' . $load_query_ms .
+    ' explain_types=' . $load_plan .
+    " (isolated CI only; no production latency SLA)\n";
+
 echo 'PVDAK_D31_HTTP_ACCOUNT_ID=' . $account_page . "\n";
 echo 'PVDAK_D31_HTTP_LOGIN_ID=' . $login_page . "\n";
 echo 'PVDAK_D31_HTTP_PARENT_ID=' . $parent . "\n";
