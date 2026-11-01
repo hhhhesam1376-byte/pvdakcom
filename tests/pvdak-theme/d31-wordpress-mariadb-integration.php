@@ -119,6 +119,13 @@ update_option( 'show_on_front', 'page' );
 update_option( 'page_on_front', $front_id );
 $check( pvdak_legal_topics_root_id() === $parent,
     'homepage resolves the published canonical legal-topics root' );
+// Exercise real HTTP cache/robots/referrer headers on a private account route.
+// This Page exists only inside the guarded disposable CI WordPress database.
+$login_page = $make_page( 'CI D31 login', 0, 'publish', '', 'account-login' );
+update_post_meta( $login_page, '_wp_page_template', 'page-templates/pvdak-login.php' );
+$check( 'page-templates/pvdak-login.php' === get_page_template_slug( $login_page ),
+    'isolated private login Page uses the account template' );
+echo 'PVDAK_D31_HTTP_LOGIN_ID=' . $login_page . "\n";
 echo 'PVDAK_D31_HTTP_PARENT_ID=' . $parent . "\n";
 echo 'PVDAK_D31_WP_MARIADB_OK: ' . $checks . '/' . $checks .
     " real WordPress/MariaDB checks on disposable CI DB; HTTP/browser/deploy NOT_TESTED.\n";
