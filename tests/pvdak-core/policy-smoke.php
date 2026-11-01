@@ -651,7 +651,10 @@ pvdak_expect( ! pvdak_core_capacity_available( 501 ), 'Unconfigured capacity def
 $GLOBALS['pvdak_mock_capacity_limit'] = '2';
 pvdak_expect( pvdak_core_capacity_available( 501 ), 'Capacity restores only when both limit and accepting switch are valid' );
 $pvdak_this_month = gmdate( 'Y-m-15 12:00:00' );
-$pvdak_last_month = gmdate( 'Y-m-15 12:00:00', strtotime( '-1 month' ) );
+// Anchor relative months to the first UTC day: subtracting from the 29th–31st
+// can normalize into the current month and falsely fail the quota regression.
+$pvdak_month_start = gmdate( 'Y-m-01 00:00:00' );
+$pvdak_last_month = gmdate( 'Y-m-15 12:00:00', strtotime( '-1 month', strtotime( $pvdak_month_start . ' UTC' ) ) );
 $GLOBALS['pvdak_mock_audit_request_ids'] = array( 701, 702 );
 $GLOBALS['pvdak_mock_assignment_audits'] = array(
     701 => array(
