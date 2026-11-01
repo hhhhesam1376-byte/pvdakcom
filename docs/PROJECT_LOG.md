@@ -3105,3 +3105,12 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - **CI state:** workflow for the new commit `cff00118` was not yet returned by the Actions list at this writing. **New full runner = NOT_VERIFIED**; do not infer PASS from earlier runs. On prior SHA, the D31 integration job passed, but D31 browser RTL/live caching/host-scale SQL/production access remain unverified.
 - **Gate accounting:** no promotion. Canonical **11 ACCEPTED / 13 CODE_COMPLETE / 3 IN_TESTING / 5 IN_PROGRESS**; D31 remains `IN_TESTING`. `Deploy=NOT_VERIFIED`; no changes to host or real user data.
 - **Next:** inspect new two-job Actions run and fix any actual failures. Only consider acceptance with independent WordPress/browser/host evidence; do not bump version for test-only changes.
+
+
+### 2026-11-01 — CI confirmation for D25 month-end regression repair
+
+- **Verified exact code SHA:** `cff00118f5e90e7fb953bc4c61c47c96845edf73`. GitHub Actions [run 41340315115](https://github.com/hhhhesam1376-byte/pvdakcom/actions/runs/41340315115) completed **SUCCESS** on 2026-11-01 UTC. Both canonical jobs `batch-readonly` and `d31-wordpress-mariadb` completed successfully; inspected individual job logs and steps.
+- **Batch job:** `PVDAK_BATCH_PHP_LINT_OK: files=107`; all 29 configured read-only smoke invocations completed without `PVDAK_SMOKE_FAILED`, ending `PVDAK_BATCH_PREFLIGHT_OK`. These are primarily synthetic/static checks, not production E2E.
+- **Isolated integration job:** real disposable WordPress/MariaDB fixture `PVDAK_D31_WP_MARIADB_OK: 17/17` and actual loopback HTTP `PVDAK_D31_HTTP_OK: 30/30`. This confirms the previously pending D31 HTTP and roles test package on the repaired SHA, **not** live-host cache, RTL browser, two real user sessions, SQL production-scale latency or deployment.
+- **Source changes in this batch:** only `tests/pvdak-core/policy-smoke.php` (month-boundary test fixture) plus `docs/PROJECT_LOG.md`. No executable production code changed and no version increment. No promotion to `ACCEPTED` solely from CI: 11 ACCEPTED, 13 CODE_COMPLETE, 3 IN_TESTING, 5 IN_PROGRESS; D31 still IN_TESTING.
+- **Deploy:** `NOT_VERIFIED`; no live host credentials or production mutation used. Next: live/staging cache + browser RTL + independent sessions/roles and production-scale SQL evidence before final D31 acceptance. The dashboard-management feature branch diverges from main; it was deliberately not merged in this D25/runner-only package, avoiding unrelated UI changes.
