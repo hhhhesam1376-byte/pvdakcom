@@ -11,8 +11,10 @@ from urllib.request import Request, HTTPRedirectHandler, ProxyHandler, build_ope
 
 HOST = "http://127.0.0.1:8080"
 PARENT = os.environ.get("PVDAK_CI_D31_PARENT_ID", "")
-if os.environ.get("PVDAK_CI_D31_ISOLATED") != "1" or not PARENT.isdecimal():
-    sys.exit("D31_HTTP_ABORT: isolated CI fixture and parent ID required")
+LOGIN = os.environ.get("PVDAK_CI_D31_LOGIN_ID", "")
+if (os.environ.get("PVDAK_CI_D31_ISOLATED") != "1"
+        or not PARENT.isdecimal() or not LOGIN.isdecimal()):
+    sys.exit("D31_HTTP_ABORT: isolated CI fixture, parent and login IDs required")
 
 
 class Page(HTMLParser):
@@ -21,6 +23,7 @@ class Page(HTMLParser):
         self.links = {}
         self.topic_links = []
         self.robots = []
+        self.headers = {}
         self.text = []
 
     def handle_starttag(self, tag, attrs):
@@ -82,7 +85,9 @@ def fetch(path):
         if response.status != 200 or "text/html" not in response.headers.get("Content-Type", ""):
             raise AssertionError(f"HTTP response not HTML 200: {url}")
         data = response.read(2_000_000)
+        response_headers = {key.lower(): value.lower() for key, value in response.headers.items()}
     page = Page()
+    page.headers = response_headers
     page.feed(data.decode("utf-8", errors="strict"))
     return page
 
@@ -164,4 +169,18 @@ check(any("noindex" in directive for directive in home_search_next.robots),
       "homepage continuation URL remains noindex")
 check("Topic password-protected" not in home_search_next.body_text and "Topic draft" not in home_search_next.body_text,
       "homepage continuation never exposes protected or draft topics")
+# Validate actual WordPress response headers, not just PHP source/stub policy.
+# The login Page is anonymous, but sensitive because of its page template.
+login = fetch("/?page_id=" + quote(LOGIN))
+check("no-store" in login.headers.get("cache-control", ""),
+      "private login HTTP response is marked no-store")
+check("noindex" in login.headers.get("x-robots-tag", "") and
+      "nofollow" in login.headers.get("x-robots-tag", ""),
+      "private login HTTP response has X-Robots-Tag noindex/nofollow")
+check(login.headers.get("referrer-policy", "") == "no-referrer",
+      "private login HTTP response blocks referrer leakage")
+check(any("noindex" in directive for directive in login.robots),
+      "private login HTML robots meta is noindex")
+check("no-store" not in first.headers.get("cache-control", ""),
+      "anonymous public topic index is not accidentally marked private")
 print(f"PVDAK_D31_HTTP_OK: {checks}/{checks} actual localhost HTTP checks; browser, live cache, production deploy NOT_TESTED.")
