@@ -86,7 +86,7 @@ jobs:
           PVDAK_CI_D31_LOGIN_ID="$(sed -n 's/^PVDAK_D31_HTTP_LOGIN_ID=//p' "$RUNNER_TEMP/pvdak-d31-wp-result.log" | tail -n 1)"
           PVDAK_CI_D31_ACCOUNT_ID="$(sed -n 's/^PVDAK_D31_HTTP_ACCOUNT_ID=//p' "$RUNNER_TEMP/pvdak-d31-wp-result.log" | tail -n 1)"
           [[ "$PVDAK_CI_D31_PARENT_ID" =~ ^[1-9][0-9]*$ && "$PVDAK_CI_D31_LOGIN_ID" =~ ^[1-9][0-9]*$ && "$PVDAK_CI_D31_ACCOUNT_ID" =~ ^[1-9][0-9]*$ ]] || { echo "FAIL: missing disposable D31 parent/login/account"; exit 1; }
-          php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/pvdak-wp" >"$RUNNER_TEMP/pvdak-d31-http-server.log" 2>&1 &
+          # WP-CLI fixtures generate /pvdak-wp/wp-content asset URLs. Serve that\n          # canonical prefix too; otherwise Chrome silently gets 404 CSS/JS.\n          ln -s . "$RUNNER_TEMP/pvdak-wp/pvdak-wp"\n          php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/pvdak-wp" >"$RUNNER_TEMP/pvdak-d31-http-server.log" 2>&1 &
           server_pid=$!
           cleanup() {
             rc=$?
