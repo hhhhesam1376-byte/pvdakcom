@@ -5,16 +5,18 @@ This test never contacts production, logs in to production, or writes to a live 
 """
 import os
 import sys
+from http.cookiejar import CookieJar
 from html.parser import HTMLParser
-from urllib.parse import quote, urljoin, urlsplit
-from urllib.request import Request, HTTPRedirectHandler, ProxyHandler, build_opener
+from urllib.parse import quote, urlencode, urljoin, urlsplit
+from urllib.request import Request, HTTPRedirectHandler, HTTPCookieProcessor, ProxyHandler, build_opener
 
 HOST = "http://127.0.0.1:8080"
 PARENT = os.environ.get("PVDAK_CI_D31_PARENT_ID", "")
 LOGIN = os.environ.get("PVDAK_CI_D31_LOGIN_ID", "")
+ACCOUNT = os.environ.get("PVDAK_CI_D31_ACCOUNT_ID", "")
 if (os.environ.get("PVDAK_CI_D31_ISOLATED") != "1"
-        or not PARENT.isdecimal() or not LOGIN.isdecimal()):
-    sys.exit("D31_HTTP_ABORT: isolated CI fixture, parent and login IDs required")
+        or not PARENT.isdecimal() or not LOGIN.isdecimal() or not ACCOUNT.isdecimal()):
+    sys.exit("D31_HTTP_ABORT: isolated CI fixture, parent, login and account IDs required")
 
 
 class Page(HTMLParser):
@@ -183,4 +185,76 @@ check(any("noindex" in directive for directive in login.robots),
       "private login HTML robots meta is noindex")
 check("no-store" not in first.headers.get("cache-control", ""),
       "anonymous public topic index is not accidentally marked private")
+
+# Two real independent WordPress cookie jars exercise private per-user HTML,
+# not a simulated wp_set_current_user() call. All accounts/passwords are
+# disposable fixtures guarded by the pvdak_ci database check in the PHP setup.
+def authenticated_client(username, password):
+    cookies = CookieJar()
+    client = build_opener(ProxyHandler({}), LoopbackRedirectHandler(),
+                          HTTPCookieProcessor(cookies))
+    with client.open(Request(HOST + "/wp-login.php"), timeout=15) as response:
+        response.read(2_000_000)  # Set WordPress test cookie before POST.
+    form = urlencode({
+        "log": username, "pwd": password, "wp-submit": "Log In",
+        "redirect_to": HOST + "/?page_id=" + ACCOUNT, "testcookie": "1"
+    }).encode("utf-8")
+    with client.open(Request(HOST + "/wp-login.php", data=form, headers={
+        "Content-Type": "application/x-www-form-urlencoded"
+    }), timeout=15) as response:
+        response.read(2_000_000)
+    check(any(cookie.name.startswith("wordpress_logged_in_") for cookie in cookies),
+          username + " has an actual WordPress login cookie")
+    return client, cookies
+
+
+def session_fetch(client, path):
+    url = urljoin(HOST, path)
+    if not loopback_only(url):
+        raise AssertionError("D31_HTTP_ABORT: off-loopback session URL")
+    with client.open(Request(url), timeout=15) as response:
+        if response.status != 200 or "text/html" not in response.headers.get("Content-Type", ""):
+            raise AssertionError("D31_HTTP_FAIL: private session HTML response")
+        body = response.read(2_000_000).decode("utf-8", errors="strict")
+        headers = {key.lower(): value.lower() for key, value in response.headers.items()}
+    page = Page()
+    page.headers = headers
+    page.feed(body)
+    return page
+
+
+account_path = "/?page_id=" + quote(ACCOUNT)
+anonymous_account = fetch(account_path)  # Redirect to branded login, never a private account.
+check("D31_CI_SUBSCRIBER_PRIVATE" not in anonymous_account.body_text and
+      "D31_CI_EDITOR_PRIVATE" not in anonymous_account.body_text,
+      "anonymous account request cannot reveal either private identity")
+subscriber_client, subscriber_cookies = authenticated_client(
+    "ci_d31_subscriber", "pvdak_ci_subscriber_disposable_2026")
+subscriber_account = session_fetch(subscriber_client, account_path)
+check("D31_CI_SUBSCRIBER_PRIVATE" in subscriber_account.body_text,
+      "subscriber session renders its own private display name")
+check("D31_CI_EDITOR_PRIVATE" not in subscriber_account.body_text,
+      "subscriber session does not render editor identity")
+check("no-store" in subscriber_account.headers.get("cache-control", ""),
+      "subscriber account HTML is not publicly cacheable")
+editor_client, editor_cookies = authenticated_client(
+    "ci_d31_editor", "pvdak_ci_editor_disposable_2026")
+editor_account = session_fetch(editor_client, account_path)
+check("D31_CI_EDITOR_PRIVATE" in editor_account.body_text,
+      "editor session renders its own private display name")
+check("D31_CI_SUBSCRIBER_PRIVATE" not in editor_account.body_text,
+      "editor session does not render subscriber identity")
+check("no-store" in editor_account.headers.get("cache-control", ""),
+      "editor account HTML is not publicly cacheable")
+check(subscriber_cookies is not editor_cookies,
+      "subscriber and editor use distinct independent cookie jars")
+check("no-store" in session_fetch(subscriber_client, index_url).headers.get("cache-control", ""),
+      "logged-in subscriber public index response is private/no-store")
+check("no-store" in session_fetch(editor_client, index_url).headers.get("cache-control", ""),
+      "logged-in editor public index response is private/no-store")
+subscriber_again = session_fetch(subscriber_client, account_path)
+check("D31_CI_SUBSCRIBER_PRIVATE" in subscriber_again.body_text and
+      "D31_CI_EDITOR_PRIVATE" not in subscriber_again.body_text,
+      "subscriber identity remains isolated after editor request")
+
 print(f"PVDAK_D31_HTTP_OK: {checks}/{checks} actual localhost HTTP checks; browser, live cache, production deploy NOT_TESTED.")
