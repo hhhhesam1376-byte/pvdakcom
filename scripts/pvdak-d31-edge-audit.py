@@ -61,7 +61,8 @@ def cache_value(headers, name):
 
 
 def is_hit(value):
-    return bool(re.search(r"(?<![a-z])hit(?![a-z])", value))
+    """Require an actual public HIT token, not a misleading NOT_HIT suffix."""
+    return bool(re.search(r"(?:^|[\s,;])(?:hit|tcp_hit)(?=$|[\s,;])", value.lower()))
 
 
 def private_ok(status, headers, cache_header, label, require_noindex=False):
@@ -83,7 +84,8 @@ def private_ok(status, headers, cache_header, label, require_noindex=False):
     age = headers.get("age")
     if age is not None and not re.fullmatch(r"0+", age.strip()):
         fail(label + ": positive or invalid Age header on private response")
-    if require_noindex and "noindex" not in headers.get("x-robots-tag", ""):
+    robots = {item.strip() for item in headers.get("x-robots-tag", "").split(",")}
+    if require_noindex and "noindex" not in robots:
         fail(label + ": missing X-Robots-Tag noindex")
 
 

@@ -22,6 +22,8 @@ class Edge(http.server.BaseHTTPRequestHandler):
     leak_anonymous = False
     leak_after_auth = False
     seen_authenticated = False
+    public_cache_status = "HIT"
+    robots_tag = "noindex"
 
     def log_message(self, *_):
         pass
@@ -29,7 +31,7 @@ class Edge(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/public.css":
             self.send_response(200)
-            self.send_header("X-PVDak-Edge-Cache", "HIT")
+            self.send_header("X-PVDak-Edge-Cache", self.public_cache_status)
             self.end_headers()
             self.wfile.write(b"/* public */")
             return
@@ -38,7 +40,7 @@ class Edge(http.server.BaseHTTPRequestHandler):
             Edge.seen_authenticated = True
         self.send_response(200 if cookie or self.path == "/login" else 302)
         self.send_header("Cache-Control", "private, x-no-store" if self.fake_no_store else "private, no-store")
-        self.send_header("X-Robots-Tag", "noindex")
+        self.send_header("X-Robots-Tag", self.robots_tag)
         if self.duplicate_hit:
             self.send_header("X-PVDak-Edge-Cache", "HIT")
         self.send_header("X-PVDak-Edge-Cache", "HIT" if self.private_hit else
@@ -82,6 +84,8 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.leak_anonymous = False
         Edge.leak_after_auth = False
         Edge.seen_authenticated = False
+        Edge.public_cache_status = "HIT"
+        Edge.robots_tag = "noindex"
 
     def run_audit(self, authenticated=True, cookie_a="session=A"):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
@@ -128,6 +132,28 @@ class EdgeAuditTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
         self.assertIn("anonymous-after-auth", r.stderr)
         self.assertIn("anonymous response leaked synthetic identity", r.stderr)
+
+    def test_public_not_hit_suffix_is_not_a_positive_cache_control(self):
+        Edge.public_cache_status = "NOT_HIT"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("public asset did not demonstrate a CDN HIT", r.stderr)
+
+    def test_public_tcp_hit_is_a_valid_positive_control(self):
+        Edge.public_cache_status = "TCP_HIT"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_fake_noindex_suffix_rejected(self):
+        Edge.robots_tag = "noindexing"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("missing X-Robots-Tag noindex", r.stderr)
+
+    def test_comma_separated_noindex_accepted(self):
+        Edge.robots_tag = "noindex, nofollow"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_anonymous_only_is_partial(self):
         r = self.run_audit(authenticated=False)

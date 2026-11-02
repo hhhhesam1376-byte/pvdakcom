@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/pvdak-batch-readonly.yml'
       - 'scripts/check-batch-readonly.sh'
+      - 'scripts/pvdak-d31-edge-audit.py'
+      - 'scripts/pvdak-restore-drill.sh'
       - 'tests/**'
       - '**/*.php'
   workflow_dispatch:
