@@ -63,12 +63,14 @@ async function login(context, actor) {
     actor.key + ' logged in with real WordPress cookie');
   check(new URL(page.url()).origin === HOST, actor.key + ' login stays on loopback');
   const nonceResponse = await context.request.get(
-    localUrl('/wp-admin/admin-ajax.php?action=rest-nonce'),
+    localUrl('/wp-admin/admin-ajax.php?action=pvdak_ci_d12_rest_nonce'),
     { maxRedirects: 0, timeout: 30000 }
   );
-  const nonce = (await nonceResponse.text()).trim();
-  check(nonceResponse.status() === 200 && /^[a-zA-Z0-9]{10}$/.test(nonce),
-    actor.key + ' obtained session-bound REST nonce via authenticated AJAX');
+  const noncePayload = await nonceResponse.json();
+  const nonce = noncePayload && noncePayload.data && noncePayload.data.nonce;
+  check(nonceResponse.status() === 200 && noncePayload.success === true &&
+    typeof nonce === 'string' && /^[a-zA-Z0-9]{10}$/.test(nonce),
+    actor.key + ' obtained session-bound REST nonce via guarded CI-only AJAX');
   return nonce;
 }
 async function main() {
