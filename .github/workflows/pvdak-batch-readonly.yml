@@ -114,6 +114,7 @@ jobs:
           cleanup() {
             rc=$?
             trap - EXIT
+            rm -f "$RUNNER_TEMP/pvdak-d13-reset-key" || true
             rm -f "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php" || true
             if (( d11_fixture_ready == 1 )); then
               if ! PVDAK_CI_D11_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-fixture.php"; then
@@ -152,6 +153,27 @@ jobs:
           cp "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-ci-nonce-mu.php" "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php"
           PVDAK_CI_D12_ISOLATED=1 node "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-rest-http.cjs"
           rm -f "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php"
+          # D13: issue a single-use key only for the marked D11 synthetic user.
+          # The key never enters logs, source, environment or production.
+          PVDAK_CI_D13_ISOLATED=1 php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval '
+            if (getenv("GITHUB_ACTIONS") !== "true" ||
+                getenv("PVDAK_CI_D13_ISOLATED") !== "1" ||
+                DB_NAME !== "pvdak_ci" || DB_HOST !== "127.0.0.1" ||
+                realpath(ABSPATH) !== realpath(getenv("RUNNER_TEMP") . "/pvdak-wp")) {
+              exit(2);
+            }
+            $user = get_user_by("login", "ci_d11_browser_client");
+            if (!$user || get_user_meta($user->ID, "_pvdak_d11_browser_fixture", true) !== "1") {
+              exit(2);
+            }
+            $key = get_password_reset_key($user);
+            if (is_wp_error($key) || !is_string($key)) { exit(2); }
+            $file = getenv("RUNNER_TEMP") . "/pvdak-d13-reset-key";
+            if (file_put_contents($file, $key, LOCK_EX) !== strlen($key) ||
+                !chmod($file, 0600)) { exit(2); }
+          '
+          PVDAK_CI_D13_ISOLATED=1 node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-recovery-http.cjs"
+          rm -f "$RUNNER_TEMP/pvdak-d13-reset-key"
       - name: Verify D30 file and SQL restore on disposable MariaDB
         shell: bash
         env:
