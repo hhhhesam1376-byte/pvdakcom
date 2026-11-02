@@ -8,10 +8,10 @@ umask 077
 [[ "$(id -u)" -ne 0 ]] || { echo "D30_STOP: run as an unprivileged account" >&2; exit 1; }
 
 usage() {
-  echo 'USAGE: bash scripts/pvdak-restore-drill.sh --theme DIR --core DIR [--sql FILE] [--files-only]' >&2
+  echo 'USAGE: bash scripts/pvdak-restore-drill.sh --theme DIR --core DIR [--sql FILE] [--files-only] [--ci-wp-boot]' >&2
   exit 2
 }
-THEME='' CORE='' SQL='' FILES_ONLY=0
+THEME='' CORE='' SQL='' FILES_ONLY=0 CI_WP_BOOT=0
 while (( $# )); do
   case "$1" in
     --theme|--core|--sql)
@@ -23,6 +23,7 @@ while (( $# )); do
       esac
       shift 2 ;;
     --files-only) FILES_ONLY=1; shift ;;
+    --ci-wp-boot) CI_WP_BOOT=1; shift ;;
     *) usage ;;
   esac
 done
@@ -30,6 +31,19 @@ done
 # require SQL explicitly and cannot quietly downgrade to file-only mode.
 [[ -n "$THEME" && -n "$CORE" ]] || usage
 (( FILES_ONLY )) || [[ -n "$SQL" ]] || usage
+if (( CI_WP_BOOT )); then
+  # This optional integration check is restricted to a disposable CI fixture.
+  # Never use a production wp-config, SQL dump, host or credential here.
+  (( ! FILES_ONLY )) || usage
+  [[ "${GITHUB_ACTIONS:-}" == "true" &&
+     "${PVDAK_CI_D30_ISOLATED:-}" == "1" &&
+     -n "${RUNNER_TEMP:-}" && -n "${GITHUB_WORKSPACE:-}" &&
+     "${PVDAK_WP_ROOT:-}" == "$RUNNER_TEMP/pvdak-wp" &&
+     -f "$RUNNER_TEMP/wp-cli.phar" ]] || {
+    echo 'D30_CI_BOOT_ABORT: disposable CI WordPress fixture required' >&2
+    exit 2
+  }
+fi
 for cmd in realpath mktemp cp diff find rm; do
   command -v "$cmd" >/dev/null || { echo "D30_STOP: required command unavailable" >&2; exit 1; }
 done
@@ -190,3 +204,44 @@ for table in "${!RESTORED_TABLES[@]}"; do
 done
 (( WP_SCHEMA_READY )) || { echo 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' >&2; exit 1; }
 echo "D30_SQL_RESTORE_OK: isolated socket-only MariaDB, tables=$TABLES, WordPress schema present; WordPress boot NOT_TESTED"
+
+if (( CI_WP_BOOT )); then
+  # Run WordPress against the *restored* socket-only database and the
+  # byte-for-byte restored theme/Core, never against the original CI DB.
+  CI_WP_ROOT="$RUNNER_TEMP/pvdak-wp"
+  [[ -f "$CI_WP_ROOT/wp-config.php" && ! -L "$CI_WP_ROOT" ]] || {
+    echo 'D30_CI_BOOT_FAILED: disposable WordPress missing' >&2; exit 1;
+  }
+  mkdir -p "$SCRATCH/wordpress"
+  cp -a -- "$CI_WP_ROOT/." "$SCRATCH/wordpress/"
+  rm -rf -- "$SCRATCH/wordpress/wp-content/themes/pvdakcom-main" \
+    "$SCRATCH/wordpress/wp-content/plugins/pvdak-core"
+  mkdir -p "$SCRATCH/wordpress/wp-content/themes/pvdakcom-main" \
+    "$SCRATCH/wordpress/wp-content/plugins/pvdak-core"
+  cp -a -- "$SCRATCH/theme/." "$SCRATCH/wordpress/wp-content/themes/pvdakcom-main/"
+  cp -a -- "$SCRATCH/core/." "$SCRATCH/wordpress/wp-content/plugins/pvdak-core/"
+  WPCLI=(php "$RUNNER_TEMP/wp-cli.phar" --path="$SCRATCH/wordpress")
+  "${WPCLI[@]}" config set DB_NAME "$DB" --type=constant --quiet
+  "${WPCLI[@]}" config set DB_USER root --type=constant --quiet
+  "${WPCLI[@]}" config set DB_PASSWORD '' --type=constant --quiet
+  "${WPCLI[@]}" config set DB_HOST "localhost:$SOCKET" --type=constant --quiet
+  "${WPCLI[@]}" core is-installed --skip-plugins --skip-themes >/dev/null || {
+    echo 'D30_CI_BOOT_FAILED: restored WordPress is not installed' >&2; exit 1;
+  }
+  PAGE_COUNT="$("${WPCLI[@]}" post list --post_type=page --post_status=publish \
+    --format=count --skip-plugins --skip-themes)"
+  [[ "$PAGE_COUNT" =~ ^[0-9]+$ && "$PAGE_COUNT" -ge 1200 ]] || {
+    echo 'D30_CI_BOOT_FAILED: restored fixture pages absent' >&2; exit 1;
+  }
+  "${WPCLI[@]}" eval '
+    if (get_option("template") !== "pvdakcom-main"
+        || !in_array("pvdak-core/pvdak-core.php", (array) get_option("active_plugins", array()), true)
+        || !function_exists("wp_get_current_user")) {
+      WP_CLI::error("D30_CI_BOOT_FAILED: restored theme/Core not active");
+    }
+    WP_CLI::log("D30_CI_WP_BOOT_OK: restored WordPress loaded with theme and Core");
+  ' || {
+    echo 'D30_CI_BOOT_FAILED: restored runtime could not boot' >&2; exit 1;
+  }
+  echo "D30_CI_WP_CONTENT_OK: published_fixture_pages=$PAGE_COUNT"
+fi
