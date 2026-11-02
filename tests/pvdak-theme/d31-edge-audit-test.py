@@ -17,6 +17,8 @@ class Edge(http.server.BaseHTTPRequestHandler):
     fake_no_store = False
     duplicate_hit = False
     hit_later = False
+    age_value = None
+    duplicate_age = False
 
     def log_message(self, *_):
         pass
@@ -36,6 +38,10 @@ class Edge(http.server.BaseHTTPRequestHandler):
             self.send_header("X-PVDak-Edge-Cache", "HIT")
         self.send_header("X-PVDak-Edge-Cache", "HIT" if self.private_hit else
                          ("BYPASS, HIT" if self.hit_later else "BYPASS"))
+        if self.age_value is not None:
+            self.send_header("Age", self.age_value)
+        if self.duplicate_age:
+            self.send_header("Age", "0")
         self.end_headers()
         if cookie == "session=A":
             self.wfile.write(b"STAGING_A_123456 " + (b"STAGING_B_123456" if self.leak else b""))
@@ -63,6 +69,8 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.fake_no_store = False
         Edge.duplicate_hit = False
         Edge.hit_later = False
+        Edge.age_value = None
+        Edge.duplicate_age = False
 
     def run_audit(self, authenticated=True):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
@@ -117,6 +125,30 @@ class EdgeAuditTest(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
         self.assertIn("private response was cached", r.stderr)
+
+    def test_zero_age_on_private_response_allowed(self):
+        Edge.age_value = "0"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_positive_age_on_private_response_rejected(self):
+        Edge.age_value = "42"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("positive or invalid Age", r.stderr)
+
+    def test_malformed_age_on_private_response_rejected(self):
+        Edge.age_value = "not-an-age"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("positive or invalid Age", r.stderr)
+
+    def test_duplicate_age_headers_rejected(self):
+        Edge.age_value = "0"
+        Edge.duplicate_age = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("positive or invalid Age", r.stderr)
 
     def test_production_hostname_with_trailing_dot_rejected(self):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}

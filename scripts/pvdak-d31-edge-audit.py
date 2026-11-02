@@ -70,6 +70,13 @@ def private_ok(status, headers, cache_header, label, require_noindex=False):
         fail(label + ": CDN cache status header missing")
     if UNSAFE_CACHE_STATUS.search(cache):
         fail(label + ": private response was cached")
+    # A positive Age means a shared intermediary served an aged response,
+    # even if the vendor-specific cache header misleadingly says BYPASS.
+    # RFC Age is a single non-negative decimal integer; malformed or
+    # duplicated Age fields fail closed rather than hiding cache reuse.
+    age = headers.get("age")
+    if age is not None and not re.fullmatch(r"0+", age.strip()):
+        fail(label + ": positive or invalid Age header on private response")
     if require_noindex and "noindex" not in headers.get("x-robots-tag", ""):
         fail(label + ": missing X-Robots-Tag noindex")
 
