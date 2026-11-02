@@ -24,6 +24,8 @@ jobs:
         run: php -v
       - name: Run canonical read-only PHP batch
         run: bash scripts/check-batch-readonly.sh
+      - name: Validate D31 staging edge audit against synthetic loopback
+        run: python3 tests/pvdak-theme/d31-edge-audit-test.py
 
   d31-wordpress-mariadb:
     runs-on: ubuntu-latest
