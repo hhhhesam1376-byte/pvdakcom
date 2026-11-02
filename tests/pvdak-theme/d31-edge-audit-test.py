@@ -19,6 +19,9 @@ class Edge(http.server.BaseHTTPRequestHandler):
     hit_later = False
     age_value = None
     duplicate_age = False
+    leak_anonymous = False
+    leak_after_auth = False
+    seen_authenticated = False
 
     def log_message(self, *_):
         pass
@@ -31,6 +34,8 @@ class Edge(http.server.BaseHTTPRequestHandler):
             self.wfile.write(b"/* public */")
             return
         cookie = self.headers.get("Cookie", "")
+        if cookie in ("session=A", "session=B"):
+            Edge.seen_authenticated = True
         self.send_response(200 if cookie or self.path == "/login" else 302)
         self.send_header("Cache-Control", "private, x-no-store" if self.fake_no_store else "private, no-store")
         self.send_header("X-Robots-Tag", "noindex")
@@ -48,7 +53,10 @@ class Edge(http.server.BaseHTTPRequestHandler):
         elif cookie == "session=B":
             self.wfile.write(b"STAGING_B_123456")
         else:
-            self.wfile.write(b"anonymous")
+            if self.leak_anonymous or (self.leak_after_auth and self.seen_authenticated):
+                self.wfile.write(b"STAGING_A_123456")
+            else:
+                self.wfile.write(b"anonymous")
 
 
 class EdgeAuditTest(unittest.TestCase):
@@ -71,6 +79,9 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.hit_later = False
         Edge.age_value = None
         Edge.duplicate_age = False
+        Edge.leak_anonymous = False
+        Edge.leak_after_auth = False
+        Edge.seen_authenticated = False
 
     def run_audit(self, authenticated=True):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
@@ -90,6 +101,20 @@ class EdgeAuditTest(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("D31_EDGE_CHECKS_OK", r.stdout)
+        self.assertIn("D31_EDGE_POST_AUTH_ANONYMOUS_OK", r.stdout)
+
+    def test_anonymous_marker_leak_before_auth_fails(self):
+        Edge.leak_anonymous = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("anonymous response leaked synthetic identity", r.stderr)
+
+    def test_anonymous_marker_leak_after_auth_fails(self):
+        Edge.leak_after_auth = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("anonymous-after-auth", r.stderr)
+        self.assertIn("anonymous response leaked synthetic identity", r.stderr)
 
     def test_anonymous_only_is_partial(self):
         r = self.run_audit(authenticated=False)
