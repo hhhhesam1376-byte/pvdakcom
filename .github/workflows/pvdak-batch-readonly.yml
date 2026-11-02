@@ -145,6 +145,8 @@ jobs:
           # remains protected by the D11 EXIT cleanup trap on any failure.
           PVDAK_CI_D12_ISOLATED=1 php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-rest-role-matrix.php"
           node "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-sessions.cjs"
+          # D12 real HTTP cookie/nonce checks reuse the same marked fixture and EXIT cleanup.
+          PVDAK_CI_D12_ISOLATED=1 node "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-rest-http.cjs"
       - name: Verify D30 file and SQL restore on disposable MariaDB
         shell: bash
         env:
