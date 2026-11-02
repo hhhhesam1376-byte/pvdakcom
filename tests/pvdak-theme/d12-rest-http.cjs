@@ -39,7 +39,7 @@ function localUrl(path) {
   return url.href;
 }
 async function rest(context, route, nonce, params = {}) {
-  const url = new URL('/', HOST);
+  const url = new URL('/pvdak-wp/', HOST);
   url.searchParams.set('rest_route', route);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   const headers = nonce ? { 'X-WP-Nonce': nonce } : {};
@@ -63,14 +63,14 @@ async function login(context, actor) {
     actor.key + ' logged in with real WordPress cookie');
   check(new URL(page.url()).origin === HOST, actor.key + ' login stays on loopback');
   const nonceResponse = await context.request.get(
-    localUrl('/wp-admin/admin-ajax.php?action=pvdak_ci_d12_rest_nonce'),
+    localUrl('/pvdak-wp/wp-admin/admin-ajax.php?action=pvdak_ci_d12_rest_nonce'),
     { maxRedirects: 0, timeout: 30000 }
   );
   const noncePayload = await nonceResponse.json();
   const nonce = noncePayload && noncePayload.data && noncePayload.data.nonce;
   check(nonceResponse.status() === 200 && noncePayload.success === true &&
     typeof nonce === 'string' && /^[a-zA-Z0-9]{10}$/.test(nonce),
-    actor.key + ' obtained session-bound REST nonce via guarded CI-only AJAX');
+    actor.key + ' obtained session-bound REST nonce via guarded CI-only AJAX (status=' + nonceResponse.status() + ', cookie paths=' + (await context.cookies()).map(c => c.path).join(',') + ')');
   return nonce;
 }
 async function main() {
