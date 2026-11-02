@@ -137,6 +137,21 @@ http {
             raise AssertionError("D31_NGINX_FAIL: nginx did not listen")
 
         anon, _ = client()
+        # Positive cache control: a harmless public static stylesheet MUST
+        # actually reach MISS then HIT. Without this, a disabled/misconfigured
+        # proxy cache could make every private no-HIT assertion vacuously pass.
+        # The query is fixed and local; no production/CDN URL is contacted.
+        stylesheet = EDGE + "/wp-content/themes/pvdakcom-main/style.css?d31_cache_probe=1"
+        css_first, first_headers = read(anon, stylesheet)
+        css_second, second_headers = read(anon, stylesheet)
+        check("Theme Name: PVDak" in css_first,
+              "public stylesheet served by disposable WordPress origin")
+        check(first_headers.get("x-pvdak-edge-cache") == "miss",
+              "shared nginx cache reports a genuine public MISS")
+        check(second_headers.get("x-pvdak-edge-cache") == "hit",
+              "shared nginx cache reports a genuine public HIT")
+        check(css_first == css_second,
+              "public cached response body is stable across MISS/HIT")
         check_private(anon, EDGE + "/?page_id=" + LOGIN)
         subscriber, sc = client()
         editor, ec = client()
