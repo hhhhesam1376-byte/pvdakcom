@@ -7,7 +7,7 @@ import os
 import sys
 from http.cookiejar import CookieJar
 from html.parser import HTMLParser
-from urllib.parse import quote, urlencode, urljoin, urlsplit
+from urllib.parse import parse_qs, quote, urlencode, urljoin, urlsplit
 from urllib.request import Request, HTTPRedirectHandler, HTTPCookieProcessor, ProxyHandler, build_opener
 
 HOST = "http://127.0.0.1:8080"
@@ -148,6 +148,23 @@ check(len(bad.topic_links) == 24 and "Topic 001" in bad.body_text,
       "invalid HTTP cursor safely resets to public first window")
 check(any("noindex" in directive for directive in bad.robots),
       "invalid cursor URL remains noindex")
+# Real HTTP cursor-abuse regression: reject ambiguous direction, array-valued
+# tokens and a tampered signed token. All responses remain public and noindex.
+index_token = parse_qs(urlsplit(first.links["next"]).query).get("pvdak_topics_after", [""])[0]
+check(bool(index_token), "HTTP next link carries a signed index cursor")
+tampered_index_token = index_token[:-1] + ("a" if index_token[-1] != "a" else "b")
+for label, suffix in (
+        ("tampered", "&pvdak_topics_after=" + quote(tampered_index_token)),
+        ("ambiguous", "&pvdak_topics_after=" + quote(index_token) +
+         "&pvdak_topics_before=" + quote(index_token)),
+        ("array", "&pvdak_topics_after%5B%5D=" + quote(index_token)),
+        ("invalid-before", "&pvdak_topics_before=invalid-cursor")):
+    rejected = fetch(index_url + suffix)
+    check(len(rejected.topic_links) == 24 and "Topic 001" in rejected.body_text and
+          "Topic 025" not in rejected.body_text,
+          label + " HTTP index cursor resets to first public window")
+    check(any("noindex" in directive for directive in rejected.robots),
+          label + " HTTP index cursor stays noindex")
 malformed_search = fetch("/?pvdak_topic%5B%5D=Topic")
 check(len(malformed_search.topic_links) == 0,
       "array-valued GET search cannot fall back to public topic preview")
@@ -171,6 +188,16 @@ check(any("noindex" in directive for directive in home_search_next.robots),
       "homepage continuation URL remains noindex")
 check("Topic password-protected" not in home_search_next.body_text and "Topic draft" not in home_search_next.body_text,
       "homepage continuation never exposes protected or draft topics")
+# A valid cursor is scoped to its normalized search term. Replaying it
+# under a different matching term must start at the first public window.
+search_token = parse_qs(urlsplit(home_search.links["next"]).query).get("pvdak_topic_after", [""])[0]
+check(bool(search_token), "HTTP search continuation carries a signed cursor")
+cross_term = fetch("/?pvdak_topic=Topic%200&pvdak_topic_after=" + quote(search_token))
+check(len(cross_term.topic_links) == 48 and "Topic 001" in cross_term.body_text and
+      "Topic 049" not in cross_term.body_text,
+      "search cursor cannot skip results when replayed under another term")
+check(any("noindex" in directive for directive in cross_term.robots),
+      "cross-term cursor URL stays noindex")
 # Validate actual WordPress response headers, not just PHP source/stub policy.
 # The login Page is anonymous, but sensitive because of its page template.
 login = fetch("/?page_id=" + quote(LOGIN))
