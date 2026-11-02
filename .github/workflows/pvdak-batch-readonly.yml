@@ -109,3 +109,12 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/pvdak-browser" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.0
           export NODE_PATH="$RUNNER_TEMP/pvdak-browser/node_modules"
           node "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-browser-rtl.cjs"
+      - name: Verify D30 file and SQL restore on disposable MariaDB
+        shell: bash
+        env:
+          PVDAK_CI_D30_ISOLATED: '1'
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server mariadb-client
+          bash "$GITHUB_WORKSPACE/tests/pvdak-theme/d30-mariadb-restore-ci.sh"
