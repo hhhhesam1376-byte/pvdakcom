@@ -150,6 +150,9 @@ jobs:
           done
           [[ "$ready" == 1 ]] || { echo "FAIL: local WordPress HTTP did not start"; exit 1; }
           python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-http-integration.py"
+          # D31: actual nginx shared-cache layer on localhost, never the live CDN.
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nginx
+          python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-nginx-cache-proxy.py"
           # Ubuntu hosted runner includes Chrome; install only the small Playwright JS client.
           command -v google-chrome
           npm install --prefix "$RUNNER_TEMP/pvdak-browser" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.0
