@@ -171,6 +171,20 @@ http {
                       "D31_CI_SUBSCRIBER_PRIVATE")
         print(f"PVDAK_D31_NGINX_CACHE_OK: {checks}/{checks} localhost nginx "
               "shared-cache checks; real CDN/host/deploy NOT_TESTED.")
+    except Exception:
+        # Cache writes exercise nginx worker filesystem access that a
+        # no-store-only regression never exercised. Surface the real worker
+        # error, rather than an opaque RemoteDisconnected in hosted CI.
+        for name in ("nginx.error.log", "nginx.access.log"):
+            file = root / name
+            if file.exists():
+                print("PVDAK_D31_NGINX_DIAG " + name + ": " +
+                      "\\n".join(file.read_text(errors="replace").splitlines()[-25:]),
+                      file=sys.stderr)
+        print("PVDAK_D31_NGINX_DIAG process_rc=" + str(process.poll()) +
+              " cache_mode=" + oct((root / "cache").stat().st_mode & 0o777),
+              file=sys.stderr)
+        raise
     finally:
         process.terminate()
         try:
