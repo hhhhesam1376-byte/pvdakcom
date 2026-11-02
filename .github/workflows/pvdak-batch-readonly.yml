@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout full repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Show PHP CLI runtime
         run: php -v
       - name: Run canonical read-only PHP batch
@@ -45,7 +45,7 @@ jobs:
           --health-retries=20
     steps:
       - name: Checkout full repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install local PHP MySQL driver
         run: |
           sudo apt-get update -qq
