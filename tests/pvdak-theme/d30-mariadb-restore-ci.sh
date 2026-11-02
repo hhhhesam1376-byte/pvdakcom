@@ -47,6 +47,8 @@ grep -F 'D30_FILES_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
 grep -F 'D30_SQL_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
 grep -F 'D30_CI_WP_BOOT_OK' "$FIXTURE/full.log" >/dev/null
 grep -F 'D30_CI_WP_CONTENT_OK' "$FIXTURE/full.log" >/dev/null
+grep -F 'D30_CI_ROLLBACK_OK' "$FIXTURE/full.log" >/dev/null
+echo 'PVDAK_D30_CI_ROLLBACK_OK: disposable release mutation rolled back to original SQL snapshot'
 echo 'PVDAK_D30_CI_SQL_RESTORE_OK: disposable WordPress SQL imported into fresh socket-only MariaDB'
 echo 'PVDAK_D30_CI_WP_BOOT_OK: restored WordPress and theme/Core loaded against restored socket-only DB'
 # A syntactically valid but unrelated SQL dump must NOT count as WordPress recovery.
@@ -79,4 +81,4 @@ grep -F 'D30_SQL_RESTORE_FAILED: missing required WordPress site options' \
     exit 1
   }
 echo 'PVDAK_D30_CI_OPTIONS_NEGATIVE_OK: missing siteurl/home rejected after MariaDB import'
-echo 'PVDAK_D30_CI_OK: 5 isolated checks; real private backup and live rollback NOT_TESTED'
+echo 'PVDAK_D30_CI_OK: 6 isolated checks; real private backup and live host rollback NOT_TESTED'

@@ -254,4 +254,43 @@ if (( CI_WP_BOOT )); then
     echo 'D30_CI_BOOT_FAILED: restored runtime could not boot' >&2; exit 1;
   }
   echo "D30_CI_WP_CONTENT_OK: published_fixture_pages=$PAGE_COUNT"
+  # D30: rehearse rollback on the *disposable restored database* only.
+  # The original SQL snapshot stays untouched; no production connection exists.
+  original_description="$("${WPCLI[@]}" option get blogdescription --skip-plugins --skip-themes)"
+  "${WPCLI[@]}" option update blogdescription D30_CI_MUTATED_RELEASE --skip-plugins --skip-themes --quiet
+  [[ "$("${WPCLI[@]}" option get blogdescription --skip-plugins --skip-themes)" == D30_CI_MUTATED_RELEASE ]] || {
+    echo 'D30_CI_ROLLBACK_FAILED: disposable release mutation not observed' >&2; exit 1;
+  }
+  # DB is the hard-coded pvdak_restore_drill inside this scratch-only,
+  # --skip-networking MariaDB process. Never drop a live database.
+  [[ "$DB" == pvdak_restore_drill && -n "$DB_PID" && -S "$SOCKET" ]] || {
+    echo 'D30_CI_ROLLBACK_FAILED: isolated DB guard' >&2; exit 1;
+  }
+  mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
+    -e "DROP DATABASE \`$DB\`; CREATE DATABASE \`$DB\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" >/dev/null || {
+    echo 'D30_CI_ROLLBACK_FAILED: cannot reset disposable database' >&2; exit 1;
+  }
+  mariadb --no-defaults --binary-mode --local-infile=0 --protocol=socket --socket="$SOCKET" --user=root "$DB" \
+    < "$SQL" >"$SCRATCH/rollback-import.log" 2>&1 || {
+    echo 'D30_CI_ROLLBACK_FAILED: cannot reimport original disposable snapshot' >&2; exit 1;
+  }
+  restored_description="$("${WPCLI[@]}" option get blogdescription --skip-plugins --skip-themes)"
+  [[ "$restored_description" == "$original_description" && "$restored_description" != D30_CI_MUTATED_RELEASE ]] || {
+    echo 'D30_CI_ROLLBACK_FAILED: original option was not restored' >&2; exit 1;
+  }
+  "${WPCLI[@]}" core is-installed --skip-plugins --skip-themes >/dev/null || {
+    echo 'D30_CI_ROLLBACK_FAILED: restored WordPress not installed' >&2; exit 1;
+  }
+  ROLLBACK_PAGE_COUNT="$("${WPCLI[@]}" post list --post_type=page --post_status=publish \
+    --format=count --skip-plugins --skip-themes)"
+  [[ "$ROLLBACK_PAGE_COUNT" == "$PAGE_COUNT" ]] || {
+    echo 'D30_CI_ROLLBACK_FAILED: published fixture page count changed' >&2; exit 1;
+  }
+  "${WPCLI[@]}" eval '
+    if (get_option("template") !== "pvdakcom-main"
+        || !in_array("pvdak-core/pvdak-core.php", (array) get_option("active_plugins", array()), true)) {
+      WP_CLI::error("D30_CI_ROLLBACK_FAILED: restored theme/Core not active");
+    }
+  ' || exit 1
+  echo 'D30_CI_ROLLBACK_OK: mutated disposable release restored from original SQL; WordPress/theme/Core/page count verified'
 fi
