@@ -115,12 +115,18 @@ http {
 """ % (root / "nginx.pid", root / "nginx.error.log", root / "cache"))
     # This deliberately uses nginx's ordinary cache rules. It does not
     # ignore upstream Cache-Control or Set-Cookie, nor bypass auth by fiat.
+    syntax = subprocess.run(["nginx", "-t", "-c", str(config)],
+                            capture_output=True, text=True)
+    if syntax.returncode:
+        raise AssertionError("D31_NGINX_CONFIG_FAIL: " + syntax.stderr.strip())
     process = subprocess.Popen(["nginx", "-c", str(config), "-g", "daemon off;"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     try:
         for _ in range(40):
             if process.poll() is not None:
-                raise AssertionError("D31_NGINX_FAIL: nginx exited during startup")
+                detail = process.stderr.read().decode("utf-8", errors="replace")
+                log = (root / "nginx.error.log").read_text(errors="replace") if (root / "nginx.error.log").exists() else ""
+                raise AssertionError("D31_NGINX_FAIL: nginx exited during startup: " + detail + log)
             try:
                 with socket.create_connection(("127.0.0.1", 8081), timeout=1):
                     break
