@@ -115,7 +115,9 @@ async function main() {
     const stillValid = await get(context, resetPath);
     check((await stillValid.text()).includes('name="action" value="pvdak_recovery_change"'),
       'failed attempts do not consume valid reset key');
-    check(await loginWith(browser, OLD), 'old password works before successful reset');
+    // D11 already proves the fixture's initial password login before this test.
+    // Avoid a redundant login here: WordPress may rotate the user's password
+    // hash on authentication, invalidating an outstanding reset key.
     const changed = await post(context, {
       _pvdak_reset_nonce: nonce, new_password: NEW, confirm_password: NEW
     });
