@@ -81,4 +81,20 @@ grep -F 'D30_SQL_RESTORE_FAILED: missing required WordPress site options' \
     exit 1
   }
 echo 'PVDAK_D30_CI_OPTIONS_NEGATIVE_OK: missing siteurl/home rejected after MariaDB import'
-echo 'PVDAK_D30_CI_OK: 6 isolated checks; real private backup and live host rollback NOT_TESTED'
+# A partial dump may retain users/posts/options while losing taxonomy data.
+# Reject it after a real import into the disposable socket-only MariaDB.
+cp -- "$BACKUP/site.sql" "$BACKUP/missing-taxonomy.sql"
+printf '\nDROP TABLE IF EXISTS `wp_term_relationships`;\n' >> "$BACKUP/missing-taxonomy.sql"
+if bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/missing-taxonomy.sql" \
+  > "$FIXTURE/missing-taxonomy.log" 2>&1; then
+  echo 'D30_CI_FAIL: dump missing WordPress taxonomy table was accepted' >&2; exit 1
+fi
+grep -F 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' \
+  "$FIXTURE/missing-taxonomy.log" >/dev/null || {
+    cat "$FIXTURE/missing-taxonomy.log" >&2
+    echo 'D30_CI_FAIL: partial WordPress dump rejected for unexpected reason' >&2
+    exit 1
+  }
+echo 'PVDAK_D30_CI_SCHEMA_NEGATIVE_OK: missing taxonomy table rejected after MariaDB import'
+echo 'PVDAK_D30_CI_OK: 7 isolated checks; real private backup and live host rollback NOT_TESTED'
