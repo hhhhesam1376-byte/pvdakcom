@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Read-only D31 CDN/staging cache audit. No logins, writes or redirects.
+
+Run with synthetic staging accounts only. Never paste cookie values into argv.
+This audit does not test production latency, purge, SMTP or deployment.
+"""
+import argparse
+import http.client
+import os
+import ssl
+import sys
+from urllib.parse import urlsplit
+
+BAD_CACHE = ("hit", "stale", "updating")
+
+
+def fail(message):
+    raise RuntimeError("D31_EDGE_FAIL: " + message)
+
+
+def path_ok(value):
+    return value.startswith("/") and not value.startswith("//") and "#" not in value and "\r" not in value and "\n" not in value
+
+
+def request(base, path, cookie=None):
+    if not path_ok(path):
+        fail("unsafe relative path")
+    conn_cls = http.client.HTTPSConnection if base.scheme == "https" else http.client.HTTPConnection
+    conn = conn_cls(base.hostname, base.port, timeout=15, **({"context": ssl.create_default_context()} if base.scheme == "https" else {}))
+    headers = {"User-Agent": "PVDak-D31-ReadOnly-Edge-Audit", "Accept-Encoding": "identity"}
+    # No request cache-bypass header; GET never follows redirects.
+    if cookie:
+        headers["Cookie"] = cookie
+    try:
+        conn.request("GET", path, headers=headers)
+        response = conn.getresponse()
+        body = response.read(500001)
+        if len(body) > 500000:
+            fail("response exceeds 500KB safety limit")
+        return response.status, {k.lower(): v.lower() for k, v in response.getheaders()}, body
+    finally:
+        conn.close()
+
+
+def cache_value(headers, name):
+    return headers.get(name, "").strip()
+
+
+def is_hit(value):
+    return value.startswith("hit") or "hit from" in value
+
+
+def private_ok(status, headers, cache_header, label, require_noindex=False):
+    if status not in (200, 301, 302, 303, 307, 308):
+        fail(label + ": unexpected HTTP status " + str(status))
+    if "no-store" not in headers.get("cache-control", ""):
+        fail(label + ": missing no-store")
+    cache = cache_value(headers, cache_header)
+    if not cache:
+        fail(label + ": CDN cache status header missing")
+    if any(cache.startswith(v) or (v == "hit" and "hit from" in cache) for v in BAD_CACHE):
+        fail(label + ": private response was cached")
+    if require_noindex and "noindex" not in headers.get("x-robots-tag", ""):
+        fail(label + ": missing X-Robots-Tag noindex")
+
+
+def audit(args):
+    base = urlsplit(args.base_url)
+    loopback = base.hostname in ("127.0.0.1", "localhost")
+    if (base.username or base.password or base.query or base.fragment or base.path not in ("", "/") or
+            not base.hostname or base.scheme not in ("http", "https")):
+        fail("base URL must be a bare origin without credentials/query")
+    if base.hostname in ("pvdak.com", "www.pvdak.com"):
+        fail("production hostname is not an authorized staging target")
+    ci_only = loopback and args.ci_loopback and os.getenv("GITHUB_ACTIONS") == "true"
+    if not ci_only and not args.confirm_staging:
+        fail("explicit --confirm-staging required")
+    if base.scheme != "https" and not ci_only:
+        fail("HTTPS required outside disposable GitHub CI loopback")
+    if not all(path_ok(x) for x in (args.public_path, args.login_path, args.account_path)):
+        fail("paths must be origin-relative")
+    if args.cache_header not in ("cf-cache-status", "x-cache", "x-pvdak-edge-cache", "x-litespeed-cache"):
+        fail("unsupported cache status header")
+
+    # Prove the CDN is really caching a public asset. Without this positive
+    # control, private MISS checks can pass when the CDN is bypassed entirely.
+    public = [request(base, args.public_path) for _ in range(3)]
+    if any(status != 200 for status, _, _ in public):
+        fail("public control did not return HTTP 200")
+    if not any(is_hit(cache_value(headers, args.cache_header)) for _, headers, _ in public):
+        fail("public asset did not demonstrate a CDN HIT")
+    if not all(body == public[0][2] for _, _, body in public):
+        fail("public cached asset changed across requests")
+    print("D31_EDGE_PUBLIC_CACHE_OK: verified public HIT and stable body")
+
+    for label, path in (("anonymous-login", args.login_path), ("anonymous-account", args.account_path)):
+        for _ in range(2):
+            status, headers, _ = request(base, path)
+            private_ok(status, headers, args.cache_header, label, require_noindex=(label == "anonymous-login"))
+    print("D31_EDGE_ANONYMOUS_OK: login/account no-store and no private cache HIT")
+
+    a, b = os.getenv("PVDAK_D31_COOKIE_A"), os.getenv("PVDAK_D31_COOKIE_B")
+    ma, mb = os.getenv("PVDAK_D31_MARKER_A"), os.getenv("PVDAK_D31_MARKER_B")
+    if not all((a, b, ma, mb)):
+        print("D31_EDGE_PARTIAL: two synthetic staging cookies and unique markers absent; authenticated isolation NOT_TESTED")
+        return 3
+    if a == b or ma == mb or len(ma) < 8 or len(mb) < 8:
+        fail("two distinct synthetic accounts and unique markers required")
+    for label, cookie, own, other in (("account-A", a, ma, mb), ("account-B", b, mb, ma),
+                                       ("account-A-repeat", a, ma, mb), ("account-B-repeat", b, mb, ma)):
+        status, headers, body = request(base, args.account_path, cookie)
+        private_ok(status, headers, args.cache_header, label, require_noindex=True)
+        if status != 200 or own.encode() not in body or other.encode() in body:
+            fail(label + ": synthetic private identity mismatch or leakage")
+    print("D31_EDGE_AUTHENTICATED_OK: two synthetic sessions isolated across repeated CDN requests")
+    print("D31_EDGE_CHECKS_OK: CDN cache policy read-only audit; purge/latency/deploy/owner acceptance NOT_TESTED")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base-url", required=True)
+    parser.add_argument("--public-path", required=True)
+    parser.add_argument("--login-path", required=True)
+    parser.add_argument("--account-path", required=True)
+    parser.add_argument("--cache-header", required=True)
+    parser.add_argument("--ci-loopback", action="store_true", help="Only valid in GitHub Actions on 127.0.0.1")
+    parser.add_argument("--confirm-staging", action="store_true", help="Explicitly authorize read-only staging requests")
+    try:
+        return audit(parser.parse_args())
+    except (RuntimeError, OSError, ssl.SSLError) as exc:
+        # Never log cookies, response bodies, user markers or private URLs.
+        print(str(exc), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
