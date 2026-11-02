@@ -14,6 +14,9 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "pvdak-d31-edge-audit
 class Edge(http.server.BaseHTTPRequestHandler):
     leak = False
     private_hit = False
+    fake_no_store = False
+    duplicate_hit = False
+    hit_later = False
 
     def log_message(self, *_):
         pass
@@ -27,9 +30,12 @@ class Edge(http.server.BaseHTTPRequestHandler):
             return
         cookie = self.headers.get("Cookie", "")
         self.send_response(200 if cookie or self.path == "/login" else 302)
-        self.send_header("Cache-Control", "private, no-store")
+        self.send_header("Cache-Control", "private, x-no-store" if self.fake_no_store else "private, no-store")
         self.send_header("X-Robots-Tag", "noindex")
-        self.send_header("X-PVDak-Edge-Cache", "HIT" if self.private_hit else "BYPASS")
+        if self.duplicate_hit:
+            self.send_header("X-PVDak-Edge-Cache", "HIT")
+        self.send_header("X-PVDak-Edge-Cache", "HIT" if self.private_hit else
+                         ("BYPASS, HIT" if self.hit_later else "BYPASS"))
         self.end_headers()
         if cookie == "session=A":
             self.wfile.write(b"STAGING_A_123456 " + (b"STAGING_B_123456" if self.leak else b""))
@@ -54,6 +60,9 @@ class EdgeAuditTest(unittest.TestCase):
     def setUp(self):
         Edge.leak = False
         Edge.private_hit = False
+        Edge.fake_no_store = False
+        Edge.duplicate_hit = False
+        Edge.hit_later = False
 
     def run_audit(self, authenticated=True):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
@@ -90,6 +99,33 @@ class EdgeAuditTest(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r.returncode, 1)
         self.assertIn("private response was cached", r.stderr)
+
+    def test_fake_no_store_directive_fails(self):
+        Edge.fake_no_store = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("missing no-store", r.stderr)
+
+    def test_duplicate_cache_status_cannot_hide_hit(self):
+        Edge.duplicate_hit = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("private response was cached", r.stderr)
+
+    def test_hit_after_bypass_in_same_header_fails(self):
+        Edge.hit_later = True
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("private response was cached", r.stderr)
+
+    def test_production_hostname_with_trailing_dot_rejected(self):
+        env = {**os.environ, "GITHUB_ACTIONS": "true"}
+        r = subprocess.run([sys.executable, str(SCRIPT), "--base-url", "https://pvdak.com.",
+                            "--public-path", "/public.css", "--login-path", "/login",
+                            "--account-path", "/account", "--cache-header", "cf-cache-status",
+                            "--confirm-staging"], capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("production hostname", r.stderr)
 
     def test_external_http_is_rejected(self):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
