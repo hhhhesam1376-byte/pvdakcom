@@ -99,6 +99,7 @@ jobs:
           PVDAK_CI_D31_ISOLATED: '1'
           PVDAK_CI_D11_ISOLATED: '1'
           PVDAK_CI_D13_MAIL_ISOLATED: '1'
+          PVDAK_CI_D13_SIGNUP_ISOLATED: '1'
         run: |
           set -Eeuo pipefail
           export PVDAK_CI_D31_PARENT_ID PVDAK_CI_D31_LOGIN_ID PVDAK_CI_D31_ACCOUNT_ID
@@ -113,11 +114,18 @@ jobs:
           server_pid=$!
           d11_fixture_ready=0
           d13_mail_fixture_ready=0
+          d13_signup_fixture_ready=0
           cleanup() {
             rc=$?
             trap - EXIT
             rm -f "$RUNNER_TEMP/pvdak-d13-reset-key" || true
             rm -f "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php" || true
+            if (( d13_signup_fixture_ready == 1 )); then
+              if ! PVDAK_CI_D13_SIGNUP_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-fixture.php"; then
+                echo 'D13_SIGNUP_CLEANUP_FAILED: isolated fixture requires review'
+                rc=1
+              fi
+            fi
             if (( d13_mail_fixture_ready == 1 )); then
               if ! PVDAK_CI_D13_MAIL_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-fixture.php"; then
                 echo 'D13_MAIL_CLEANUP_FAILED: isolated fixture requires review'
@@ -188,6 +196,14 @@ jobs:
           d13_mail_fixture_ready=1
           node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-http.cjs"
           PVDAK_CI_D13_MAIL_MODE=verify php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-fixture.php"
+          # D13: exercise the actual public signup handler and privilege boundary.
+          # Registration is enabled only in disposable CI and reset by EXIT cleanup.
+          d13_signup_fixture_ready=1
+          PVDAK_CI_D13_SIGNUP_MODE=setup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-fixture.php"
+          PVDAK_CI_D13_SIGNUP_MODE=register node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-http.cjs"
+          PVDAK_CI_D13_SIGNUP_MODE=issue php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-fixture.php"
+          PVDAK_CI_D13_SIGNUP_MODE=verify node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-http.cjs"
+          PVDAK_CI_D13_SIGNUP_MODE=assert php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-registration-fixture.php"
       - name: Verify D30 file and SQL restore on disposable MariaDB
         shell: bash
         env:
