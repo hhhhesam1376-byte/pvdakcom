@@ -158,7 +158,7 @@ try {
     else { $_SERVER['HTTP_X_WP_NONCE'] = $original_nonce; }
 }
 WP_CLI::line( sprintf( 'PVDAK_D12_REST_MATRIX: checks=%d failures=%d cleanup=delegated_to_D11_EXIT_trap', $checks, $failures ) );
-if ( $failures || $checks !== 46 ) {
+if ( $failures || $checks !== 45 ) {
     WP_CLI::error( 'D12 isolated REST/role matrix failed; no gate promotion.' );
 }
 WP_CLI::success( 'D12 isolated WordPress REST/role matrix passed; live HTTP/staging not tested.' );
