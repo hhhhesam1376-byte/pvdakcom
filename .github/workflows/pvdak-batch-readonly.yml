@@ -97,6 +97,7 @@ jobs:
         shell: bash
         env:
           PVDAK_CI_D31_ISOLATED: '1'
+          PVDAK_CI_D11_ISOLATED: '1'
         run: |
           set -Eeuo pipefail
           export PVDAK_CI_D31_PARENT_ID PVDAK_CI_D31_LOGIN_ID PVDAK_CI_D31_ACCOUNT_ID
@@ -109,10 +110,19 @@ jobs:
           ln -s . "$RUNNER_TEMP/pvdak-wp/pvdak-wp"
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/pvdak-wp" >"$RUNNER_TEMP/pvdak-d31-http-server.log" 2>&1 &
           server_pid=$!
+          d11_fixture_ready=0
           cleanup() {
             rc=$?
+            trap - EXIT
+            if (( d11_fixture_ready == 1 )); then
+              if ! PVDAK_CI_D11_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-fixture.php"; then
+                echo 'D11_BROWSER_CLEANUP_FAILED: isolated fixture requires review'
+                rc=1
+              fi
+            fi
             if (( rc != 0 )); then tail -n 100 "$RUNNER_TEMP/pvdak-d31-http-server.log" || true; fi
             kill "$server_pid" 2>/dev/null || true
+            exit "$rc"
           }
           trap cleanup EXIT
           ready=0
@@ -127,6 +137,11 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/pvdak-browser" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.0
           export NODE_PATH="$RUNNER_TEMP/pvdak-browser/node_modules"
           node "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-browser-rtl.cjs"
+          # D11 browser fixtures exist only during this isolated HTTP step.
+          # EXIT trap deletes all synthetic users/records even if Chrome fails.
+          PVDAK_CI_D11_MODE=setup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-fixture.php"
+          d11_fixture_ready=1
+          node "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-sessions.cjs"
       - name: Verify D30 file and SQL restore on disposable MariaDB
         shell: bash
         env:
