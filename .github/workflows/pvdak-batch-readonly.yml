@@ -98,6 +98,7 @@ jobs:
         env:
           PVDAK_CI_D31_ISOLATED: '1'
           PVDAK_CI_D11_ISOLATED: '1'
+          PVDAK_CI_D13_MAIL_ISOLATED: '1'
         run: |
           set -Eeuo pipefail
           export PVDAK_CI_D31_PARENT_ID PVDAK_CI_D31_LOGIN_ID PVDAK_CI_D31_ACCOUNT_ID
@@ -111,11 +112,18 @@ jobs:
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/pvdak-wp" >"$RUNNER_TEMP/pvdak-d31-http-server.log" 2>&1 &
           server_pid=$!
           d11_fixture_ready=0
+          d13_mail_fixture_ready=0
           cleanup() {
             rc=$?
             trap - EXIT
             rm -f "$RUNNER_TEMP/pvdak-d13-reset-key" || true
             rm -f "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php" || true
+            if (( d13_mail_fixture_ready == 1 )); then
+              if ! PVDAK_CI_D13_MAIL_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-fixture.php"; then
+                echo 'D13_MAIL_CLEANUP_FAILED: isolated fixture requires review'
+                rc=1
+              fi
+            fi
             if (( d11_fixture_ready == 1 )); then
               if ! PVDAK_CI_D11_MODE=cleanup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d11-browser-fixture.php"; then
                 echo 'D11_BROWSER_CLEANUP_FAILED: isolated fixture requires review'
@@ -174,6 +182,12 @@ jobs:
           '
           PVDAK_CI_D13_ISOLATED=1 node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-recovery-http.cjs"
           rm -f "$RUNNER_TEMP/pvdak-d13-reset-key"
+          # D13 verification: capture synthetic wp_mail locally, then verify
+          # over real Chrome/HTTP and confirm the single-use DB state.
+          PVDAK_CI_D13_MAIL_MODE=setup php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-fixture.php"
+          d13_mail_fixture_ready=1
+          node "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-http.cjs"
+          PVDAK_CI_D13_MAIL_MODE=verify php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d13-mail-verification-fixture.php"
       - name: Verify D30 file and SQL restore on disposable MariaDB
         shell: bash
         env:
