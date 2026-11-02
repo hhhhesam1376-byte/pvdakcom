@@ -7,11 +7,12 @@ This audit does not test production latency, purge, SMTP or deployment.
 import argparse
 import http.client
 import os
+import re
 import ssl
 import sys
 from urllib.parse import urlsplit
 
-BAD_CACHE = ("hit", "stale", "updating")
+UNSAFE_CACHE_STATUS = re.compile(r"(?<![a-z])(?:hit|stale|updating)(?![a-z])")
 
 
 def fail(message):
@@ -37,7 +38,14 @@ def request(base, path, cookie=None):
         body = response.read(500001)
         if len(body) > 500000:
             fail("response exceeds 500KB safety limit")
-        return response.status, {k.lower(): v.lower() for k, v in response.getheaders()}, body
+        # Duplicate HTTP headers must not hide an earlier edge HIT or a
+        # conflicting cache policy. Keep every value rather than last-wins.
+        headers = {}
+        for key, value in response.getheaders():
+            key = key.lower()
+            value = value.lower().strip()
+            headers[key] = headers[key] + ", " + value if key in headers else value
+        return response.status, headers, body
     finally:
         conn.close()
 
@@ -47,18 +55,20 @@ def cache_value(headers, name):
 
 
 def is_hit(value):
-    return value.startswith("hit") or "hit from" in value
+    return bool(re.search(r"(?<![a-z])hit(?![a-z])", value))
 
 
 def private_ok(status, headers, cache_header, label, require_noindex=False):
     if status not in (200, 301, 302, 303, 307, 308):
         fail(label + ": unexpected HTTP status " + str(status))
-    if "no-store" not in headers.get("cache-control", ""):
+    # A substring such as "x-no-store" is not the no-store directive.
+    directives = {item.strip() for item in headers.get("cache-control", "").split(",")}
+    if "no-store" not in directives:
         fail(label + ": missing no-store")
     cache = cache_value(headers, cache_header)
     if not cache:
         fail(label + ": CDN cache status header missing")
-    if any(cache.startswith(v) or (v == "hit" and "hit from" in cache) for v in BAD_CACHE):
+    if UNSAFE_CACHE_STATUS.search(cache):
         fail(label + ": private response was cached")
     if require_noindex and "noindex" not in headers.get("x-robots-tag", ""):
         fail(label + ": missing X-Robots-Tag noindex")
@@ -70,7 +80,7 @@ def audit(args):
     if (base.username or base.password or base.query or base.fragment or base.path not in ("", "/") or
             not base.hostname or base.scheme not in ("http", "https")):
         fail("base URL must be a bare origin without credentials/query")
-    if base.hostname in ("pvdak.com", "www.pvdak.com"):
+    if base.hostname and base.hostname.rstrip(".") in ("pvdak.com", "www.pvdak.com"):
         fail("production hostname is not an authorized staging target")
     ci_only = loopback and args.ci_loopback and os.getenv("GITHUB_ACTIONS") == "true"
     if not ci_only and not args.confirm_staging:
