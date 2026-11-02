@@ -190,6 +190,7 @@ while IFS= read -r table; do
   [[ -n "$table" ]] && RESTORED_TABLES["$table"]=1
 done <<< "$TABLE_NAMES"
 WP_SCHEMA_READY=0
+WP_OPTIONS_READY=0
 for table in "${!RESTORED_TABLES[@]}"; do
   if [[ "$table" =~ ^([a-zA-Z0-9_]+)options$ ]]; then
     prefix="${BASH_REMATCH[1]}"
@@ -198,11 +199,20 @@ for table in "${!RESTORED_TABLES[@]}"; do
           -n "${RESTORED_TABLES[${prefix}users]:-}" &&
           -n "${RESTORED_TABLES[${prefix}usermeta]:-}" ]]; then
       WP_SCHEMA_READY=1
-      break
+      # A dump may have the expected table names but lack the two mandatory
+      # WordPress URL options. Verify only their presence, never reveal values.
+      options_table="${prefix}options"
+      options_count="$(mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
+        --batch --skip-column-names "$DB" \
+        -e "SELECT COUNT(DISTINCT option_name) FROM \`$options_table\` WHERE option_name IN ('siteurl','home') AND option_value <> ''" 2>/dev/null)" || {
+        echo 'D30_SQL_RESTORE_FAILED: unreadable WordPress site options' >&2; exit 1;
+      }
+      if [[ "$options_count" == 2 ]]; then WP_OPTIONS_READY=1; break; fi
     fi
   fi
 done
 (( WP_SCHEMA_READY )) || { echo 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' >&2; exit 1; }
+(( WP_OPTIONS_READY )) || { echo 'D30_SQL_RESTORE_FAILED: missing required WordPress site options' >&2; exit 1; }
 echo "D30_SQL_RESTORE_OK: isolated socket-only MariaDB, tables=$TABLES, WordPress schema present; WordPress boot NOT_TESTED"
 
 if (( CI_WP_BOOT )); then

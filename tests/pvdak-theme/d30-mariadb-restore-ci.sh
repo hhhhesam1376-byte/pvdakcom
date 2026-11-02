@@ -63,4 +63,20 @@ grep -F 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' \
     exit 1
   }
 echo 'PVDAK_D30_CI_NEGATIVE_OK: unrelated SQL rejected by real MariaDB schema guard'
-echo 'PVDAK_D30_CI_OK: 4 isolated checks; real private backup and live rollback NOT_TESTED'
+# Keep the WordPress table family intact but remove its required URL options
+# from a COPY of the disposable dump; this must be rejected after SQL import.
+cp -- "$BACKUP/site.sql" "$BACKUP/missing-site-options.sql"
+printf "\\nDELETE FROM \`wp_options\` WHERE option_name IN ('siteurl','home');\\n" >> "$BACKUP/missing-site-options.sql"
+if bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/missing-site-options.sql" \
+  > "$FIXTURE/missing-options.log" 2>&1; then
+  echo 'D30_CI_FAIL: dump missing site options was accepted' >&2; exit 1
+fi
+grep -F 'D30_SQL_RESTORE_FAILED: missing required WordPress site options' \
+  "$FIXTURE/missing-options.log" >/dev/null || {
+    cat "$FIXTURE/missing-options.log" >&2
+    echo 'D30_CI_FAIL: missing options rejected for unexpected reason' >&2
+    exit 1
+  }
+echo 'PVDAK_D30_CI_OPTIONS_NEGATIVE_OK: missing siteurl/home rejected after MariaDB import'
+echo 'PVDAK_D30_CI_OK: 5 isolated checks; real private backup and live rollback NOT_TESTED'
