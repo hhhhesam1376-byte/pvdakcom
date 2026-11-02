@@ -20,7 +20,5 @@ add_action( 'wp_ajax_pvdak_ci_d12_rest_nonce', static function () {
         wp_die( 'Fixture authorization required.' );
     }
     nocache_headers();
-    header( 'Content-Type: text/plain; charset=UTF-8' );
-    echo esc_html( wp_create_nonce( 'wp_rest' ) );
-    wp_die();
+    wp_send_json_success( array( 'nonce' => wp_create_nonce( 'wp_rest' ) ) );
 } );
