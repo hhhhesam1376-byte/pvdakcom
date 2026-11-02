@@ -110,14 +110,19 @@ def audit(args):
         fail("public cached asset changed across requests")
     print("D31_EDGE_PUBLIC_CACHE_OK: verified public HIT and stable body")
 
-    for label, path in (("anonymous-login", args.login_path), ("anonymous-account", args.account_path)):
-        for _ in range(2):
-            status, headers, _ = request(base, path)
-            private_ok(status, headers, args.cache_header, label, require_noindex=(label == "anonymous-login"))
-    print("D31_EDGE_ANONYMOUS_OK: login/account no-store and no private cache HIT")
-
+    # Synthetic identity markers are checked on anonymous responses too.
+    # This detects origin leaks even if the CDN reports BYPASS/no-store.
     a, b = os.getenv("PVDAK_D31_COOKIE_A"), os.getenv("PVDAK_D31_COOKIE_B")
     ma, mb = os.getenv("PVDAK_D31_MARKER_A"), os.getenv("PVDAK_D31_MARKER_B")
+    for label, path in (("anonymous-login", args.login_path), ("anonymous-account", args.account_path)):
+        for _ in range(2):
+            status, headers, body = request(base, path)
+            private_ok(status, headers, args.cache_header, label, require_noindex=(label == "anonymous-login"))
+            if ma and mb and (ma.encode() in body or mb.encode() in body):
+                fail(label + ": anonymous response leaked synthetic identity")
+    print("D31_EDGE_ANONYMOUS_OK: login/account no-store, no private HIT or synthetic identity")
+
+
     if not all((a, b, ma, mb)):
         print("D31_EDGE_PARTIAL: two synthetic staging cookies and unique markers absent; authenticated isolation NOT_TESTED")
         return 3
@@ -129,7 +134,15 @@ def audit(args):
         private_ok(status, headers, args.cache_header, label, require_noindex=True)
         if status != 200 or own.encode() not in body or other.encode() in body:
             fail(label + ": synthetic private identity mismatch or leakage")
+    # Re-check anonymous access *after* authenticated requests. A faulty
+    # shared cache can leak the last logged-in response to the next visitor.
+    for _ in range(2):
+        status, headers, body = request(base, args.account_path)
+        private_ok(status, headers, args.cache_header, "anonymous-after-auth")
+        if ma.encode() in body or mb.encode() in body:
+            fail("anonymous-after-auth: anonymous response leaked synthetic identity")
     print("D31_EDGE_AUTHENTICATED_OK: two synthetic sessions isolated across repeated CDN requests")
+    print("D31_EDGE_POST_AUTH_ANONYMOUS_OK: no private identity leaked to anonymous visitors")
     print("D31_EDGE_CHECKS_OK: CDN cache policy read-only audit; purge/latency/deploy/owner acceptance NOT_TESTED")
     return 0
 
