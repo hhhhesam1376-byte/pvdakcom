@@ -58,8 +58,10 @@ async function main() {
       await safeGoto(page, '/wp-login.php');
       await page.locator('#user_login').fill(identity.login);
       await page.locator('#user_pass').fill(identity.password);
-      await page.locator('#wp-submit').click();
-      await page.waitForLoadState('domcontentloaded');
+      await Promise.all([
+        page.waitForURL(url => url.origin === HOST && url.pathname !== '/wp-login.php', { waitUntil: 'domcontentloaded', timeout: 30000 }),
+        page.locator('#wp-submit').click()
+      ]);
       check((await context.cookies()).some(c => c.name.startsWith('wordpress_logged_in_')),
         identity.key + ' has a real WordPress authentication cookie');
       const response = await safeGoto(page, '/?page_id=' + account);
