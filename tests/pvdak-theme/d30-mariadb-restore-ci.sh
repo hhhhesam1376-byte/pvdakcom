@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# D30: test the real restore drill against a disposable WordPress SQL dump.
+# Run only inside GitHub Actions after the isolated pvdak_ci WP/MariaDB bootstrap.
+set -Eeuo pipefail
+umask 077
+[[ "${GITHUB_ACTIONS:-}" == "true" && "${PVDAK_CI_D30_ISOLATED:-}" == "1" &&
+   -n "${RUNNER_TEMP:-}" && -n "${GITHUB_WORKSPACE:-}" ]] || {
+  echo 'D30_CI_ABORT: disposable GitHub Actions fixture required' >&2
+  exit 2
+}
+[[ "$(id -u)" -ne 0 ]] || { echo 'D30_CI_ABORT: root not permitted' >&2; exit 2; }
+for cmd in mariadb-dump mariadbd mariadb-install-db mariadb; do
+  command -v "$cmd" >/dev/null || { echo "D30_CI_ABORT: missing $cmd" >&2; exit 2; }
+done
+WP_ROOT="$RUNNER_TEMP/pvdak-wp"
+[[ -f "$WP_ROOT/wp-config.php" && -d "$WP_ROOT/wp-content/themes/pvdakcom-main" &&
+   -d "$WP_ROOT/wp-content/plugins/pvdak-core" ]] || {
+  echo 'D30_CI_ABORT: isolated WordPress fixture missing' >&2; exit 2;
+}
+FIXTURE="$(mktemp -d "$RUNNER_TEMP/pvdak-d30-ci.XXXXXXXX")"
+trap 'rm -rf -- "$FIXTURE"' EXIT
+BACKUP="$FIXTURE/backups"
+mkdir -p "$BACKUP/theme" "$BACKUP/core"
+cp -a -- "$WP_ROOT/wp-content/themes/pvdakcom-main/." "$BACKUP/theme/"
+cp -a -- "$WP_ROOT/wp-content/plugins/pvdak-core/." "$BACKUP/core/"
+export PVDAK_D30_BACKUP_ROOT="$BACKUP"
+export PVDAK_WP_ROOT="$WP_ROOT"
+# This DB is created by the same workflow with disposable users/credentials;
+# never use wp-config credentials or access any external database.
+MYSQL_PWD=pvdak_ci_local_only mariadb-dump \
+  --host=127.0.0.1 --port=3306 --user=pvdak_ci \
+  --single-transaction --skip-comments --skip-dump-date pvdak_ci > "$BACKUP/site.sql"
+[[ -s "$BACKUP/site.sql" ]] || { echo 'D30_CI_FAIL: empty disposable SQL dump' >&2; exit 1; }
+bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --files-only \
+  > "$FIXTURE/files.log" 2>&1
+grep -F 'D30_FILES_RESTORE_OK' "$FIXTURE/files.log" >/dev/null
+grep -F 'D30_SQL_RESTORE_NOT_TESTED' "$FIXTURE/files.log" >/dev/null
+echo 'PVDAK_D30_CI_FILES_ONLY_OK: isolated theme and Core restore'
+bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/site.sql" \
+  > "$FIXTURE/full.log" 2>&1 || {
+    cat "$FIXTURE/full.log" >&2
+    exit 1
+  }
+grep -F 'D30_FILES_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
+grep -F 'D30_SQL_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
+echo 'PVDAK_D30_CI_SQL_RESTORE_OK: disposable WordPress SQL imported into fresh socket-only MariaDB'
+# A syntactically valid but unrelated SQL dump must NOT count as WordPress recovery.
+printf 'CREATE TABLE unrelated_fixture (id INT);\n' > "$BACKUP/unrelated.sql"
+if bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/unrelated.sql" \
+  > "$FIXTURE/negative.log" 2>&1; then
+  echo 'D30_CI_FAIL: unrelated SQL was accepted' >&2; exit 1
+fi
+grep -F 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' \
+  "$FIXTURE/negative.log" >/dev/null || {
+    cat "$FIXTURE/negative.log" >&2
+    echo 'D30_CI_FAIL: unrelated SQL rejected for unexpected reason' >&2
+    exit 1
+  }
+echo 'PVDAK_D30_CI_NEGATIVE_OK: unrelated SQL rejected by real MariaDB schema guard'
+echo 'PVDAK_D30_CI_OK: 3 isolated checks; real backup/WordPress boot/live rollback NOT_TESTED'
