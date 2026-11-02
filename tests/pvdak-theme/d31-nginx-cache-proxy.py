@@ -3,7 +3,9 @@
 
 No production hostname, credentials, database or CDN is accessed. This proves
 only localhost nginx behavior; it is NOT acceptance of the production CDN.
+D31 also verifies that real cookie/nonce REST identity responses are not shared-cached.
 """
+import json
 import os
 from http.client import HTTPConnection
 import socket
@@ -12,6 +14,7 @@ import sys
 import tempfile
 import time
 from http.cookiejar import CookieJar
+from urllib.error import HTTPError
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import (
@@ -84,6 +87,34 @@ def raw_edge(path):
         return status, body, headers
     finally:
         connection.close()
+
+
+
+def rest_nonce(opener):
+    """Obtain a nonce only from the guarded D12 synthetic-user MU fixture."""
+    url = UPSTREAM + "/pvdak-wp/wp-admin/admin-ajax.php?action=pvdak_ci_d12_rest_nonce"
+    with opener.open(url, timeout=15) as response:
+        payload = json.loads(response.read(65536))
+    nonce = payload.get("data", {}).get("nonce") if payload.get("success") else None
+    check(isinstance(nonce, str) and len(nonce) == 10 and nonce.isalnum(),
+          "guarded synthetic user obtains a session-bound REST nonce")
+    return nonce
+
+
+def rest_me(opener, nonce):
+    """Inspect actual nginx REST response without hiding a 403 from the edge."""
+    url = EDGE + "/pvdak-wp/?rest_route=%2Fwp%2Fv2%2Fusers%2Fme"
+    request = Request(url, headers={
+        "User-Agent": "PVDak-D31-REST-Cache-CI",
+        "X-WP-Nonce": nonce,
+    })
+    try:
+        response = opener.open(request, timeout=15)
+    except HTTPError as error:
+        response = error
+    with response:
+        return (response.status, response.read(200000).decode("utf-8", "replace"),
+                {k.lower(): v.lower() for k, v in response.headers.items()})
 
 
 checks = 0
@@ -214,6 +245,49 @@ http {
         _, public_after_private = read(anon, stylesheet)
         check(public_after_private.get("x-pvdak-edge-cache") == "hit",
               "public cache remains active after mixed private sessions")
+
+        # D31: real REST cookie/nonce identity must remain private at the
+        # *shared* edge, not only when called directly on WordPress (D12).
+        # The D11 users and CI-only nonce issuer are already provisioned by
+        # the workflow. Two independent cookie jars share one nginx cache.
+        rest_client, rest_client_cookies = client()
+        rest_lawyer, rest_lawyer_cookies = client()
+        authenticate(rest_client, rest_client_cookies, "ci_d11_browser_client",
+                     "pvdak_ci_d11_client_browser_only_2026")
+        authenticate(rest_lawyer, rest_lawyer_cookies, "ci_d11_browser_lawyer",
+                     "pvdak_ci_d11_lawyer_browser_only_2026")
+        client_nonce = rest_nonce(rest_client)
+        lawyer_nonce = rest_nonce(rest_lawyer)
+        rest_ids = []
+        for opener, nonce, expected in (
+                (rest_client, client_nonce, "ci_d11_browser_client"),
+                (rest_lawyer, lawyer_nonce, "ci_d11_browser_lawyer")):
+            for repeat in range(2):
+                status, body, headers = rest_me(opener, nonce)
+                check(status == 200, "authenticated REST identity HTTP 200 at edge")
+                data = json.loads(body)
+                check(data.get("slug") == expected and
+                      isinstance(data.get("id"), int) and data["id"] > 0,
+                      "REST edge response belongs to correct cookie/nonce user")
+                check("no-store" in headers.get("cache-control", ""),
+                      "authenticated REST response is no-store at nginx")
+                check(headers.get("x-pvdak-edge-cache", "") not in
+                      ("hit", "stale", "updating"),
+                      "authenticated REST identity never served from shared cache")
+                if repeat == 0:
+                    rest_ids.append(data["id"])
+        check(len(rest_ids) == 2 and rest_ids[0] != rest_ids[1],
+              "independent REST sessions have different WordPress identities")
+        for opener, other_nonce in (
+                (rest_client, lawyer_nonce), (rest_lawyer, client_nonce)):
+            status, body, headers = rest_me(opener, other_nonce)
+            check(status == 403, "cross-session REST nonce rejected at nginx")
+            check("ci_d11_browser_client" not in body and
+                  "ci_d11_browser_lawyer" not in body,
+                  "rejected REST response contains no private identity")
+        _, public_after_rest = read(anon, stylesheet)
+        check(public_after_rest.get("x-pvdak-edge-cache") == "hit",
+              "public shared cache stays active after REST identity traffic")
         print(f"PVDAK_D31_NGINX_CACHE_OK: {checks}/{checks} localhost nginx "
               "shared-cache checks; real CDN/host/deploy NOT_TESTED.")
     except Exception:

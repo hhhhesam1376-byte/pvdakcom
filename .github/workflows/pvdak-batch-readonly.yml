@@ -152,7 +152,6 @@ jobs:
           python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-http-integration.py"
           # D31: actual nginx shared-cache layer on localhost, never the live CDN.
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nginx
-          python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-nginx-cache-proxy.py"
           # Ubuntu hosted runner includes Chrome; install only the small Playwright JS client.
           command -v google-chrome
           npm install --prefix "$RUNNER_TEMP/pvdak-browser" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.0
@@ -171,6 +170,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins"
           cp "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-ci-nonce-mu.php" "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php"
           PVDAK_CI_D12_ISOLATED=1 node "$GITHUB_WORKSPACE/tests/pvdak-theme/d12-rest-http.cjs"
+          # D31: now test real cookie/nonce REST identities through a shared
+          # nginx cache while the guarded D11/D12 fixtures are still present.
+          PVDAK_CI_D12_ISOLATED=1 python3 "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-nginx-cache-proxy.py"
           rm -f "$RUNNER_TEMP/pvdak-wp/wp-content/mu-plugins/pvdak-d12-ci-nonce.php"
           # D13: issue a single-use key only for the marked D11 synthetic user.
           # The key never enters logs, source, environment or production.
