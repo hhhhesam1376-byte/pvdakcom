@@ -75,6 +75,24 @@ jobs:
         run: |
           set -Eeuo pipefail
           php "$RUNNER_TEMP/wp-cli.phar" --path="$RUNNER_TEMP/pvdak-wp" --user=ciadmin eval-file "$GITHUB_WORKSPACE/tests/pvdak-theme/d31-wordpress-mariadb-integration.php" | tee "$RUNNER_TEMP/pvdak-d31-wp-result.log"
+      - name: Run D11/D12 isolated Core multiuser ownership E2E
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          WP_ROOT="$RUNNER_TEMP/pvdak-wp"
+          wpci() { php "$RUNNER_TEMP/wp-cli.phar" --path="$WP_ROOT" "$@"; }
+          # This flag is a constant in the disposable CI WordPress only.
+          # Never use the staging fixture on the real site or its database.
+          wpci config set PVDAK_E2E_ISOLATED_STAGING true --raw --type=constant --quiet
+          wpci option update pvdak_maintenance_enabled 1 --quiet
+          cleanup() {
+            wpci option update pvdak_maintenance_enabled 0 --quiet || true
+          }
+          trap cleanup EXIT
+          wpci eval-file "$GITHUB_WORKSPACE/scripts/pvdak-staging-multiuser-e2e.php" |
+            tee "$RUNNER_TEMP/pvdak-d11-multiuser.log"
+          grep -F 'PVDAK_STAGING_MULTIUSER: checks=20 failures=0 expected=20 cleanup=OK' "$RUNNER_TEMP/pvdak-d11-multiuser.log"
+          echo 'PVDAK_D11_MULTIUSER_CI_OK: 20/20 WordPress/Core ownership and cleanup checks; live host NOT_TESTED'
       - name: Check real localhost HTTP pagination, privacy and robots
         shell: bash
         env:
