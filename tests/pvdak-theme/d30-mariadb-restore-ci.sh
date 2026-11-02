@@ -38,14 +38,17 @@ grep -F 'D30_FILES_RESTORE_OK' "$FIXTURE/files.log" >/dev/null
 grep -F 'D30_SQL_RESTORE_NOT_TESTED' "$FIXTURE/files.log" >/dev/null
 echo 'PVDAK_D30_CI_FILES_ONLY_OK: isolated theme and Core restore'
 bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
-  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/site.sql" \
+  --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/site.sql" --ci-wp-boot \
   > "$FIXTURE/full.log" 2>&1 || {
     cat "$FIXTURE/full.log" >&2
     exit 1
   }
 grep -F 'D30_FILES_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
 grep -F 'D30_SQL_RESTORE_OK' "$FIXTURE/full.log" >/dev/null
+grep -F 'D30_CI_WP_BOOT_OK' "$FIXTURE/full.log" >/dev/null
+grep -F 'D30_CI_WP_CONTENT_OK' "$FIXTURE/full.log" >/dev/null
 echo 'PVDAK_D30_CI_SQL_RESTORE_OK: disposable WordPress SQL imported into fresh socket-only MariaDB'
+echo 'PVDAK_D30_CI_WP_BOOT_OK: restored WordPress and theme/Core loaded against restored socket-only DB'
 # A syntactically valid but unrelated SQL dump must NOT count as WordPress recovery.
 printf 'CREATE TABLE unrelated_fixture (id INT);\n' > "$BACKUP/unrelated.sql"
 if bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
@@ -60,4 +63,4 @@ grep -F 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' \
     exit 1
   }
 echo 'PVDAK_D30_CI_NEGATIVE_OK: unrelated SQL rejected by real MariaDB schema guard'
-echo 'PVDAK_D30_CI_OK: 3 isolated checks; real backup/WordPress boot/live rollback NOT_TESTED'
+echo 'PVDAK_D30_CI_OK: 4 isolated checks; real private backup and live rollback NOT_TESTED'
