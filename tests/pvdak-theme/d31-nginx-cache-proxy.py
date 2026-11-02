@@ -5,6 +5,7 @@ No production hostname, credentials, database or CDN is accessed. This proves
 only localhost nginx behavior; it is NOT acceptance of the production CDN.
 """
 import os
+from http.client import HTTPConnection
 import socket
 import subprocess
 import sys
@@ -65,6 +66,24 @@ def read(opener, url):
             raise AssertionError("D31_NGINX_FAIL: HTTP 200 required")
         return (response.read(2_000_000).decode("utf-8"),
                 {k.lower(): v.lower() for k, v in response.headers.items()})
+
+
+def raw_edge(path):
+    """Inspect the first nginx response without following a redirect to origin.
+
+    urllib follows the anonymous account redirect to port 8080, which can
+    conceal an incorrectly cached 302 at the actual shared edge.
+    """
+    connection = HTTPConnection("127.0.0.1", 8081, timeout=15)
+    try:
+        connection.request("GET", path, headers={"User-Agent": "PVDak-D31-Nginx-CI"})
+        response = connection.getresponse()
+        status = response.status
+        body = response.read(2_000_000).decode("utf-8", errors="replace")
+        headers = {k.lower(): v.lower() for k, v in response.getheaders()}
+        return status, body, headers
+    finally:
+        connection.close()
 
 
 checks = 0
@@ -157,6 +176,24 @@ http {
         check(css_first == css_second,
               "public cached response body is stable across MISS/HIT")
         check_private(anon, EDGE + "/?page_id=" + LOGIN)
+        # Do not follow an anonymous account redirect: the first response
+        # must itself be non-cacheable at nginx, not just its login target.
+        account_path = "/?page_id=" + ACCOUNT
+        anonymous_first = raw_edge(account_path)
+        anonymous_second = raw_edge(account_path)
+        check(anonymous_first[0] in (200, 301, 302, 303, 307, 308) and
+              anonymous_second[0] == anonymous_first[0],
+              "anonymous account edge status stable on repeat")
+        for attempt, response in enumerate((anonymous_first, anonymous_second), 1):
+            check("no-store" in response[2].get("cache-control", ""),
+                  f"anonymous account edge response {attempt} is no-store")
+            check(response[2].get("x-pvdak-edge-cache", "") not in
+                  ("hit", "stale", "updating"),
+                  f"anonymous account edge response {attempt} is never a cache HIT")
+        check(all("D31_CI_SUBSCRIBER_PRIVATE" not in response[1] and
+                  "D31_CI_EDITOR_PRIVATE" not in response[1]
+                  for response in (anonymous_first, anonymous_second)),
+              "anonymous edge responses never disclose fixture identities")
         subscriber, sc = client()
         editor, ec = client()
         authenticate(subscriber, sc, "ci_d31_subscriber",
@@ -173,6 +210,10 @@ http {
                       "D31_CI_EDITOR_PRIVATE")
         check_private(editor, account, "D31_CI_EDITOR_PRIVATE",
                       "D31_CI_SUBSCRIBER_PRIVATE")
+        # Cache must still be active after the private/anonymous sequence.
+        _, public_after_private = read(anon, stylesheet)
+        check(public_after_private.get("x-pvdak-edge-cache") == "hit",
+              "public cache remains active after mixed private sessions")
         print(f"PVDAK_D31_NGINX_CACHE_OK: {checks}/{checks} localhost nginx "
               "shared-cache checks; real CDN/host/deploy NOT_TESTED.")
     except Exception:
