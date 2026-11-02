@@ -83,10 +83,10 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.leak_after_auth = False
         Edge.seen_authenticated = False
 
-    def run_audit(self, authenticated=True):
+    def run_audit(self, authenticated=True, cookie_a="session=A"):
         env = {**os.environ, "GITHUB_ACTIONS": "true"}
         if authenticated:
-            env.update(PVDAK_D31_COOKIE_A="session=A", PVDAK_D31_COOKIE_B="session=B",
+            env.update(PVDAK_D31_COOKIE_A=cookie_a, PVDAK_D31_COOKIE_B="session=B",
                        PVDAK_D31_MARKER_A="STAGING_A_123456", PVDAK_D31_MARKER_B="STAGING_B_123456")
         else:
             for k in ("PVDAK_D31_COOKIE_A", "PVDAK_D31_COOKIE_B", "PVDAK_D31_MARKER_A", "PVDAK_D31_MARKER_B"):
@@ -102,6 +102,19 @@ class EdgeAuditTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("D31_EDGE_CHECKS_OK", r.stdout)
         self.assertIn("D31_EDGE_POST_AUTH_ANONYMOUS_OK", r.stdout)
+
+    def test_crlf_cookie_rejected_without_exposing_secret(self):
+        r = self.run_audit(cookie_a="session=A\r\nSECRET_COOKIE_SENTINEL")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("invalid HTTP header characters", r.stderr)
+        self.assertNotIn("SECRET_COOKIE_SENTINEL", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+
+    def test_non_ascii_cookie_rejected_without_traceback(self):
+        r = self.run_audit(cookie_a="session=A\u2603")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("invalid HTTP header characters", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
 
     def test_anonymous_marker_leak_before_auth_fails(self):
         Edge.leak_anonymous = True

@@ -23,6 +23,12 @@ def path_ok(value):
     return value.startswith("/") and not value.startswith("//") and "#" not in value and "\r" not in value and "\n" not in value
 
 
+def validate_cookie(value):
+    """Reject unsafe staging Cookie headers without ever echoing credentials."""
+    if value and (len(value) > 8192 or any(ord(ch) < 32 or ord(ch) > 126 for ch in value)):
+        fail("synthetic staging cookie contains invalid HTTP header characters")
+
+
 def request(base, path, cookie=None):
     if not path_ok(path):
         fail("unsafe relative path")
@@ -99,6 +105,13 @@ def audit(args):
     if args.cache_header not in ("cf-cache-status", "x-cache", "x-pvdak-edge-cache", "x-litespeed-cache"):
         fail("unsupported cache status header")
 
+    # Validate secrets before any network request; http.client otherwise may
+    # raise ValueError/UnicodeEncodeError with credential fragments.
+    a, b = os.getenv("PVDAK_D31_COOKIE_A"), os.getenv("PVDAK_D31_COOKIE_B")
+    ma, mb = os.getenv("PVDAK_D31_MARKER_A"), os.getenv("PVDAK_D31_MARKER_B")
+    validate_cookie(a)
+    validate_cookie(b)
+
     # Prove the CDN is really caching a public asset. Without this positive
     # control, private MISS checks can pass when the CDN is bypassed entirely.
     public = [request(base, args.public_path) for _ in range(3)]
@@ -112,8 +125,6 @@ def audit(args):
 
     # Synthetic identity markers are checked on anonymous responses too.
     # This detects origin leaks even if the CDN reports BYPASS/no-store.
-    a, b = os.getenv("PVDAK_D31_COOKIE_A"), os.getenv("PVDAK_D31_COOKIE_B")
-    ma, mb = os.getenv("PVDAK_D31_MARKER_A"), os.getenv("PVDAK_D31_MARKER_B")
     for label, path in (("anonymous-login", args.login_path), ("anonymous-account", args.account_path)):
         for _ in range(2):
             status, headers, body = request(base, path)
