@@ -189,15 +189,23 @@ declare -A RESTORED_TABLES=()
 while IFS= read -r table; do
   [[ -n "$table" ]] && RESTORED_TABLES["$table"]=1
 done <<< "$TABLE_NAMES"
+# A five-table subset can boot wp core is-installed while losing comments,
+# taxonomy, links or term metadata. Require all 12 standard WordPress tables.
+WP_CORE_TABLES=(commentmeta comments links options postmeta posts
+  term_relationships term_taxonomy termmeta terms usermeta users)
 WP_SCHEMA_READY=0
 WP_OPTIONS_READY=0
 for table in "${!RESTORED_TABLES[@]}"; do
   if [[ "$table" =~ ^([a-zA-Z0-9_]+)options$ ]]; then
     prefix="${BASH_REMATCH[1]}"
-    if [[ -n "${RESTORED_TABLES[${prefix}posts]:-}" &&
-          -n "${RESTORED_TABLES[${prefix}postmeta]:-}" &&
-          -n "${RESTORED_TABLES[${prefix}users]:-}" &&
-          -n "${RESTORED_TABLES[${prefix}usermeta]:-}" ]]; then
+    family_complete=1
+    for suffix in "${WP_CORE_TABLES[@]}"; do
+      if [[ -z "${RESTORED_TABLES[${prefix}${suffix}]:-}" ]]; then
+        family_complete=0
+        break
+      fi
+    done
+    if (( family_complete )); then
       WP_SCHEMA_READY=1
       # A dump may have the expected table names but lack the two mandatory
       # WordPress URL options. Verify only their presence, never reveal values.
