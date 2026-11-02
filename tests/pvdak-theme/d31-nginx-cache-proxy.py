@@ -100,6 +100,7 @@ pid %s;
 error_log %s warn;
 events { worker_connections 128; }
 http {
+  access_log %s;
   proxy_cache_path %s levels=1:2 keys_zone=pvdak_ci_cache:1m inactive=5m max_size=10m;
   server {
     listen 127.0.0.1:8081;
@@ -112,7 +113,7 @@ http {
     }
   }
 }
-""" % (root / "nginx.pid", root / "nginx.error.log", root / "cache"))
+""" % (root / "nginx.pid", root / "nginx.error.log", root / "nginx.access.log", root / "cache"))
     # This deliberately uses nginx's ordinary cache rules. It does not
     # ignore upstream Cache-Control or Set-Cookie, nor bypass auth by fiat.
     syntax = subprocess.run(["nginx", "-t", "-c", str(config)],
