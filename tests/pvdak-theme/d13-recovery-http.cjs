@@ -119,8 +119,13 @@ async function main() {
     const changed = await post(context, {
       _pvdak_reset_nonce: nonce, new_password: NEW, confirm_password: NEW
     });
-    check([301, 302, 303].includes(changed.status()) &&
-      /status=reset/.test(changed.headers().location || ''),
+    const changedLocation = changed.headers().location || '';
+    const changedStatus = new URL(changedLocation || '/', HOST).searchParams.get('status');
+    if (!([301, 302, 303].includes(changed.status()) && changedStatus === 'reset')) {
+      process.stderr.write('D13_HTTP_DIAGNOSTIC: HTTP=' + changed.status() +
+        ' redirect_status=' + (changedStatus || 'none') + '\\n');
+    }
+    check([301, 302, 303].includes(changed.status()) && changedStatus === 'reset',
       'valid reset returns success only after database write');
     const replay = await get(context, resetPath);
     check(!(await replay.text()).includes('name="action" value="pvdak_recovery_change"'),
