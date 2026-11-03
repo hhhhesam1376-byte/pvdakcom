@@ -195,6 +195,7 @@ WP_CORE_TABLES=(commentmeta comments links options postmeta posts
   term_relationships term_taxonomy termmeta terms usermeta users)
 WP_SCHEMA_READY=0
 WP_OPTIONS_READY=0
+WP_USER_DATA_READY=0
 for table in "${!RESTORED_TABLES[@]}"; do
   if [[ "$table" =~ ^([a-zA-Z0-9_]+)options$ ]]; then
     prefix="${BASH_REMATCH[1]}"
@@ -215,12 +216,34 @@ for table in "${!RESTORED_TABLES[@]}"; do
         -e "SELECT COUNT(DISTINCT option_name) FROM \`$options_table\` WHERE option_name IN ('siteurl','home') AND option_value <> ''" 2>/dev/null)" || {
         echo 'D30_SQL_RESTORE_FAILED: unreadable WordPress site options' >&2; exit 1;
       }
-      if [[ "$options_count" == 2 ]]; then WP_OPTIONS_READY=1; break; fi
+      if [[ "$options_count" == 2 ]]; then
+        WP_OPTIONS_READY=1
+        # The twelve tables and site URLs alone are insufficient: an empty
+        # users/usermeta pair means the restored site has lost its identities.
+        # Query existence only; never read or print private user rows.
+        users_table="${prefix}users"
+        usermeta_table="${prefix}usermeta"
+        users_present="$(mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
+          --batch --skip-column-names "$DB" \
+          -e "SELECT EXISTS(SELECT 1 FROM \`$users_table\` LIMIT 1)" 2>/dev/null)" || {
+          echo 'D30_SQL_RESTORE_FAILED: unreadable WordPress user table' >&2; exit 1;
+        }
+        usermeta_present="$(mariadb --no-defaults --protocol=socket --socket="$SOCKET" --user=root \
+          --batch --skip-column-names "$DB" \
+          -e "SELECT EXISTS(SELECT 1 FROM \`$usermeta_table\` LIMIT 1)" 2>/dev/null)" || {
+          echo 'D30_SQL_RESTORE_FAILED: unreadable WordPress user metadata' >&2; exit 1;
+        }
+        if [[ "$users_present" == 1 && "$usermeta_present" == 1 ]]; then
+          WP_USER_DATA_READY=1
+          break
+        fi
+      fi
     fi
   fi
 done
 (( WP_SCHEMA_READY )) || { echo 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' >&2; exit 1; }
 (( WP_OPTIONS_READY )) || { echo 'D30_SQL_RESTORE_FAILED: missing required WordPress site options' >&2; exit 1; }
+(( WP_USER_DATA_READY )) || { echo 'D30_SQL_RESTORE_FAILED: missing WordPress user data' >&2; exit 1; }
 echo "D30_SQL_RESTORE_OK: isolated socket-only MariaDB, tables=$TABLES, WordPress schema present; WordPress boot NOT_TESTED"
 
 if (( CI_WP_BOOT )); then

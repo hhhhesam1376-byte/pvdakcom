@@ -97,4 +97,22 @@ grep -F 'D30_SQL_RESTORE_FAILED: incomplete WordPress table family' \
     exit 1
   }
 echo 'PVDAK_D30_CI_SCHEMA_NEGATIVE_OK: missing taxonomy table rejected after MariaDB import'
-echo 'PVDAK_D30_CI_OK: 7 isolated checks; real private backup and live host rollback NOT_TESTED'
+# A structurally complete dump with site URLs but no users or user metadata
+# must fail even if all twelve core tables survived the import.
+for suffix in users usermeta; do
+  cp -- "$BACKUP/site.sql" "$BACKUP/missing-$suffix.sql"
+  printf '\nDELETE FROM `wp_%s`;\n' "$suffix" >> "$BACKUP/missing-$suffix.sql"
+  if bash "$GITHUB_WORKSPACE/scripts/pvdak-restore-drill.sh" \
+    --theme "$BACKUP/theme" --core "$BACKUP/core" --sql "$BACKUP/missing-$suffix.sql" \
+    > "$FIXTURE/missing-$suffix.log" 2>&1; then
+    echo "D30_CI_FAIL: dump missing $suffix rows was accepted" >&2; exit 1
+  fi
+  grep -F 'D30_SQL_RESTORE_FAILED: missing WordPress user data' \
+    "$FIXTURE/missing-$suffix.log" >/dev/null || {
+      cat "$FIXTURE/missing-$suffix.log" >&2
+      echo "D30_CI_FAIL: missing $suffix rejected for unexpected reason" >&2
+      exit 1
+    }
+  echo "PVDAK_D30_CI_${suffix^^}_NEGATIVE_OK: missing $suffix rows rejected after MariaDB import"
+done
+echo 'PVDAK_D30_CI_OK: 9 isolated checks; real private backup and live host rollback NOT_TESTED'
