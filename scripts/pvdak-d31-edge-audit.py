@@ -62,7 +62,9 @@ def cache_value(headers, name):
 
 def is_hit(value):
     """Require an actual public HIT token, not a misleading NOT_HIT suffix."""
-    return bool(re.search(r"(?:^|[\s,;])(?:hit|tcp_hit)(?=$|[\s,;])", value.lower()))
+    tokens = [token.strip() for token in re.split(r"[,;]", value.lower()) if token.strip()]
+    # Reject contradictory cache states rather than accepting a trailing HIT.
+    return len(tokens) == 1 and tokens[0] in ("hit", "tcp_hit")
 
 
 def private_ok(status, headers, cache_header, label, require_noindex=False):
