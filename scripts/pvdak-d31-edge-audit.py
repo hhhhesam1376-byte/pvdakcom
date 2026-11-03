@@ -119,8 +119,10 @@ def audit(args):
     public = [request(base, args.public_path) for _ in range(3)]
     if any(status != 200 for status, _, _ in public):
         fail("public control did not return HTTP 200")
-    if not any(is_hit(cache_value(headers, args.cache_header)) for _, headers, _ in public):
-        fail("public asset did not demonstrate a CDN HIT")
+    # A warm-cache control must HIT on the final request. An isolated early
+    # HIT followed by MISS/BYPASS is not evidence of a functioning edge cache.
+    if not is_hit(cache_value(public[-1][1], args.cache_header)):
+        fail("public asset final request did not demonstrate a CDN HIT")
     if not all(body == public[0][2] for _, _, body in public):
         fail("public cached asset changed across requests")
     print("D31_EDGE_PUBLIC_CACHE_OK: verified public HIT and stable body")
