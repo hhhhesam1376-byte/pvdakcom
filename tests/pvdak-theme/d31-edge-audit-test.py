@@ -23,6 +23,8 @@ class Edge(http.server.BaseHTTPRequestHandler):
     leak_after_auth = False
     seen_authenticated = False
     public_cache_status = "HIT"
+    public_probe_count = 0
+    public_cache_sequence = None
     robots_tag = "noindex"
 
     def log_message(self, *_):
@@ -31,7 +33,10 @@ class Edge(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/public.css":
             self.send_response(200)
-            self.send_header("X-PVDak-Edge-Cache", self.public_cache_status)
+            Edge.public_probe_count += 1
+            status = (self.public_cache_sequence[Edge.public_probe_count - 1]
+                      if self.public_cache_sequence else self.public_cache_status)
+            self.send_header("X-PVDak-Edge-Cache", status)
             self.end_headers()
             self.wfile.write(b"/* public */")
             return
@@ -85,6 +90,8 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.leak_after_auth = False
         Edge.seen_authenticated = False
         Edge.public_cache_status = "HIT"
+        Edge.public_probe_count = 0
+        Edge.public_cache_sequence = None
         Edge.robots_tag = "noindex"
 
     def run_audit(self, authenticated=True, cookie_a="session=A"):
@@ -138,6 +145,17 @@ class EdgeAuditTest(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
         self.assertIn("public asset did not demonstrate a CDN HIT", r.stderr)
+
+    def test_early_hit_then_bypass_is_not_a_warm_cache(self):
+        Edge.public_cache_sequence = ["HIT", "MISS", "BYPASS"]
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("final request did not demonstrate a CDN HIT", r.stderr)
+
+    def test_miss_then_hit_stays_valid(self):
+        Edge.public_cache_sequence = ["MISS", "MISS", "HIT"]
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_public_tcp_hit_is_a_valid_positive_control(self):
         Edge.public_cache_status = "TCP_HIT"
