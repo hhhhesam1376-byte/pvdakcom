@@ -144,7 +144,7 @@ class EdgeAuditTest(unittest.TestCase):
         Edge.public_cache_status = "NOT_HIT"
         r = self.run_audit()
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertIn("public asset did not demonstrate a CDN HIT", r.stderr)
+        self.assertIn("public asset final request did not demonstrate a CDN HIT", r.stderr)
 
     def test_early_hit_then_bypass_is_not_a_warm_cache(self):
         Edge.public_cache_sequence = ["HIT", "MISS", "BYPASS"]
