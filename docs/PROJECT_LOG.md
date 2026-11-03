@@ -3461,3 +3461,12 @@ The owner correctly identified that the earlier site was a visually dynamic them
 - **Runner:** checkout, PHP/MySQL driver, WordPress bootstrap, localhost HTTP and MariaDB restore steps completed successfully in this CI run; no runner-blocking failure observed in those jobs. Production runner/host compatibility remains NOT_VERIFIED.
 - **Gate:** unchanged 11 ACCEPTED / 13 CODE_COMPLETE / 2 IN_TESTING (D13, D31) / 5 IN_PROGRESS (D20, D26, D29, D30, D32) / 1 READY_FOR_ACCEPTANCE (D11) = 32. Real staging CDN, two synthetic sessions, D30 private-backup rollback, D13 SMTP and external approvals remain unverified. No acceptance promotion.
 - **Deploy:** NOT_ATTEMPTED / NOT_VERIFIED; no version increase or production writes. This documentation-only commit is not a new tested build.
+
+
+### 2026-11-04 02:42 Asia/Tehran — D31 runner PHP driver compatibility patch
+- **Scope:** `hhhhesam1376-byte/pvdakcom`, branch `main`, workflow only; baseline prior HEAD `c1b74e7ebac9265faabb9cb3bce16aa6931779d2`.
+- **Before → after:** `.github/workflows/pvdak-batch-readonly.yml`, job `d31-wordpress-mariadb`, step `Install local PHP MySQL driver`: fixed Ubuntu package `php8.3-mysql` → distribution default `php-mysql`; existing `php -m | grep -Fx mysqli` guard retained. This removes explicit PHP 8.3 package coupling; actual runner PHP/package compatibility still requires a new GitHub Actions run.
+- **Code commit:** `2b0e72cb2736904aaff29d5c1fdac77e95134859`. Only workflow file changed; no application/UI/theme version changes.
+- **Tests/evidence:** source diff verified through GitHub update response. No newly completed CI run or runtime PASS observed at this log write. Prior successful CI run 41588114466 belongs to earlier SHA `39850db9` and is not evidence for this patch. New CI result: PENDING/NOT_VERIFIED. D31 live CDN two-session isolation and D30 staging restore: NOT_TESTED.
+- **Gates:** D31 remains IN_TESTING; D30 remains IN_PROGRESS; no acceptance or CODE_COMPLETE promotion. Canonical prior count: 11 ACCEPTED, 13 CODE_COMPLETE, 2 IN_TESTING, 5 IN_PROGRESS, 1 READY_FOR_ACCEPTANCE. User's six IN_PROGRESS differs from log's five.
+- **Deploy:** NOT_ATTEMPTED / NOT_VERIFIED. GitHub workflow change only, not a production deployment.
