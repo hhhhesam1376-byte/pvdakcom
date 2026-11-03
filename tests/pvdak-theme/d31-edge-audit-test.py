@@ -157,6 +157,17 @@ class EdgeAuditTest(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
+    def test_public_bypass_hit_conflict_rejected(self):
+        Edge.public_cache_status = "BYPASS, HIT"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("final request did not demonstrate a CDN HIT", r.stderr)
+
+    def test_public_hit_miss_conflict_rejected(self):
+        Edge.public_cache_status = "HIT, MISS"
+        r = self.run_audit()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+
     def test_public_tcp_hit_is_a_valid_positive_control(self):
         Edge.public_cache_status = "TCP_HIT"
         r = self.run_audit()
